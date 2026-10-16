@@ -115,11 +115,11 @@ footer{color:var(--muted);font-size:13px;border-top:1px solid var(--line);paddin
     <div>
       <p class="eyebrow">Asset Management · Dokumentasi Teknis &amp; Manual Book</p>
       <h1>Dokumentasi Asset Karyawan</h1>
-      <p class="lede">Enam belas fitur dan satu dokumen infrastruktur penyimpanan foto yang mengatur perjalanan asset — di tangan karyawan (diterima, dipakai, dikembalikan), di ruangan (dialokasikan dan diterima PIC), dan di gudang (dirawat, diperbaiki, diklaim, dihapus). Setiap dokumen disusun dari source code <code>API</code> (Lumen) dan <code>MOBILE</code> (Flutter) dengan 48 bagian yang sama.</p>
+      <p class="lede">Tujuh belas fitur dan satu dokumen infrastruktur penyimpanan foto yang mengatur perjalanan asset — di tangan karyawan (diterima, dipakai, dikembalikan), di ruangan (dialokasikan, diupgrade, dan diretur lewat PIC), dan di gudang (dirawat, diperbaiki, diklaim, dihapus). Setiap dokumen disusun dari source code <code>API</code> (Lumen) dan <code>MOBILE</code> (Flutter) dengan 48 bagian yang sama.</p>
     </div>
     <div class="stats" aria-label="Ringkasan">
-      <div><b>17</b>dokumen</div>
-      <div><b>200</b>endpoint</div>
+      <div><b>18</b>dokumen</div>
+      <div><b>215</b>endpoint</div>
       <div><b>48</b>bagian/dok</div>
     </div>
   </header>
@@ -319,6 +319,25 @@ footer{color:var(--muted);font-size:13px;border-top:1px solid var(--line);paddin
     </div>
   </section>
 
+  <section class="stage" aria-labelledby="st-ruangan-pakai">
+    <div class="stage-head">
+      <span class="stage-arrow">tetap di ruangan</span>
+      <h2 id="st-ruangan-pakai">Asset selama di ruangan</h2>
+      <p>Peningkatan spesifikasi aset ruangan tanpa memindahkan kepemilikannya.</p>
+    </div>
+    <div class="cards">
+      <a class="card" href="dokumentasi-asset-upgrade-ruangan.html" data-local="dokumentasi-asset-upgrade-ruangan.html" data-online="https://claude.ai/artifact/1hB6TXQDgD5UGcLRgAYni2" data-search="upgrade ruangan komponen alk-rgn07 spesifikasi pic ruangan jalur a jalur b dalam service dalam_perbaikan kirim ulang teknisi checklist admin hr">
+        <div class="tagline"><span class="code">ALK-RGN07</span><span class="ver">v1.0</span></div>
+        <h3>Upgrade Komponen Ruangan</h3>
+        <p>Spesifikasi satu aset ruangan ditingkatkan: PIC mengajukan atau Admin/HR langsung membuat, aset diambil sementara, diupgrade teknisi, lalu kembali ke ruangan yang sama. Alur meniru upgrade karyawan.</p>
+        <div class="flow">pengajuan → menunggu_pengambilan → dalam_service → menunggu_pengembalian → menunggu_review → selesai</div>
+        <div class="meta"><span>15 endpoint</span><span>16 test API</span><span>16 test mobile</span><span>2 jalur</span></div>
+        <div class="risk"><span class="sev sev-m">SEDANG</span><span>Ruangan tanpa PIC aktif membuat pelepasan/terima mustahil dan belum ada pembatalan; belum diuji end-to-end di aplikasi.</span></div>
+        <span class="open">Buka dokumen →</span>
+      </a>
+    </div>
+  </section>
+
   <section class="stage" aria-labelledby="st-ruangan-keluar">
     <div class="stage-head">
       <span class="stage-arrow">ruangan → gudang</span>
@@ -417,11 +436,12 @@ footer{color:var(--muted);font-size:13px;border-top:1px solid var(--line);paddin
       <tr><td>Dokumentasi Teknis & Manual Book — Retur Asset Karyawan</td><td><a href="dokumentasi-asset-retur-karyawan.html" download>HTML</a></td><td><a href="dokumentasi-asset-retur-karyawan.md" download>Markdown</a></td></tr>
       <tr><td>Dokumentasi Teknis & Manual Book — Retur Asset Ruangan (ALK-RGN06)</td><td><a href="dokumentasi-asset-retur-ruangan.html" download>HTML</a></td><td><a href="dokumentasi-asset-retur-ruangan.md" download>Markdown</a></td></tr>
       <tr><td>Dokumentasi Teknis & Manual Book — Upgrade Asset Karyawan</td><td><a href="dokumentasi-asset-upgrade-karyawan.html" download>HTML</a></td><td><a href="dokumentasi-asset-upgrade-karyawan.md" download>Markdown</a></td></tr>
+      <tr><td>Dokumentasi Teknis & Manual Book — Upgrade Komponen Aset Ruangan (ALK-RGN07)</td><td><a href="dokumentasi-asset-upgrade-ruangan.html" download>HTML</a></td><td><a href="dokumentasi-asset-upgrade-ruangan.md" download>Markdown</a></td></tr>
       <tr><td>Dokumentasi Teknis — MinIO Object Storage (API)</td><td><a href="dokumentasi-minio-object-storage.html" download>HTML</a></td><td><a href="dokumentasi-minio-object-storage.md" download>Markdown</a></td></tr>
     </tbody></table>
   </section>
 
-  <footer>Dokumentasi Asset Karyawan · diperbarui 15 Oktober 2026 · disusun dari source lokal API (Lumen) &amp; MOBILE (Flutter).</footer>
+  <footer>Dokumentasi Asset Karyawan · diperbarui 16 Oktober 2026 · disusun dari source lokal API (Lumen) &amp; MOBILE (Flutter).</footer>
 </div>
 
 <script>
@@ -463,7 +483,7 @@ footer{color:var(--muted);font-size:13px;border-top:1px solid var(--line);paddin
   }
   function apply(){
     cards.forEach(function(a){
-      if(choice==='artifact'){a.href=a.dataset.online;a.target='_blank';a.rel='noopener';}
+      if(choice==='artifact'&&a.dataset.online&&a.dataset.online!=='PENDING'){a.href=a.dataset.online;a.target='_blank';a.rel='noopener';}
       else{a.href=a.dataset.local;a.removeAttribute('target');a.removeAttribute('rel');}
     });
     buttons.forEach(function(b){b.setAttribute('aria-pressed',String(b.dataset.mode===choice));});

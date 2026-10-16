@@ -20,4 +20,5 @@ Dokumentasi teknis dan manual book fitur Asset (API Lumen + MOBILE Flutter). Buk
 | Dokumentasi Teknis & Manual Book — Retur Asset Karyawan | [HTML](dokumentasi-asset-retur-karyawan.html) | [Markdown](dokumentasi-asset-retur-karyawan.md) |
 | Dokumentasi Teknis & Manual Book — Retur Asset Ruangan (ALK-RGN06) | [HTML](dokumentasi-asset-retur-ruangan.html) | [Markdown](dokumentasi-asset-retur-ruangan.md) |
 | Dokumentasi Teknis & Manual Book — Upgrade Asset Karyawan | [HTML](dokumentasi-asset-upgrade-karyawan.html) | [Markdown](dokumentasi-asset-upgrade-karyawan.md) |
+| Dokumentasi Teknis & Manual Book — Upgrade Komponen Aset Ruangan (ALK-RGN07) | [HTML](dokumentasi-asset-upgrade-ruangan.html) | [Markdown](dokumentasi-asset-upgrade-ruangan.md) |
 | Dokumentasi Teknis — MinIO Object Storage (API) | [HTML](dokumentasi-minio-object-storage.html) | [Markdown](dokumentasi-minio-object-storage.md) |

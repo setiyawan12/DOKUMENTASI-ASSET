@@ -1,0 +1,2624 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Upgrade Komponen Ruangan</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap">
+<style>
+:root{
+  --ground:#F3F5F9; --surface:#FFFFFF; --surface-2:#EAEEF5; --ink:#162033; --ink-2:#3A4559; --muted:#657089;
+  --line:#D9DFEA; --accent:#1F5AA6; --accent-soft:#E3ECF8; --accent-ink:#163F75;
+  --wait:#B45F00; --wait-bg:#FFE9C7; --draft:#0078A8; --draft-bg:#D6F1FA;
+  --bad:#C22F2F; --bad-bg:#FDE1E1; --done:#157A41; --done-bg:#D9F2E3; --neutral:#4E5A70; --neutral-bg:#E6EAF1;
+  --code-bg:#0F1A2C; --code-ink:#DCE6F5; --code-muted:#8FA3C2;
+  --shadow:0 1px 2px rgba(22,32,51,.06),0 8px 24px rgba(22,32,51,.06);
+  --font:"Plus Jakarta Sans",ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  color-scheme:dark;
+  --ground:#0E1420; --surface:#151D2C; --surface-2:#1C2638; --ink:#E7ECF5; --ink-2:#C3CBDA; --muted:#8E99AF;
+  --line:#28334A; --accent:#7FAEF0; --accent-soft:#1B2A45; --accent-ink:#B8D2F7;
+  --wait:#FFB861; --wait-bg:#3A2A12; --draft:#6CD3F5; --draft-bg:#113442; --bad:#FF8A8A; --bad-bg:#3D1C1F;
+  --done:#6FD69C; --done-bg:#15321F; --neutral:#B7C1D3; --neutral-bg:#243047;
+  --code-bg:#0A101B; --code-ink:#DCE6F5; --code-muted:#7F93B3; --shadow:0 1px 2px rgba(0,0,0,.3),0 8px 24px rgba(0,0,0,.25);
+}}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --ground:#0E1420; --surface:#151D2C; --surface-2:#1C2638; --ink:#E7ECF5; --ink-2:#C3CBDA; --muted:#8E99AF;
+  --line:#28334A; --accent:#7FAEF0; --accent-soft:#1B2A45; --accent-ink:#B8D2F7;
+  --wait:#FFB861; --wait-bg:#3A2A12; --draft:#6CD3F5; --draft-bg:#113442; --bad:#FF8A8A; --bad-bg:#3D1C1F;
+  --done:#6FD69C; --done-bg:#15321F; --neutral:#B7C1D3; --neutral-bg:#243047;
+  --code-bg:#0A101B; --code-ink:#DCE6F5; --code-muted:#7F93B3; --shadow:0 1px 2px rgba(0,0,0,.3),0 8px 24px rgba(0,0,0,.25);
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth;scroll-padding-top:24px}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+body{background:var(--ground);color:var(--ink);font-family:var(--font);font-size:15px;line-height:1.65;padding-inline:16px}
+a{color:var(--accent)}
+a:focus-visible,button:focus-visible,input:focus-visible,summary:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:4px}
+
+.shell{max-width:1320px;margin:0 auto;display:grid;grid-template-columns:270px minmax(0,1fr);gap:40px;padding-block:28px 80px}
+@media (max-width:960px){.shell{grid-template-columns:minmax(0,1fr);gap:20px}}
+
+/* Navigasi */
+.sidebar{position:sticky;top:calc(env(safe-area-inset-top,0px) + 16px);align-self:start;max-height:calc(100vh - 32px);display:flex;flex-direction:column;gap:12px}
+@media (max-width:960px){.sidebar{display:none}}
+.back{font-size:13px;font-weight:600;text-decoration:none}
+.back-mobile{display:none;margin:0 0 8px}
+@media (max-width:960px){.back-mobile{display:block}}
+.brand{display:flex;align-items:center;gap:10px;font-weight:700;font-size:14px}
+.brand-mark{height:30px;padding-inline:8px;border-radius:8px;background:var(--accent);color:var(--surface);display:grid;place-items:center;font-family:var(--mono);font-size:12px;font-weight:600}
+.search{width:100%;padding:9px 12px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--ink);font:inherit;font-size:13.5px}
+.nav{overflow-y:auto;padding-right:6px;display:flex;flex-direction:column;gap:14px}
+.nav-group p{margin:0 0 4px;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:700}
+.nav a{display:flex;gap:10px;padding:4px 8px;border-radius:6px;text-decoration:none;color:var(--ink-2);font-size:13.5px;line-height:1.4}
+.nav a span{font-family:var(--mono);font-size:11.5px;color:var(--muted);padding-top:1px;min-width:18px}
+.nav a:hover{background:var(--surface-2)}
+.nav a.active{background:var(--accent-soft);color:var(--accent-ink);font-weight:600}
+.nav a.active span{color:var(--accent)}
+.mobile-toc{display:none;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px 14px}
+.mobile-toc summary{font-weight:700;cursor:pointer}
+.mobile-toc .nav{max-height:60vh;margin-top:10px}
+@media (max-width:960px){.mobile-toc{display:block}}
+
+main{min-width:0}
+
+/* Header bergaya label asset */
+.hero{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:28px;align-items:end;padding-block:8px 28px;border-bottom:1px solid var(--line)}
+@media (max-width:760px){.hero{grid-template-columns:minmax(0,1fr)}}
+.eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:.06em;color:var(--accent);text-transform:uppercase;margin:0 0 8px}
+.hero h1{font-size:clamp(30px,5vw,46px);line-height:1.08;letter-spacing:-.02em;margin:0 0 12px;font-weight:800;text-wrap:balance}
+.hero .lede{max-width:62ch;color:var(--ink-2);margin:0;font-size:16px}
+.hero .lede code{font-family:var(--mono);font-size:.86em;background:var(--surface-2);padding:1px 5px;border-radius:5px}
+.tag{background:var(--surface);border:1px dashed var(--muted);border-radius:12px;padding:14px 16px;min-width:250px;font-family:var(--mono);font-size:12px;box-shadow:var(--shadow);position:relative}
+@media (max-width:760px){.tag{min-width:0}}
+.tag::before{content:"";position:absolute;left:14px;top:-7px;width:12px;height:12px;border-radius:50%;background:var(--ground);border:1px dashed var(--muted)}
+.tag dl{display:grid;grid-template-columns:auto 1fr;gap:4px 14px;margin:0}
+.tag dt{color:var(--muted)}
+.tag dd{margin:0;color:var(--ink);font-weight:500}
+.barcode{height:26px;margin-top:10px;background:repeating-linear-gradient(90deg,var(--ink) 0 2px,transparent 2px 4px,var(--ink) 4px 5px,transparent 5px 8px,var(--ink) 8px 11px,transparent 11px 12px);opacity:.75;border-radius:2px}
+.tag .trx{margin-top:4px;text-align:center;letter-spacing:.2em;font-size:11px;color:var(--ink-2)}
+
+/* Panel ringkas */
+.overview{display:grid;gap:18px;padding-block:28px 8px}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:22px}
+.panel h3{margin:0 0 4px;font-size:18px}
+.panel .sub{margin:0 0 18px;color:var(--muted);font-size:14px}
+.panel code{font-family:var(--mono);font-size:.86em;background:var(--surface-2);padding:1px 5px;border-radius:5px;overflow-wrap:anywhere}
+.three{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
+@media (max-width:760px){.three{grid-template-columns:minmax(0,1fr)}}
+.fact{border-left:3px solid var(--accent);padding:2px 0 2px 14px}
+.fact b{display:block;font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.fact p{margin:4px 0 0;font-size:14.5px}
+
+/* Lifecycle */
+.flow{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;align-items:stretch}
+@media (max-width:760px){.flow{grid-template-columns:minmax(0,1fr)}}
+.step{border:1px solid var(--line);border-radius:12px;padding:14px;background:var(--surface);display:flex;flex-direction:column;gap:6px}
+.step .who{font-size:11.5px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.06em}
+.step p{margin:0;font-size:13.5px;color:var(--ink-2)}
+.step .db{font-family:var(--mono);font-size:11.5px;color:var(--muted);margin-top:auto;padding-top:8px;border-top:1px dashed var(--line)}
+.loop{margin-top:12px;display:flex;flex-wrap:wrap;gap:10px;align-items:center;padding:12px 14px;border-radius:12px;background:var(--bad-bg);color:var(--ink);font-size:13.5px}
+.loop strong{color:var(--bad)}
+
+.badge{display:inline-flex;align-items:center;gap:6px;padding:3px 10px;border-radius:999px;font-size:12.5px;font-weight:700;width:max-content}
+.badge::before{content:"";width:7px;height:7px;border-radius:50%;background:currentColor}
+.b-draft{background:var(--draft-bg);color:var(--draft)}
+.b-wait{background:var(--wait-bg);color:var(--wait)}
+.b-bad{background:var(--bad-bg);color:var(--bad)}
+.b-done{background:var(--done-bg);color:var(--done)}
+
+/* Peran */
+.roles{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+@media (max-width:900px){.roles{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:520px){.roles{grid-template-columns:minmax(0,1fr)}}
+.role{border:1px solid var(--line);border-radius:12px;padding:14px 16px;background:var(--surface);display:flex;flex-direction:column;gap:8px}
+.role h4{margin:0;font-size:14.5px}
+.role p{margin:0;font-size:13px;color:var(--muted)}
+.role .links{display:flex;flex-wrap:wrap;gap:6px;margin-top:auto}
+.role .links a{font-family:var(--mono);font-size:11.5px;text-decoration:none;padding:2px 8px;border-radius:6px;background:var(--accent-soft);color:var(--accent-ink)}
+.role .links a:hover{background:var(--accent);color:var(--surface)}
+
+.attention{list-style:none;margin:0;padding:0;display:grid;gap:10px}
+.attention li{display:grid;grid-template-columns:72px minmax(0,1fr);gap:12px;align-items:start;font-size:14px}
+.sev{font-family:var(--mono);font-size:11px;font-weight:600;padding:2px 8px;border-radius:6px;margin-top:2px;text-align:center}
+.sev-h{background:var(--bad-bg);color:var(--bad)}
+.sev-m{background:var(--wait-bg);color:var(--wait)}
+
+/* Konten dokumen */
+.doc{padding-top:8px}
+.group-divider{margin:64px 0 0;display:flex;align-items:center;gap:14px;color:var(--accent);font-size:12px;font-weight:800;letter-spacing:.12em;text-transform:uppercase}
+.group-divider::after{content:"";flex:1;height:2px;background:var(--accent);opacity:.25}
+.doc h2{font-size:clamp(22px,3vw,27px);line-height:1.2;letter-spacing:-.01em;margin:40px 0 14px;display:flex;align-items:baseline;gap:14px;text-wrap:balance}
+.sec-no{font-family:var(--mono);font-size:14px;color:var(--accent);font-weight:600;padding:3px 8px;border:1px solid var(--accent);border-radius:6px;flex:none;transform:translateY(-3px)}
+.doc h3{font-size:18px;margin:30px 0 10px;text-wrap:balance}
+.doc h4{font-size:15.5px;margin:22px 0 8px}
+.doc p,.doc li{max-width:78ch;color:var(--ink-2)}
+.doc strong{color:var(--ink)}
+.doc hr{display:none}
+.doc code{font-family:var(--mono);font-size:.86em;background:var(--surface-2);padding:1px 5px;border-radius:5px;color:var(--ink);overflow-wrap:anywhere}
+.doc .chip{font-weight:600;border-radius:999px;padding:1px 8px}
+.doc .chip-draft{background:var(--draft-bg);color:var(--draft)}
+.doc .chip-wait{background:var(--wait-bg);color:var(--wait)}
+.doc .chip-bad{background:var(--bad-bg);color:var(--bad)}
+.doc .chip-done{background:var(--done-bg);color:var(--done)}
+.doc .chip-neutral{background:var(--neutral-bg);color:var(--neutral)}
+
+.table-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:12px;background:var(--surface);margin:14px 0 20px}
+table{border-collapse:collapse;width:100%;font-size:13.5px;font-variant-numeric:tabular-nums}
+th{text-align:left;background:var(--surface-2);color:var(--ink);font-weight:700;font-size:12.5px;letter-spacing:.02em;padding:10px 12px;border-bottom:1px solid var(--line);white-space:nowrap}
+td{padding:9px 12px;border-bottom:1px solid var(--line);vertical-align:top;color:var(--ink-2);min-width:90px}
+tr:last-child td{border-bottom:0}
+tbody tr:hover td{background:var(--accent-soft)}
+
+.code{position:relative;margin:14px 0 20px}
+.code-lang{position:absolute;top:8px;right:12px;font-family:var(--mono);font-size:10.5px;color:var(--code-muted);letter-spacing:.08em;text-transform:uppercase}
+.doc .code pre{background:var(--code-bg);color:var(--code-ink);border-radius:12px;padding:18px;overflow-x:auto;margin:0;font-size:12.8px;line-height:1.6}
+.doc .code pre code{background:none;color:inherit;padding:0;font-size:inherit;overflow-wrap:normal}
+.diagram{overflow-x:auto;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:18px;margin:14px 0 20px}
+.diagram pre{margin:0}
+.diagram pre.mermaid{font-family:var(--mono);font-size:12px;color:var(--muted);white-space:pre;text-align:center}
+.diagram pre.mermaid[data-processed]{color:inherit;white-space:normal}
+.diagram svg{max-width:100%;height:auto}
+
+.callout{border-radius:12px;padding:12px 16px;margin:14px 0;border:1px solid var(--line);background:var(--surface)}
+.callout p{margin:4px 0}
+.callout-warn{background:var(--wait-bg);border-color:transparent}
+.doc .callout-warn p,.doc .callout-warn strong{color:var(--ink)}
+.callout-note{border-left:3px solid var(--accent)}
+
+.doc .task{list-style:none;padding-left:4px}
+.task::before{content:"";display:inline-block;width:14px;height:14px;border:1.5px solid var(--muted);border-radius:4px;margin-right:10px;vertical-align:-2px}
+.task.done::before{background:var(--done);border-color:var(--done);box-shadow:inset 0 0 0 2px var(--surface)}
+footer{margin-top:64px;padding-top:18px;border-top:1px solid var(--line);color:var(--muted);font-size:13px}
+.to-top{position:fixed;right:16px;bottom:calc(env(safe-area-inset-bottom,0px) + 16px);width:40px;height:40px;border-radius:50%;border:1px solid var(--line);background:var(--surface);color:var(--ink);box-shadow:var(--shadow);cursor:pointer;font-size:16px}
+.dl{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0 12px}.dl a{font-size:12px;font-weight:600;text-decoration:none;border:1px solid var(--line);border-radius:999px;padding:3px 10px;color:var(--ink);background:var(--surface)}.dl a:hover{border-color:var(--accent);color:var(--accent)}.dl[hidden]{display:none}
+</style>
+
+<div class="shell">
+  <aside class="sidebar" aria-label="Daftar isi">
+    <a class="back" href="index.html">← Semua dokumen</a>
+    <div class="dl" aria-label="Unduh dokumen"><a href="dokumentasi-asset-upgrade-ruangan.html" download>⬇ HTML</a><a href="dokumentasi-asset-upgrade-ruangan.md" download>⬇ Markdown</a></div>
+    <div class="brand"><span class="brand-mark">RGN07</span>Upgrade Ruangan</div>
+    <input class="search" id="nav-search" type="search" placeholder="Cari bagian… (mis. API, status)" aria-label="Cari bagian">
+    <nav class="nav" id="nav"><div class="nav-group"><p>Gambaran &amp; Bisnis</p><a href="#s1" data-sec="s1"><span>01</span>Informasi Dokumen</a><a href="#s3" data-sec="s3"><span>03</span>Quick Overview</a><a href="#s4" data-sec="s4"><span>04</span>Ringkasan Fitur</a><a href="#s5" data-sec="s5"><span>05</span>Tujuan Fitur</a><a href="#s6" data-sec="s6"><span>06</span>Aktor</a><a href="#s7" data-sec="s7"><span>07</span>Hak Akses</a><a href="#s8" data-sec="s8"><span>08</span>Terminologi</a><a href="#s9" data-sec="s9"><span>09</span>Business Rules</a><a href="#s10" data-sec="s10"><span>10</span>Business Flow</a><a href="#s11" data-sec="s11"><span>11</span>Flow Berdasarkan Role</a><a href="#s12" data-sec="s12"><span>12</span>Flow Diagram</a><a href="#s13" data-sec="s13"><span>13</span>Sequence Diagram</a><a href="#s14" data-sec="s14"><span>14</span>Status Transaksi</a><a href="#s15" data-sec="s15"><span>15</span>State Transition</a></div><div class="nav-group"><p>Database</p><a href="#s16" data-sec="s16"><span>16</span>Struktur Database</a><a href="#s17" data-sec="s17"><span>17</span>Relasi Database</a><a href="#s18" data-sec="s18"><span>18</span>Data Dictionary</a><a href="#s19" data-sec="s19"><span>19</span>Database Index</a></div><div class="nav-group"><p>Backend &amp; API</p><a href="#s20" data-sec="s20"><span>20</span>Backend Architecture</a><a href="#s21" data-sec="s21"><span>21</span>Backend Business Logic</a><a href="#s22" data-sec="s22"><span>22</span>Dampak terhadap asset_data</a><a href="#s23" data-sec="s23"><span>23</span>API Documentation</a><a href="#s24" data-sec="s24"><span>24</span>Detail Setiap API</a></div><div class="nav-group"><p>Mobile</p><a href="#s25" data-sec="s25"><span>25</span>Mobile Architecture</a><a href="#s26" data-sec="s26"><span>26</span>Mobile Screen</a><a href="#s27" data-sec="s27"><span>27</span>Mobile → API</a><a href="#s28" data-sec="s28"><span>28</span>API → Mobile</a><a href="#s29" data-sec="s29"><span>29</span>Mapping Mobile → API → Database</a><a href="#s30" data-sec="s30"><span>30</span>Mapping Database → API → Mobile</a></div><div class="nav-group"><p>Validasi, Error &amp; Keamanan</p><a href="#s31" data-sec="s31"><span>31</span>Validation</a><a href="#s32" data-sec="s32"><span>32</span>Error Handling</a><a href="#s33" data-sec="s33"><span>33</span>Audit Trail</a><a href="#s34" data-sec="s34"><span>34</span>Notification</a><a href="#s35" data-sec="s35"><span>35</span>Security</a></div><div class="nav-group"><p>Manual Book</p><a href="#s36" data-sec="s36"><span>36</span>Manual Book User/Admin</a><a href="#s37" data-sec="s37"><span>37</span>Kondisi Button</a></div><div class="nav-group"><p>QA &amp; Risiko</p><a href="#s38" data-sec="s38"><span>38</span>Testing Scenario</a><a href="#s39" data-sec="s39"><span>39</span>Temuan Ketidaksesuaian</a><a href="#s40" data-sec="s40"><span>40</span>Edge Case</a><a href="#s41" data-sec="s41"><span>41</span>Potential Bug / Technical Risk</a></div><div class="nav-group"><p>Referensi Developer</p><a href="#s42" data-sec="s42"><span>42</span>Dependency</a><a href="#s43" data-sec="s43"><span>43</span>Source Code Reference</a><a href="#s44" data-sec="s44"><span>44</span>Developer Notes</a><a href="#s45" data-sec="s45"><span>45</span>End-to-End Traceability</a><a href="#s46" data-sec="s46"><span>46</span>Ringkasan Database Impact</a><a href="#s47" data-sec="s47"><span>47</span>Checklist Implementasi</a><a href="#s48" data-sec="s48"><span>48</span>Changelog</a></div></nav>
+  </aside>
+
+  <main>
+    <p class="back-mobile"><a class="back" href="index.html">← Semua dokumen</a> <div class="dl" aria-label="Unduh dokumen"><a href="dokumentasi-asset-upgrade-ruangan.html" download>⬇ HTML</a><a href="dokumentasi-asset-upgrade-ruangan.md" download>⬇ Markdown</a></div></p>
+    <header class="hero">
+      <div>
+        <p class="eyebrow">Asset Management · Dokumentasi Teknis &amp; Manual Book</p>
+        <h1>Upgrade Komponen Aset Ruangan (ALK-RGN07)</h1>
+        <p class="lede">Spesifikasi satu aset milik ruangan (mis. RAM 16 GB menjadi 32 GB) ditingkatkan lewat dua jalur dalam satu tabel: PIC Ruangan mengajukan lalu Admin/HR menyetujui atau menolak (Jalur A), atau Admin/HR langsung membuat transaksi (Jalur B). Aset diambil sementara (<code>dalam_perbaikan</code>, pemegang tetap ruangan), diupgrade di luar sistem, lalu dikembalikan ke ruangan yang sama; atribut baru ditulis hanya bila upgrade berhasil. Alurnya meniru Upgrade Asset Karyawan (KRY03). Seluruh isi diturunkan dari source code <code>API</code> (Lumen) dan <code>MOBILE</code> (Flutter).</p>
+      </div>
+      <div class="tag" aria-label="Identitas dokumen">
+        <dl>
+          <dt>Kode</dt><dd>ALK-RGN07</dd><dt>Modul</dt><dd>Ruangan</dd><dt>Versi</dt><dd>1.0 · 16 Okt 2026</dd><dt>Stack</dt><dd>Lumen 10 · Flutter</dd><dt>API</dt><dd>15 endpoint</dd>
+        </dl>
+        <div class="barcode" aria-hidden="true"></div>
+        <div class="trx">RGN07-YYYYMMNNN</div>
+      </div>
+    </header>
+
+    <details class="mobile-toc">
+      <summary>Daftar isi</summary>
+      <nav class="nav"><div class="nav-group"><p>Gambaran &amp; Bisnis</p><a href="#s1" data-sec="s1"><span>01</span>Informasi Dokumen</a><a href="#s3" data-sec="s3"><span>03</span>Quick Overview</a><a href="#s4" data-sec="s4"><span>04</span>Ringkasan Fitur</a><a href="#s5" data-sec="s5"><span>05</span>Tujuan Fitur</a><a href="#s6" data-sec="s6"><span>06</span>Aktor</a><a href="#s7" data-sec="s7"><span>07</span>Hak Akses</a><a href="#s8" data-sec="s8"><span>08</span>Terminologi</a><a href="#s9" data-sec="s9"><span>09</span>Business Rules</a><a href="#s10" data-sec="s10"><span>10</span>Business Flow</a><a href="#s11" data-sec="s11"><span>11</span>Flow Berdasarkan Role</a><a href="#s12" data-sec="s12"><span>12</span>Flow Diagram</a><a href="#s13" data-sec="s13"><span>13</span>Sequence Diagram</a><a href="#s14" data-sec="s14"><span>14</span>Status Transaksi</a><a href="#s15" data-sec="s15"><span>15</span>State Transition</a></div><div class="nav-group"><p>Database</p><a href="#s16" data-sec="s16"><span>16</span>Struktur Database</a><a href="#s17" data-sec="s17"><span>17</span>Relasi Database</a><a href="#s18" data-sec="s18"><span>18</span>Data Dictionary</a><a href="#s19" data-sec="s19"><span>19</span>Database Index</a></div><div class="nav-group"><p>Backend &amp; API</p><a href="#s20" data-sec="s20"><span>20</span>Backend Architecture</a><a href="#s21" data-sec="s21"><span>21</span>Backend Business Logic</a><a href="#s22" data-sec="s22"><span>22</span>Dampak terhadap asset_data</a><a href="#s23" data-sec="s23"><span>23</span>API Documentation</a><a href="#s24" data-sec="s24"><span>24</span>Detail Setiap API</a></div><div class="nav-group"><p>Mobile</p><a href="#s25" data-sec="s25"><span>25</span>Mobile Architecture</a><a href="#s26" data-sec="s26"><span>26</span>Mobile Screen</a><a href="#s27" data-sec="s27"><span>27</span>Mobile → API</a><a href="#s28" data-sec="s28"><span>28</span>API → Mobile</a><a href="#s29" data-sec="s29"><span>29</span>Mapping Mobile → API → Database</a><a href="#s30" data-sec="s30"><span>30</span>Mapping Database → API → Mobile</a></div><div class="nav-group"><p>Validasi, Error &amp; Keamanan</p><a href="#s31" data-sec="s31"><span>31</span>Validation</a><a href="#s32" data-sec="s32"><span>32</span>Error Handling</a><a href="#s33" data-sec="s33"><span>33</span>Audit Trail</a><a href="#s34" data-sec="s34"><span>34</span>Notification</a><a href="#s35" data-sec="s35"><span>35</span>Security</a></div><div class="nav-group"><p>Manual Book</p><a href="#s36" data-sec="s36"><span>36</span>Manual Book User/Admin</a><a href="#s37" data-sec="s37"><span>37</span>Kondisi Button</a></div><div class="nav-group"><p>QA &amp; Risiko</p><a href="#s38" data-sec="s38"><span>38</span>Testing Scenario</a><a href="#s39" data-sec="s39"><span>39</span>Temuan Ketidaksesuaian</a><a href="#s40" data-sec="s40"><span>40</span>Edge Case</a><a href="#s41" data-sec="s41"><span>41</span>Potential Bug / Technical Risk</a></div><div class="nav-group"><p>Referensi Developer</p><a href="#s42" data-sec="s42"><span>42</span>Dependency</a><a href="#s43" data-sec="s43"><span>43</span>Source Code Reference</a><a href="#s44" data-sec="s44"><span>44</span>Developer Notes</a><a href="#s45" data-sec="s45"><span>45</span>End-to-End Traceability</a><a href="#s46" data-sec="s46"><span>46</span>Ringkasan Database Impact</a><a href="#s47" data-sec="s47"><span>47</span>Checklist Implementasi</a><a href="#s48" data-sec="s48"><span>48</span>Changelog</a></div></nav>
+    </details>
+
+    <section class="overview" aria-label="Ringkasan">
+      <div class="panel">
+        <h3>Ringkasan dalam 1 menit: upgrade komponen aset ruangan</h3>
+        <p class="sub">Meningkatkan spesifikasi aset ruangan secara terdokumentasi tanpa mengubah kepemilikannya.</p>
+        <div class="three">
+          <div class="fact"><b>Aset tetap milik ruangan</b><p>Selama upgrade status aset <code>dalam_perbaikan</code> dan pemegang tetap <code>ruangan</code>. Log mencatat ruangan → gudang saat diserahkan dan gudang → ruangan saat selesai.</p></div>
+          <div class="fact"><b>Satu tabel, dua jalur</b><p><code>sumber_pengajuan</code> membedakan pengajuan PIC (<code>karyawan</code>) dan inisiasi Admin (<code>admin</code>). Notifikasi ke PIC dikirim ke <strong>semua PIC aktif</strong> ruangan.</p></div>
+          <div class="fact"><b>Atribut diperbarui hanya bila berhasil</b><p>Nilai baru ditulis ke <code>asset_data_item</code> saat review akhir dan hanya bila hasilnya <code>selesai</code>. Aset yang terkunci di retur, onboarding, atau penambahan ruangan tidak bisa diupgrade.</p></div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h3>Siklus upgrade</h3>
+        <p class="sub">Jalur A dimulai dari <strong>Menunggu Persetujuan</strong> (PIC mengajukan, Admin mereview); Jalur B langsung ke Menunggu Pengambilan. Dua kolom status disimpan: <code>status_approval</code> dan <code>fase_upgrade</code>.</p>
+        <div class="flow">
+          <div class="step"><span class="badge b-wait">Menunggu Pengambilan</span><span class="who">Admin: Setujui / Buat + jadwal</span><p>Admin mengisi checklist pengambilan, lalu PIC menekan Serahkan Aset.</p><span class="db">asset → dalam_perbaikan · log ruangan→gudang</span></div>
+          <div class="step"><span class="badge b-draft">Dalam Service</span><span class="who">Admin: Hasil Upgrade</span><p>Selesai (nilai baru) atau Tidak Dapat Diupgrade, keterangan, biaya, jadwal pengembalian.</p><span class="db">item.nilai_baru · menunggu_pengembalian</span></div>
+          <div class="step"><span class="badge b-draft">Menunggu Pengembalian</span><span class="who">PIC: Terima Aset</span><p>PIC mengisi checklist kondisi tiap komponen.</p><span class="db">checklist_pengembalian · menunggu_review</span></div>
+          <div class="step"><span class="badge b-done">Selesai</span><span class="who">Admin: Selesaikan Upgrade</span><p>Atribut diperbarui (bila berhasil) dan aset kembali aktif di ruangan.</p><span class="db">asset → terpakai · log gudang→ruangan</span></div>
+        </div>
+        <div class="loop"><span class="badge b-bad">Kirim ulang</span><span>Saat review akhir Admin bisa menekan <strong>Kirim Ulang ke Teknisi</strong> + jadwal baru; proses kembali ke <strong>Menunggu Pengambilan</strong> dan checklist pengambilan harus diisi ulang.</span></div>
+      </div>
+
+      <div class="panel">
+        <h3>Mulai dari sini sesuai peran</h3>
+        <p class="sub">Lompat langsung ke bagian yang paling relevan.</p>
+        <div class="roles">
+          <div class="role"><h4>Business Analyst / PM</h4><p>Aturan bisnis, status, perbedaan dengan KRY03.</p><div class="links"><a href="#s3">§3</a><a href="#s9">§9 Rules</a><a href="#s14">§14 Status</a><a href="#s39">§39 INC</a></div></div>
+          <div class="role"><h4>Backend Developer</h4><p>Logika, dampak ke asset_data, kontrak API, modul yang berubah.</p><div class="links"><a href="#s20">§20 Arsitektur</a><a href="#s21">§21 Logic</a><a href="#s22">§22 asset_data</a><a href="#s24">§24 API</a></div></div>
+          <div class="role"><h4>Mobile Developer</h4><p>Pemakaian ulang modul upgrade karyawan lewat flag, route, pemetaan.</p><div class="links"><a href="#s25">§25</a><a href="#s26">§26 Screen</a><a href="#s29">§29 Mapping</a></div></div>
+          <div class="role"><h4>QA / Tester</h4><p>16 test API, 16 test mobile, skenario, edge case, risiko.</p><div class="links"><a href="#s38">§38 Test</a><a href="#s40">§40 Edge</a><a href="#s41">§41 Risk</a></div></div>
+          <div class="role"><h4>Technical Support</h4><p>Pesan error, audit trail, notifikasi.</p><div class="links"><a href="#s32">§32 Error</a><a href="#s33">§33 Audit</a><a href="#s34">§34 Notif</a></div></div>
+          <div class="role"><h4>User / Admin Asset</h4><p>Langkah operasional dan kondisi tombol.</p><div class="links"><a href="#s36">§36 Manual Book</a><a href="#s37">§37 Tombol</a></div></div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h3>Perlu perhatian</h3>
+        <p class="sub">Temuan terpenting. Detail di <a href="#s39">§39</a> dan <a href="#s41">§41</a>.</p>
+        <ul class="attention">
+          <li><span class="sev sev-m">SEDANG</span><span>Ruangan kehilangan semua PIC saat aset <code>dalam_perbaikan</code>: pelepasan/terima mustahil dan belum ada pembatalan. <a href="#s41">RISK-001</a></span></li>
+          <li><span class="sev sev-m">SEDANG</span><span>Checklist pengembalian berkondisi rusak hanya flag; tidak memblokir selesai (perlu konfirmasi). <a href="#s41">RISK-003</a></span></li>
+          <li><span class="sev sev-m">SEDANG</span><span>Test API memakai SQLite; enum/FK MariaDB diverifikasi manual. <a href="#s41">RISK-007</a></span></li>
+          <li><span class="sev sev-m">SEDANG</span><span>Belum diuji end-to-end di server/emulator, termasuk push notifikasi. <a href="#s41">RISK-009</a></span></li>
+        </ul>
+      </div>
+    </section>
+
+    <article class="doc">
+<div class="group-divider" id="g1"><span>Gambaran &amp; Bisnis</span></div>
+<h2 id="s1"><span class="sec-no">01</span>Informasi Dokumen</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Informasi</th>
+<th>Nilai</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Nama Fitur</td>
+<td>Upgrade Komponen Aset Ruangan (UI PIC: tombol <strong>"Upgrade Komponen"</strong> di halaman <strong>"PIC Ruangan"</strong>; UI Admin: item <strong>"Upgrade"</strong> di dashboard Ruangan; judul layar <strong>"Upgrade Komponen Ruangan"</strong>)</td>
+</tr>
+<tr>
+<td>Kode Fitur</td>
+<td><strong>ALK-RGN07</strong> (nomor transaksi <code>RGN07-YYYYMMNNN</code>; RGN06 adalah Retur Ruangan, bukan fitur ini)</td>
+</tr>
+<tr>
+<td>Modul</td>
+<td>Asset Management — Ruangan</td>
+</tr>
+<tr>
+<td>Backend</td>
+<td>Laravel <strong>Lumen ^10.0</strong>, PHP ^8.1, JWT, Query Builder</td>
+</tr>
+<tr>
+<td>Database</td>
+<td><code>API/diagram-asset.dbml</code> (tanda <code>[NEW ALK-RGN Upgrade]</code>) + SQL manual <code>Claude outputs/sql-alk-rgn-upgrade-ruangan.sql</code></td>
+</tr>
+<tr>
+<td>Mobile</td>
+<td>Flutter (<code>professional_flutter_3_35</code>), <code>flutter_bloc</code>, <code>dio</code></td>
+</tr>
+<tr>
+<td>Web</td>
+<td>⚠️ Belum ditemukan: tidak ada source web di workspace</td>
+</tr>
+<tr>
+<td>Test otomatis</td>
+<td>API <code>tests/Asset/AssetUpgradeRuanganTest.php</code> (16 test) · Mobile <code>test/asset/asset_upgrade_ruangan_test.dart</code> (16 test)</td>
+</tr>
+<tr>
+<td>Versi dokumen</td>
+<td>1.0 — 16 Oktober 2026</td>
+</tr>
+<tr>
+<td>Dokumen terkait</td>
+<td>Upgrade Asset Karyawan (KRY03), Retur Ruangan (ALK-RGN06), Onboarding Ruangan (ALK-RGN01), Penambahan Ruangan (ALK-RGN04), Master Lokasi &amp; PIC Ruangan</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="s2"><span class="sec-no">02</span>Daftar Isi</h2>
+<p>Lihat panel navigasi di samping.</p>
+<h2 id="s3"><span class="sec-no">03</span>Quick Overview</h2>
+<p>Spesifikasi komponen <strong>satu aset ruangan</strong> (mis. RAM 16 GB → 32 GB) ditingkatkan lewat dua jalur dalam <strong>satu tabel</strong> (<code>asset_trx_upgrade_ruangan</code>), dibedakan kolom <code>sumber_pengajuan</code>. Pada <strong>Jalur A</strong> PIC Ruangan mengajukan (komponen yang diupgrade, alasan, urgensi) lalu Admin/HR menyetujui dengan jadwal pengambilan atau menolak; pada <strong>Jalur B</strong> Admin/HR langsung membuat transaksi beserta jadwal pengambilan. Admin/HR mengisi <strong>checklist pengambilan</strong>, PIC <strong>menyerahkan aset</strong> (aset menjadi <code>dalam_perbaikan</code>, pemegang tetap ruangan), Admin/HR mencatat <strong>hasil upgrade</strong> dan jadwal pengembalian, PIC <strong>menerima kembali</strong> sambil mengisi checklist pengembalian, lalu Admin/HR melakukan <strong>review akhir</strong>: selesai (atribut diperbarui, aset kembali <code>terpakai</code>) atau kirim ulang ke teknisi.</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Aspek</th>
+<th>Ringkasan</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Aktor</td>
+<td>PIC Ruangan, Admin/HR (Admin Asset), Sistem</td>
+</tr>
+<tr>
+<td>Jalur</td>
+<td>A = <code>sumber_pengajuan='karyawan'</code> (PIC mengajukan) · B = <code>sumber_pengajuan='admin'</code> (Admin langsung)</td>
+</tr>
+<tr>
+<td>Fase</td>
+<td><code>pengajuan</code> → <code>menunggu_pengambilan</code> → <code>dalam_service</code> → <code>menunggu_pengembalian</code> → <code>menunggu_review</code> → <code>selesai</code>; <code>kirim_ulang</code> kembali ke <code>menunggu_pengambilan</code></td>
+</tr>
+<tr>
+<td>Status approval</td>
+<td><code>status_approval</code>: <code>proses</code> → <code>disetujui</code> atau <code>ditolak</code></td>
+</tr>
+<tr>
+<td>Hasil</td>
+<td><code>status_hasil</code>: <code>selesai</code> (nilai baru ditulis ke atribut) atau <code>tidak_dapat_diupgrade</code> (atribut tidak berubah) + biaya</td>
+</tr>
+<tr>
+<td>Status asset</td>
+<td><code>terpakai</code> → <code>dalam_perbaikan</code> (saat PIC menyerahkan) → <code>terpakai</code> (saat selesai); pemegang tetap <code>ruangan</code></td>
+</tr>
+<tr>
+<td>Log aset</td>
+<td><code>asset_trx_log</code> dengan <code>jenis_log='upgrade_ruangan'</code>: ruangan → gudang saat pelepasan, gudang → ruangan saat selesai</td>
+</tr>
+<tr>
+<td>Endpoint</td>
+<td>9 admin + 6 PIC = <strong>15</strong></td>
+</tr>
+<tr>
+<td>Notifikasi</td>
+<td>10 event (<code>upgrade_ruangan.*</code>), penerima PIC = <strong>semua PIC aktif ruangan</strong></td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="s4"><span class="sec-no">04</span>Ringkasan Fitur</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Fitur</th>
+<th>Aktor</th>
+<th>Keterangan</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Ajukan upgrade</td>
+<td>PIC Ruangan</td>
+<td>Pilih ruangan miliknya, aset <code>terpakai</code>, komponen (atribut spesifikasi) + detail upgrade, alasan, urgensi. Status <code>proses</code>, belum ada jadwal.</td>
+</tr>
+<tr>
+<td>Review pengajuan</td>
+<td>Admin/HR</td>
+<td>Setujui dengan jadwal pengambilan, atau tolak dengan alasan (transaksi langsung selesai).</td>
+</tr>
+<tr>
+<td>Inisiasi langsung</td>
+<td>Admin/HR</td>
+<td>Pilih ruangan, aset, komponen, catatan, jadwal pengambilan. PIC otomatis dari master PIC ruangan.</td>
+</tr>
+<tr>
+<td>Ubah jadwal</td>
+<td>Admin/HR</td>
+<td>Selama fase <code>menunggu_pengambilan</code> atau <code>menunggu_pengembalian</code>.</td>
+</tr>
+<tr>
+<td>Checklist pengambilan</td>
+<td>Admin/HR</td>
+<td>Kondisi normal/rusak setiap komponen aset sebelum diambil.</td>
+</tr>
+<tr>
+<td>Serahkan aset (pelepasan)</td>
+<td>PIC Ruangan</td>
+<td>Setelah checklist pengambilan. Aset menjadi <code>dalam_perbaikan</code>, log ruangan → gudang.</td>
+</tr>
+<tr>
+<td>Hasil upgrade</td>
+<td>Admin/HR</td>
+<td><code>selesai</code> atau <code>tidak_dapat_diupgrade</code>, nilai baru, biaya, keterangan, jadwal pengembalian.</td>
+</tr>
+<tr>
+<td>Terima aset kembali</td>
+<td>PIC Ruangan</td>
+<td>Checklist kondisi setiap komponen; masuk review akhir.</td>
+</tr>
+<tr>
+<td>Review akhir</td>
+<td>Admin/HR</td>
+<td>Terima (atribut diperbarui, aset <code>terpakai</code>, log gudang → ruangan) atau Kirim Ulang ke Teknisi.</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="s5"><span class="sec-no">05</span>Tujuan Fitur</h2>
+<ul>
+<li>Meningkatkan spesifikasi aset ruangan tanpa mengubah kepemilikannya: aset tetap tercatat milik ruangan.</li>
+<li>Memberi PIC Ruangan jalur resmi untuk meminta upgrade dengan alasan dan urgensi, dan memberi Admin/HR keputusan terdokumentasi.</li>
+<li>Mencatat serah terima fisik dua arah (pengambilan dan pengembalian) lengkap dengan kondisi tiap komponen.</li>
+<li>Memperbarui nilai atribut aset (<code>asset_data_item</code>) hanya bila upgrade benar-benar berhasil.</li>
+<li>Mencegah aset yang sama dipakai bersamaan di retur, onboarding, penambahan ruangan, atau upgrade lain.</li>
+</ul>
+<h2 id="s6"><span class="sec-no">06</span>Aktor</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Aktor</th>
+<th>Peran</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>PIC Ruangan</td>
+<td>Karyawan di <code>asset_lokasi_pic_m</code> untuk ruangan tersebut. Mengajukan (Jalur A), menyerahkan aset, menerima aset kembali. Satu ruangan boleh punya banyak PIC; semua PIC aktif berhak bertindak dan dinotifikasi.</td>
+</tr>
+<tr>
+<td>Admin/HR</td>
+<td>Terdaftar di <code>asset_admin</code>. Menginisiasi (Jalur B), mereview pengajuan, menetapkan/mengubah jadwal, mengisi checklist pengambilan dan hasil upgrade, review akhir.</td>
+</tr>
+<tr>
+<td>Sistem</td>
+<td>Menurunkan status dari fase, mengunci aset lintas modul, memperbarui <code>asset_data</code>/<code>asset_data_item</code>, mencatat <code>asset_trx_log</code>, mengirim notifikasi.</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="s7"><span class="sec-no">07</span>Hak Akses</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Aksi</th>
+<th>Admin/HR</th>
+<th>PIC Ruangan</th>
+<th>Keterangan</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Lihat opsi/daftar/detail (admin)</td>
+<td>✔</td>
+<td>✘</td>
+<td>Controller admin memeriksa <code>asset_admin</code>; selain admin mendapat <code>FORBIDDEN</code>.</td>
+</tr>
+<tr>
+<td>Inisiasi, review, jadwal, checklist pengambilan, hasil, review akhir</td>
+<td>✔</td>
+<td>✘</td>
+<td>Model memeriksa <code>findAssetAdmin</code>; pesan <code>Pengguna tidak terdaftar sebagai admin asset.</code></td>
+</tr>
+<tr>
+<td>Ajukan upgrade</td>
+<td>✘</td>
+<td>✔</td>
+<td>Hanya untuk ruangan yang PIC-nya pengaju.</td>
+</tr>
+<tr>
+<td>Lihat opsi/daftar/detail milik ruangan</td>
+<td>✘</td>
+<td>✔</td>
+<td>Dibatasi lewat <code>wherePic</code>: PIC <strong>saat ini</strong> di <code>asset_lokasi_pic_m</code>, bukan snapshot <code>id_karyawan_pic</code>. PIC ruangan lain mendapat <code>NOT_FOUND</code> pada detail.</td>
+</tr>
+<tr>
+<td>Serahkan aset, terima aset kembali</td>
+<td>✘</td>
+<td>✔</td>
+<td>Hanya PIC ruangan transaksi tersebut; PIC lain mendapat <code>BUSINESS_RULE_VIOLATION</code> (Upgrade asset tidak ditemukan).</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="s8"><span class="sec-no">08</span>Terminologi</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Istilah</th>
+<th>Arti</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Jalur A / Jalur B</td>
+<td>Pengajuan PIC (<code>sumber_pengajuan='karyawan'</code>) / inisiasi Admin (<code>'admin'</code>).</td>
+</tr>
+<tr>
+<td>Fase</td>
+<td>Kolom <code>fase_upgrade</code> (enum, disimpan): posisi alur lihat §14.</td>
+</tr>
+<tr>
+<td>Atribut / komponen</td>
+<td>Field spesifikasi pada <code>asset_data_item</code> (flag_spesifikasi 1 = unit utama, 2 = kelengkapan) yang bisa dipilih sebagai target upgrade. <code>id_atribut</code> berbentuk <code>id_asset_data_item|id_komponen</code>.</td>
+</tr>
+<tr>
+<td>Item upgrade</td>
+<td>Satu baris <code>asset_trx_upgrade_ruangan_item</code> per atribut yang diupgrade (<code>nilai_lama</code>, <code>nilai_baru</code>).</td>
+</tr>
+<tr>
+<td>Komponen (checklist)</td>
+<td>Daftar unit utama + kelengkapan aset yang dicek kondisinya (<code>komponen[]</code> pada detail); berbeda dari item upgrade.</td>
+</tr>
+<tr>
+<td>Pelepasan</td>
+<td>PIC menyerahkan aset untuk diupgrade (<code>POST .../pelepasan</code>).</td>
+</tr>
+<tr>
+<td>Teknisi</td>
+<td>Pihak di luar sistem yang mengerjakan upgrade; sistem hanya mencatat hasilnya.</td>
+</tr>
+<tr>
+<td>Kirim Ulang</td>
+<td>Review akhir yang mengembalikan transaksi ke <code>menunggu_pengambilan</code> dengan jadwal baru.</td>
+</tr>
+<tr>
+<td><code>SEMUA_PIC_RUANGAN</code></td>
+<td>Jenis penerima notifikasi: semua PIC aktif ruangan transaksi.</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="s9"><span class="sec-no">09</span>Business Rules</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>No</th>
+<th>Aturan</th>
+<th>Implementasi</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>BR-01</td>
+<td>Hanya ruangan aktif ber-PIC</td>
+<td><code>ruanganAktif()</code>: <code>tipe='ruangan'</code>, <code>status_aktif='1'</code>, ada baris <code>asset_lokasi_pic_m</code> dengan karyawan aktif (<code>STATUS_KARYAWAN_AKTIF</code>). Pesan: Ruangan tidak ditemukan, tidak aktif, atau belum memiliki PIC.</td>
+</tr>
+<tr>
+<td>BR-02</td>
+<td>PIC pengaju harus PIC ruangan tersebut</td>
+<td><code>storePic</code> memanggil <code>findRuangan</code> dengan id karyawan; pesan: Ruangan tidak ditemukan, tidak aktif, atau Anda bukan PIC ruangan ini.</td>
+</tr>
+<tr>
+<td>BR-03</td>
+<td>Aset harus milik ruangan itu dan berstatus <code>terpakai</code></td>
+<td><code>insertTransaction</code>: <code>pemegang_asset='ruangan'</code>, <code>id_asset_lokasi_m</code> = ruangan; pesan Asset bukan milik ruangan atau tidak ditemukan. / Hanya asset berstatus terpakai yang dapat diupgrade.</td>
+</tr>
+<tr>
+<td>BR-04</td>
+<td>Satu transaksi = satu aset, minimal satu komponen</td>
+<td><code>AssetUpgradeKaryawan_m::normalizeItems</code>: atribut harus ada pada aset, tidak ganda, <code>detail_upgrade</code> tidak kosong.</td>
+</tr>
+<tr>
+<td>BR-05</td>
+<td>Pengajuan PIC wajib beralasan dan berurgensi</td>
+<td><code>urgensi</code> ∈ <code>normal</code>, <code>secepatnya</code>, <code>mendesak</code>; alasan tidak kosong.</td>
+</tr>
+<tr>
+<td>BR-06</td>
+<td>Aset terkunci lintas modul</td>
+<td><code>assetBlockMessage</code>: ditolak bila aset ada di upgrade ruangan lain, retur ruangan, onboarding ruangan, atau penambahan ruangan yang masih berjalan.</td>
+</tr>
+<tr>
+<td>BR-07</td>
+<td>Jalur B hanya oleh Admin/HR dan wajib berjadwal</td>
+<td><code>storeAdmin</code>: PIC diambil dari master ruangan; langsung <code>disetujui</code> + <code>menunggu_pengambilan</code>. Jadwal pengambilan wajib (Tanggal dan jam serah terima wajib diisi.).</td>
+</tr>
+<tr>
+<td>BR-08</td>
+<td>Review hanya sekali</td>
+<td><code>review</code> menolak bila <code>status_approval</code> bukan <code>proses</code> (Pengajuan upgrade sudah direview.). Tolak wajib alasan. Setujui wajib jadwal dan aset masih <code>terpakai</code>.</td>
+</tr>
+<tr>
+<td>BR-09</td>
+<td>Jadwal tidak boleh sebelum tanggal pengajuan</td>
+<td><code>parseJadwalValue</code>: Tanggal serah terima tidak boleh sebelum tanggal pengajuan.</td>
+</tr>
+<tr>
+<td>BR-10</td>
+<td>Jadwal hanya diubah di dua fase</td>
+<td><code>updateJadwal</code>: fase <code>menunggu_pengambilan</code> (mengubah jadwal pengambilan) atau <code>menunggu_pengembalian</code> (jadwal pengembalian); selain itu Jadwal hanya dapat diubah sebelum serah terima dilakukan.</td>
+</tr>
+<tr>
+<td>BR-11</td>
+<td>Checklist pengambilan sekali per putaran</td>
+<td><code>checklistPengambilan</code>: fase <code>menunggu_pengambilan</code> dan checklist masih <code>NULL</code>; wajib mencakup seluruh komponen aset, kondisi <code>normal</code>/<code>rusak</code>, rusak wajib keterangan.</td>
+</tr>
+<tr>
+<td>BR-12</td>
+<td>Pelepasan hanya setelah checklist pengambilan</td>
+<td><code>pelepasan</code>: fase <code>menunggu_pengambilan</code> dan <code>checklist_pengambilan</code> terisi; aset berstatus <code>terpakai</code> (atau <code>dalam_perbaikan</code> setelah kirim ulang).</td>
+</tr>
+<tr>
+<td>BR-13</td>
+<td>Hasil upgrade</td>
+<td><code>hasil</code>: fase <code>dalam_service</code>; <code>status_hasil</code> ∈ <code>selesai</code>, <code>tidak_dapat_diupgrade</code>; keterangan wajib; biaya ≥ 0; bila <code>selesai</code>, nilai baru setiap atribut wajib; jadwal pengembalian wajib.</td>
+</tr>
+<tr>
+<td>BR-14</td>
+<td>PIC menerima kembali dengan checklist lengkap</td>
+<td><code>terima</code>: fase <code>menunggu_pengembalian</code>; seluruh komponen dicek; aset berstatus <code>dalam_perbaikan</code>.</td>
+</tr>
+<tr>
+<td>BR-15</td>
+<td>Review akhir</td>
+<td><code>selesai</code>: fase <code>menunggu_review</code>. <code>terima</code> memperbarui atribut <strong>hanya bila</strong> <code>status_hasil='selesai'</code> dan mengembalikan aset ke <code>terpakai</code>; <code>kirim_ulang</code> mereset <code>checklist_pengambilan</code> dan kembali ke <code>menunggu_pengambilan</code>.</td>
+</tr>
+<tr>
+<td>BR-16</td>
+<td>Pemegang aset tidak pernah berubah</td>
+<td>Selama proses <code>pemegang_asset='ruangan'</code> dan <code>id_asset_lokasi_m</code> tetap; hanya <code>status_asset</code> yang berubah.</td>
+</tr>
+<tr>
+<td>BR-17</td>
+<td>Hak akses PIC mengikuti PIC ruangan saat ini</td>
+<td><code>wherePic</code> menguji <code>asset_lokasi_pic_m</code> pada saat permintaan, bukan snapshot di header.</td>
+</tr>
+<tr>
+<td>BR-18</td>
+<td>Setiap tindakan mencatat pelaku dan waktu</td>
+<td><code>user_input</code>, <code>user_update</code>, <code>user_approval</code>, <code>tgl_approval</code>, <code>user_pelepasan</code>, <code>tgl_pelepasan</code>, <code>tgl_diterima</code>, <code>asset_trx_log</code>.</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="s10"><span class="sec-no">10</span>Business Flow</h2>
+<ol>
+<li><strong>Jalur A.</strong> PIC memilih ruangan, aset, komponen yang diupgrade (+ detail upgrade tiap komponen), alasan, dan urgensi, lalu mengirim. Admin/HR dinotifikasi (<code>upgrade_ruangan.diajukan</code>).</li>
+<li>Admin/HR mereview pengajuan.<ul>
+<li><strong>Tolak:</strong> isi alasan, status <code>ditolak</code>, fase <code>selesai</code>, transaksi <code>selesai</code>; semua PIC ruangan dinotifikasi (<code>ditolak</code>).</li>
+<li><strong>Setujui:</strong> tetapkan jadwal pengambilan, fase <code>menunggu_pengambilan</code>; semua PIC dinotifikasi (<code>disetujui</code>).</li>
+</ul>
+</li>
+<li><strong>Jalur B.</strong> Admin/HR memilih ruangan, aset, komponen, catatan, dan jadwal pengambilan; transaksi langsung <code>disetujui</code> dan semua PIC dinotifikasi (<code>disetujui</code>). Langkah 1-2 dilewati.</li>
+<li>Admin/HR mengisi <strong>checklist pengambilan</strong> (kondisi tiap komponen). PIC dinotifikasi (<code>checklist_pengambilan</code>). Jadwal dapat diubah Admin/HR selama fase ini (<code>dijadwalkan</code>).</li>
+<li>PIC <strong>menyerahkan aset</strong> pada jadwal. Aset menjadi <code>dalam_perbaikan</code>, log ruangan → gudang, fase <code>dalam_service</code>. Admin dinotifikasi (<code>dilepas</code>).</li>
+<li>Teknisi mengerjakan upgrade di luar sistem. Admin/HR mencatat <strong>hasil</strong> (<code>selesai</code> atau <code>tidak_dapat_diupgrade</code>, nilai baru per atribut, biaya, keterangan) dan jadwal pengembalian. Fase <code>menunggu_pengembalian</code>; semua PIC dinotifikasi (<code>pengembalian</code>).</li>
+<li>PIC <strong>menerima aset kembali</strong> dan mengisi checklist kondisi tiap komponen. Fase <code>menunggu_review</code>; Admin dinotifikasi (<code>diterima</code>).</li>
+<li>Admin/HR melakukan <strong>review akhir</strong>:<ul>
+<li><strong>Selesaikan:</strong> atribut diperbarui (bila hasil <code>selesai</code>), aset <code>terpakai</code>, log gudang → ruangan, fase <code>selesai</code>; PIC dinotifikasi (<code>selesai</code>).</li>
+<li><strong>Kirim Ulang ke Teknisi:</strong> jadwal pengambilan baru, <code>checklist_pengambilan</code> direset, fase kembali <code>menunggu_pengambilan</code>; PIC dinotifikasi (<code>kirim_ulang</code>). Kembali ke langkah 4.</li>
+</ul>
+</li>
+</ol>
+<h2 id="s11"><span class="sec-no">11</span>Flow Berdasarkan Role</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Role</th>
+<th>Langkah</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>PIC Ruangan</td>
+<td>Ajukan → (tunggu keputusan) → terima notifikasi jadwal → serahkan aset setelah checklist admin → (tunggu hasil) → terima aset dan isi checklist → selesai.</td>
+</tr>
+<tr>
+<td>Admin/HR</td>
+<td>Tab Pengajuan → setujui/tolak (atau tombol <strong>+</strong> untuk Jalur B) → checklist pengambilan → (ubah jadwal bila perlu) → catat hasil + jadwal pengembalian → review akhir (selesaikan atau kirim ulang).</td>
+</tr>
+<tr>
+<td>Sistem</td>
+<td>Mengunci aset lintas modul, menurunkan status dari fase, memperbarui atribut, mencatat log, mengirim notifikasi.</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="s12"><span class="sec-no">12</span>Flow Diagram</h2>
+<div class="diagram"><pre class="mermaid">flowchart TD
+    A([Mulai]) --> J{Jalur}
+    J -->|A: PIC mengajukan| P[Pengajuan: ruangan, aset, komponen, alasan, urgensi]
+    J -->|B: Admin langsung| B[Pilih ruangan, aset, komponen, jadwal pengambilan]
+    P --> R{Admin/HR review}
+    R -->|Tolak + alasan| T([Ditolak - selesai])
+    R -->|Setujui + jadwal| W[Menunggu pengambilan]
+    B --> W
+    W --> C[Admin: checklist pengambilan]
+    C --> L[PIC: serahkan aset - dalam_perbaikan]
+    L --> S[Dalam service: Admin catat hasil + jadwal pengembalian]
+    S --> N[PIC: terima aset + checklist pengembalian]
+    N --> V{Review akhir Admin}
+    V -->|Kirim Ulang| W
+    V -->|Selesaikan| K[Atribut diperbarui bila hasil selesai, aset terpakai]
+    K --> Z([Selesai])
+</pre></div>
+<h2 id="s13"><span class="sec-no">13</span>Sequence Diagram</h2>
+<div class="diagram"><pre class="mermaid">sequenceDiagram
+    participant PIC as PIC Ruangan (Mobile)
+    participant API as API Lumen
+    participant DB as Database
+    participant ADM as Admin/HR (Mobile)
+    PIC->>API: POST karyawan/pic-ruangan/upgrade
+    API->>DB: insert header (proses, pengajuan) + item atribut
+    API-->>ADM: notifikasi upgrade_ruangan.diajukan
+    ADM->>API: POST upgrade-ruangan/{id}/review (disetujui + jadwal)
+    API-->>PIC: notifikasi upgrade_ruangan.disetujui
+    ADM->>API: POST upgrade-ruangan/{id}/checklist-pengambilan
+    API-->>PIC: notifikasi upgrade_ruangan.checklist_pengambilan
+    PIC->>API: POST karyawan/pic-ruangan/upgrade/{id}/pelepasan
+    API->>DB: asset dalam_perbaikan, asset_trx_log ruangan ke gudang
+    API-->>ADM: notifikasi upgrade_ruangan.dilepas
+    ADM->>API: POST upgrade-ruangan/{id}/hasil
+    API-->>PIC: notifikasi upgrade_ruangan.pengembalian
+    PIC->>API: POST karyawan/pic-ruangan/upgrade/{id}/terima
+    API-->>ADM: notifikasi upgrade_ruangan.diterima
+    ADM->>API: POST upgrade-ruangan/{id}/selesai (terima)
+    API->>DB: atribut diperbarui, asset terpakai, asset_trx_log gudang ke ruangan
+    API-->>PIC: notifikasi upgrade_ruangan.selesai
+</pre></div>
+<h2 id="s14"><span class="sec-no">14</span>Status Transaksi</h2>
+<p>Dua kolom enum disimpan di header: <code>status_approval</code> dan <code>fase_upgrade</code> (serta <code>status_transaksi</code> untuk tab Selesai). Label dan tab daftar diturunkan oleh <code>upgradeStatusMetadata</code>.</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th><code>status_approval</code></th>
+<th><code>fase_upgrade</code></th>
+<th>Label</th>
+<th>Tab</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>proses</code></td>
+<td><code>pengajuan</code></td>
+<td>Menunggu Persetujuan</td>
+<td><code>pengajuan</code></td>
+</tr>
+<tr>
+<td><code>disetujui</code></td>
+<td><code>menunggu_pengambilan</code></td>
+<td>Menunggu Pengambilan</td>
+<td><code>proses</code></td>
+</tr>
+<tr>
+<td><code>disetujui</code></td>
+<td><code>dalam_service</code></td>
+<td>Dalam Service</td>
+<td><code>proses</code></td>
+</tr>
+<tr>
+<td><code>disetujui</code></td>
+<td><code>menunggu_pengembalian</code></td>
+<td>Menunggu Pengembalian</td>
+<td><code>proses</code></td>
+</tr>
+<tr>
+<td><code>disetujui</code></td>
+<td><code>menunggu_review</code></td>
+<td>Menunggu Review</td>
+<td><code>proses</code></td>
+</tr>
+<tr>
+<td><code>disetujui</code></td>
+<td><code>selesai</code></td>
+<td>Selesai</td>
+<td><code>selesai</code></td>
+</tr>
+<tr>
+<td><code>ditolak</code></td>
+<td><code>selesai</code></td>
+<td>Ditolak</td>
+<td><code>selesai</code></td>
+</tr>
+</tbody>
+</table></div>
+<p>Filter daftar di API: tab <code>pengajuan</code> = <code>status_approval='proses'</code>; <code>proses</code> = <code>disetujui</code> dan fase bukan <code>selesai</code>; <code>selesai</code> = <code>status_transaksi='selesai'</code>. Tanpa parameter <code>tab</code>, semua transaksi dikembalikan. Status aset: lihat §22.</p>
+<h2 id="s15"><span class="sec-no">15</span>State Transition</h2>
+<div class="diagram"><pre class="mermaid">stateDiagram-v2
+    [*] --> pengajuan: PIC ajukan (Jalur A)
+    [*] --> menunggu_pengambilan: Admin inisiasi (Jalur B)
+    pengajuan --> ditolak: Admin tolak
+    pengajuan --> menunggu_pengambilan: Admin setujui + jadwal
+    menunggu_pengambilan --> menunggu_pengambilan: Ubah jadwal / checklist pengambilan
+    menunggu_pengambilan --> dalam_service: PIC serahkan aset
+    dalam_service --> menunggu_pengembalian: Admin catat hasil + jadwal
+    menunggu_pengembalian --> menunggu_pengembalian: Ubah jadwal
+    menunggu_pengembalian --> menunggu_review: PIC terima + checklist
+    menunggu_review --> menunggu_pengambilan: Kirim Ulang
+    menunggu_review --> selesai: Admin selesaikan
+    ditolak --> [*]
+    selesai --> [*]
+</pre></div>
+<div class="group-divider" id="g2"><span>Database</span></div>
+<h2 id="s16"><span class="sec-no">16</span>Struktur Database</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Tabel</th>
+<th>Fungsi</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>asset_trx_upgrade_ruangan</code></td>
+<td>Header transaksi (kedua jalur): ruangan, PIC, jadwal, checklist, hasil, status.</td>
+</tr>
+<tr>
+<td><code>asset_trx_upgrade_ruangan_item</code></td>
+<td>Satu baris per atribut yang diupgrade (<code>nilai_lama</code>, <code>nilai_baru</code>).</td>
+</tr>
+<tr>
+<td><code>asset_trx_log</code></td>
+<td>Enum <code>jenis_log</code> ditambah nilai <code>upgrade_ruangan</code> (nilai lama dipertahankan).</td>
+</tr>
+</tbody>
+</table></div>
+<p>Enum yang dipakai bersama dokumen lain di DBML: <code>sumber_pengajuan</code>, <code>status_approval</code>, <code>status</code>, <code>fase_upgrade</code>, <code>status_hasil_upgrade</code>.</p>
+<h2 id="s17"><span class="sec-no">17</span>Relasi Database</h2>
+<div class="diagram"><pre class="mermaid">erDiagram
+    asset_lokasi_m ||--o{ asset_trx_upgrade_ruangan : "id_asset_lokasi_m"
+    asset_trx_upgrade_ruangan ||--o{ asset_trx_upgrade_ruangan_item : "id_asset_trx_upgrade_ruangan"
+    asset_data ||--o{ asset_trx_upgrade_ruangan_item : "id_asset_data"
+    asset_lokasi_m ||--o{ asset_lokasi_pic_m : "PIC ruangan"
+    asset_data ||--o{ asset_data_item : "atribut diupgrade"
+</pre></div>
+<p>Foreign key di SQL: <code>fk_atur_upgrade_id_asset_lokasi_m</code>, <code>fk_aturi_upgrade_header</code>, <code>fk_aturi_upgrade_asset_data</code>. PIC pada header disimpan sebagai snapshot (<code>id_karyawan_pic</code>, <code>nama_pic</code>, <code>nik_pic</code>); hak akses dan penerima notifikasi dibaca dari <code>asset_lokasi_pic_m</code> saat itu juga.</p>
+<h2 id="s18"><span class="sec-no">18</span>Data Dictionary</h2>
+<p><strong><code>asset_trx_upgrade_ruangan</code></strong></p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Kolom</th>
+<th>Tipe</th>
+<th>Keterangan</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>id_asset_trx_upgrade_ruangan</code></td>
+<td>varchar(50) PK</td>
+<td><code>id_company</code> + <code>YYYYMM</code> + 3 digit urut</td>
+</tr>
+<tr>
+<td><code>no_trx</code></td>
+<td>varchar(50)</td>
+<td><code>RGN07-YYYYMMNNN</code>; unik per company</td>
+</tr>
+<tr>
+<td><code>sumber_pengajuan</code></td>
+<td>enum(<code>karyawan</code>,<code>admin</code>)</td>
+<td>Jalur A / Jalur B</td>
+</tr>
+<tr>
+<td><code>id_asset_lokasi_m</code> + snapshot <code>nama_asset_ruangan</code>, <code>nama_cabang</code>, <code>nama_departemen</code></td>
+<td>varchar</td>
+<td>Ruangan; FK ke <code>asset_lokasi_m</code></td>
+</tr>
+<tr>
+<td><code>id_karyawan_pic</code>, <code>nama_pic</code>, <code>nik_pic</code></td>
+<td>varchar</td>
+<td>Snapshot PIC saat transaksi dibuat; dasar tampilan, bukan hak akses</td>
+</tr>
+<tr>
+<td><code>id_asset_kategori_m</code>, <code>nama_kategori</code></td>
+<td>varchar</td>
+<td>Jenis aset</td>
+</tr>
+<tr>
+<td><code>detail_upgrade</code></td>
+<td>varchar(255)</td>
+<td>Ringkasan "label: detail" semua komponen (dipotong 255)</td>
+</tr>
+<tr>
+<td><code>alasan</code>, <code>urgensi</code></td>
+<td>text, varchar(50)</td>
+<td>Jalur A (<code>normal</code>/<code>secepatnya</code>/<code>mendesak</code>); kosong pada Jalur B</td>
+</tr>
+<tr>
+<td><code>catatan</code></td>
+<td>text</td>
+<td>Jalur B (opsional)</td>
+</tr>
+<tr>
+<td><code>id_karyawan</code>, <code>nik_karyawan</code>, <code>nama_karyawan</code></td>
+<td>varchar</td>
+<td>Pembuat transaksi (PIC pada Jalur A, Admin pada Jalur B)</td>
+</tr>
+<tr>
+<td><code>tgl_pengajuan</code></td>
+<td>date</td>
+<td>Tanggal hari ini saat dibuat</td>
+</tr>
+<tr>
+<td><code>tgl_pengambilan</code>, <code>jam_pengambilan</code></td>
+<td>date, time NULL</td>
+<td>Jadwal pengambilan</td>
+</tr>
+<tr>
+<td><code>tgl_pengembalian</code>, <code>jam_pengembalian</code></td>
+<td>date, time NULL</td>
+<td>Jadwal pengembalian</td>
+</tr>
+<tr>
+<td><code>keterangan_pengembalian</code></td>
+<td>varchar(255)</td>
+<td>Keterangan jadwal terakhir (pengambilan atau pengembalian)</td>
+</tr>
+<tr>
+<td><code>checklist_pengambilan</code></td>
+<td>text NULL</td>
+<td>JSON kondisi komponen saat diambil; <code>NULL</code> = belum dicek</td>
+</tr>
+<tr>
+<td><code>checklist_pengembalian</code></td>
+<td>text NULL</td>
+<td>JSON kondisi komponen saat diterima kembali</td>
+</tr>
+<tr>
+<td><code>tgl_pelepasan</code>, <code>user_pelepasan</code></td>
+<td>timestamp NULL, varchar</td>
+<td>PIC menyerahkan aset</td>
+</tr>
+<tr>
+<td><code>status_hasil</code></td>
+<td>enum(<code>selesai</code>,<code>tidak_dapat_diupgrade</code>) NULL</td>
+<td>Hasil upgrade</td>
+</tr>
+<tr>
+<td><code>keterangan_hasil</code>, <code>biaya_upgrade</code></td>
+<td>text, bigint</td>
+<td>Keterangan dan biaya (default 0)</td>
+</tr>
+<tr>
+<td><code>tgl_diterima</code></td>
+<td>timestamp NULL</td>
+<td>PIC menerima kembali</td>
+</tr>
+<tr>
+<td><code>status_transaksi</code></td>
+<td>enum(<code>proses</code>,<code>selesai</code>)</td>
+<td><code>selesai</code> saat ditolak atau diselesaikan</td>
+</tr>
+<tr>
+<td><code>fase_upgrade</code></td>
+<td>enum 6 nilai</td>
+<td>Default <code>pengajuan</code></td>
+</tr>
+<tr>
+<td><code>status_approval</code></td>
+<td>enum(<code>proses</code>,<code>disetujui</code>,<code>ditolak</code>)</td>
+<td>Default <code>proses</code></td>
+</tr>
+<tr>
+<td><code>ket_tolak</code>, <code>user_approval</code>, <code>tgl_approval</code></td>
+<td>varchar, varchar, timestamp NULL</td>
+<td>Keputusan review</td>
+</tr>
+<tr>
+<td><code>id_company</code>, <code>tgl_input</code>, <code>user_input</code>, <code>tgl_update</code>, <code>user_update</code></td>
+<td></td>
+<td>Audit standar</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong><code>asset_trx_upgrade_ruangan_item</code></strong>: <code>id_asset_trx_upgrade_ruangan_item</code> (PK), <code>id_asset_trx_upgrade_ruangan</code>, <code>id_asset_data</code>, <code>kelengkapan_item</code> (JSON atribut: <code>id_atribut</code>, <code>id_asset_data_item</code>, <code>id_komponen</code>, <code>nama_item</code>, <code>jenis</code>, <code>label</code>, <code>satuan</code>, <code>nilai</code>), snapshot <code>nama_asset</code>, <code>deskripsi_asset</code>, <code>kategori_asset</code>, <code>detail_upgrade</code>, <code>nilai_lama</code>, <code>nilai_baru</code>, <code>alasan_tidak_upgrade</code>, <code>id_company</code>, <code>tgl_input</code>, <code>user_input</code>.</p>
+<h2 id="s19"><span class="sec-no">19</span>Database Index</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Tabel</th>
+<th>Index</th>
+<th>Kegunaan</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>asset_trx_upgrade_ruangan</code></td>
+<td>unik <code>uq_upgrade_rgn_company_no_trx (id_company, no_trx)</code></td>
+<td>Nomor transaksi unik per company</td>
+</tr>
+<tr>
+<td></td>
+<td><code>atur_admin_list_idx (id_company, status_approval, fase_upgrade, tgl_input, id)</code></td>
+<td>Daftar admin per tab</td>
+</tr>
+<tr>
+<td></td>
+<td><code>atur_pic_list_idx (id_company, id_karyawan_pic, status_approval, fase_upgrade)</code></td>
+<td>Daftar PIC</td>
+</tr>
+<tr>
+<td></td>
+<td><code>atur_lokasi_idx (id_company, id_asset_lokasi_m, status_approval, fase_upgrade)</code></td>
+<td>Pencarian per ruangan</td>
+</tr>
+<tr>
+<td><code>asset_trx_upgrade_ruangan_item</code></td>
+<td><code>aturi_upgrade_idx (id_asset_trx_upgrade_ruangan, id_company, id_asset_data)</code></td>
+<td>Item per transaksi</td>
+</tr>
+<tr>
+<td></td>
+<td><code>aturi_asset_idx (id_asset_data, id_company)</code></td>
+<td>Pencarian per aset (kunci lintas modul)</td>
+</tr>
+</tbody>
+</table></div>
+<div class="group-divider" id="g3"><span>Backend &amp; API</span></div>
+<h2 id="s20"><span class="sec-no">20</span>Backend Architecture</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Lapisan</th>
+<th>File</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Route</td>
+<td><code>API/routes/modules/asset/RouteAsset.php</code> (grup <code>upgrade-ruangan</code> dan <code>pic-ruangan</code> → <code>upgrade</code>)</td>
+</tr>
+<tr>
+<td>Controller Admin</td>
+<td><code>app/Http/Controllers/Asset/Admin/AssetAdminUpgradeRuangan_c.php</code></td>
+</tr>
+<tr>
+<td>Controller PIC</td>
+<td><code>app/Http/Controllers/Asset/Karyawan/AssetKaryawanUpgradeRuangan_c.php</code></td>
+</tr>
+<tr>
+<td>Model</td>
+<td><code>app/Models/Asset/AssetUpgradeRuangan_m.php</code> (admin + PIC; mewarisi <code>Asset_m</code>)</td>
+</tr>
+<tr>
+<td>Notifikasi</td>
+<td><code>app/Support/Asset/AssetNotification.php</code> (event <code>upgrade_ruangan.*</code>, penerima <code>SEMUA_PIC_RUANGAN</code>)</td>
+</tr>
+<tr>
+<td>Basis controller</td>
+<td><code>app/Http/Controllers/Asset/Asset_c.php</code> (<code>UPGRADE_JADWAL_RULES</code>, <code>UPGRADE_CHECKLIST_RULES</code>, <code>UPGRADE_MESSAGES</code>, <code>mutateAssetTrx</code>, <code>mutateTrxSaya</code>)</td>
+</tr>
+</tbody>
+</table></div>
+<p>Controller memvalidasi input, model menjalankan <code>DB::transaction</code> (dengan <code>lockCompany</code> dan <code>lockForUpdate</code>), lalu notifikasi dikirim <strong>setelah</strong> transaksi sukses. Aksi admin lewat <code>mutateAssetTrx</code> (respons sukses <code>UPDATED</code>), aksi PIC lewat <code>mutateTrxSaya</code>. Logika pendukung dipakai ulang dari KRY03 (<code>AssetUpgradeKaryawan_m</code>) dan <code>Asset_m</code> (<code>komponenAssets</code>, <code>normalizeKondisiChecklist</code>, <code>parseJadwalValue</code>, <code>insertAssetLog</code>).</p>
+<p><strong>Perubahan pada modul lain</strong></p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Modul</th>
+<th>Perubahan</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>AssetReturRuangan_m</code></td>
+<td>Tiga method query kunci (<code>activeReturRuanganQuery</code>, <code>activeOnboardingRuanganQuery</code>, <code>activeRequestRuanganQuery</code>) dijadikan <code>public</code> agar dipakai upgrade ruangan. <code>store</code> retur kini menolak aset yang sedang diupgrade (Satu atau beberapa asset sedang diproses pada upgrade ruangan.) dan <code>lockedAssetIds</code> ikut menyaring aset upgrade dari opsi retur. Pemblokiran retur ↔ upgrade berlaku dua arah.</td>
+</tr>
+<tr>
+<td><code>AssetUpgradeKaryawan_m</code></td>
+<td>Empat helper dijadikan <code>public</code> tanpa perubahan logika: <code>atributAssets</code>, <code>normalizeItems</code>, <code>jadwalPayload</code>, <code>upgradeStatusMetadata</code>.</td>
+</tr>
+<tr>
+<td><code>AssetAdmin_m</code></td>
+<td><code>getSummary</code> menambah <code>ruangan_upgrade_perlu_proses</code> (jumlah) dan <code>ruangan_upgrade_pending</code> (daftar terlama).</td>
+</tr>
+<tr>
+<td><code>AssetLokasiPic_m</code></td>
+<td><code>getAssetRuanganSaya</code> (beranda PIC) menambah key <code>upgrade_ruangan</code> (aksi <code>pelepasan</code> atau <code>terima</code>).</td>
+</tr>
+<tr>
+<td><code>AssetNotification</code></td>
+<td>10 event baru dan jenis penerima <code>SEMUA_PIC_RUANGAN</code> (<code>picRuanganRecipients</code>).</td>
+</tr>
+<tr>
+<td><code>RouteAsset.php</code></td>
+<td>Grup <code>upgrade-ruangan</code> (admin) dan <code>upgrade</code> di dalam <code>pic-ruangan</code> (PIC).</td>
+</tr>
+<tr>
+<td>Skema</td>
+<td>Dua tabel baru dan nilai enum <code>upgrade_ruangan</code> pada <code>asset_trx_log.jenis_log</code> (SQL manual).</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="s21"><span class="sec-no">21</span>Backend Business Logic</h2>
+<ul>
+<li><strong><code>storePic</code></strong> (Jalur A): kunci company; validasi karyawan aktif, ruangan milik PIC (BR-02), urgensi, alasan; <code>insertTransaction</code> membuat header <code>proses</code>/<code>pengajuan</code> tanpa jadwal.</li>
+<li><strong><code>storeAdmin</code></strong> (Jalur B): validasi admin dan ruangan (PIC = PIC pertama ruangan menurut urutan master), parse jadwal; header <code>disetujui</code>/<code>menunggu_pengambilan</code> dengan jadwal pengambilan, <code>user_approval</code> dan <code>tgl_approval</code> terisi.</li>
+<li><strong><code>insertTransaction</code></strong>: kunci aset <code>FOR UPDATE</code>; aset harus milik ruangan dan <code>terpakai</code>; cek kunci lintas modul; normalisasi item; nomor <code>RGN07-</code> + <code>YYYYMM</code> + 3 digit; simpan header dan item (<code>nilai_lama</code> dari atribut saat itu).</li>
+<li><strong><code>review</code></strong>: header harus <code>proses</code>. Tolak: alasan wajib, <code>status_approval='ditolak'</code>, <code>fase_upgrade='selesai'</code>, <code>status_transaksi='selesai'</code>. Setujui: aset masih <code>terpakai</code>, jadwal valid, fase <code>menunggu_pengambilan</code>.</li>
+<li><strong><code>updateJadwal</code></strong>: fase <code>menunggu_pengambilan</code> atau <code>menunggu_pengembalian</code>; menulis tanggal/jam pengambilan atau pengembalian sesuai fase.</li>
+<li><strong><code>checklistPengambilan</code></strong>: fase <code>menunggu_pengambilan</code> dan checklist <code>NULL</code>; aset <code>terpakai</code> atau <code>dalam_perbaikan</code>; simpan JSON hasil <code>normalizeKondisiChecklist</code>.</li>
+<li><strong><code>pelepasan</code></strong> (PIC): fase <code>menunggu_pengambilan</code> dan checklist terisi; aset → <code>dalam_perbaikan</code>; log ruangan → gudang; <code>tgl_pelepasan</code>, <code>user_pelepasan</code>; fase <code>dalam_service</code>.</li>
+<li><strong><code>hasil</code></strong>: fase <code>dalam_service</code>; validasi status/keterangan/biaya/jadwal; tiap item mendapat <code>nilai_baru</code> (hanya bila <code>selesai</code>) atau <code>alasan_tidak_upgrade</code> (bila tidak dapat diupgrade); fase <code>menunggu_pengembalian</code>; <code>checklist_pengembalian</code> dan <code>tgl_diterima</code> direset.</li>
+<li><strong><code>terima</code></strong> (PIC): fase <code>menunggu_pengembalian</code>; aset <code>dalam_perbaikan</code>; simpan checklist pengembalian dan <code>tgl_diterima</code>; fase <code>menunggu_review</code>.</li>
+<li><strong><code>selesai</code></strong>: fase <code>menunggu_review</code>. <code>kirim_ulang</code>: jadwal pengambilan baru, <code>checklist_pengambilan=NULL</code>, fase <code>menunggu_pengambilan</code>. <code>terima</code>: bila <code>status_hasil='selesai'</code> jalankan <code>applyAtribut</code> (menulis <code>nilai_baru</code> ke <code>json_value.komponen[].value</code> pada <code>asset_data_item</code>), aset → <code>terpakai</code>, log gudang → ruangan, fase <code>selesai</code>, <code>status_transaksi='selesai'</code>.</li>
+</ul>
+<h2 id="s22"><span class="sec-no">22</span>Dampak terhadap asset_data</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Tahap</th>
+<th><code>status_asset</code></th>
+<th><code>pemegang_asset</code></th>
+<th>Catatan</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Pengajuan / review / jadwal / checklist pengambilan</td>
+<td><code>terpakai</code></td>
+<td><code>ruangan</code></td>
+<td>Tidak berubah; aset terkunci secara logis lewat pemeriksaan lintas modul, bukan lewat status.</td>
+</tr>
+<tr>
+<td>PIC menyerahkan (<code>pelepasan</code>)</td>
+<td><code>terpakai</code> → <code>dalam_perbaikan</code></td>
+<td><code>ruangan</code></td>
+<td><code>id_asset_lokasi_m</code> tetap; log <code>upgrade_ruangan</code> ruangan → gudang.</td>
+</tr>
+<tr>
+<td>Hasil dicatat, PIC menerima</td>
+<td>tetap <code>dalam_perbaikan</code></td>
+<td><code>ruangan</code></td>
+<td>Menunggu review akhir.</td>
+</tr>
+<tr>
+<td>Selesai (<code>terima</code>)</td>
+<td><code>dalam_perbaikan</code> → <code>terpakai</code></td>
+<td><code>ruangan</code></td>
+<td>Log gudang → ruangan; <code>asset_data_item</code> diperbarui bila hasil <code>selesai</code>.</td>
+</tr>
+<tr>
+<td>Kirim Ulang</td>
+<td>tetap <code>dalam_perbaikan</code></td>
+<td><code>ruangan</code></td>
+<td>Kembali ke fase pengambilan; pelepasan berikutnya mencatat log ruangan → gudang lagi (RISK-004).</td>
+</tr>
+<tr>
+<td>Ditolak</td>
+<td><code>terpakai</code></td>
+<td><code>ruangan</code></td>
+<td>Tidak ada perubahan; aset boleh diajukan lagi.</td>
+</tr>
+</tbody>
+</table></div>
+<p>Kolom log: <code>id_pemegang</code>/<code>nama_pemegang</code> terisi id dan nama ruangan pada sisi ruangan, <strong>kosong</strong> pada sisi gudang (mengikuti retur ruangan, RISK-005). <code>kondisi_awal</code> dan <code>kondisi_akhir</code> log memakai <code>kondisi_awal</code> aset (tidak diubah oleh checklist).</p>
+<h2 id="s23"><span class="sec-no">23</span>API Documentation</h2>
+<p>Base <code>asset/</code>. Semua memakai JWT dan envelope <code>ApiResponse</code>.</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>ID</th>
+<th>Method</th>
+<th>Path</th>
+<th>Peran</th>
+<th>Fungsi</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>API-01</td>
+<td>GET</td>
+<td><code>upgrade-ruangan/options</code></td>
+<td>Admin</td>
+<td>Ruangan aktif ber-PIC beserta aset yang dapat diupgrade</td>
+</tr>
+<tr>
+<td>API-02</td>
+<td>GET</td>
+<td><code>upgrade-ruangan?tab&amp;limit&amp;offset</code></td>
+<td>Admin</td>
+<td>Daftar (<code>pengajuan</code>/<code>proses</code>/<code>selesai</code>)</td>
+</tr>
+<tr>
+<td>API-03</td>
+<td>GET</td>
+<td><code>upgrade-ruangan/{id}</code></td>
+<td>Admin</td>
+<td>Detail + flag <code>aksi</code></td>
+</tr>
+<tr>
+<td>API-04</td>
+<td>POST</td>
+<td><code>upgrade-ruangan</code></td>
+<td>Admin</td>
+<td>Jalur B: buat upgrade + jadwal pengambilan</td>
+</tr>
+<tr>
+<td>API-05</td>
+<td>POST</td>
+<td><code>upgrade-ruangan/{id}/review</code></td>
+<td>Admin</td>
+<td>Jalur A: setujui + jadwal / tolak + alasan</td>
+</tr>
+<tr>
+<td>API-06</td>
+<td>PUT</td>
+<td><code>upgrade-ruangan/{id}/jadwal</code></td>
+<td>Admin</td>
+<td>Ubah jadwal pengambilan/pengembalian</td>
+</tr>
+<tr>
+<td>API-07</td>
+<td>POST</td>
+<td><code>upgrade-ruangan/{id}/checklist-pengambilan</code></td>
+<td>Admin</td>
+<td>Checklist kondisi komponen saat diambil</td>
+</tr>
+<tr>
+<td>API-08</td>
+<td>POST</td>
+<td><code>upgrade-ruangan/{id}/hasil</code></td>
+<td>Admin</td>
+<td>Hasil upgrade + jadwal pengembalian</td>
+</tr>
+<tr>
+<td>API-09</td>
+<td>POST</td>
+<td><code>upgrade-ruangan/{id}/selesai</code></td>
+<td>Admin</td>
+<td>Review akhir: <code>terima</code> atau <code>kirim_ulang</code></td>
+</tr>
+<tr>
+<td>API-10</td>
+<td>GET</td>
+<td><code>karyawan/pic-ruangan/upgrade/options</code></td>
+<td>PIC</td>
+<td>Ruangan miliknya + aset + urgensi</td>
+</tr>
+<tr>
+<td>API-11</td>
+<td>GET</td>
+<td><code>karyawan/pic-ruangan/upgrade?tab</code></td>
+<td>PIC</td>
+<td>Daftar upgrade ruangan milik PIC</td>
+</tr>
+<tr>
+<td>API-12</td>
+<td>POST</td>
+<td><code>karyawan/pic-ruangan/upgrade</code></td>
+<td>PIC</td>
+<td>Ajukan upgrade (Jalur A)</td>
+</tr>
+<tr>
+<td>API-13</td>
+<td>GET</td>
+<td><code>karyawan/pic-ruangan/upgrade/{id}</code></td>
+<td>PIC</td>
+<td>Detail</td>
+</tr>
+<tr>
+<td>API-14</td>
+<td>POST</td>
+<td><code>karyawan/pic-ruangan/upgrade/{id}/pelepasan</code></td>
+<td>PIC</td>
+<td>Serahkan aset</td>
+</tr>
+<tr>
+<td>API-15</td>
+<td>POST</td>
+<td><code>karyawan/pic-ruangan/upgrade/{id}/terima</code></td>
+<td>PIC</td>
+<td>Terima aset kembali + checklist</td>
+</tr>
+</tbody>
+</table></div>
+<p>Tambahan: <code>GET karyawan/pic-ruangan</code> (beranda PIC) kini menyertakan key <code>upgrade_ruangan</code>; <code>GET summary</code> (admin) kini menyertakan <code>ruangan_upgrade_perlu_proses</code> dan <code>ruangan_upgrade_pending</code>. Route diverifikasi dengan <code>php artisan routes:list</code> (15 route modul ini; total 552 route, lihat RISK-008).</p>
+<h2 id="s24"><span class="sec-no">24</span>Detail Setiap API</h2>
+<p><strong>API-12 · POST <code>asset/karyawan/pic-ruangan/upgrade</code></strong> (Jalur A)</p>
+<pre><code class="language-json">{ &quot;id_asset_lokasi_m&quot;: &quot;RGN-1&quot;, &quot;id_asset_data&quot;: &quot;LAP-1&quot;,
+  &quot;alasan&quot;: &quot;Build lambat&quot;, &quot;urgensi&quot;: &quot;secepatnya&quot;,
+  &quot;items&quot;: [{ &quot;id_atribut&quot;: &quot;LAP-1-UNIT|K1&quot;, &quot;detail_upgrade&quot;: &quot;16 GB ke 32 GB&quot; }] }
+</code></pre>
+<p>Respons <code>CREATED</code>: <code>{ "id": "COMP202610001", "no_trx": "RGN07-202610001", "status_approval": "proses", "fase_upgrade": "pengajuan", "status_label": "Menunggu Persetujuan", "tab": "pengajuan" }</code>. <code>urgensi</code> ∈ <code>normal|secepatnya|mendesak</code>; <code>id_atribut</code> diambil dari <code>assets[].atribut[]</code> pada API-10.</p>
+<p><strong>API-04 · POST <code>asset/upgrade-ruangan</code></strong> (Jalur B)</p>
+<pre><code class="language-json">{ &quot;id_asset_lokasi_m&quot;: &quot;RGN-1&quot;, &quot;id_asset_data&quot;: &quot;LAP-1&quot;, &quot;catatan&quot;: &quot;Bawa kunci ruangan&quot;,
+  &quot;items&quot;: [{ &quot;id_atribut&quot;: &quot;LAP-1-UNIT|K1&quot;, &quot;detail_upgrade&quot;: &quot;16 GB ke 32 GB&quot; }],
+  &quot;tgl_jadwal&quot;: &quot;2026-10-20&quot;, &quot;jam_jadwal&quot;: &quot;09:00&quot;, &quot;keterangan_jadwal&quot;: &quot;Ruang IT&quot; }
+</code></pre>
+<p>Respons <code>CREATED</code>: <code>status_approval: "disetujui"</code>, <code>fase_upgrade: "menunggu_pengambilan"</code>, <code>tab: "proses"</code>. Controller menandai jadwal <code>nullable</code>, tetapi model menolak bila kosong (Tanggal dan jam serah terima wajib diisi.).</p>
+<p><strong>API-05 · POST <code>.../{id}/review</code></strong>: setujui <code>{ "keputusan": "disetujui", "tgl_jadwal": "2026-10-20", "jam_jadwal": "09:00", "keterangan_jadwal": "" }</code>; tolak <code>{ "keputusan": "ditolak", "ket_tolak": "Belum prioritas" }</code>. Respons <code>UPDATED</code> dengan status/fase terbaru; event <code>upgrade_ruangan.disetujui</code> atau <code>upgrade_ruangan.ditolak</code>.</p>
+<p><strong>API-06 · PUT <code>.../{id}/jadwal</code></strong>: <code>{ "tgl_jadwal", "jam_jadwal", "keterangan_jadwal" }</code>. Mengubah jadwal pengambilan atau pengembalian sesuai fase; event <code>upgrade_ruangan.dijadwalkan</code>.</p>
+<p><strong>API-07 · POST <code>.../{id}/checklist-pengambilan</code></strong> dan <strong>API-15 · POST <code>.../upgrade/{id}/terima</code></strong></p>
+<pre><code class="language-json">{ &quot;items&quot;: [
+  { &quot;id_item&quot;: &quot;LAP-1-UNIT&quot;, &quot;kondisi&quot;: &quot;normal&quot; },
+  { &quot;id_item&quot;: &quot;LAP-1-CHG&quot;, &quot;kondisi&quot;: &quot;rusak&quot;, &quot;ket_rusak&quot;: &quot;Kabel terkelupas&quot; } ] }
+</code></pre>
+<p><code>id_item</code> di sini adalah id <strong>komponen aset</strong> (dari <code>komponen[]</code> pada detail), bukan id item upgrade. Seluruh komponen wajib dicek; <code>kondisi</code> ∈ <code>normal|rusak</code>; <code>ket_rusak</code> wajib bila rusak.</p>
+<p><strong>API-08 · POST <code>.../{id}/hasil</code></strong></p>
+<pre><code class="language-json">{ &quot;status_hasil&quot;: &quot;selesai&quot;, &quot;keterangan_hasil&quot;: &quot;Dikerjakan vendor&quot;, &quot;biaya_upgrade&quot;: 850000,
+  &quot;items&quot;: [{ &quot;id_item&quot;: &quot;COMP202610001&quot;, &quot;nilai_baru&quot;: &quot;32&quot; }],
+  &quot;tgl_jadwal&quot;: &quot;2026-10-22&quot;, &quot;jam_jadwal&quot;: &quot;10:00&quot;, &quot;keterangan_jadwal&quot;: &quot;Ambil di resepsionis&quot; }
+</code></pre>
+<p>Di sini <code>id_item</code> adalah id <strong>baris item upgrade</strong> (<code>items[].id_item</code> pada detail). <code>status_hasil</code> ∈ <code>selesai|tidak_dapat_diupgrade</code>; bila <code>selesai</code>, <code>nilai_baru</code> setiap item wajib. Event <code>upgrade_ruangan.pengembalian</code>.</p>
+<p><strong>API-09 · POST <code>.../{id}/selesai</code></strong>: <code>{ "aksi": "terima" }</code> atau <code>{ "aksi": "kirim_ulang", "tgl_jadwal", "jam_jadwal", "keterangan_jadwal" }</code>. Event <code>upgrade_ruangan.selesai</code> atau <code>upgrade_ruangan.kirim_ulang</code>.</p>
+<p><strong>API-14 · POST <code>.../upgrade/{id}/pelepasan</code></strong>: tanpa body. Event <code>upgrade_ruangan.dilepas</code>.</p>
+<p><strong>API-10 / API-01 · Opsi</strong>: <code>ruangan[]</code> berisi <code>id_asset_lokasi_m</code>, <code>nama_ruangan</code>, <code>cabang</code>, <code>divisi</code>, <code>pic{id_karyawan,nik,nama}</code>, <code>assets[]</code> (<code>id_asset_data</code>, <code>kode_asset</code>, <code>nama_asset</code>, <code>kategori_asset</code>, <code>merek</code>, <code>id_asset_lokasi_m</code>, <code>atribut[]</code>). Hanya ruangan yang punya aset <code>terpakai</code>, bebas kunci lintas modul, dan beratribut spesifikasi yang muncul. API-10 menambah <code>urgensi[]</code> (<code>value</code>, <code>label</code>).</p>
+<p><strong>API-02 / API-11 · Daftar</strong>: <code>filters[]</code>, <code>records[]</code> (<code>id</code>, <code>no_trx</code>, <code>sumber_pengajuan</code>, <code>tgl_pengajuan</code>, <code>urgensi</code>, <code>status_approval</code>, <code>fase_upgrade</code>, <code>status_label</code>, <code>tab</code>, jadwal, <code>jumlah_item</code>, <code>asset</code>, <code>ruangan</code>, <code>pic</code>), <code>pagination</code> (<code>limit</code> default 20 maks 50, <code>offset</code>, <code>next_offset</code>, <code>has_more</code>).</p>
+<p><strong>API-03 / API-13 · Detail</strong>: <code>id</code>, <code>no_trx</code>, <code>sumber_pengajuan</code>, <code>tgl_pengajuan</code>, <code>alasan</code>, <code>urgensi</code>, <code>catatan</code>, <code>ket_tolak</code>, <code>status_approval</code>, <code>fase_upgrade</code>, <code>status_label</code>, <code>tab</code>, jadwal (<code>tgl_pengambilan</code>, <code>jam_pengambilan</code>, <code>tgl_pengembalian</code>, <code>jam_pengembalian</code>), <code>keterangan_jadwal</code>, <code>tgl_pelepasan</code>, <code>tgl_diterima</code>, <code>status_hasil</code>, <code>keterangan_hasil</code>, <code>biaya_upgrade</code>, <code>ruangan</code>, <code>pic</code>, <code>asset</code>, <code>items[]</code> (<code>id_item</code>, <code>nama_item</code>, <code>label</code>, <code>satuan</code>, <code>detail_upgrade</code>, <code>nilai_lama</code>, <code>nilai_baru</code>, <code>alasan_tidak_upgrade</code>), <code>komponen[]</code>, <code>checklist_pengambilan</code>, <code>checklist_pengembalian</code>, <code>checklist_pengembalian_rusak</code>, dan <code>aksi{review, ubah_jadwal, checklist_pengambilan, pelepasan, hasil, terima, selesai}</code>. Flag <code>aksi</code> <strong>tidak mengenal peran</strong> (RISK-002): detail PIC pun memuat flag yang hanya berlaku untuk admin.</p>
+<div class="group-divider" id="g4"><span>Mobile</span></div>
+<h2 id="s25"><span class="sec-no">25</span>Mobile Architecture</h2>
+<p>Flutter + <code>flutter_bloc</code> + <code>dio</code>. Modul Upgrade Karyawan (KRY03) <strong>dipakai ulang lewat flag</strong> agar tidak menggandakan kode.</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Komponen</th>
+<th>Cara pakai ulang</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>AssetUpgradeApi(admin:, ruangan:)</code></td>
+<td><code>ruangan: true</code> mengganti basis menjadi <code>asset/upgrade-ruangan</code> (admin) atau <code>asset/karyawan/pic-ruangan/upgrade</code> (PIC); metode baru <code>storeRuangan</code> (karyawan memakai <code>store</code>)</td>
+</tr>
+<tr>
+<td><code>HalamanAssetUpgrade(untukRuangan:)</code></td>
+<td>Daftar dengan tab; kartu menampilkan nama ruangan (<code>showRuangan</code>)</td>
+</tr>
+<tr>
+<td><code>HalamanTambahAssetUpgrade(untukRuangan:)</code></td>
+<td>Form: pilih ruangan → aset → komponen; PIC mengisi alasan + urgensi, admin mengisi catatan + jadwal</td>
+</tr>
+<tr>
+<td><code>HalamanDetailAssetUpgrade(untukRuangan:)</code></td>
+<td>Detail, stepper, checklist, hasil, aksi per peran</td>
+</tr>
+<tr>
+<td><code>AssetUpgradeBloc</code></td>
+<td>Bloc yang sama; dibuat dengan <code>AssetUpgradeApi(admin: ..., ruangan: true)</code> di <code>router.dart</code></td>
+</tr>
+<tr>
+<td>Model</td>
+<td><code>mAssetUpgrade.dart</code>: <code>AssetUpgradeRuanganOption</code>, <code>AssetUpgradePic</code>, <code>AssetUpgradeRuanganPending</code>; <code>AssetUpgradeRecord</code> memuat <code>ruangan</code> dan <code>pic</code></td>
+</tr>
+</tbody>
+</table></div>
+<p>Perubahan di file bersama: <code>HalamanAssetPicRuangan.dart</code> (entri + banner), <code>HalamanAssetAdminRuangan.dart</code> (item <strong>Upgrade</strong> + seksi perlu diproses), <code>mAssetPicRuangan.dart</code> (<code>upgradeRuangan</code>), <code>mAssetSummary.dart</code> (<code>ruanganUpgradePerluProses</code>, <code>ruanganUpgradePending</code>), <code>NavigatorBloc.dart</code>, <code>router.dart</code>.</p>
+<h2 id="s26"><span class="sec-no">26</span>Mobile Screen</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Layar</th>
+<th>Rute</th>
+<th>Pengguna</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Dashboard Ruangan → item <strong>Upgrade</strong> + seksi "Upgrade Komponen Ruangan Perlu Diproses"</td>
+<td>tab Ruangan pada <code>HalamanHomeAssetAdmin</code> (<code>HalamanAssetAdminRuangan</code>, bukan rute tersendiri)</td>
+<td>Admin/HR</td>
+</tr>
+<tr>
+<td>Daftar upgrade (tab Pengajuan/Proses/Selesai)</td>
+<td><code>/asset_admin_upgrade_ruangan</code></td>
+<td>Admin/HR</td>
+</tr>
+<tr>
+<td>Form Buat Upgrade (Jalur B)</td>
+<td><code>/asset_admin_tambah_upgrade_ruangan</code></td>
+<td>Admin/HR</td>
+</tr>
+<tr>
+<td>Detail upgrade</td>
+<td><code>/asset_admin_detail_upgrade_ruangan</code></td>
+<td>Admin/HR</td>
+</tr>
+<tr>
+<td>PIC Ruangan + tombol <strong>Upgrade Komponen</strong> + banner serah/terima</td>
+<td><code>/asset_pic_ruangan</code> (halaman yang sudah ada)</td>
+<td>PIC</td>
+</tr>
+<tr>
+<td>Daftar upgrade (dari notifikasi dengan id langsung ke detail)</td>
+<td><code>/asset_pic_ruangan_upgrade</code></td>
+<td>PIC</td>
+</tr>
+<tr>
+<td>Form Ajukan Upgrade</td>
+<td><code>/asset_pic_ruangan_tambah_upgrade</code></td>
+<td>PIC</td>
+</tr>
+<tr>
+<td>Detail upgrade</td>
+<td><code>/asset_pic_ruangan_detail_upgrade</code></td>
+<td>PIC</td>
+</tr>
+</tbody>
+</table></div>
+<p>Rute notifikasi (<code>assetNotifRoutes</code>): <code>asset_pic_ruangan_upgrade</code> (PIC, membawa id transaksi) dan <code>asset_admin_detail_upgrade_ruangan</code> (Admin). Detail menampilkan header nomor transaksi, stepper fase, kartu jadwal aktif, komponen yang diupgrade (nilai lama/baru), form hasil (admin), form checklist, ringkasan checklist, dan kartu pengajuan (ruangan, PIC, alasan, urgensi, catatan).</p>
+<h2 id="s27"><span class="sec-no">27</span>Mobile → API</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Aksi di layar</th>
+<th>Pemanggilan</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Buka daftar / pindah tab</td>
+<td><code>getList(tab)</code> → API-02 (admin) / API-11 (PIC)</td>
+</tr>
+<tr>
+<td>Buka form</td>
+<td><code>getOptions()</code> → API-01 / API-10; kirim → <code>storeRuangan</code> → API-04 / API-12</td>
+</tr>
+<tr>
+<td>Buka detail</td>
+<td><code>getDetail</code> → API-03 / API-13</td>
+</tr>
+<tr>
+<td>Tolak / Setujui &amp; Jadwalkan</td>
+<td><code>review</code> → API-05</td>
+</tr>
+<tr>
+<td>Ubah Jadwal</td>
+<td><code>updateJadwal</code> → API-06</td>
+</tr>
+<tr>
+<td>Simpan Checklist Pengambilan</td>
+<td><code>checklistPengambilan</code> → API-07</td>
+</tr>
+<tr>
+<td>Simpan Hasil &amp; Jadwalkan</td>
+<td><code>hasil</code> → API-08</td>
+</tr>
+<tr>
+<td>Kirim Ulang ke Teknisi / Selesaikan Upgrade</td>
+<td><code>selesai(aksi: kirim_ulang / terima)</code> → API-09</td>
+</tr>
+<tr>
+<td>Serahkan Aset</td>
+<td><code>pelepasan</code> → API-14</td>
+</tr>
+<tr>
+<td>Terima Aset</td>
+<td><code>terima</code> → API-15</td>
+</tr>
+<tr>
+<td>Beranda PIC / dashboard Admin</td>
+<td><code>GET karyawan/pic-ruangan</code> (<code>upgrade_ruangan</code>) / <code>GET summary</code> (<code>ruangan_upgrade_*</code>)</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="s28"><span class="sec-no">28</span>API → Mobile</h2>
+<p>Model: <code>mAssetUpgrade.dart</code> (<code>AssetUpgradeRecord</code> dengan <code>ruangan</code>, <code>pic</code>, <code>aksi</code>; <code>AssetUpgradeRuanganOption</code> untuk opsi; <code>AssetUpgradeRuanganPending</code> untuk banner beranda PIC), <code>mAssetPicRuangan.dart</code> (<code>upgradeRuangan</code> dari key <code>upgrade_ruangan</code>), <code>mAssetSummary.dart</code> (<code>ruanganUpgradePerluProses</code>, <code>ruanganUpgradePending</code> dari <code>ruangan_upgrade_*</code>). Respons PIC memakai kunci <code>nama</code> (bukan <code>nama_karyawan</code>) sehingga dibaca <code>AssetUpgradePic</code>. Mobile <strong>menyaring tombol per peran</strong> karena <code>aksi</code> dari server tidak mengenal peran: admin hanya melihat review/checklist pengambilan/hasil/selesai (+ubah jadwal), PIC hanya pelepasan/terima.</p>
+<h2 id="s29"><span class="sec-no">29</span>Mapping Mobile → API → Database</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Mobile</th>
+<th>API</th>
+<th>Tabel yang ditulis</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Kirim Pengajuan (PIC)</td>
+<td>API-12</td>
+<td><code>asset_trx_upgrade_ruangan</code>, <code>..._item</code></td>
+</tr>
+<tr>
+<td>Buat Upgrade (Admin)</td>
+<td>API-04</td>
+<td><code>asset_trx_upgrade_ruangan</code>, <code>..._item</code></td>
+</tr>
+<tr>
+<td>Tolak / Setujui &amp; Jadwalkan</td>
+<td>API-05</td>
+<td>header (<code>status_approval</code>, <code>fase_upgrade</code>, jadwal, <code>user_approval</code>)</td>
+</tr>
+<tr>
+<td>Ubah Jadwal</td>
+<td>API-06</td>
+<td>header (jadwal, <code>keterangan_pengembalian</code>)</td>
+</tr>
+<tr>
+<td>Simpan Checklist Pengambilan</td>
+<td>API-07</td>
+<td>header (<code>checklist_pengambilan</code>)</td>
+</tr>
+<tr>
+<td>Serahkan Aset</td>
+<td>API-14</td>
+<td>header (<code>tgl_pelepasan</code>, fase), <code>asset_data</code> (<code>status_asset</code>), <code>asset_trx_log</code></td>
+</tr>
+<tr>
+<td>Simpan Hasil &amp; Jadwalkan</td>
+<td>API-08</td>
+<td>header (hasil, biaya, jadwal pengembalian), <code>..._item</code> (<code>nilai_baru</code>)</td>
+</tr>
+<tr>
+<td>Terima Aset</td>
+<td>API-15</td>
+<td>header (<code>checklist_pengembalian</code>, <code>tgl_diterima</code>, fase)</td>
+</tr>
+<tr>
+<td>Selesaikan Upgrade</td>
+<td>API-09 (<code>terima</code>)</td>
+<td>header, <code>asset_data</code>, <code>asset_data_item</code>, <code>asset_trx_log</code></td>
+</tr>
+<tr>
+<td>Kirim Ulang ke Teknisi</td>
+<td>API-09 (<code>kirim_ulang</code>)</td>
+<td>header (jadwal pengambilan, <code>checklist_pengambilan=NULL</code>, fase)</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="s30"><span class="sec-no">30</span>Mapping Database → API → Mobile</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Kolom</th>
+<th>API</th>
+<th>Tampilan</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>sumber_pengajuan</code></td>
+<td><code>sumber_pengajuan</code></td>
+<td>Baris "Informasi" (sumber admin) pada kartu pengajuan</td>
+</tr>
+<tr>
+<td><code>alasan</code>, <code>urgensi</code>, <code>catatan</code></td>
+<td><code>alasan</code>, <code>urgensi</code>, <code>catatan</code></td>
+<td>Kartu pengajuan</td>
+</tr>
+<tr>
+<td><code>ket_tolak</code></td>
+<td><code>ket_tolak</code></td>
+<td>Kotak merah "Ditolak"</td>
+</tr>
+<tr>
+<td><code>status_approval</code> + <code>fase_upgrade</code></td>
+<td><code>status_label</code>, <code>tab</code>, <code>fase_upgrade</code></td>
+<td>Badge status, stepper, tab daftar</td>
+</tr>
+<tr>
+<td>jadwal</td>
+<td><code>tgl_*</code>/<code>jam_*</code></td>
+<td>Kartu jadwal aktif</td>
+</tr>
+<tr>
+<td><code>checklist_*</code></td>
+<td><code>checklist_pengambilan</code>, <code>checklist_pengembalian</code>, <code>checklist_pengembalian_rusak</code></td>
+<td>Ringkasan checklist; pesan review merah bila ada komponen rusak</td>
+</tr>
+<tr>
+<td><code>nilai_lama</code>, <code>nilai_baru</code>, <code>detail_upgrade</code></td>
+<td><code>items[]</code></td>
+<td>Kartu komponen</td>
+</tr>
+<tr>
+<td><code>id_karyawan_pic</code>/<code>nama_pic</code></td>
+<td><code>pic</code></td>
+<td>Baris "PIC Ruangan"</td>
+</tr>
+</tbody>
+</table></div>
+<div class="group-divider" id="g5"><span>Validasi, Error &amp; Keamanan</span></div>
+<h2 id="s31"><span class="sec-no">31</span>Validation</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Aturan</th>
+<th>Pesan</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>id_asset_lokasi_m</code></td>
+<td>wajib, ≤ 50</td>
+<td>Ruangan wajib dipilih.</td>
+</tr>
+<tr>
+<td><code>id_asset_data</code></td>
+<td>wajib, ≤ 50</td>
+<td>(validasi bawaan)</td>
+</tr>
+<tr>
+<td><code>alasan</code> (Jalur A)</td>
+<td>wajib, ≤ 1000</td>
+<td>Alasan upgrade wajib diisi.</td>
+</tr>
+<tr>
+<td><code>urgensi</code> (Jalur A)</td>
+<td>wajib, ∈ 3 nilai</td>
+<td>Urgensi wajib dipilih. / Urgensi upgrade tidak valid.</td>
+</tr>
+<tr>
+<td><code>catatan</code> (Jalur B)</td>
+<td>opsional, ≤ 1000</td>
+<td></td>
+</tr>
+<tr>
+<td><code>items</code></td>
+<td>wajib, ≥ 1</td>
+<td>Minimal satu komponen wajib dipilih/diisi.</td>
+</tr>
+<tr>
+<td><code>items.*.id_atribut</code></td>
+<td>wajib, ≤ 120, tidak ganda</td>
+<td>Komponen upgrade tidak ditemukan pada asset. / Komponen yang sama tidak boleh dipilih lebih dari sekali.</td>
+</tr>
+<tr>
+<td><code>items.*.detail_upgrade</code></td>
+<td>wajib, ≤ 255</td>
+<td>Detail upgrade setiap komponen wajib diisi.</td>
+</tr>
+<tr>
+<td><code>tgl_jadwal</code> / <code>jam_jadwal</code></td>
+<td><code>Y-m-d</code> / <code>H:i</code></td>
+<td>Format tanggal jadwal harus YYYY-MM-DD. / Format jam jadwal harus HH:MM. (wajib terisi di model)</td>
+</tr>
+<tr>
+<td><code>keterangan_jadwal</code></td>
+<td>opsional, ≤ 255</td>
+<td></td>
+</tr>
+<tr>
+<td><code>keputusan</code></td>
+<td><code>disetujui</code> atau <code>ditolak</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>ket_tolak</code></td>
+<td>wajib bila ditolak, ≤ 255</td>
+<td>Alasan penolakan wajib diisi.</td>
+</tr>
+<tr>
+<td><code>status_hasil</code></td>
+<td><code>selesai</code> atau <code>tidak_dapat_diupgrade</code></td>
+<td>Status hasil upgrade tidak valid.</td>
+</tr>
+<tr>
+<td><code>keterangan_hasil</code></td>
+<td>wajib, ≤ 1000</td>
+<td>Keterangan hasil upgrade wajib diisi.</td>
+</tr>
+<tr>
+<td><code>biaya_upgrade</code></td>
+<td>integer ≥ 0</td>
+<td>Biaya upgrade tidak boleh negatif.</td>
+</tr>
+<tr>
+<td><code>items.*.nilai_baru</code></td>
+<td>≤ 255; wajib bila hasil <code>selesai</code></td>
+<td>Nilai baru setiap atribut wajib diisi.</td>
+</tr>
+<tr>
+<td><code>aksi</code></td>
+<td><code>terima</code> atau <code>kirim_ulang</code></td>
+<td></td>
+</tr>
+<tr>
+<td>checklist <code>items.*.kondisi</code></td>
+<td><code>normal</code> atau <code>rusak</code></td>
+<td>Kondisi item harus normal atau rusak.</td>
+</tr>
+<tr>
+<td>checklist <code>items.*.ket_rusak</code></td>
+<td>wajib bila rusak</td>
+<td>Keterangan kerusakan wajib diisi.</td>
+</tr>
+<tr>
+<td><code>tab</code></td>
+<td><code>pengajuan</code>/<code>proses</code>/<code>selesai</code></td>
+<td>Filter upgrade asset ruangan tidak valid.</td>
+</tr>
+<tr>
+<td><code>limit</code></td>
+<td>1-50</td>
+<td>Limit maksimal adalah 50 data.</td>
+</tr>
+</tbody>
+</table></div>
+<p>Mobile: tombol Setujui memerlukan jadwal lewat sheet jadwal; form hasil memvalidasi nilai baru dan keterangan sebelum menampilkan sheet jadwal pengembalian; dialog Tolak memerlukan alasan.</p>
+<h2 id="s32"><span class="sec-no">32</span>Error Handling</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Kondisi</th>
+<th>Kode</th>
+<th>Pesan</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Input tidak valid</td>
+<td><code>VALIDATION_ERROR</code> (422)</td>
+<td>Data pengajuan upgrade belum lengkap. dan sejenisnya, dengan rincian per field</td>
+</tr>
+<tr>
+<td>Bukan admin (endpoint admin)</td>
+<td><code>FORBIDDEN</code> (403)</td>
+<td>Pengguna tidak memiliki akses admin asset.</td>
+</tr>
+<tr>
+<td>Tanpa token</td>
+<td><code>UNAUTHORIZED</code> (401)</td>
+<td></td>
+</tr>
+<tr>
+<td>Detail tidak ditemukan / PIC ruangan lain</td>
+<td><code>NOT_FOUND</code> (404)</td>
+<td>Upgrade asset ruangan tidak ditemukan.</td>
+</tr>
+<tr>
+<td>Aksi PIC pada transaksi ruangan lain</td>
+<td><code>BUSINESS_RULE_VIOLATION</code> (422)</td>
+<td>Upgrade asset tidak ditemukan.</td>
+</tr>
+<tr>
+<td>Aset terkunci</td>
+<td><code>BUSINESS_RULE_VIOLATION</code></td>
+<td>Asset sedang diproses pada upgrade lain. / pada retur. / pada onboarding ruangan. / pada penambahan asset ruangan.</td>
+</tr>
+<tr>
+<td>Fase salah</td>
+<td><code>BUSINESS_RULE_VIOLATION</code></td>
+<td>Aset belum siap diserahkan untuk upgrade. / Aset belum berada dalam proses upgrade. / Aset belum dijadwalkan untuk dikembalikan. / Checklist pengambilan tidak dapat diisi saat ini. / Checklist pengembalian belum dikirim PIC ruangan. / Pengajuan upgrade sudah direview.</td>
+</tr>
+<tr>
+<td>Status aset berubah</td>
+<td><code>BUSINESS_RULE_VIOLATION</code></td>
+<td>Status asset sudah berubah atau tidak lagi dipegang ruangan.</td>
+</tr>
+<tr>
+<td>Ruangan tidak sah</td>
+<td><code>BUSINESS_RULE_VIOLATION</code></td>
+<td>Ruangan tidak ditemukan, tidak aktif, atau belum memiliki PIC. / ... atau Anda bukan PIC ruangan ini.</td>
+</tr>
+<tr>
+<td>Checklist tidak lengkap</td>
+<td><code>BUSINESS_RULE_VIOLATION</code></td>
+<td>Seluruh item aset wajib dicek.</td>
+</tr>
+<tr>
+<td>Kesalahan sistem</td>
+<td><code>SYSTEM_ERROR</code> (500)</td>
+<td>Terjadi kesalahan saat membuat upgrade asset ruangan. / ... saat menyimpan pengajuan upgrade. / ... saat memproses transaksi asset. (detail di log)</td>
+</tr>
+</tbody>
+</table></div>
+<p>Respons sukses: <code>CREATED</code> (201) untuk pembuatan, <code>UPDATED</code> (200) untuk aksi, <code>SUCCESS</code> untuk pembacaan.</p>
+<h2 id="s33"><span class="sec-no">33</span>Audit Trail</h2>
+<ul>
+<li>Header: <code>user_input</code>/<code>tgl_input</code>, <code>user_update</code>/<code>tgl_update</code> pada setiap perubahan; <code>user_approval</code> + <code>tgl_approval</code> (review atau Jalur B); <code>user_pelepasan</code> + <code>tgl_pelepasan</code>; <code>tgl_diterima</code>.</li>
+<li>Item: <code>user_input</code>/<code>tgl_input</code> per baris; nilai lama/baru tersimpan permanen di item.</li>
+<li>Checklist pengambilan dan pengembalian tersimpan sebagai JSON di header (pada Kirim Ulang, checklist pengambilan lama <strong>ditimpa</strong> menjadi <code>NULL</code>, bukan diarsipkan).</li>
+<li><code>asset_trx_log</code> jenis <code>upgrade_ruangan</code>: <code>ruangan → gudang</code> saat pelepasan dan <code>gudang → ruangan</code> saat selesai, <code>nama_tabel_transaksi='asset_trx_upgrade_ruangan'</code>.</li>
+</ul>
+<h2 id="s34"><span class="sec-no">34</span>Notification</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Event</th>
+<th>Penerima</th>
+<th>Isi</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>upgrade_ruangan.diajukan</code></td>
+<td>Admin/HR</td>
+<td>PIC mengajukan upgrade untuk ruangan</td>
+</tr>
+<tr>
+<td><code>upgrade_ruangan.ditolak</code></td>
+<td>Semua PIC ruangan</td>
+<td>Pengajuan ditolak admin</td>
+</tr>
+<tr>
+<td><code>upgrade_ruangan.disetujui</code></td>
+<td>Semua PIC ruangan</td>
+<td>Disetujui / dibuat admin; cek jadwal pengambilan</td>
+</tr>
+<tr>
+<td><code>upgrade_ruangan.dijadwalkan</code></td>
+<td>Semua PIC ruangan</td>
+<td>Jadwal diperbarui</td>
+</tr>
+<tr>
+<td><code>upgrade_ruangan.checklist_pengambilan</code></td>
+<td>Semua PIC ruangan</td>
+<td>Admin telah memeriksa aset; konfirmasi penyerahan</td>
+</tr>
+<tr>
+<td><code>upgrade_ruangan.dilepas</code></td>
+<td>Admin/HR</td>
+<td>PIC menyerahkan aset untuk diupgrade</td>
+</tr>
+<tr>
+<td><code>upgrade_ruangan.pengembalian</code></td>
+<td>Semua PIC ruangan</td>
+<td>Hasil siap; cek jadwal pengembalian</td>
+</tr>
+<tr>
+<td><code>upgrade_ruangan.diterima</code></td>
+<td>Admin/HR</td>
+<td>PIC menerima aset hasil upgrade</td>
+</tr>
+<tr>
+<td><code>upgrade_ruangan.selesai</code></td>
+<td>Semua PIC ruangan</td>
+<td>Upgrade selesai</td>
+</tr>
+<tr>
+<td><code>upgrade_ruangan.kirim_ulang</code></td>
+<td>Semua PIC ruangan</td>
+<td>Aset perlu dikirim ulang ke teknisi</td>
+</tr>
+</tbody>
+</table></div>
+<p>Penerima PIC dihitung dari <code>asset_lokasi_pic_m</code> <strong>saat notifikasi dikirim</strong> (karyawan aktif, tanpa duplikat), bukan dari snapshot PIC di header. Placeholder <code>{pic}</code> pada pesan admin berasal dari snapshot <code>nama_pic</code>, sehingga pada ruangan ber-PIC banyak bisa menampilkan nama PIC pembuat transaksi, bukan PIC yang benar-benar bertindak. Rute tujuan: <code>asset_pic_ruangan_upgrade</code> (PIC, membawa id) dan <code>asset_admin_detail_upgrade_ruangan</code> (Admin). Notifikasi dibuat setelah transaksi database sukses; kegagalan kirim tidak membatalkan transaksi.</p>
+<h2 id="s35"><span class="sec-no">35</span>Security</h2>
+<ul>
+<li>JWT wajib; <code>ctx</code> memuat <code>id_company</code> dan <code>id_karyawan</code>. Seluruh query dibatasi <code>id_company</code> (diuji: company lain tidak dapat melihat atau mengubah).</li>
+<li>Endpoint admin memeriksa <code>asset_admin</code>; sisi PIC dibatasi <code>wherePic</code> (PIC ruangan saat ini).</li>
+<li>Aset dikunci <code>FOR UPDATE</code>, company dikunci per transaksi untuk mencegah nomor ganda; pemeriksaan fase di dalam transaksi mencegah submit ganda.</li>
+<li>Input divalidasi di controller dan model; tidak ada query mentah dari input pengguna.</li>
+<li>Foto/berkas: tidak dipakai di alur ini.</li>
+</ul>
+<div class="group-divider" id="g6"><span>Manual Book</span></div>
+<h2 id="s36"><span class="sec-no">36</span>Manual Book User/Admin</h2>
+<p><strong>PIC Ruangan: mengajukan upgrade</strong></p>
+<ol>
+<li>Buka <strong>Asset → PIC Ruangan</strong>, ketuk <strong>Upgrade Komponen</strong>, lalu ikon <strong>+</strong>.</li>
+<li>Pilih <strong>Ruangan</strong> (otomatis bila hanya satu), pilih <strong>Aset</strong>, pilih komponen yang diupgrade dan isi detail upgrade tiap komponen.</li>
+<li>Isi <strong>Alasan</strong> dan <strong>Urgensi</strong>, ketuk <strong>Ajukan Upgrade</strong>.</li>
+<li>Pantau status di daftar (tab Pengajuan/Proses/Selesai). Bila ditolak, alasan terlihat di detail.</li>
+</ol>
+<p><strong>PIC Ruangan: menyerahkan aset</strong></p>
+<ol>
+<li>Setelah Admin/HR mengisi checklist pengambilan, banner di beranda PIC Ruangan meminta aset diserahkan.</li>
+<li>Pada jadwal, serahkan aset kepada petugas lalu ketuk <strong>Serahkan Aset</strong> dan konfirmasi.</li>
+</ol>
+<p><strong>PIC Ruangan: menerima aset hasil upgrade</strong></p>
+<ol>
+<li>Setelah hasil dicatat, banner meminta aset diterima. Periksa fisik setiap komponen.</li>
+<li>Pilih <strong>Normal</strong> atau <strong>Rusak</strong> untuk tiap komponen (isi keterangan bila rusak), ketuk <strong>Terima Aset</strong>. Checklist tidak dapat diubah setelah dikirim.</li>
+</ol>
+<p><strong>Admin/HR: memproses pengajuan</strong></p>
+<ol>
+<li>Buka <strong>Asset → Ruangan → Upgrade</strong>, tab <strong>Pengajuan</strong>, pilih transaksi.</li>
+<li>Tinjau ruangan, PIC, alasan, urgensi, komponen. Pilih <strong>Tolak</strong> (isi alasan) atau <strong>Setujui &amp; Jadwalkan</strong> (pilih tanggal dan jam pengambilan).</li>
+</ol>
+<p><strong>Admin/HR: inisiasi langsung (Jalur B)</strong></p>
+<ol>
+<li>Di daftar Upgrade, ketuk <strong>+</strong> (<strong>Buat Upgrade</strong>).</li>
+<li>Pilih ruangan (PIC tampil otomatis), aset, komponen, isi catatan, tetapkan jadwal pengambilan, simpan.</li>
+</ol>
+<p><strong>Admin/HR: pengambilan, hasil, dan review akhir</strong></p>
+<ol>
+<li>Tab <strong>Proses</strong>, buka transaksi. Selama menunggu pengambilan atau pengembalian, <strong>Ubah Jadwal</strong> tersedia.</li>
+<li>Isi <strong>Simpan Checklist Pengambilan</strong>, lalu tunggu PIC menyerahkan aset.</li>
+<li>Setelah aset dalam service, pilih status hasil (Selesai atau Tidak Dapat Diupgrade), isi nilai baru tiap komponen (bila selesai), biaya, keterangan, ketuk <strong>Simpan Hasil &amp; Jadwalkan</strong> dan tetapkan jadwal pengembalian.</li>
+<li>Setelah PIC menerima aset: <strong>Selesaikan Upgrade</strong> (atribut diperbarui bila hasil selesai) atau <strong>Kirim Ulang ke Teknisi</strong> (tetapkan jadwal pengambilan baru).</li>
+</ol>
+<h2 id="s37"><span class="sec-no">37</span>Kondisi Button</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Tombol</th>
+<th>Tampil bila (<code>aksi</code> + peran)</th>
+<th>Aktif bila</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Ikon <strong>+</strong> (Ajukan Upgrade / Buat Upgrade)</td>
+<td>di daftar, semua peran</td>
+<td>selalu</td>
+</tr>
+<tr>
+<td>Tolak, Setujui &amp; Jadwalkan</td>
+<td>Admin dan <code>aksi.review</code></td>
+<td>tidak sedang bekerja; Tolak butuh alasan, Setujui butuh jadwal</td>
+</tr>
+<tr>
+<td>Ubah Jadwal</td>
+<td>Admin dan <code>aksi.ubah_jadwal</code></td>
+<td>tidak sedang bekerja</td>
+</tr>
+<tr>
+<td>Simpan Checklist Pengambilan</td>
+<td>Admin dan <code>aksi.checklist_pengambilan</code></td>
+<td>seluruh komponen dicek (rusak wajib keterangan)</td>
+</tr>
+<tr>
+<td>Serahkan Aset</td>
+<td>PIC dan <code>aksi.pelepasan</code></td>
+<td>setelah dikonfirmasi</td>
+</tr>
+<tr>
+<td>Simpan Hasil &amp; Jadwalkan</td>
+<td>Admin dan <code>aksi.hasil</code></td>
+<td>form hasil valid + jadwal pengembalian dipilih</td>
+</tr>
+<tr>
+<td>Terima Aset</td>
+<td>PIC dan <code>aksi.terima</code></td>
+<td>seluruh komponen dicek (rusak wajib keterangan)</td>
+</tr>
+<tr>
+<td>Kirim Ulang ke Teknisi, Selesaikan Upgrade</td>
+<td>Admin dan <code>aksi.selesai</code></td>
+<td>tidak sedang bekerja; Kirim Ulang butuh jadwal</td>
+</tr>
+</tbody>
+</table></div>
+<p>Karena <code>aksi</code> dari server tidak mengenal peran, tombol di mobile ditentukan oleh <strong>peran dan flag sekaligus</strong> (<code>_admin</code> dan <code>aksi.*</code>); PIC tidak pernah melihat tombol admin dan sebaliknya (diuji di mobile).</p>
+<div class="group-divider" id="g7"><span>QA &amp; Risiko</span></div>
+<h2 id="s38"><span class="sec-no">38</span>Testing Scenario</h2>
+<p>Hasil terakhir: API <code>tests/Asset</code> 240 test lolos (16 di antaranya modul ini, dijalankan ulang saat dokumen disusun); mobile <code>test/asset/asset_upgrade_ruangan_test.dart</code> 16 test lolos.</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>ID</th>
+<th>Skenario</th>
+<th>Hasil yang diharapkan</th>
+<th>Otomatis</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>TC-01</td>
+<td>Opsi PIC/admin</td>
+<td>Hanya ruangan aktif ber-PIC, aset <code>terpakai</code> beratribut, bebas kunci</td>
+<td>✔ API</td>
+</tr>
+<tr>
+<td>TC-02</td>
+<td>Pengajuan PIC</td>
+<td>Snapshot ruangan/PIC, <code>RGN07-</code>, validasi, tolak lalu ajukan ulang</td>
+<td>✔ API</td>
+</tr>
+<tr>
+<td>TC-03</td>
+<td>Alur penuh Jalur A</td>
+<td>Atribut diperbarui, pemegang tetap ruangan, 2 baris log</td>
+<td>✔ API</td>
+</tr>
+<tr>
+<td>TC-04</td>
+<td>Kirim ulang dan tidak dapat diupgrade</td>
+<td>Atribut tidak berubah, aset <code>terpakai</code></td>
+<td>✔ API</td>
+</tr>
+<tr>
+<td>TC-05</td>
+<td>Jalur B</td>
+<td>Wajib admin, ruangan aktif ber-PIC, jadwal; ubah jadwal</td>
+<td>✔ API</td>
+</tr>
+<tr>
+<td>TC-06</td>
+<td>Kunci upgrade ↔ retur</td>
+<td>Saling menolak untuk aset yang sama</td>
+<td>✔ API</td>
+</tr>
+<tr>
+<td>TC-07</td>
+<td>Kunci onboarding / penambahan</td>
+<td>Upgrade ditolak selama transaksi lain berjalan</td>
+<td>✔ API</td>
+</tr>
+<tr>
+<td>TC-08</td>
+<td>Endpoint PIC</td>
+<td>Akses ruangan, 404 PIC lain, notifikasi ke admin</td>
+<td>✔ API</td>
+</tr>
+<tr>
+<td>TC-09</td>
+<td>Endpoint admin</td>
+<td>403 non-admin, alur penuh, notifikasi ke PIC</td>
+<td>✔ API</td>
+</tr>
+<tr>
+<td>TC-10</td>
+<td>Isolasi company</td>
+<td>Company lain tidak dapat menyentuh transaksi</td>
+<td>✔ API</td>
+</tr>
+<tr>
+<td>TC-11</td>
+<td>Fase salah / submit ganda</td>
+<td>Ditolak dengan pesan fase</td>
+<td>✔ API</td>
+</tr>
+<tr>
+<td>TC-12</td>
+<td>Checklist</td>
+<td>Wajib lengkap, kondisi valid, rusak wajib keterangan</td>
+<td>✔ API</td>
+</tr>
+<tr>
+<td>TC-13</td>
+<td>Validasi hasil; kirim ulang</td>
+<td>Validasi hasil; <code>checklist_pengambilan</code> direset</td>
+<td>✔ API</td>
+</tr>
+<tr>
+<td>TC-14</td>
+<td>Penerima notifikasi</td>
+<td>Semua PIC aktif ruangan (bukan snapshot, bukan karyawan nonaktif)</td>
+<td>✔ API</td>
+</tr>
+<tr>
+<td>TC-15</td>
+<td>Pesan filter tab</td>
+<td>Pesan khusus upgrade ruangan</td>
+<td>✔ API</td>
+</tr>
+<tr>
+<td>TC-16</td>
+<td>Registrasi route</td>
+<td>Grup admin dan PIC terdaftar</td>
+<td>✔ API</td>
+</tr>
+<tr>
+<td>TC-17</td>
+<td>Teks id/en</td>
+<td>Kunci <code>upgrade_*</code> ada di kedua bahasa</td>
+<td>✔ Mobile</td>
+</tr>
+<tr>
+<td>TC-18</td>
+<td>Parsing opsi dan detail</td>
+<td>Ruangan, PIC, <code>aksi</code> terbaca</td>
+<td>✔ Mobile</td>
+</tr>
+<tr>
+<td>TC-19</td>
+<td>Beranda PIC dan summary admin</td>
+<td><code>upgrade_ruangan</code> dan <code>ruangan_upgrade_*</code> terbaca</td>
+<td>✔ Mobile</td>
+</tr>
+<tr>
+<td>TC-20</td>
+<td>Rute notifikasi</td>
+<td>PIC dan admin menuju rute yang benar</td>
+<td>✔ Mobile</td>
+</tr>
+<tr>
+<td>TC-21</td>
+<td>Endpoint dan payload API client</td>
+<td>Basis ruangan dan payload sesuai kontrak</td>
+<td>✔ Mobile</td>
+</tr>
+<tr>
+<td>TC-22</td>
+<td>Form PIC</td>
+<td>Butuh komponen, alasan, lalu kirim</td>
+<td>✔ Mobile</td>
+</tr>
+<tr>
+<td>TC-23</td>
+<td>Aksi detail per peran</td>
+<td>8 skenario tombol sesuai peran dan fase</td>
+<td>✔ Mobile</td>
+</tr>
+<tr>
+<td>TC-24</td>
+<td>Beranda PIC</td>
+<td>Entri upgrade dan banner serah/terima</td>
+<td>✔ Mobile</td>
+</tr>
+<tr>
+<td>TC-25</td>
+<td>Halaman admin ruangan</td>
+<td>Daftar pending upgrade dan navigasi</td>
+<td>✔ Mobile</td>
+</tr>
+<tr>
+<td>TC-26</td>
+<td>Push notifikasi end-to-end</td>
+<td>Notif tiba dan membuka rute yang benar</td>
+<td>✘ manual</td>
+</tr>
+<tr>
+<td>TC-27</td>
+<td>Alur penuh di server/emulator</td>
+<td>Jalur A dan B sampai selesai, termasuk Kirim Ulang</td>
+<td>✘ manual</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="s39"><span class="sec-no">39</span>Temuan Ketidaksesuaian</h2>
+<p>Dokumen bisnis RGN07 <strong>tidak tersedia</strong> saat dokumen ini disusun (⚠️ Belum ditemukan). Perbandingan dilakukan terhadap KRY03 dan keputusan sesi.</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>ID</th>
+<th>Pembanding</th>
+<th>Implementasi</th>
+<th>Dampak</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>INC-01</td>
+<td>Penamaan sebelumnya "RGN-UPG"</td>
+<td>Kode fitur <strong>RGN07</strong>; <code>no_trx</code> <code>RGN07-YYYYMMNNN</code>. Komentar DBML/SQL hanya menyebut "ALK-RGN Upgrade" tanpa angka</td>
+<td>RGN06 = Retur Ruangan; jangan tertukar</td>
+</tr>
+<tr>
+<td>INC-02</td>
+<td>Header komentar SQL: "BELUM DIJALANKAN"</td>
+<td>SQL sudah dijalankan oleh pengguna dan diuji via model</td>
+<td>Komentar header SQL sudah diperbarui (16 Okt 2026)</td>
+</tr>
+<tr>
+<td>INC-03</td>
+<td>KRY03 membatasi akses ke <code>id_karyawan</code> pemilik</td>
+<td>Upgrade ruangan membatasi ke PIC ruangan <strong>saat ini</strong> (<code>asset_lokasi_pic_m</code>)</td>
+<td>PIC baru langsung berhak; PIC yang dicopot kehilangan akses</td>
+</tr>
+<tr>
+<td>INC-04</td>
+<td>KRY03 menyimpan jadwal kosong sebagai <code>0000-00-00</code></td>
+<td>Upgrade ruangan memakai <code>NULL</code> (konvensi tabel ruangan); <code>jadwalPayload</code> dipakai bersama dan menangani keduanya</td>
+<td>Jadwal kosong tampil sebagai string kosong</td>
+</tr>
+<tr>
+<td>INC-05</td>
+<td>KRY03: log membawa pemegang karyawan di kedua sisi</td>
+<td>Log ruangan: sisi gudang tanpa pemegang</td>
+<td>Konsisten dengan retur ruangan (RISK-005)</td>
+</tr>
+<tr>
+<td>INC-06</td>
+<td>Detail 404 vs aksi 422 untuk PIC ruangan lain</td>
+<td>Detail → <code>NOT_FOUND</code>; pelepasan/terima → <code>BUSINESS_RULE_VIOLATION</code> (Upgrade asset tidak ditemukan.)</td>
+<td>Klien perlu menangani keduanya</td>
+</tr>
+<tr>
+<td>INC-07</td>
+<td>Pesan validasi controller vs model</td>
+<td>Controller: Minimal satu komponen wajib diisi.; model: Minimal satu komponen wajib dipilih.</td>
+<td>Kosmetik</td>
+</tr>
+<tr>
+<td>INC-08</td>
+<td>Riwayat log aset</td>
+<td>Log <code>upgrade_ruangan</code> menampilkan <code>no_trx</code> pada <code>asset/data/{id}/log</code> setelah <code>asset_trx_upgrade_ruangan</code> ditambahkan ke <code>LOG_TRANSAKSI_TABLES</code> (RISK-010, diperbaiki)</td>
+<td>Nomor transaksi tampil di riwayat</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="s40"><span class="sec-no">40</span>Edge Case</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Kasus</th>
+<th>Perilaku</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Aset yang sama diajukan dua kali</td>
+<td>Ditolak: Asset sedang diproses pada upgrade lain. Setelah transaksi ditolak atau selesai, boleh diajukan lagi.</td>
+</tr>
+<tr>
+<td>Aset sedang retur/onboarding/penambahan ruangan</td>
+<td>Ditolak; aset juga hilang dari opsi upgrade. Sebaliknya retur menolak aset yang sedang diupgrade.</td>
+</tr>
+<tr>
+<td>Aset tanpa atribut spesifikasi</td>
+<td>Tidak muncul di opsi.</td>
+</tr>
+<tr>
+<td>Aset berstatus bukan <code>terpakai</code> (mis. <code>rusak</code>)</td>
+<td>Tidak muncul di opsi; pembuatan ditolak.</td>
+</tr>
+<tr>
+<td>Ruangan nonaktif / tanpa PIC</td>
+<td>Tidak muncul di opsi; pembuatan ditolak.</td>
+</tr>
+<tr>
+<td>Dua admin mereview bersamaan</td>
+<td>Header dikunci <code>FOR UPDATE</code>; yang kedua mendapat "sudah direview".</td>
+</tr>
+<tr>
+<td>Hasil <code>tidak_dapat_diupgrade</code></td>
+<td>Atribut tidak berubah; aset tetap kembali <code>terpakai</code> setelah review akhir.</td>
+</tr>
+<tr>
+<td>Kirim Ulang</td>
+<td>Fase kembali <code>menunggu_pengambilan</code>, <code>checklist_pengambilan</code> direset; hasil lama tetap di header sampai hasil berikutnya.</td>
+</tr>
+<tr>
+<td>PIC ruangan berganti saat transaksi berjalan</td>
+<td>PIC baru berhak dan dinotifikasi; snapshot <code>nama_pic</code> tidak berubah.</td>
+</tr>
+<tr>
+<td>Ruangan kehilangan semua PIC</td>
+<td>Pelepasan/terima tidak dapat dilakukan; tidak ada pembatalan (RISK-001).</td>
+</tr>
+<tr>
+<td>Checklist pengembalian ada komponen <code>rusak</code></td>
+<td>Admin melihat pesan peringatan, tetapi Selesaikan tidak diblokir server (RISK-003).</td>
+</tr>
+<tr>
+<td>Daftar kosong</td>
+<td>Teks "belum ada" dari grup teks <code>upgrade</code>.</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="s41"><span class="sec-no">41</span>Potential Bug / Technical Risk</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>ID</th>
+<th>Tingkat</th>
+<th>Risiko</th>
+<th>Saran</th>
+<th>Status</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>RISK-001</td>
+<td>SEDANG</td>
+<td>Ruangan kehilangan semua PIC saat aset <code>dalam_perbaikan</code>: pelepasan dan terima mustahil (<code>wherePic</code>) dan tidak ada endpoint batal, sehingga aset tertahan. Konsisten dengan retur ruangan.</td>
+<td>Tambah aksi batal oleh Admin atau izinkan Admin menyerahkan/menerima atas nama ruangan.</td>
+<td>Terbuka</td>
+</tr>
+<tr>
+<td>RISK-002</td>
+<td>RENDAH</td>
+<td><code>aksi</code> pada detail tidak mengenal peran; UI wajib menyaring sendiri. Server tetap menolak aksi di luar peran.</td>
+<td>Pertimbangkan flag per peran bila ada klien lain.</td>
+<td>Diterima (mobile sudah menyaring dan diuji)</td>
+</tr>
+<tr>
+<td>RISK-003</td>
+<td>SEDANG</td>
+<td>Checklist pengembalian berkondisi <code>rusak</code> hanya flag (<code>checklist_pengembalian_rusak</code>): tidak mengubah kondisi aset dan tidak memblokir <code>selesai</code> (paritas KRY03).</td>
+<td>Konfirmasi dengan bisnis: apakah aset rusak pasca-upgrade harus memicu laporan kerusakan atau blokir selesai.</td>
+<td>Perlu konfirmasi</td>
+</tr>
+<tr>
+<td>RISK-004</td>
+<td>RENDAH</td>
+<td>Setelah <code>kirim_ulang</code>, pelepasan kedua menulis log ruangan → gudang <strong>ganda</strong> (aset sebenarnya sudah di luar).</td>
+<td>Lewati log bila aset sudah <code>dalam_perbaikan</code>.</td>
+<td>Terbuka</td>
+</tr>
+<tr>
+<td>RISK-005</td>
+<td>RENDAH</td>
+<td>Log sisi gudang menyimpan <code>id_pemegang</code>/<code>nama_pemegang</code> kosong (mengikuti retur ruangan).</td>
+<td>Samakan konvensi lintas modul bila perlu.</td>
+<td>Diterima</td>
+</tr>
+<tr>
+<td>RISK-006</td>
+<td>RENDAH</td>
+<td>Ruangan ber-PIC banyak: snapshot PIC Jalur B = PIC pertama; <code>{pic}</code> pada notifikasi admin memakai snapshot.</td>
+<td>Catat pelaku sebenarnya pada pesan.</td>
+<td>Diterima</td>
+</tr>
+<tr>
+<td>RISK-007</td>
+<td>SEDANG</td>
+<td>Test API memakai SQLite; enum, FK, dan tipe kolom MariaDB diverifikasi manual oleh pengguna, bukan oleh test.</td>
+<td>Uji end-to-end pada database sebenarnya.</td>
+<td>Terbuka</td>
+</tr>
+<tr>
+<td>RISK-008</td>
+<td>RENDAH</td>
+<td>Fixture jumlah route basi: <code>RouteContractTest</code> (<code>ROUTE_COUNT</code>) dan test <code>routes:list</code> menulis 506, aktual 552. Kegagalan lama, tidak terkait modul ini.</td>
+<td>Perbarui fixture.</td>
+<td>Terbuka (di luar scope)</td>
+</tr>
+<tr>
+<td>RISK-009</td>
+<td>SEDANG</td>
+<td>Belum diuji end-to-end di aplikasi (server/emulator), termasuk push notifikasi dan rute notifikasi.</td>
+<td>Uji alur penuh dua jalur (TC-26, TC-27).</td>
+<td>Terbuka</td>
+</tr>
+<tr>
+<td>RISK-010</td>
+<td>RENDAH</td>
+<td><code>LOG_TRANSAKSI_TABLES</code> pada <code>AssetAdmin_m</code> tidak memuat tabel ruangan, sehingga <code>no_trx</code> kosong pada riwayat log aset untuk log <code>upgrade_ruangan</code>.</td>
+<td>Diperbaiki 16 Okt 2026: <code>asset_trx_upgrade_ruangan</code> ditambahkan ke daftar dan dicakup test alur penuh. Tabel ruangan lain (retur, request, onboarding) belum terdaftar; di luar scope.</td>
+<td>Diperbaiki</td>
+</tr>
+</tbody>
+</table></div>
+<div class="group-divider" id="g8"><span>Referensi Developer</span></div>
+<h2 id="s42"><span class="sec-no">42</span>Dependency</h2>
+<ul>
+<li><strong>Data master</strong>: <code>asset_lokasi_m</code> (tipe <code>ruangan</code>, <code>status_aktif</code>), <code>asset_lokasi_pic_m</code>, <code>asset_kategori_m</code>, <code>data_karyawan</code>, <code>asset_admin</code>, <code>asset_data</code>, <code>asset_data_item</code>.</li>
+<li><strong>Modul lain</strong>: Upgrade Karyawan KRY03 (helper bersama), Retur Ruangan RGN06, Onboarding Ruangan RGN01, Penambahan Ruangan RGN04 (saling mengunci aset), <code>asset_trx_log</code>, notifikasi (<code>notif_data</code>, FCM).</li>
+<li><strong>Urutan SQL</strong>: PML04 (disposal) → RGN06 (retur ruangan) → upgrade ruangan, karena enum <code>jenis_log</code> dibangun berurutan dan diakhiri <code>retur_ruangan</code> sebelum <code>upgrade_ruangan</code> ditambahkan.</li>
+<li><strong>Berbagi komponen mobile</strong>: <code>HalamanAssetUpgrade</code>, <code>HalamanTambahAssetUpgrade</code>, <code>HalamanDetailAssetUpgrade</code>, <code>AssetUpgradeBloc</code>, <code>AssetUpgradeApi</code>, <code>showAssetPickerSheet</code>.</li>
+</ul>
+<h2 id="s43"><span class="sec-no">43</span>Source Code Reference</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Area</th>
+<th>File</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Model API</td>
+<td><code>API/app/Models/Asset/AssetUpgradeRuangan_m.php</code></td>
+</tr>
+<tr>
+<td>Controller</td>
+<td><code>API/app/Http/Controllers/Asset/Admin/AssetAdminUpgradeRuangan_c.php</code>, <code>API/app/Http/Controllers/Asset/Karyawan/AssetKaryawanUpgradeRuangan_c.php</code></td>
+</tr>
+<tr>
+<td>Route</td>
+<td><code>API/routes/modules/asset/RouteAsset.php</code></td>
+</tr>
+<tr>
+<td>Notifikasi</td>
+<td><code>API/app/Support/Asset/AssetNotification.php</code></td>
+</tr>
+<tr>
+<td>Modul terkait</td>
+<td><code>API/app/Models/Asset/AssetReturRuangan_m.php</code>, <code>API/app/Models/Asset/AssetUpgradeKaryawan_m.php</code>, <code>API/app/Models/Asset/AssetAdmin_m.php</code>, <code>API/app/Models/Asset/AssetLokasiPic_m.php</code></td>
+</tr>
+<tr>
+<td>Skema</td>
+<td><code>API/diagram-asset.dbml</code>, <code>Claude outputs/sql-alk-rgn-upgrade-ruangan.sql</code></td>
+</tr>
+<tr>
+<td>Test API</td>
+<td><code>API/tests/Asset/AssetUpgradeRuanganTest.php</code></td>
+</tr>
+<tr>
+<td>Mobile UI</td>
+<td><code>MOBILE/lib/UI/Modul/Asset/Upgrade/HalamanAssetUpgrade.dart</code>, <code>HalamanTambahAssetUpgrade.dart</code>, <code>HalamanDetailAssetUpgrade.dart</code>, <code>AssetUpgradeWidgets.dart</code></td>
+</tr>
+<tr>
+<td>Mobile halaman ruangan</td>
+<td><code>MOBILE/lib/UI/Modul/Asset/PicRuangan/HalamanAssetPicRuangan.dart</code>, <code>MOBILE/lib/UI/Modul/Asset/AssetAdmin/AssetAdminRuangan/HalamanAssetAdminRuangan.dart</code></td>
+</tr>
+<tr>
+<td>Mobile API / bloc</td>
+<td><code>MOBILE/lib/Repository/Service/assetUpgradeApi.dart</code>, <code>MOBILE/lib/Bloc/Asset/AssetUpgradeBloc.dart</code></td>
+</tr>
+<tr>
+<td>Mobile model</td>
+<td><code>MOBILE/lib/Repository/Model/Asset/mAssetUpgrade.dart</code>, <code>mAssetPicRuangan.dart</code>, <code>mAssetSummary.dart</code></td>
+</tr>
+<tr>
+<td>Navigasi</td>
+<td><code>MOBILE/lib/Bloc/NavigatorBloc.dart</code>, <code>MOBILE/lib/Setting/router.dart</code></td>
+</tr>
+<tr>
+<td>Teks</td>
+<td><code>MOBILE/assets/id/asset.json</code>, <code>MOBILE/assets/en/asset.json</code> (grup <code>menu_asset.pic_ruangan</code>, 21 kunci <code>upgrade_*</code>)</td>
+</tr>
+<tr>
+<td>Test mobile</td>
+<td><code>MOBILE/test/asset/asset_upgrade_ruangan_test.dart</code></td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="s44"><span class="sec-no">44</span>Developer Notes</h2>
+<ul>
+<li>Skema mengikuti KRY03 ditambah konvensi tabel ruangan: jadwal <code>NULL</code> (bukan <code>0000-00-00</code>), snapshot ruangan dan PIC di header, <code>no_trx</code> unik per company.</li>
+<li>Dua kolom status disimpan (<code>status_approval</code>, <code>fase_upgrade</code>); bila menambah fase, ubah enum di DBML/SQL, <code>upgradeStatusMetadata</code> (dipakai bersama KRY03), dan stepper mobile.</li>
+<li>Dua jenis <code>id_item</code> yang berbeda: pada checklist (pengambilan/pengembalian) = id <strong>komponen aset</strong> dari <code>komponen[]</code>; pada hasil = id <strong>baris item upgrade</strong> dari <code>items[]</code>.</li>
+<li>Pembaruan atribut hanya terjadi di review akhir <code>terima</code> dan hanya bila <code>status_hasil='selesai'</code>; komponen dicocokkan lewat <code>id_asset_data_item</code> + <code>id_komponen</code> dalam <code>kelengkapan_item</code>.</li>
+<li>Mobile memakai satu bloc dan satu set halaman untuk dua modul; selalu teruskan <code>untukRuangan</code>/<code>ruangan: true</code> pada rute baru agar basis URL benar.</li>
+</ul>
+<p><strong>Catatan verifikasi</strong></p>
+<p>Dijalankan ulang saat dokumen ini disusun:
+- <code>tests/Asset</code>: 240 test, 2895 assertion, lolos (16 test <code>AssetUpgradeRuanganTest</code>, 198 assertion).
+- <code>php artisan routes:list</code>: 15 route modul ini (9 admin + 6 PIC); total 552 route.
+- Mobile <code>test/asset/asset_upgrade_ruangan_test.dart</code>: 16 test lolos (Flutter 3.35.6 dari <code>android/local.properties</code>).</p>
+<p>Dilaporkan oleh sesi pengerjaan fitur, <strong>tidak dijalankan ulang</strong> di sini: mobile 35 test terkait lolos; <code>test/asset</code> 354 lulus + 5 gagal lama (4 <code>asset_onboarding_widget_test</code>, 1 <code>asset_peminjaman_test</code>); suite API penuh 5 gagal lama (<code>JwtAuthTest</code> 1, fixture jumlah route 506 vs 552 sebanyak 4). Seluruhnya tidak terkait modul ini.</p>
+<p>Tidak dapat diverifikasi dari kode: (1) SQL telah dijalankan di database dan struktur enum/FK MariaDB benar, hanya pernyataan pengguna (komentar header SQL masih "BELUM DIJALANKAN"); (2) alur nyata di server/emulator dan push notifikasi; (3) dokumen bisnis RGN07 (tidak ada); (4) klaim bahwa empat helper <code>AssetUpgradeKaryawan_m</code> berubah menjadi <code>public</code> tanpa perubahan logika (tidak ada riwayat versi di workspace untuk dibandingkan; kondisi saat ini sudah <code>public</code>).</p>
+<h2 id="s45"><span class="sec-no">45</span>End-to-End Traceability</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Kebutuhan bisnis</th>
+<th>Aturan</th>
+<th>API</th>
+<th>Mobile</th>
+<th>Test</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>PIC mengajukan upgrade</td>
+<td>BR-02, BR-03, BR-04, BR-05</td>
+<td>API-12</td>
+<td>Form Ajukan Upgrade</td>
+<td>TC-02, TC-08, TC-22</td>
+</tr>
+<tr>
+<td>Admin inisiasi langsung</td>
+<td>BR-07</td>
+<td>API-04</td>
+<td>Form Buat Upgrade</td>
+<td>TC-05</td>
+</tr>
+<tr>
+<td>Admin setujui/tolak</td>
+<td>BR-08, BR-09</td>
+<td>API-05</td>
+<td>Dialog Tolak, sheet jadwal</td>
+<td>TC-02, TC-09</td>
+</tr>
+<tr>
+<td>Aset tidak bentrok antarmodul</td>
+<td>BR-06</td>
+<td>API-04, API-12</td>
+<td>Opsi aset</td>
+<td>TC-06, TC-07</td>
+</tr>
+<tr>
+<td>Checklist pengambilan dan serah aset</td>
+<td>BR-10, BR-11, BR-12</td>
+<td>API-07, API-14</td>
+<td>Detail Admin/PIC</td>
+<td>TC-03, TC-12, TC-23</td>
+</tr>
+<tr>
+<td>Hasil upgrade</td>
+<td>BR-13</td>
+<td>API-08</td>
+<td>Form hasil</td>
+<td>TC-13</td>
+</tr>
+<tr>
+<td>PIC menerima kembali</td>
+<td>BR-14</td>
+<td>API-15</td>
+<td>Detail PIC</td>
+<td>TC-03, TC-12</td>
+</tr>
+<tr>
+<td>Selesai / Kirim Ulang</td>
+<td>BR-15, BR-16</td>
+<td>API-09</td>
+<td>Selesaikan, Kirim Ulang</td>
+<td>TC-03, TC-04, TC-13</td>
+</tr>
+<tr>
+<td>Hak akses PIC ruangan</td>
+<td>BR-17</td>
+<td>API-10..15</td>
+<td>Rute PIC</td>
+<td>TC-08, TC-14</td>
+</tr>
+<tr>
+<td>Jejak audit</td>
+<td>BR-18</td>
+<td>semua</td>
+<td>Ringkasan checklist</td>
+<td>TC-03, TC-11</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="s46"><span class="sec-no">46</span>Ringkasan Database Impact</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Tabel</th>
+<th>Operasi</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>asset_trx_upgrade_ruangan</code></td>
+<td>INSERT (ajukan/inisiasi), UPDATE (review, jadwal, checklist, pelepasan, hasil, terima, selesai/kirim ulang)</td>
+</tr>
+<tr>
+<td><code>asset_trx_upgrade_ruangan_item</code></td>
+<td>INSERT (saat dibuat), UPDATE <code>nilai_baru</code>/<code>alasan_tidak_upgrade</code> (hasil)</td>
+</tr>
+<tr>
+<td><code>asset_data</code></td>
+<td>UPDATE <code>status_asset</code> (<code>dalam_perbaikan</code> saat pelepasan, <code>terpakai</code> saat selesai)</td>
+</tr>
+<tr>
+<td><code>asset_data_item</code></td>
+<td>UPDATE <code>json_value</code> komponen (review akhir <code>terima</code>, hanya bila hasil <code>selesai</code>)</td>
+</tr>
+<tr>
+<td><code>asset_trx_log</code></td>
+<td>INSERT 2 baris per siklus normal (<code>upgrade_ruangan</code>); bertambah per Kirim Ulang</td>
+</tr>
+<tr>
+<td><code>notif_data</code></td>
+<td>INSERT per notifikasi</td>
+</tr>
+<tr>
+<td><code>asset_trx_log.jenis_log</code></td>
+<td>Enum ditambah <code>upgrade_ruangan</code> (SQL manual)</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="s47"><span class="sec-no">47</span>Checklist Implementasi</h2>
+<ul>
+<li class="task done">DBML diperbarui (<code>[NEW ALK-RGN Upgrade]</code>)</li>
+<li class="task done">SQL manual dibuat (<code>sql-alk-rgn-upgrade-ruangan.sql</code>)</li>
+<li class="task done">SQL manual dijalankan pengguna dan diuji via model (pernyataan pengguna; urutan PML04 → RGN06 → upgrade ruangan)</li>
+<li class="task">Perbarui komentar header SQL ("BELUM DIJALANKAN")</li>
+<li class="task done">Model, controller, route, notifikasi API (15 endpoint, 10 event)</li>
+<li class="task done">Perubahan modul lain: retur ruangan, helper KRY03, summary admin, beranda PIC</li>
+<li class="task done">Test API (16) dan seluruh <code>tests/Asset</code> (240) lolos</li>
+<li class="task done">Model, API client, halaman, route, teks mobile</li>
+<li class="task done">Test mobile (16) lolos</li>
+<li class="task">Uji end-to-end di server/emulator, termasuk push notifikasi</li>
+<li class="task">Keputusan RISK-003 (checklist pengembalian rusak)</li>
+<li class="task">Aksi batal oleh Admin (belum ada, RISK-001)</li>
+<li class="task">Perbarui fixture jumlah route (RISK-008, di luar scope)</li>
+</ul>
+<h2 id="s48"><span class="sec-no">48</span>Changelog</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Versi</th>
+<th>Tanggal</th>
+<th>Perubahan</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1.0</td>
+<td>16 Oktober 2026</td>
+<td>Dokumen awal ALK-RGN07: upgrade komponen aset ruangan, dua jalur, 15 endpoint, 10 event notifikasi, pemblokiran lintas modul, modul mobile dipakai ulang, 16 test API dan 16 test mobile.</td>
+</tr>
+</tbody>
+</table></div>
+    </article>
+
+    <footer>Dokumentasi Upgrade Komponen Aset Ruangan (ALK-RGN07) v1.0 · 16 Oktober 2026 · Disusun dari source lokal API (Lumen) &amp; MOBILE (Flutter). Contoh ID dan nama pada payload adalah data sintetis.</footer>
+  </main>
+</div>
+<button class="to-top" id="to-top" type="button" aria-label="Kembali ke atas">↑</button>
+
+<script>
+(function(){
+  var search=document.getElementById('nav-search');
+  var navs=document.querySelectorAll('.nav');
+  search.addEventListener('input',function(){
+    var q=search.value.trim().toLowerCase();
+    navs.forEach(function(nav){
+      nav.querySelectorAll('.nav-group').forEach(function(g){
+        var any=false;
+        g.querySelectorAll('a').forEach(function(a){
+          var hit=!q||a.textContent.toLowerCase().indexOf(q)>-1;
+          a.hidden=!hit; if(hit) any=true;
+        });
+        g.hidden=!any;
+      });
+    });
+  });
+  var links={};
+  document.querySelectorAll('#nav a').forEach(function(a){links[a.dataset.sec]=a;});
+  var current=null;
+  if('IntersectionObserver' in window){
+    var io=new IntersectionObserver(function(entries){
+      entries.forEach(function(e){
+        if(e.isIntersecting){
+          if(current) current.classList.remove('active');
+          current=links[e.target.id];
+          if(current){current.classList.add('active');var nav=current.closest('.nav');var top=current.offsetTop-nav.offsetTop;if(top<nav.scrollTop||top>nav.scrollTop+nav.clientHeight-30){nav.scrollTop=top-nav.clientHeight/2;}}
+        }
+      });
+    },{rootMargin:'0px 0px -75% 0px'});
+    document.querySelectorAll('.doc h2[id]').forEach(function(h){io.observe(h);});
+  }
+  document.querySelectorAll('.mobile-toc a').forEach(function(a){
+    a.addEventListener('click',function(){a.closest('details').open=false;});
+  });
+  document.getElementById('to-top').addEventListener('click',function(){window.scrollTo({top:0});});
+})();
+</script>
+<script type="module">
+// Fallback renderer: hanya jalan bila viewer belum merender diagram (mis. file dibuka langsung).
+const blocks=[...document.querySelectorAll('pre.mermaid')].filter(function(el){return !el.hasAttribute('data-claude-mermaid-claimed');});
+if(blocks.length){
+  blocks.forEach(function(el){el.setAttribute('data-claude-mermaid-claimed','1');el.dataset.src=el.textContent;});
+  const {default:mermaid}=await import("https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs");
+  const media=window.matchMedia('(prefers-color-scheme: dark)');
+  const render=async function(){
+    const css=getComputedStyle(document.documentElement);
+    const v=function(n){return css.getPropertyValue(n).trim();};
+    mermaid.initialize({startOnLoad:false,securityLevel:'strict',theme:'base',fontFamily:'inherit',
+      themeVariables:{background:v('--surface'),primaryColor:v('--accent-soft'),primaryTextColor:v('--ink'),
+        primaryBorderColor:v('--accent'),lineColor:v('--muted'),secondaryColor:v('--surface-2'),tertiaryColor:v('--surface'),
+        textColor:v('--ink'),mainBkg:v('--accent-soft'),nodeBorder:v('--accent'),clusterBkg:v('--surface-2'),
+        noteBkgColor:v('--surface-2'),noteTextColor:v('--ink'),noteBorderColor:v('--line'),
+        actorBkg:v('--accent-soft'),actorBorder:v('--accent'),actorTextColor:v('--ink'),actorLineColor:v('--muted'),
+        signalColor:v('--ink-2'),signalTextColor:v('--ink'),labelBoxBkgColor:v('--surface-2'),labelTextColor:v('--ink'),
+        edgeLabelBackground:v('--surface'),attributeBackgroundColorOdd:v('--surface'),attributeBackgroundColorEven:v('--surface-2')}});
+    blocks.forEach(function(el){el.removeAttribute('data-processed');el.textContent=el.dataset.src;});
+    try{await mermaid.run({nodes:blocks});}catch(e){console.error(e);}
+  };
+  render();
+  if(media.addEventListener) media.addEventListener('change',render);
+}
+</script>
+<script>
+// Kembali ke index lokal bila dibuka dari komputer, ke index artifact bila dibuka dari claude.ai.
+(function(){var h=location.hostname;var art=location.protocol!=='file:'&&/claude/i.test(h);
+if(art){document.querySelectorAll('a.back').forEach(function(a){a.href='https://claude.ai/artifact/X39UeaJRpBKwqFjswGNqip';a.target='_blank';a.rel='noopener';});
+document.querySelectorAll('.dl').forEach(function(d){d.hidden=true;});}})();
+</script>
