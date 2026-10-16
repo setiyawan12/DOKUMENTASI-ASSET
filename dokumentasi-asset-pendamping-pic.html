@@ -1,0 +1,1205 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Master Pendamping &amp; Tugas PIC</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap">
+<style>
+:root{
+  --ground:#F3F5F9; --surface:#FFFFFF; --surface-2:#EAEEF5; --ink:#162033; --ink-2:#3A4559; --muted:#657089;
+  --line:#D9DFEA; --accent:#1F5AA6; --accent-soft:#E3ECF8; --accent-ink:#163F75;
+  --wait:#B45F00; --wait-bg:#FFE9C7; --draft:#0078A8; --draft-bg:#D6F1FA;
+  --bad:#C22F2F; --bad-bg:#FDE1E1; --done:#157A41; --done-bg:#D9F2E3; --neutral:#4E5A70; --neutral-bg:#E6EAF1;
+  --code-bg:#0F1A2C; --code-ink:#DCE6F5; --code-muted:#8FA3C2;
+  --shadow:0 1px 2px rgba(22,32,51,.06),0 8px 24px rgba(22,32,51,.06);
+  --font:"Plus Jakarta Sans",ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  color-scheme:dark;
+  --ground:#0E1420; --surface:#151D2C; --surface-2:#1C2638; --ink:#E7ECF5; --ink-2:#C3CBDA; --muted:#8E99AF;
+  --line:#28334A; --accent:#7FAEF0; --accent-soft:#1B2A45; --accent-ink:#B8D2F7;
+  --wait:#FFB861; --wait-bg:#3A2A12; --draft:#6CD3F5; --draft-bg:#113442; --bad:#FF8A8A; --bad-bg:#3D1C1F;
+  --done:#6FD69C; --done-bg:#15321F; --neutral:#B7C1D3; --neutral-bg:#243047;
+  --code-bg:#0A101B; --code-ink:#DCE6F5; --code-muted:#7F93B3; --shadow:0 1px 2px rgba(0,0,0,.3),0 8px 24px rgba(0,0,0,.25);
+}}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --ground:#0E1420; --surface:#151D2C; --surface-2:#1C2638; --ink:#E7ECF5; --ink-2:#C3CBDA; --muted:#8E99AF;
+  --line:#28334A; --accent:#7FAEF0; --accent-soft:#1B2A45; --accent-ink:#B8D2F7;
+  --wait:#FFB861; --wait-bg:#3A2A12; --draft:#6CD3F5; --draft-bg:#113442; --bad:#FF8A8A; --bad-bg:#3D1C1F;
+  --done:#6FD69C; --done-bg:#15321F; --neutral:#B7C1D3; --neutral-bg:#243047;
+  --code-bg:#0A101B; --code-ink:#DCE6F5; --code-muted:#7F93B3; --shadow:0 1px 2px rgba(0,0,0,.3),0 8px 24px rgba(0,0,0,.25);
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth;scroll-padding-top:24px}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+body{background:var(--ground);color:var(--ink);font-family:var(--font);font-size:15px;line-height:1.65;padding-inline:16px}
+a{color:var(--accent)}
+a:focus-visible,button:focus-visible,input:focus-visible,summary:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:4px}
+
+.shell{max-width:1320px;margin:0 auto;display:grid;grid-template-columns:270px minmax(0,1fr);gap:40px;padding-block:28px 80px}
+@media (max-width:960px){.shell{grid-template-columns:minmax(0,1fr);gap:20px}}
+
+/* Navigasi */
+.sidebar{position:sticky;top:calc(env(safe-area-inset-top,0px) + 16px);align-self:start;max-height:calc(100vh - 32px);display:flex;flex-direction:column;gap:12px}
+@media (max-width:960px){.sidebar{display:none}}
+.back{font-size:13px;font-weight:600;text-decoration:none}
+.back-mobile{display:none;margin:0 0 8px}
+@media (max-width:960px){.back-mobile{display:block}}
+.brand{display:flex;align-items:center;gap:10px;font-weight:700;font-size:14px}
+.brand-mark{height:30px;padding-inline:8px;border-radius:8px;background:var(--accent);color:var(--surface);display:grid;place-items:center;font-family:var(--mono);font-size:12px;font-weight:600}
+.search{width:100%;padding:9px 12px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--ink);font:inherit;font-size:13.5px}
+.nav{overflow-y:auto;padding-right:6px;display:flex;flex-direction:column;gap:14px}
+.nav-group p{margin:0 0 4px;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:700}
+.nav a{display:flex;gap:10px;padding:4px 8px;border-radius:6px;text-decoration:none;color:var(--ink-2);font-size:13.5px;line-height:1.4}
+.nav a span{font-family:var(--mono);font-size:11.5px;color:var(--muted);padding-top:1px;min-width:18px}
+.nav a:hover{background:var(--surface-2)}
+.nav a.active{background:var(--accent-soft);color:var(--accent-ink);font-weight:600}
+.nav a.active span{color:var(--accent)}
+.mobile-toc{display:none;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px 14px}
+.mobile-toc summary{font-weight:700;cursor:pointer}
+.mobile-toc .nav{max-height:60vh;margin-top:10px}
+@media (max-width:960px){.mobile-toc{display:block}}
+
+main{min-width:0}
+
+/* Header bergaya label asset */
+.hero{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:28px;align-items:end;padding-block:8px 28px;border-bottom:1px solid var(--line)}
+@media (max-width:760px){.hero{grid-template-columns:minmax(0,1fr)}}
+.eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:.06em;color:var(--accent);text-transform:uppercase;margin:0 0 8px}
+.hero h1{font-size:clamp(30px,5vw,46px);line-height:1.08;letter-spacing:-.02em;margin:0 0 12px;font-weight:800;text-wrap:balance}
+.hero .lede{max-width:62ch;color:var(--ink-2);margin:0;font-size:16px}
+.hero .lede code{font-family:var(--mono);font-size:.86em;background:var(--surface-2);padding:1px 5px;border-radius:5px}
+.tag{background:var(--surface);border:1px dashed var(--muted);border-radius:12px;padding:14px 16px;min-width:250px;font-family:var(--mono);font-size:12px;box-shadow:var(--shadow);position:relative}
+@media (max-width:760px){.tag{min-width:0}}
+.tag::before{content:"";position:absolute;left:14px;top:-7px;width:12px;height:12px;border-radius:50%;background:var(--ground);border:1px dashed var(--muted)}
+.tag dl{display:grid;grid-template-columns:auto 1fr;gap:4px 14px;margin:0}
+.tag dt{color:var(--muted)}
+.tag dd{margin:0;color:var(--ink);font-weight:500}
+.barcode{height:26px;margin-top:10px;background:repeating-linear-gradient(90deg,var(--ink) 0 2px,transparent 2px 4px,var(--ink) 4px 5px,transparent 5px 8px,var(--ink) 8px 11px,transparent 11px 12px);opacity:.75;border-radius:2px}
+.tag .trx{margin-top:4px;text-align:center;letter-spacing:.2em;font-size:11px;color:var(--ink-2)}
+
+/* Panel ringkas */
+.overview{display:grid;gap:18px;padding-block:28px 8px}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:22px}
+.panel h3{margin:0 0 4px;font-size:18px}
+.panel .sub{margin:0 0 18px;color:var(--muted);font-size:14px}
+.panel code{font-family:var(--mono);font-size:.86em;background:var(--surface-2);padding:1px 5px;border-radius:5px;overflow-wrap:anywhere}
+.three{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
+@media (max-width:760px){.three{grid-template-columns:minmax(0,1fr)}}
+.fact{border-left:3px solid var(--accent);padding:2px 0 2px 14px}
+.fact b{display:block;font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.fact p{margin:4px 0 0;font-size:14.5px}
+
+/* Lifecycle */
+.flow{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;align-items:stretch}
+@media (max-width:760px){.flow{grid-template-columns:minmax(0,1fr)}}
+.step{border:1px solid var(--line);border-radius:12px;padding:14px;background:var(--surface);display:flex;flex-direction:column;gap:6px}
+.step .who{font-size:11.5px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.06em}
+.step p{margin:0;font-size:13.5px;color:var(--ink-2)}
+.step .db{font-family:var(--mono);font-size:11.5px;color:var(--muted);margin-top:auto;padding-top:8px;border-top:1px dashed var(--line)}
+.loop{margin-top:12px;display:flex;flex-wrap:wrap;gap:10px;align-items:center;padding:12px 14px;border-radius:12px;background:var(--bad-bg);color:var(--ink);font-size:13.5px}
+.loop strong{color:var(--bad)}
+
+.badge{display:inline-flex;align-items:center;gap:6px;padding:3px 10px;border-radius:999px;font-size:12.5px;font-weight:700;width:max-content}
+.badge::before{content:"";width:7px;height:7px;border-radius:50%;background:currentColor}
+.b-draft{background:var(--draft-bg);color:var(--draft)}
+.b-wait{background:var(--wait-bg);color:var(--wait)}
+.b-bad{background:var(--bad-bg);color:var(--bad)}
+.b-done{background:var(--done-bg);color:var(--done)}
+
+/* Peran */
+.roles{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+@media (max-width:900px){.roles{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:520px){.roles{grid-template-columns:minmax(0,1fr)}}
+.role{border:1px solid var(--line);border-radius:12px;padding:14px 16px;background:var(--surface);display:flex;flex-direction:column;gap:8px}
+.role h4{margin:0;font-size:14.5px}
+.role p{margin:0;font-size:13px;color:var(--muted)}
+.role .links{display:flex;flex-wrap:wrap;gap:6px;margin-top:auto}
+.role .links a{font-family:var(--mono);font-size:11.5px;text-decoration:none;padding:2px 8px;border-radius:6px;background:var(--accent-soft);color:var(--accent-ink)}
+.role .links a:hover{background:var(--accent);color:var(--surface)}
+
+.attention{list-style:none;margin:0;padding:0;display:grid;gap:10px}
+.attention li{display:grid;grid-template-columns:72px minmax(0,1fr);gap:12px;align-items:start;font-size:14px}
+.sev{font-family:var(--mono);font-size:11px;font-weight:600;padding:2px 8px;border-radius:6px;margin-top:2px;text-align:center}
+.sev-h{background:var(--bad-bg);color:var(--bad)}
+.sev-m{background:var(--wait-bg);color:var(--wait)}
+
+/* Konten dokumen */
+.doc{padding-top:8px}
+.group-divider{margin:64px 0 0;display:flex;align-items:center;gap:14px;color:var(--accent);font-size:12px;font-weight:800;letter-spacing:.12em;text-transform:uppercase}
+.group-divider::after{content:"";flex:1;height:2px;background:var(--accent);opacity:.25}
+.doc h2{font-size:clamp(22px,3vw,27px);line-height:1.2;letter-spacing:-.01em;margin:40px 0 14px;display:flex;align-items:baseline;gap:14px;text-wrap:balance}
+.sec-no{font-family:var(--mono);font-size:14px;color:var(--accent);font-weight:600;padding:3px 8px;border:1px solid var(--accent);border-radius:6px;flex:none;transform:translateY(-3px)}
+.doc h3{font-size:18px;margin:30px 0 10px;text-wrap:balance}
+.doc h4{font-size:15.5px;margin:22px 0 8px}
+.doc p,.doc li{max-width:78ch;color:var(--ink-2)}
+.doc strong{color:var(--ink)}
+.doc hr{display:none}
+.doc code{font-family:var(--mono);font-size:.86em;background:var(--surface-2);padding:1px 5px;border-radius:5px;color:var(--ink);overflow-wrap:anywhere}
+.doc .chip{font-weight:600;border-radius:999px;padding:1px 8px}
+.doc .chip-draft{background:var(--draft-bg);color:var(--draft)}
+.doc .chip-wait{background:var(--wait-bg);color:var(--wait)}
+.doc .chip-bad{background:var(--bad-bg);color:var(--bad)}
+.doc .chip-done{background:var(--done-bg);color:var(--done)}
+.doc .chip-neutral{background:var(--neutral-bg);color:var(--neutral)}
+
+.table-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:12px;background:var(--surface);margin:14px 0 20px}
+table{border-collapse:collapse;width:100%;font-size:13.5px;font-variant-numeric:tabular-nums}
+th{text-align:left;background:var(--surface-2);color:var(--ink);font-weight:700;font-size:12.5px;letter-spacing:.02em;padding:10px 12px;border-bottom:1px solid var(--line);white-space:nowrap}
+td{padding:9px 12px;border-bottom:1px solid var(--line);vertical-align:top;color:var(--ink-2);min-width:90px}
+tr:last-child td{border-bottom:0}
+tbody tr:hover td{background:var(--accent-soft)}
+
+.code{position:relative;margin:14px 0 20px}
+.code-lang{position:absolute;top:8px;right:12px;font-family:var(--mono);font-size:10.5px;color:var(--code-muted);letter-spacing:.08em;text-transform:uppercase}
+.doc .code pre{background:var(--code-bg);color:var(--code-ink);border-radius:12px;padding:18px;overflow-x:auto;margin:0;font-size:12.8px;line-height:1.6}
+.doc .code pre code{background:none;color:inherit;padding:0;font-size:inherit;overflow-wrap:normal}
+.diagram{overflow-x:auto;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:18px;margin:14px 0 20px}
+.diagram pre{margin:0}
+.diagram pre.mermaid{font-family:var(--mono);font-size:12px;color:var(--muted);white-space:pre;text-align:center}
+.diagram pre.mermaid[data-processed]{color:inherit;white-space:normal}
+.diagram svg{max-width:100%;height:auto}
+
+.callout{border-radius:12px;padding:12px 16px;margin:14px 0;border:1px solid var(--line);background:var(--surface)}
+.callout p{margin:4px 0}
+.callout-warn{background:var(--wait-bg);border-color:transparent}
+.doc .callout-warn p,.doc .callout-warn strong{color:var(--ink)}
+.callout-note{border-left:3px solid var(--accent)}
+
+.doc .task{list-style:none;padding-left:4px}
+.task::before{content:"";display:inline-block;width:14px;height:14px;border:1.5px solid var(--muted);border-radius:4px;margin-right:10px;vertical-align:-2px}
+.task.done::before{background:var(--done);border-color:var(--done);box-shadow:inset 0 0 0 2px var(--surface)}
+footer{margin-top:64px;padding-top:18px;border-top:1px solid var(--line);color:var(--muted);font-size:13px}
+.to-top{position:fixed;right:16px;bottom:calc(env(safe-area-inset-bottom,0px) + 16px);width:40px;height:40px;border-radius:50%;border:1px solid var(--line);background:var(--surface);color:var(--ink);box-shadow:var(--shadow);cursor:pointer;font-size:16px}
+.dl{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0 12px}.dl a{font-size:12px;font-weight:600;text-decoration:none;border:1px solid var(--line);border-radius:999px;padding:3px 10px;color:var(--ink);background:var(--surface)}.dl a:hover{border-color:var(--accent);color:var(--accent)}.dl[hidden]{display:none}
+</style>
+
+<div class="shell">
+  <aside class="sidebar" aria-label="Daftar isi">
+    <a class="back" href="index.html">← Semua dokumen</a>
+    <div class="dl" aria-label="Unduh dokumen"><a href="dokumentasi-asset-pendamping-pic.html" download>⬇ HTML</a><a href="dokumentasi-asset-pendamping-pic.md" download>⬇ Markdown</a></div>
+    <div class="brand"><span class="brand-mark">PIC</span>Pendamping &amp; PIC</div>
+    <input class="search" id="nav-search" type="search" placeholder="Cari bagian… (mis. API, status)" aria-label="Cari bagian">
+    <nav class="nav" id="nav"><div class="nav-group"><p>Gambaran & Bisnis</p><a href="#s1" data-sec="s1"><span>01</span>Informasi Dokumen</a><a href="#s3" data-sec="s3"><span>03</span>Quick Overview</a><a href="#s4" data-sec="s4"><span>04</span>Ringkasan Fitur</a><a href="#s5" data-sec="s5"><span>05</span>Tujuan Fitur</a><a href="#s6" data-sec="s6"><span>06</span>Aktor</a><a href="#s7" data-sec="s7"><span>07</span>Hak Akses</a><a href="#s8" data-sec="s8"><span>08</span>Terminologi</a><a href="#s9" data-sec="s9"><span>09</span>Business Rules</a><a href="#s10" data-sec="s10"><span>10</span>Business Flow</a><a href="#s11" data-sec="s11"><span>11</span>Flow Berdasarkan Role</a><a href="#s12" data-sec="s12"><span>12</span>Flow Diagram</a><a href="#s13" data-sec="s13"><span>13</span>Sequence Diagram</a><a href="#s14" data-sec="s14"><span>14</span>Status Transaksi</a><a href="#s15" data-sec="s15"><span>15</span>State Transition</a></div><div class="nav-group"><p>Database</p><a href="#s16" data-sec="s16"><span>16</span>Struktur Database</a><a href="#s17" data-sec="s17"><span>17</span>Relasi Database</a><a href="#s18" data-sec="s18"><span>18</span>Data Dictionary</a><a href="#s19" data-sec="s19"><span>19</span>Database Index</a></div><div class="nav-group"><p>Backend & API</p><a href="#s20" data-sec="s20"><span>20</span>Backend Architecture</a><a href="#s21" data-sec="s21"><span>21</span>Backend Business Logic</a><a href="#s22" data-sec="s22"><span>22</span>Dampak terhadap asset_data</a><a href="#s23" data-sec="s23"><span>23</span>API Documentation</a><a href="#s24" data-sec="s24"><span>24</span>Detail Setiap API</a></div><div class="nav-group"><p>Mobile</p><a href="#s25" data-sec="s25"><span>25</span>Mobile Architecture</a><a href="#s26" data-sec="s26"><span>26</span>Mobile Screen</a><a href="#s27" data-sec="s27"><span>27</span>Mobile → API</a><a href="#s28" data-sec="s28"><span>28</span>API → Mobile</a><a href="#s29" data-sec="s29"><span>29</span>Mapping Mobile → API → Database</a><a href="#s30" data-sec="s30"><span>30</span>Mapping Database → API → Mobile</a></div><div class="nav-group"><p>Validasi, Error & Keamanan</p><a href="#s31" data-sec="s31"><span>31</span>Validation</a><a href="#s32" data-sec="s32"><span>32</span>Error Handling</a><a href="#s33" data-sec="s33"><span>33</span>Audit Trail</a><a href="#s34" data-sec="s34"><span>34</span>Notification</a><a href="#s35" data-sec="s35"><span>35</span>Security</a></div><div class="nav-group"><p>Manual Book</p><a href="#s36" data-sec="s36"><span>36</span>Manual Book User/Admin</a><a href="#s37" data-sec="s37"><span>37</span>Kondisi Button</a></div><div class="nav-group"><p>QA & Risiko</p><a href="#s38" data-sec="s38"><span>38</span>Testing Scenario</a><a href="#s39" data-sec="s39"><span>39</span>Temuan Ketidaksesuaian</a><a href="#s40" data-sec="s40"><span>40</span>Edge Case</a><a href="#s41" data-sec="s41"><span>41</span>Potential Bug / Technical Risk</a></div><div class="nav-group"><p>Referensi Developer</p><a href="#s42" data-sec="s42"><span>42</span>Dependency</a><a href="#s43" data-sec="s43"><span>43</span>Source Code Reference</a><a href="#s44" data-sec="s44"><span>44</span>Developer Notes</a><a href="#s45" data-sec="s45"><span>45</span>End-to-End Traceability</a><a href="#s46" data-sec="s46"><span>46</span>Ringkasan Database Impact</a><a href="#s47" data-sec="s47"><span>47</span>Checklist Implementasi</a><a href="#s48" data-sec="s48"><span>48</span>Changelog</a></div></nav>
+  </aside>
+
+  <main>
+    <p class="back-mobile"><a class="back" href="index.html">← Semua dokumen</a> <div class="dl" aria-label="Unduh dokumen"><a href="dokumentasi-asset-pendamping-pic.html" download>⬇ HTML</a><a href="dokumentasi-asset-pendamping-pic.md" download>⬇ Markdown</a></div></p>
+    <header class="hero">
+      <div>
+        <p class="eyebrow">Asset Management · Dokumentasi Teknis &amp; Manual Book</p>
+        <h1>Master Pendamping &amp; Tugas PIC</h1>
+        <p class="lede">Satu master pendamping dipakai sebagai PIC pada Pemeliharaan Gudang, Klaim Garansi, dan Perbaikan. Admin mengelola master; karyawan PIC melihat semua tugasnya di satu dashboard. Seluruh isi diturunkan dari source code <code>API</code> (Lumen) dan <code>MOBILE</code> (Flutter).</p>
+      </div>
+      <div class="tag" aria-label="Identitas dokumen">
+        <dl>
+          <dt>Kode</dt><dd>PIC</dd><dt>Modul</dt><dd>Pemeliharaan Aset</dd><dt>Versi</dt><dd>1.2 · 12 Okt 2026</dd><dt>Stack</dt><dd>Lumen 10 · Flutter</dd><dt>API</dt><dd>5 endpoint</dd>
+        </dl>
+        <div class="barcode" aria-hidden="true"></div>
+        <div class="trx">asset_pendamping_m</div>
+      </div>
+    </header>
+
+    <details class="mobile-toc">
+      <summary>Daftar isi</summary>
+      <nav class="nav"><div class="nav-group"><p>Gambaran & Bisnis</p><a href="#s1" data-sec="s1"><span>01</span>Informasi Dokumen</a><a href="#s3" data-sec="s3"><span>03</span>Quick Overview</a><a href="#s4" data-sec="s4"><span>04</span>Ringkasan Fitur</a><a href="#s5" data-sec="s5"><span>05</span>Tujuan Fitur</a><a href="#s6" data-sec="s6"><span>06</span>Aktor</a><a href="#s7" data-sec="s7"><span>07</span>Hak Akses</a><a href="#s8" data-sec="s8"><span>08</span>Terminologi</a><a href="#s9" data-sec="s9"><span>09</span>Business Rules</a><a href="#s10" data-sec="s10"><span>10</span>Business Flow</a><a href="#s11" data-sec="s11"><span>11</span>Flow Berdasarkan Role</a><a href="#s12" data-sec="s12"><span>12</span>Flow Diagram</a><a href="#s13" data-sec="s13"><span>13</span>Sequence Diagram</a><a href="#s14" data-sec="s14"><span>14</span>Status Transaksi</a><a href="#s15" data-sec="s15"><span>15</span>State Transition</a></div><div class="nav-group"><p>Database</p><a href="#s16" data-sec="s16"><span>16</span>Struktur Database</a><a href="#s17" data-sec="s17"><span>17</span>Relasi Database</a><a href="#s18" data-sec="s18"><span>18</span>Data Dictionary</a><a href="#s19" data-sec="s19"><span>19</span>Database Index</a></div><div class="nav-group"><p>Backend & API</p><a href="#s20" data-sec="s20"><span>20</span>Backend Architecture</a><a href="#s21" data-sec="s21"><span>21</span>Backend Business Logic</a><a href="#s22" data-sec="s22"><span>22</span>Dampak terhadap asset_data</a><a href="#s23" data-sec="s23"><span>23</span>API Documentation</a><a href="#s24" data-sec="s24"><span>24</span>Detail Setiap API</a></div><div class="nav-group"><p>Mobile</p><a href="#s25" data-sec="s25"><span>25</span>Mobile Architecture</a><a href="#s26" data-sec="s26"><span>26</span>Mobile Screen</a><a href="#s27" data-sec="s27"><span>27</span>Mobile → API</a><a href="#s28" data-sec="s28"><span>28</span>API → Mobile</a><a href="#s29" data-sec="s29"><span>29</span>Mapping Mobile → API → Database</a><a href="#s30" data-sec="s30"><span>30</span>Mapping Database → API → Mobile</a></div><div class="nav-group"><p>Validasi, Error & Keamanan</p><a href="#s31" data-sec="s31"><span>31</span>Validation</a><a href="#s32" data-sec="s32"><span>32</span>Error Handling</a><a href="#s33" data-sec="s33"><span>33</span>Audit Trail</a><a href="#s34" data-sec="s34"><span>34</span>Notification</a><a href="#s35" data-sec="s35"><span>35</span>Security</a></div><div class="nav-group"><p>Manual Book</p><a href="#s36" data-sec="s36"><span>36</span>Manual Book User/Admin</a><a href="#s37" data-sec="s37"><span>37</span>Kondisi Button</a></div><div class="nav-group"><p>QA & Risiko</p><a href="#s38" data-sec="s38"><span>38</span>Testing Scenario</a><a href="#s39" data-sec="s39"><span>39</span>Temuan Ketidaksesuaian</a><a href="#s40" data-sec="s40"><span>40</span>Edge Case</a><a href="#s41" data-sec="s41"><span>41</span>Potential Bug / Technical Risk</a></div><div class="nav-group"><p>Referensi Developer</p><a href="#s42" data-sec="s42"><span>42</span>Dependency</a><a href="#s43" data-sec="s43"><span>43</span>Source Code Reference</a><a href="#s44" data-sec="s44"><span>44</span>Developer Notes</a><a href="#s45" data-sec="s45"><span>45</span>End-to-End Traceability</a><a href="#s46" data-sec="s46"><span>46</span>Ringkasan Database Impact</a><a href="#s47" data-sec="s47"><span>47</span>Checklist Implementasi</a><a href="#s48" data-sec="s48"><span>48</span>Changelog</a></div></nav>
+    </details>
+
+    <section class="overview" aria-label="Ringkasan">
+      <div class="panel">
+        <h3>Ringkasan dalam 1 menit: satu master, satu dashboard</h3>
+        <p class="sub">Pendamping tidak dihapus karena dirujuk FK; cukup dinonaktifkan.</p>
+        <div class="three">
+          <div class="fact"><b>Master</b><p>Satu baris per karyawan (<code>flag_aktif</code>). Hanya karyawan aktif yang bisa didaftarkan dan dipilih sebagai PIC.</p></div>
+          <div class="fact"><b>Guard nonaktif</b><p>Pendamping yang masih menjadi PIC transaksi berjalan (PML01 gudang, PML03, PML02) tidak bisa dinonaktifkan.</p></div>
+          <div class="fact"><b>Tugas PIC</b><p>Satu halaman: jumlah Jadwal/Proses/Selesai per alur dan tugas yang menunggu tindakan.</p></div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h3>Alur singkat</h3>
+        <p class="sub">Dari pendaftaran sampai tugas dikerjakan.</p>
+        <div class="flow">
+          <div class="step"><span class="badge b-wait">Daftar</span><span class="who">Admin: Master Pendamping</span><p>Pilih karyawan aktif.</p><span class="db">asset_pendamping_m</span></div>
+          <div class="step"><span class="badge b-draft">Tunjuk PIC</span><span class="who">Admin: Buat transaksi</span><p>Pilih pendamping aktif pada PM gudang, klaim, atau perbaikan.</p><span class="db">id_asset_pendamping_m</span></div>
+          <div class="step"><span class="badge b-draft">Kerjakan</span><span class="who">PIC: Tugas PIC</span><p>Notifikasi → dashboard → daftar transaksi.</p><span class="db">GET karyawan/pic/ringkasan</span></div>
+          <div class="step"><span class="badge b-done">Nonaktifkan</span><span class="who">Admin</span><p>Setelah tidak bertugas.</p><span class="db">flag_aktif = 0</span></div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h3>Mulai dari sini sesuai peran</h3>
+        <p class="sub">Lompat langsung ke bagian yang paling relevan.</p>
+        <div class="roles">
+          <div class="role"><h4>Business Analyst / PM</h4><p>Aturan bisnis, status, perbedaan dengan dokumen bisnis.</p><div class="links"><a href="#s3">§3</a><a href="#s9">§9 Rules</a><a href="#s14">§14 Status</a><a href="#s39">§39 INC</a></div></div>
+          <div class="role"><h4>Backend Developer</h4><p>Logika, dampak ke asset_data, kontrak API.</p><div class="links"><a href="#s21">§21 Logic</a><a href="#s22">§22 asset_data</a><a href="#s24">§24 API</a></div></div>
+          <div class="role"><h4>Mobile Developer</h4><p>Bloc, route, layar, objek aksi.</p><div class="links"><a href="#s25">§25</a><a href="#s26">§26 Screen</a><a href="#s29">§29 Mapping</a></div></div>
+          <div class="role"><h4>QA / Tester</h4><p>Test API master + 5 test mobile, skenario, edge case, risiko.</p><div class="links"><a href="#s38">§38 Test</a><a href="#s40">§40 Edge</a><a href="#s41">§41 Risk</a></div></div>
+          <div class="role"><h4>Technical Support</h4><p>Pesan error, audit trail, notifikasi.</p><div class="links"><a href="#s32">§32 Error</a><a href="#s33">§33 Audit</a><a href="#s34">§34 Notif</a></div></div>
+          <div class="role"><h4>User / Admin Asset</h4><p>Langkah operasional dan kondisi tombol.</p><div class="links"><a href="#s36">§36 Manual Book</a><a href="#s37">§37 Tombol</a></div></div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h3>Perlu perhatian</h3>
+        <p class="sub">Temuan terpenting. Detail di <a href="#s39">§39</a> dan <a href="#s41">§41</a>.</p>
+        <ul class="attention">
+          <li><span class="sev sev-h">TINGGI</span><span>ALTER <code>asset_pendamping_m</code> ada di SQL PML01 gudang (manual). <a href="#s41">RISK-001</a></span></li>
+          <li><span class="sev sev-l">RENDAH</span><span>Pesan penolakan nonaktif menyebut hanya pemeliharaan gudang. <a href="#s39">INC-03</a></span></li>
+        </ul>
+      </div>
+    </section>
+
+    <article class="doc">
+<div class="group-divider" id="g1"><span>Gambaran &amp; Bisnis</span></div><h2 id="s1"><span class="sec-no">01</span>Informasi Dokumen</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Informasi</th>
+<th>Nilai</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Nama Fitur</td>
+<td>Master Pendamping (admin) dan Tugas PIC (karyawan)</td>
+</tr>
+<tr>
+<td>Kode Fitur</td>
+<td>Pendukung PML01 gudang, PML02, PML03 (tanpa nomor transaksi sendiri)</td>
+</tr>
+<tr>
+<td>Modul</td>
+<td>Asset Management — Pemeliharaan Aset</td>
+</tr>
+<tr>
+<td>Backend</td>
+<td>Laravel <strong>Lumen ^10.0</strong>, PHP ^8.1, JWT, Query Builder</td>
+</tr>
+<tr>
+<td>Database</td>
+<td>Tabel <code>asset_pendamping_m</code> (di-ALTER lewat <code>Claude outputs/sql-pml01-pemeliharaan-gudang.sql</code>, blok 0). ⚠️ SQL manual</td>
+</tr>
+<tr>
+<td>Mobile</td>
+<td>Flutter (<code>professional_flutter_3_35</code>), <code>flutter_bloc</code>, <code>dio</code></td>
+</tr>
+<tr>
+<td>Web</td>
+<td>⚠️ Belum ditemukan</td>
+</tr>
+<tr>
+<td>Test otomatis</td>
+<td>API: <code>AssetPemeliharaanGudangTest::test_pendamping_master_store_and_reactivate</code> (+ ringkasan PIC di <code>AssetGaransiTest</code>, <code>AssetPerbaikanTest</code>, <code>AssetPemeliharaanGudangTest</code>) · Mobile: <code>test/asset/asset_pic_dashboard_test.dart</code> (5 test)</td>
+</tr>
+<tr>
+<td>Versi dokumen</td>
+<td>1.2 — 12 Oktober 2026</td>
+</tr>
+<tr>
+<td>Dokumen terkait</td>
+<td>Pemeliharaan Gudang, Klaim Garansi, Perbaikan</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="s3"><span class="sec-no">03</span>Quick Overview</h2>
+<p>Tiga alur pemeliharaan membutuhkan <strong>PIC</strong> yang menjalankan tugas di lapangan: PIC Pendamping (PML01 gudang), PIC Claim (PML03), dan PIC Service (PML02). Ketiganya dipilih dari satu <strong>master pendamping</strong>. Admin mendaftarkan karyawan aktif sebagai pendamping, dan dapat menonaktifkannya (tidak dihapus karena dirujuk FK). Karyawan yang menjadi PIC melihat semua tugasnya di satu halaman <strong>Tugas PIC</strong>: jumlah per tab (Jadwal/Proses/Selesai) dan daftar tugas yang menunggu tindakannya.</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Aspek</th>
+<th>Ringkasan</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Aktor</td>
+<td>Admin Asset (master), Karyawan PIC (dashboard), Sistem</td>
+</tr>
+<tr>
+<td>Tabel utama</td>
+<td><code>asset_pendamping_m</code></td>
+</tr>
+<tr>
+<td>Endpoint</td>
+<td>4 master (admin) + 1 ringkasan (karyawan)</td>
+</tr>
+<tr>
+<td>Pembatasan</td>
+<td>Pendamping yang masih menjadi PIC transaksi berjalan tidak bisa dinonaktifkan</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="s4"><span class="sec-no">04</span>Ringkasan Fitur</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>No</th>
+<th>Fitur</th>
+<th>Aktor</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>Lihat master pendamping (filter aktif)</td>
+<td>Admin</td>
+</tr>
+<tr>
+<td>2</td>
+<td>Daftarkan karyawan aktif sebagai pendamping / aktifkan kembali</td>
+<td>Admin</td>
+</tr>
+<tr>
+<td>3</td>
+<td>Nonaktifkan / aktifkan pendamping</td>
+<td>Admin</td>
+</tr>
+<tr>
+<td>4</td>
+<td>Dashboard Tugas PIC: jumlah per tab dan tugas perlu tindakan</td>
+<td>Karyawan PIC</td>
+</tr>
+<tr>
+<td>5</td>
+<td>Pintasan dari tugas ke daftar transaksi yang sesuai</td>
+<td>Karyawan PIC</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="s5"><span class="sec-no">05</span>Tujuan Fitur</h2>
+<h3>5.1 Tujuan Bisnis (diturunkan dari kode)</h3>
+<ul>
+<li>Penanggung jawab lapangan dipilih dari daftar resmi, bukan karyawan sembarang.</li>
+<li>Satu karyawan satu baris master; riwayat penugasan tetap utuh walau pendamping dinonaktifkan.</li>
+<li>PIC cukup membuka satu halaman untuk semua tugasnya.</li>
+</ul>
+<h3>5.2 Tujuan Sistem</h3>
+<ul>
+<li>Menjaga integritas FK dari tiga tabel transaksi ke master.</li>
+<li>Mencegah penonaktifan pendamping yang sedang bertugas.</li>
+<li>Menyediakan ringkasan tugas dengan satu panggilan API.</li>
+</ul>
+<h2 id="s6"><span class="sec-no">06</span>Aktor</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Aktor</th>
+<th>Peran</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Admin Asset</td>
+<td>Mengelola master pendamping</td>
+</tr>
+<tr>
+<td>Karyawan PIC</td>
+<td>Karyawan yang ditunjuk pada transaksi; memakai dashboard Tugas PIC</td>
+</tr>
+<tr>
+<td>Sistem</td>
+<td>Memvalidasi status karyawan dan penugasan aktif</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="s7"><span class="sec-no">07</span>Hak Akses</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Aksi</th>
+<th>Admin</th>
+<th>Karyawan</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Master pendamping (daftar, opsi, tambah, status)</td>
+<td>✅</td>
+<td>❌</td>
+</tr>
+<tr>
+<td>Ringkasan Tugas PIC</td>
+<td>❌ (bukan tujuan)</td>
+<td>✅ (hanya tugas milik sendiri)</td>
+</tr>
+</tbody>
+</table></div>
+<p>Ringkasan PIC dihitung dari <code>id_karyawan</code> pada token; karyawan tanpa penugasan mendapat nol dan daftar kosong.</p>
+<h2 id="s8"><span class="sec-no">08</span>Terminologi</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Istilah</th>
+<th>Arti</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Pendamping</td>
+<td>Baris master <code>asset_pendamping_m</code></td>
+</tr>
+<tr>
+<td>PIC</td>
+<td>Pendamping yang ditunjuk pada transaksi (<code>id_pic_pendamping</code>)</td>
+</tr>
+<tr>
+<td>Perlu tindakan</td>
+<td>Transaksi yang menunggu langkah PIC (mis. terima, kirim, isi hasil)</td>
+</tr>
+<tr>
+<td>Aktif</td>
+<td><code>flag_aktif = 1</code></td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="s9"><span class="sec-no">09</span>Business Rules</h2>
+<h3>BR-001 — Satu baris per karyawan</h3>
+<p>Unik <code>(id_company, id_karyawan)</code>. Mendaftarkan ulang karyawan nonaktif mengaktifkannya kembali dan menyegarkan NIK/nama.</p>
+<h3>BR-002 — Hanya karyawan aktif</h3>
+<p>Mendaftarkan atau mengaktifkan pendamping mensyaratkan karyawan berstatus aktif. Pesan: <em>"Karyawan tidak ditemukan atau tidak aktif."</em></p>
+<h3>BR-003 — Tidak ganda</h3>
+<p>Karyawan yang sudah menjadi pendamping aktif ditolak: <em>"Karyawan sudah terdaftar sebagai pendamping."</em></p>
+<h3>BR-004 — Nonaktifkan dengan syarat</h3>
+<p>Pendamping tidak bisa dinonaktifkan bila masih menjadi PIC transaksi berjalan di PML01 gudang, PML03, atau PML02 (<code>hasActivePic</code>). Pesan: <em>"Pendamping masih menjadi PIC pemeliharaan gudang yang berjalan. Ganti PIC terlebih dahulu."</em></p>
+<h3>BR-005 — Hanya pendamping aktif yang dapat dipilih</h3>
+<p>Form buat/ubah PML01 gudang, PML03, dan PML02 hanya menawarkan pendamping aktif yang karyawannya masih aktif.</p>
+<h3>BR-006 — Tidak dihapus</h3>
+<p>Pendamping dinonaktifkan, tidak dihapus, karena dirujuk FK transaksi.</p>
+<h3>BR-007 — Ringkasan PIC</h3>
+<p>Menampilkan, per alur, jumlah transaksi milik PIC per tab dan daftar tugas yang perlu tindakan. Tab: <code>jadwal</code> (menunggu serah terima/penjadwalan), <code>proses</code>, <code>selesai</code>.</p>
+<h2 id="s10"><span class="sec-no">10</span>Business Flow</h2>
+<ol>
+<li>Admin membuka Pemeliharaan → ikon <strong>Master Pendamping</strong>.</li>
+<li>Admin menambahkan karyawan aktif sebagai pendamping.</li>
+<li>Admin memilih pendamping tersebut sebagai PIC saat membuat PM gudang, klaim garansi, atau perbaikan.</li>
+<li>Karyawan PIC menerima notifikasi, membuka <strong>Tugas PIC</strong>, dan mengikuti tugas.</li>
+<li>Bila pendamping tidak lagi bertugas, admin menonaktifkannya (setelah mengganti PIC pada transaksi berjalan).</li>
+</ol>
+<h2 id="s11"><span class="sec-no">11</span>Flow Berdasarkan Role</h2>
+<h3>11.1 Admin Asset</h3>
+<p>Tambah/aktifkan/nonaktifkan pendamping; pilih PIC pada transaksi.</p>
+<h3>11.2 Karyawan PIC</h3>
+<p>Buka Tugas PIC → lihat jumlah per tab dan tugas → ketuk tugas/angka untuk membuka daftar transaksi pada tab yang sesuai.</p>
+<h3>11.3 System</h3>
+<p>Validasi karyawan aktif, cegah penonaktifan bertugas, hitung ringkasan.</p>
+<h2 id="s12"><span class="sec-no">12</span>Flow Diagram</h2>
+<div class="diagram"><pre class="mermaid">flowchart TD
+    A[Admin buka Master Pendamping] --&gt; B{Aksi}
+    B -- tambah --&gt; C{Karyawan aktif dan belum jadi pendamping aktif?}
+    C -- ya --&gt; D[Insert / aktifkan kembali]
+    C -- tidak --&gt; X[Ditolak]
+    B -- nonaktifkan --&gt; E{Masih PIC transaksi berjalan?}
+    E -- ya --&gt; X
+    E -- tidak --&gt; F[flag_aktif = 0]
+    D --&gt; G[Muncul di pilihan PIC]
+    F --&gt; H[Tidak muncul lagi di pilihan PIC]
+</pre></div>
+<h2 id="s13"><span class="sec-no">13</span>Sequence Diagram</h2>
+<div class="diagram"><pre class="mermaid">sequenceDiagram
+    actor PIC as Karyawan PIC
+    participant App as Mobile
+    participant API
+    participant DB
+    PIC-&gt;&gt;App: Buka Tugas PIC
+    App-&gt;&gt;API: GET asset/karyawan/pic/ringkasan
+    API-&gt;&gt;DB: hitung per tab + tugas perlu tindakan (gudang, garansi, perbaikan)
+    API--&gt;&gt;App: {pemeliharaan_gudang, garansi, perbaikan}
+    PIC-&gt;&gt;App: Ketuk tugas
+    App-&gt;&gt;App: Buka daftar transaksi pada tab sesuai aksi
+</pre></div>
+<h2 id="s14"><span class="sec-no">14</span>Status Transaksi</h2>
+<p>Master tidak punya alur status; hanya <code>flag_aktif</code> (<code>1</code> aktif, <code>0</code> nonaktif). Status tugas mengikuti fase masing-masing alur.</p>
+<h2 id="s15"><span class="sec-no">15</span>State Transition</h2>
+<div class="diagram"><pre class="mermaid">stateDiagram-v2
+    [*] --&gt; Aktif: Daftarkan karyawan
+    Aktif --&gt; Nonaktif: Nonaktifkan (tidak sedang bertugas)
+    Nonaktif --&gt; Aktif: Daftarkan ulang / aktifkan (karyawan aktif)
+</pre></div>
+<div class="group-divider" id="g2"><span>Database</span></div><h2 id="s16"><span class="sec-no">16</span>Struktur Database</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Tabel</th>
+<th>Fungsi</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>asset_pendamping_m</code></td>
+<td>Master pendamping</td>
+</tr>
+<tr>
+<td><code>asset_trx_pemeliharaan_gudang</code>, <code>asset_trx_garansi</code>, <code>asset_trx_perbaikan</code></td>
+<td>Merujuk master lewat <code>id_asset_pendamping_m</code> dan menyimpan snapshot PIC</td>
+</tr>
+<tr>
+<td><code>data_karyawan</code></td>
+<td>Sumber identitas dan status karyawan</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="s17"><span class="sec-no">17</span>Relasi Database</h2>
+<div class="diagram"><pre class="mermaid">erDiagram
+    asset_pendamping_m }o--|| data_karyawan : &quot;karyawan&quot;
+    asset_trx_pemeliharaan_gudang }o--|| asset_pendamping_m : &quot;PIC&quot;
+    asset_trx_garansi }o--|| asset_pendamping_m : &quot;PIC Claim&quot;
+    asset_trx_perbaikan }o--|| asset_pendamping_m : &quot;PIC Service&quot;
+</pre></div>
+<h2 id="s18"><span class="sec-no">18</span>Data Dictionary</h2>
+<h3>18.1 asset_pendamping_m</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Kolom</th>
+<th>Tipe</th>
+<th>Keterangan</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>id_asset_pendamping_m</code></td>
+<td>varchar(50) PK</td>
+<td><code>id_company</code>+<code>YYYYMM</code>+3 digit</td>
+</tr>
+<tr>
+<td><code>id_karyawan</code></td>
+<td>varchar(150)</td>
+<td>Karyawan; unik per perusahaan</td>
+</tr>
+<tr>
+<td><code>nama_karyawan</code>, <code>nik</code></td>
+<td>varchar</td>
+<td>Snapshot saat didaftarkan/diaktifkan</td>
+</tr>
+<tr>
+<td><code>flag_aktif</code></td>
+<td>enum('0','1')</td>
+<td>Default <code>1</code>; <code>0</code> = tidak dapat dipilih lagi</td>
+</tr>
+<tr>
+<td><code>id_company</code></td>
+<td>varchar(50)</td>
+<td></td>
+</tr>
+<tr>
+<td><code>tgl_input</code>, <code>user_input</code></td>
+<td>timestamp, varchar</td>
+<td>Pendaftaran</td>
+</tr>
+<tr>
+<td><code>tgl_update</code>, <code>user_update</code></td>
+<td>timestamp null, varchar</td>
+<td>Perubahan status</td>
+</tr>
+</tbody>
+</table></div>
+<p>Indeks: unik <code>apm_company_karyawan_uq (id_company, id_karyawan)</code>.</p>
+<h3>18.2 Respons master (list)</h3>
+<p><code>{id_asset_pendamping_m, id_karyawan, nik, nama_karyawan, flag_aktif (bool), karyawan_aktif (bool)}</code>; <code>karyawan_aktif</code> dari status <code>data_karyawan</code>.</p>
+<h2 id="s19"><span class="sec-no">19</span>Database Index</h2>
+<p>Unik <code>apm_company_karyawan_uq</code>; indeks PIC pada tabel transaksi (<code>…_company_pic_fase_idx</code>) mendukung ringkasan tugas.</p>
+<div class="group-divider" id="g3"><span>Backend &amp; API</span></div><h2 id="s20"><span class="sec-no">20</span>Backend Architecture</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Lapisan</th>
+<th>File</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Route</td>
+<td><code>RouteAsset.php</code> (<code>pendamping/*</code>, <code>karyawan/pic/ringkasan</code>)</td>
+</tr>
+<tr>
+<td>Controller master</td>
+<td><code>Asset/Admin/AssetAdminPendamping_c.php</code></td>
+</tr>
+<tr>
+<td>Controller ringkasan</td>
+<td><code>Asset/Karyawan/AssetKaryawanPic_c.php</code></td>
+</tr>
+<tr>
+<td>Model</td>
+<td><code>Models/Asset/AssetPendamping_m.php</code></td>
+</tr>
+<tr>
+<td>Sumber ringkasan</td>
+<td><code>countByTabForPic</code> dan <code>getPendingForPic</code> di <code>AssetPemeliharaanGudang_m</code>, <code>AssetGaransi_m</code>, <code>AssetPerbaikan_m</code></td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="s21"><span class="sec-no">21</span>Backend Business Logic</h2>
+<h3>21.1 Daftar — <code>getList</code></h3>
+<p>Gabung <code>data_karyawan</code> untuk <code>karyawan_aktif</code>; filter opsional <code>aktif</code>; urut nama.</p>
+<h3>21.2 Opsi — <code>getOptions</code></h3>
+<p>Karyawan aktif yang belum menjadi pendamping aktif.</p>
+<h3>21.3 Tambah — <code>store</code></h3>
+<p>Validasi karyawan aktif; bila baris ada: nonaktif → diaktifkan kembali (NIK/nama disegarkan), aktif → ditolak; bila belum ada → insert dengan nomor urut.</p>
+<h3>21.4 Status — <code>setAktif</code></h3>
+<p>Aktivasi butuh karyawan aktif; nonaktif ditolak bila <code>hasActivePic</code> benar di salah satu dari tiga alur.</p>
+<h3>21.5 Pendamping untuk pilihan PIC — <code>getList(…, true)</code> + <code>findAktif</code></h3>
+<p>Dipakai <code>getAdminOptions</code> setiap alur dan <code>picFields</code> saat menyimpan.</p>
+<h3>21.6 Ringkasan PIC — <code>getRingkasanPic</code></h3>
+<p>Memanggil tiga pasang fungsi hitung/daftar dengan <code>id_company</code> dan <code>id_karyawan</code> token.</p>
+<h2 id="s22"><span class="sec-no">22</span>Dampak terhadap asset_data</h2>
+<p>Tidak ada. Fitur ini tidak mengubah <code>asset_data</code>.</p>
+<h2 id="s23"><span class="sec-no">23</span>API Documentation</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Kode</th>
+<th>Method</th>
+<th>Path</th>
+<th>Aktor</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>API-001</td>
+<td>GET</td>
+<td><code>asset/pendamping</code></td>
+<td>Admin</td>
+</tr>
+<tr>
+<td>API-002</td>
+<td>GET</td>
+<td><code>asset/pendamping/options</code></td>
+<td>Admin</td>
+</tr>
+<tr>
+<td>API-003</td>
+<td>POST</td>
+<td><code>asset/pendamping</code></td>
+<td>Admin</td>
+</tr>
+<tr>
+<td>API-004</td>
+<td>POST</td>
+<td><code>asset/pendamping/{id}/status</code></td>
+<td>Admin</td>
+</tr>
+<tr>
+<td>API-005</td>
+<td>GET</td>
+<td><code>asset/karyawan/pic/ringkasan</code></td>
+<td>Karyawan</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="s24"><span class="sec-no">24</span>Detail Setiap API</h2>
+<h3>API-001 — Daftar</h3>
+<p>Query <code>aktif</code> (<code>0|1</code>, opsional). Respons <code>{records: [...]}</code> (lihat §18.2).</p>
+<h3>API-002 — Opsi</h3>
+<p><code>{karyawan: [{id_karyawan, nik, nama_karyawan}]}</code>.</p>
+<h3>API-003 — Tambah</h3>
+<pre><code class="language-json">{&quot;id_karyawan&quot;: &quot;EMP-2&quot;}
+</code></pre>
+<p>Respons: baris master hasil tambah/aktivasi.</p>
+<h3>API-004 — Status</h3>
+<pre><code class="language-json">{&quot;flag_aktif&quot;: &quot;0&quot;}
+</code></pre>
+<p><code>flag_aktif</code> ∈ <code>0|1</code>.</p>
+<h3>API-005 — Ringkasan Tugas PIC</h3>
+<pre><code class="language-json">{
+  &quot;pemeliharaan_gudang&quot;: {&quot;jumlah&quot;: {&quot;jadwal&quot;: 1, &quot;proses&quot;: 0, &quot;selesai&quot;: 3},
+    &quot;perlu_tindakan&quot;: [{&quot;id&quot;: &quot;…&quot;, &quot;no_trx&quot;: &quot;PML01-3-202610001&quot;, &quot;fase_pemeliharaan&quot;: &quot;penjadwalan&quot;,
+      &quot;tgl_pemeliharaan&quot;: &quot;…&quot;, &quot;jam_pemeliharaan&quot;: &quot;…&quot;, &quot;jumlah_asset&quot;: 2, &quot;aksi&quot;: &quot;hasil&quot;}]},
+  &quot;garansi&quot;: {&quot;jumlah&quot;: {&quot;jadwal&quot;: 0, &quot;proses&quot;: 1, &quot;selesai&quot;: 0}, &quot;perlu_tindakan&quot;: [...]},
+  &quot;perbaikan&quot;: {&quot;jumlah&quot;: {&quot;jadwal&quot;: 0, &quot;proses&quot;: 0, &quot;selesai&quot;: 0}, &quot;perlu_tindakan&quot;: []}
+}
+</code></pre>
+<p>Nilai <code>aksi</code>: <code>hasil</code> (gudang; langkah Mulai sudah dihapus), <code>terima</code>/<code>klaim</code> (garansi), <code>terima</code>/<code>service</code> (perbaikan).</p>
+<div class="group-divider" id="g4"><span>Mobile</span></div><h2 id="s25"><span class="sec-no">25</span>Mobile Architecture</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Lapisan</th>
+<th>File</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Master: model/API</td>
+<td><code>AssetPendamping</code> di <code>mAssetPemeliharaanGudang.dart</code>; <code>AssetPendampingApi</code> di <code>assetPemeliharaanGudangApi.dart</code></td>
+</tr>
+<tr>
+<td>Master: bloc/UI</td>
+<td><code>Bloc/Asset/AssetPendampingBloc.dart</code>; <code>UI/Modul/Asset/Pemeliharaan/Pic/HalamanPendampingAsset.dart</code></td>
+</tr>
+<tr>
+<td>Tugas PIC: model/API</td>
+<td><code>lib/Repository/Model/Asset/mAssetPic.dart</code>; <code>lib/Repository/Service/assetPicApi.dart</code></td>
+</tr>
+<tr>
+<td>Tugas PIC: bloc/UI</td>
+<td><code>Bloc/Asset/AssetPicBloc.dart</code>; <code>UI/Modul/Asset/Pemeliharaan/Pic/HalamanAssetPic.dart</code></td>
+</tr>
+<tr>
+<td>Navigasi</td>
+<td><code>NavigateToAssetPendamping</code>, <code>NavigateToAssetPic</code>; rute <code>/asset_admin_pendamping</code>, <code>/asset_pic</code></td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="s26"><span class="sec-no">26</span>Mobile Screen</h2>
+<h3>26.1 Master Pendamping — <code>HalamanPendampingAsset</code></h3>
+<p>Daftar pendamping (aktif/nonaktif), tombol tambah (memilih karyawan dari opsi), saklar status. Menonaktifkan meminta konfirmasi dahulu. Karyawan yang tidak aktif lagi ditandai dan saklarnya tidak dapat diaktifkan.</p>
+<h3>26.2 Tugas PIC — <code>HalamanAssetPic</code></h3>
+<p>Ringkasan jumlah Jadwal/Proses/Selesai per alur (ketuk angka membuka daftar pada tab itu), bagian <strong>Perlu Tindakan</strong> berisi kartu tugas (label aksi: Isi Hasil, Terima Aset, Urus Klaim, Urus Service), keadaan kosong, dan keadaan gagal dengan coba lagi.</p>
+<h3>26.3 Entry point</h3>
+<p>Master: ikon <strong>Kelola Pendamping</strong> pada halaman <strong>Pemeliharaan</strong> admin (tampil di tab Gudang). Tugas PIC: satu kartu <strong>Tugas PIC</strong> di beranda Asset (menggantikan kartu terpisah per alur).</p>
+<h2 id="s27"><span class="sec-no">27</span>Mobile → API</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Aksi UI</th>
+<th>Method</th>
+<th>Endpoint</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Muat master</td>
+<td>GET</td>
+<td><code>asset/pendamping</code></td>
+</tr>
+<tr>
+<td>Muat opsi karyawan</td>
+<td>GET</td>
+<td><code>asset/pendamping/options</code></td>
+</tr>
+<tr>
+<td>Tambah</td>
+<td>POST</td>
+<td><code>asset/pendamping</code></td>
+</tr>
+<tr>
+<td>Aktif/nonaktif</td>
+<td>POST</td>
+<td><code>asset/pendamping/{id}/status</code></td>
+</tr>
+<tr>
+<td>Muat Tugas PIC</td>
+<td>GET</td>
+<td><code>asset/karyawan/pic/ringkasan</code></td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="s28"><span class="sec-no">28</span>API → Mobile</h2>
+<p>Master dipetakan ke <code>AssetPendamping</code>; ringkasan ke <code>AssetPicRingkasan</code> (<code>AssetPicSection</code> per alur: <code>AssetPicJumlah</code> + <code>AssetPicTugas</code>). Data yang hilang menjadi nol/kosong.</p>
+<h2 id="s29"><span class="sec-no">29</span>Mapping Mobile → API → Database</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Aksi UI</th>
+<th>Field API</th>
+<th>Kolom DB</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Pilih karyawan</td>
+<td><code>id_karyawan</code></td>
+<td><code>asset_pendamping_m.id_karyawan</code></td>
+</tr>
+<tr>
+<td>Saklar status</td>
+<td><code>flag_aktif</code></td>
+<td><code>flag_aktif</code></td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="s30"><span class="sec-no">30</span>Mapping Database → API → Mobile</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Kolom DB</th>
+<th>Field API</th>
+<th>Tampil di</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>flag_aktif</code></td>
+<td><code>flag_aktif</code></td>
+<td>Saklar/penanda</td>
+</tr>
+<tr>
+<td><code>data_karyawan.status</code></td>
+<td><code>karyawan_aktif</code></td>
+<td>Penanda karyawan tidak aktif</td>
+</tr>
+<tr>
+<td>Jumlah per fase PIC</td>
+<td><code>jumlah.jadwal/proses/selesai</code></td>
+<td>Angka ringkasan</td>
+</tr>
+</tbody>
+</table></div>
+<div class="group-divider" id="g5"><span>Validasi, Error &amp; Keamanan</span></div><h2 id="s31"><span class="sec-no">31</span>Validation</h2>
+<h3>31.1 Mobile</h3>
+<p>Karyawan wajib dipilih saat menambah.</p>
+<h3>31.2 Backend</h3>
+<p><code>id_karyawan</code> wajib (≤150), <code>flag_aktif</code> ∈ <code>0|1</code>, <code>aktif</code> ∈ <code>0|1</code>; aturan bisnis §9.</p>
+<h3>31.3 Database</h3>
+<p>Enum <code>flag_aktif</code>; unik per karyawan; FK dari tabel transaksi.</p>
+<h2 id="s32"><span class="sec-no">32</span>Error Handling</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Kondisi</th>
+<th>Kode</th>
+<th>Contoh pesan</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Validasi</td>
+<td>422</td>
+<td>"Karyawan wajib dipilih."</td>
+</tr>
+<tr>
+<td>Aturan bisnis</td>
+<td>422 <code>BUSINESS_RULE_VIOLATION</code></td>
+<td>"Karyawan sudah terdaftar sebagai pendamping."</td>
+</tr>
+<tr>
+<td>Bukan admin</td>
+<td>403</td>
+<td>"Pengguna tidak memiliki akses admin asset."</td>
+</tr>
+<tr>
+<td>Tidak terautentikasi</td>
+<td>401 <code>UNAUTHORIZED</code></td>
+<td>—</td>
+</tr>
+<tr>
+<td>Sistem</td>
+<td>500 <code>SYSTEM_ERROR</code></td>
+<td>Pesan umum</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="s33"><span class="sec-no">33</span>Audit Trail</h2>
+<p><code>user_input</code>/<code>tgl_input</code> saat didaftarkan; <code>user_update</code>/<code>tgl_update</code> saat diaktifkan ulang atau status berubah (format <code>nik - nama</code>).</p>
+<h2 id="s34"><span class="sec-no">34</span>Notification</h2>
+<p>Fitur ini tidak mengirim notifikasi sendiri. Penugasan PIC memicu notifikasi dari alur masing-masing: <code>pemeliharaan_gudang.ditugaskan</code>, <code>garansi.ditugaskan</code>, <code>perbaikan.ditugaskan</code>.</p>
+<h2 id="s35"><span class="sec-no">35</span>Security</h2>
+<p>JWT; master admin-only; ringkasan dibatasi ke <code>id_karyawan</code> token dan <code>id_company</code>; transaksi + kunci perusahaan pada tulis.</p>
+<div class="group-divider" id="g6"><span>Manual Book</span></div><h2 id="s36"><span class="sec-no">36</span>Manual Book User/Admin</h2>
+<h3>A. Admin — Mendaftarkan pendamping</h3>
+<p>Pemeliharaan → ikon <strong>Master Pendamping</strong> → tambah → pilih karyawan aktif.</p>
+<h3>B. Admin — Menonaktifkan pendamping</h3>
+<p>Matikan saklar. Bila ditolak karena masih bertugas, ganti PIC pada transaksi berjalan lebih dulu.</p>
+<h3>C. Karyawan — Memakai Tugas PIC</h3>
+<p>Beranda Asset → <strong>Tugas PIC</strong>. Ketuk angka untuk membuka daftar pada tab itu, atau ketuk kartu <strong>Perlu Tindakan</strong> untuk membuka daftar yang sesuai langkah.</p>
+<h2 id="s37"><span class="sec-no">37</span>Kondisi Button</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Tombol</th>
+<th>Syarat</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Tambah pendamping</td>
+<td>Admin</td>
+</tr>
+<tr>
+<td>Saklar nonaktif</td>
+<td>Pendamping tidak sedang menjadi PIC transaksi berjalan</td>
+</tr>
+<tr>
+<td>Kartu tugas</td>
+<td>Ada tugas perlu tindakan</td>
+</tr>
+</tbody>
+</table></div>
+<div class="group-divider" id="g7"><span>QA &amp; Risiko</span></div><h2 id="s38"><span class="sec-no">38</span>Testing Scenario</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>No</th>
+<th>Skenario</th>
+<th>Hasil</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>T-01</td>
+<td>Tambah karyawan aktif</td>
+<td>Baris master aktif</td>
+</tr>
+<tr>
+<td>T-02</td>
+<td>Tambah karyawan yang sudah aktif</td>
+<td>Ditolak</td>
+</tr>
+<tr>
+<td>T-03</td>
+<td>Daftarkan ulang karyawan nonaktif</td>
+<td>Aktif kembali</td>
+</tr>
+<tr>
+<td>T-04</td>
+<td>Nonaktifkan pendamping yang masih PIC</td>
+<td>Ditolak</td>
+</tr>
+<tr>
+<td>T-05</td>
+<td>Ringkasan PIC dengan tugas dan tanpa tugas</td>
+<td>Jumlah dan daftar sesuai; nol bila kosong</td>
+</tr>
+<tr>
+<td>T-06</td>
+<td>Ketuk tugas/angka</td>
+<td>Membuka daftar tab yang sesuai</td>
+</tr>
+<tr>
+<td>T-07</td>
+<td>Gagal memuat ringkasan</td>
+<td>Pesan + coba lagi</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="s39"><span class="sec-no">39</span>Temuan Ketidaksesuaian</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>ID</th>
+<th>Temuan</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>INC-01</td>
+<td>PML01 karyawan (konteks karyawan) memakai PIC Pendamping dari alurnya sendiri dan tidak termasuk dashboard Tugas PIC</td>
+</tr>
+<tr>
+<td>INC-02</td>
+<td>Tugas diketuk membuka <strong>daftar</strong>, bukan detail, karena navigasi detail memanggil bloc daftar milik halaman asal</td>
+</tr>
+<tr>
+<td>INC-03</td>
+<td>Pesan penolakan nonaktif menyebut "pemeliharaan gudang" walau pemeriksaan mencakup garansi dan perbaikan</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="s40"><span class="sec-no">40</span>Edge Case</h2>
+<ul>
+<li>Karyawan pendamping menjadi tidak aktif: tetap di master tetapi tidak muncul sebagai pilihan PIC (<code>karyawan_aktif = false</code>).</li>
+<li>Pendamping didaftarkan ulang setelah dinonaktifkan: baris lama dipakai, FK transaksi lama tetap valid.</li>
+<li>PIC tanpa tugas: ringkasan nol dan keadaan kosong.</li>
+</ul>
+<h2 id="s41"><span class="sec-no">41</span>Potential Bug / Technical Risk</h2>
+<h3>RISK-001 — Skema dari SQL manual (TINGGI)</h3>
+<p>ALTER <code>asset_pendamping_m</code> ada di SQL PML01 gudang; tanpa itu <code>flag_aktif</code> tidak ada.</p>
+<h3>RISK-002 — Pesan penolakan menyesatkan (RENDAH)</h3>
+<p>Lihat INC-03.</p>
+<h3>RISK-003 — Ringkasan memanggil banyak query (RENDAH)</h3>
+<p>Enam fungsi hitung/daftar per panggilan; aman pada volume saat ini.</p>
+<div class="group-divider" id="g8"><span>Referensi Developer</span></div><h2 id="s42"><span class="sec-no">42</span>Dependency</h2>
+<p><code>Asset_m/Asset_c</code>, <code>AssetPemeliharaanGudang_m</code>, <code>AssetGaransi_m</code>, <code>AssetPerbaikan_m</code>, <code>data_karyawan</code>.</p>
+<h2 id="s43"><span class="sec-no">43</span>Source Code Reference</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Area</th>
+<th>Lokasi</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Model master</td>
+<td><code>API/app/Models/Asset/AssetPendamping_m.php</code></td>
+</tr>
+<tr>
+<td>Controller</td>
+<td><code>API/app/Http/Controllers/Asset/Admin/AssetAdminPendamping_c.php</code>, <code>Karyawan/AssetKaryawanPic_c.php</code></td>
+</tr>
+<tr>
+<td>SQL</td>
+<td><code>Claude outputs/sql-pml01-pemeliharaan-gudang.sql</code> (blok 0)</td>
+</tr>
+<tr>
+<td>Mobile master</td>
+<td><code>MOBILE/lib/UI/Modul/Asset/Pemeliharaan/Pic/HalamanPendampingAsset.dart</code></td>
+</tr>
+<tr>
+<td>Mobile PIC</td>
+<td><code>MOBILE/lib/UI/Modul/Asset/Pemeliharaan/Pic/HalamanAssetPic.dart</code>, <code>Bloc/Asset/AssetPicBloc.dart</code></td>
+</tr>
+<tr>
+<td>Test mobile</td>
+<td><code>MOBILE/test/asset/asset_pic_dashboard_test.dart</code></td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="s44"><span class="sec-no">44</span>Developer Notes</h2>
+<ul>
+<li>Menambah alur baru yang memakai PIC: tambahkan <code>countByTabForPic</code>/<code>getPendingForPic</code>/<code>hasActivePic</code> di modelnya, daftarkan ke <code>getRingkasanPic</code> dan <code>AssetPendamping_m::setAktif</code>.</li>
+<li>Kunci teks dashboard ada di grup <code>garansi</code> asset.json (<code>pic_*</code>, <code>menu_pic_gabungan*</code>); cek duplikat kunci JSON sebelum menambah.</li>
+<li><code>fromAssetPic</code> pada event navigasi memicu pemuatan ulang dashboard saat kembali.</li>
+</ul>
+<h2 id="s45"><span class="sec-no">45</span>End-to-End Traceability</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Kebutuhan</th>
+<th>Rule</th>
+<th>API</th>
+<th>Mobile</th>
+<th>DB</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>PIC dari daftar resmi</td>
+<td>BR-005</td>
+<td>API-001/002</td>
+<td>Form PIC alur</td>
+<td><code>asset_pendamping_m</code></td>
+</tr>
+<tr>
+<td>Tidak menonaktifkan yang bertugas</td>
+<td>BR-004</td>
+<td>API-004</td>
+<td>Saklar status</td>
+<td><code>…_pic</code>, <code>flag_aktif</code></td>
+</tr>
+<tr>
+<td>Satu halaman tugas</td>
+<td>BR-007</td>
+<td>API-005</td>
+<td><code>HalamanAssetPic</code></td>
+<td>tabel transaksi</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="s46"><span class="sec-no">46</span>Ringkasan Database Impact</h2>
+<p><code>asset_pendamping_m</code> di-ALTER: <code>flag_aktif</code>, <code>tgl_update</code>, <code>user_update</code>, unik <code>(id_company, id_karyawan)</code>. Tidak ada tabel baru.</p>
+<h2 id="s47"><span class="sec-no">47</span>Checklist Implementasi</h2>
+<h3>Database</h3>
+<ul>
+<li class="task done">SQL ALTER (di SQL PML01 gudang)</li>
+<li class="task">SQL dijalankan di setiap environment</li>
+</ul>
+<h3>Backend</h3>
+<ul>
+<li class="task done">Model, controller master, controller ringkasan, route, test</li>
+</ul>
+<h3>Mobile</h3>
+<ul>
+<li class="task done">Master Pendamping, Tugas PIC, test</li>
+</ul>
+<h3>Documentation</h3>
+<ul>
+<li class="task done">Dokumen ini</li>
+</ul>
+<h2 id="s48"><span class="sec-no">48</span>Changelog</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Versi</th>
+<th>Tanggal</th>
+<th>Perubahan</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1.0</td>
+<td>8 Okt 2026</td>
+<td>Dokumen awal Master Pendamping &amp; Tugas PIC</td>
+</tr>
+<tr>
+<td>1.1</td>
+<td>12 Okt 2026</td>
+<td>Sinkronisasi dengan kode 12 Okt 2026: path file mobile mengikuti struktur folder baru (<code>UI/Modul/Asset/&lt;Fitur&gt;/</code> berhuruf kapital, model di <code>Repository/Model/Asset/</code>). <code>HalamanPendampingAsset</code> kini di <code>Pemeliharaan/Pic/</code></td>
+</tr>
+<tr>
+<td>1.2</td>
+<td>12 Okt 2026</td>
+<td>Tugas PIC pemeliharaan gudang: aksi <code>mulai</code> dihapus, kini selalu <code>hasil</code> (langkah Mulai PM dihapus); tab kartu tugas mengikuti <code>fase_pemeliharaan</code>.</td>
+</tr>
+</tbody>
+</table></div>
+    </article>
+
+    <footer>Dokumentasi Master Pendamping &amp; Tugas PIC v1.0 · 8 Oktober 2026 · Disusun dari source lokal API (Lumen) &amp; MOBILE (Flutter). Contoh ID dan nama pada payload adalah data sintetis.</footer>
+  </main>
+</div>
+<button class="to-top" id="to-top" type="button" aria-label="Kembali ke atas">↑</button>
+
+<script>
+(function(){
+  var search=document.getElementById('nav-search');
+  var navs=document.querySelectorAll('.nav');
+  search.addEventListener('input',function(){
+    var q=search.value.trim().toLowerCase();
+    navs.forEach(function(nav){
+      nav.querySelectorAll('.nav-group').forEach(function(g){
+        var any=false;
+        g.querySelectorAll('a').forEach(function(a){
+          var hit=!q||a.textContent.toLowerCase().indexOf(q)>-1;
+          a.hidden=!hit; if(hit) any=true;
+        });
+        g.hidden=!any;
+      });
+    });
+  });
+  var links={};
+  document.querySelectorAll('#nav a').forEach(function(a){links[a.dataset.sec]=a;});
+  var current=null;
+  if('IntersectionObserver' in window){
+    var io=new IntersectionObserver(function(entries){
+      entries.forEach(function(e){
+        if(e.isIntersecting){
+          if(current) current.classList.remove('active');
+          current=links[e.target.id];
+          if(current){current.classList.add('active');var nav=current.closest('.nav');var top=current.offsetTop-nav.offsetTop;if(top<nav.scrollTop||top>nav.scrollTop+nav.clientHeight-30){nav.scrollTop=top-nav.clientHeight/2;}}
+        }
+      });
+    },{rootMargin:'0px 0px -75% 0px'});
+    document.querySelectorAll('.doc h2[id]').forEach(function(h){io.observe(h);});
+  }
+  document.querySelectorAll('.mobile-toc a').forEach(function(a){
+    a.addEventListener('click',function(){a.closest('details').open=false;});
+  });
+  document.getElementById('to-top').addEventListener('click',function(){window.scrollTo({top:0});});
+})();
+</script>
+<script type="module">
+// Fallback renderer: hanya jalan bila viewer belum merender diagram (mis. file dibuka langsung).
+const blocks=[...document.querySelectorAll('pre.mermaid')].filter(function(el){return !el.hasAttribute('data-claude-mermaid-claimed');});
+if(blocks.length){
+  blocks.forEach(function(el){el.setAttribute('data-claude-mermaid-claimed','1');el.dataset.src=el.textContent;});
+  const {default:mermaid}=await import("https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs");
+  const media=window.matchMedia('(prefers-color-scheme: dark)');
+  const render=async function(){
+    const css=getComputedStyle(document.documentElement);
+    const v=function(n){return css.getPropertyValue(n).trim();};
+    mermaid.initialize({startOnLoad:false,securityLevel:'strict',theme:'base',fontFamily:'inherit',
+      themeVariables:{background:v('--surface'),primaryColor:v('--accent-soft'),primaryTextColor:v('--ink'),
+        primaryBorderColor:v('--accent'),lineColor:v('--muted'),secondaryColor:v('--surface-2'),tertiaryColor:v('--surface'),
+        textColor:v('--ink'),mainBkg:v('--accent-soft'),nodeBorder:v('--accent'),clusterBkg:v('--surface-2'),
+        noteBkgColor:v('--surface-2'),noteTextColor:v('--ink'),noteBorderColor:v('--line'),
+        actorBkg:v('--accent-soft'),actorBorder:v('--accent'),actorTextColor:v('--ink'),actorLineColor:v('--muted'),
+        signalColor:v('--ink-2'),signalTextColor:v('--ink'),labelBoxBkgColor:v('--surface-2'),labelTextColor:v('--ink'),
+        edgeLabelBackground:v('--surface'),attributeBackgroundColorOdd:v('--surface'),attributeBackgroundColorEven:v('--surface-2')}});
+    blocks.forEach(function(el){el.removeAttribute('data-processed');el.textContent=el.dataset.src;});
+    try{await mermaid.run({nodes:blocks});}catch(e){console.error(e);}
+  };
+  render();
+  if(media.addEventListener) media.addEventListener('change',render);
+}
+</script>
+<script>
+// Kembali ke index lokal bila dibuka dari komputer, ke index artifact bila dibuka dari claude.ai.
+(function(){var h=location.hostname;var art=location.protocol!=='file:'&&/claude/i.test(h);
+if(art){document.querySelectorAll('a.back').forEach(function(a){a.href='https://claude.ai/artifact/X39UeaJRpBKwqFjswGNqip';a.target='_blank';a.rel='noopener';});
+document.querySelectorAll('.dl').forEach(function(d){d.hidden=true;});}})();
+</script>

@@ -1,0 +1,2880 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Pemeliharaan Terjadwal Asset</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap">
+<style>
+:root{
+  --ground:#F3F5F9; --surface:#FFFFFF; --surface-2:#EAEEF5; --ink:#162033; --ink-2:#3A4559; --muted:#657089;
+  --line:#D9DFEA; --accent:#1F5AA6; --accent-soft:#E3ECF8; --accent-ink:#163F75;
+  --wait:#B45F00; --wait-bg:#FFE9C7; --draft:#0078A8; --draft-bg:#D6F1FA;
+  --bad:#C22F2F; --bad-bg:#FDE1E1; --done:#157A41; --done-bg:#D9F2E3; --neutral:#4E5A70; --neutral-bg:#E6EAF1;
+  --code-bg:#0F1A2C; --code-ink:#DCE6F5; --code-muted:#8FA3C2;
+  --shadow:0 1px 2px rgba(22,32,51,.06),0 8px 24px rgba(22,32,51,.06);
+  --font:"Plus Jakarta Sans",ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  color-scheme:dark;
+  --ground:#0E1420; --surface:#151D2C; --surface-2:#1C2638; --ink:#E7ECF5; --ink-2:#C3CBDA; --muted:#8E99AF;
+  --line:#28334A; --accent:#7FAEF0; --accent-soft:#1B2A45; --accent-ink:#B8D2F7;
+  --wait:#FFB861; --wait-bg:#3A2A12; --draft:#6CD3F5; --draft-bg:#113442; --bad:#FF8A8A; --bad-bg:#3D1C1F;
+  --done:#6FD69C; --done-bg:#15321F; --neutral:#B7C1D3; --neutral-bg:#243047;
+  --code-bg:#0A101B; --code-ink:#DCE6F5; --code-muted:#7F93B3; --shadow:0 1px 2px rgba(0,0,0,.3),0 8px 24px rgba(0,0,0,.25);
+}}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --ground:#0E1420; --surface:#151D2C; --surface-2:#1C2638; --ink:#E7ECF5; --ink-2:#C3CBDA; --muted:#8E99AF;
+  --line:#28334A; --accent:#7FAEF0; --accent-soft:#1B2A45; --accent-ink:#B8D2F7;
+  --wait:#FFB861; --wait-bg:#3A2A12; --draft:#6CD3F5; --draft-bg:#113442; --bad:#FF8A8A; --bad-bg:#3D1C1F;
+  --done:#6FD69C; --done-bg:#15321F; --neutral:#B7C1D3; --neutral-bg:#243047;
+  --code-bg:#0A101B; --code-ink:#DCE6F5; --code-muted:#7F93B3; --shadow:0 1px 2px rgba(0,0,0,.3),0 8px 24px rgba(0,0,0,.25);
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth;scroll-padding-top:24px}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+body{background:var(--ground);color:var(--ink);font-family:var(--font);font-size:15px;line-height:1.65;padding-inline:16px}
+a{color:var(--accent)}
+a:focus-visible,button:focus-visible,input:focus-visible,summary:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:4px}
+
+.shell{max-width:1320px;margin:0 auto;display:grid;grid-template-columns:270px minmax(0,1fr);gap:40px;padding-block:28px 80px}
+@media (max-width:960px){.shell{grid-template-columns:minmax(0,1fr);gap:20px}}
+
+/* Navigasi */
+.sidebar{position:sticky;top:calc(env(safe-area-inset-top,0px) + 16px);align-self:start;max-height:calc(100vh - 32px);display:flex;flex-direction:column;gap:12px}
+@media (max-width:960px){.sidebar{display:none}}
+.back{font-size:13px;font-weight:600;text-decoration:none}
+.back-mobile{display:none;margin:0 0 8px}
+@media (max-width:960px){.back-mobile{display:block}}
+.brand{display:flex;align-items:center;gap:10px;font-weight:700;font-size:14px}
+.brand-mark{height:30px;padding-inline:8px;border-radius:8px;background:var(--accent);color:var(--surface);display:grid;place-items:center;font-family:var(--mono);font-size:12px;font-weight:600}
+.search{width:100%;padding:9px 12px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--ink);font:inherit;font-size:13.5px}
+.nav{overflow-y:auto;padding-right:6px;display:flex;flex-direction:column;gap:14px}
+.nav-group p{margin:0 0 4px;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:700}
+.nav a{display:flex;gap:10px;padding:4px 8px;border-radius:6px;text-decoration:none;color:var(--ink-2);font-size:13.5px;line-height:1.4}
+.nav a span{font-family:var(--mono);font-size:11.5px;color:var(--muted);padding-top:1px;min-width:18px}
+.nav a:hover{background:var(--surface-2)}
+.nav a.active{background:var(--accent-soft);color:var(--accent-ink);font-weight:600}
+.nav a.active span{color:var(--accent)}
+.mobile-toc{display:none;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px 14px}
+.mobile-toc summary{font-weight:700;cursor:pointer}
+.mobile-toc .nav{max-height:60vh;margin-top:10px}
+@media (max-width:960px){.mobile-toc{display:block}}
+
+main{min-width:0}
+
+/* Header bergaya label asset */
+.hero{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:28px;align-items:end;padding-block:8px 28px;border-bottom:1px solid var(--line)}
+@media (max-width:760px){.hero{grid-template-columns:minmax(0,1fr)}}
+.eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:.06em;color:var(--accent);text-transform:uppercase;margin:0 0 8px}
+.hero h1{font-size:clamp(30px,5vw,46px);line-height:1.08;letter-spacing:-.02em;margin:0 0 12px;font-weight:800;text-wrap:balance}
+.hero .lede{max-width:62ch;color:var(--ink-2);margin:0;font-size:16px}
+.hero .lede code{font-family:var(--mono);font-size:.86em;background:var(--surface-2);padding:1px 5px;border-radius:5px}
+.tag{background:var(--surface);border:1px dashed var(--muted);border-radius:12px;padding:14px 16px;min-width:250px;font-family:var(--mono);font-size:12px;box-shadow:var(--shadow);position:relative}
+@media (max-width:760px){.tag{min-width:0}}
+.tag::before{content:"";position:absolute;left:14px;top:-7px;width:12px;height:12px;border-radius:50%;background:var(--ground);border:1px dashed var(--muted)}
+.tag dl{display:grid;grid-template-columns:auto 1fr;gap:4px 14px;margin:0}
+.tag dt{color:var(--muted)}
+.tag dd{margin:0;color:var(--ink);font-weight:500}
+.barcode{height:26px;margin-top:10px;background:repeating-linear-gradient(90deg,var(--ink) 0 2px,transparent 2px 4px,var(--ink) 4px 5px,transparent 5px 8px,var(--ink) 8px 11px,transparent 11px 12px);opacity:.75;border-radius:2px}
+.tag .trx{margin-top:4px;text-align:center;letter-spacing:.2em;font-size:11px;color:var(--ink-2)}
+
+/* Panel ringkas */
+.overview{display:grid;gap:18px;padding-block:28px 8px}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:22px}
+.panel h3{margin:0 0 4px;font-size:18px}
+.panel .sub{margin:0 0 18px;color:var(--muted);font-size:14px}
+.panel code{font-family:var(--mono);font-size:.86em;background:var(--surface-2);padding:1px 5px;border-radius:5px;overflow-wrap:anywhere}
+.three{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
+@media (max-width:760px){.three{grid-template-columns:minmax(0,1fr)}}
+.fact{border-left:3px solid var(--accent);padding:2px 0 2px 14px}
+.fact b{display:block;font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.fact p{margin:4px 0 0;font-size:14.5px}
+
+/* Lifecycle */
+.flow{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;align-items:stretch}
+@media (max-width:760px){.flow{grid-template-columns:minmax(0,1fr)}}
+.step{border:1px solid var(--line);border-radius:12px;padding:14px;background:var(--surface);display:flex;flex-direction:column;gap:6px}
+.step .who{font-size:11.5px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.06em}
+.step p{margin:0;font-size:13.5px;color:var(--ink-2)}
+.step .db{font-family:var(--mono);font-size:11.5px;color:var(--muted);margin-top:auto;padding-top:8px;border-top:1px dashed var(--line)}
+.loop{margin-top:12px;display:flex;flex-wrap:wrap;gap:10px;align-items:center;padding:12px 14px;border-radius:12px;background:var(--bad-bg);color:var(--ink);font-size:13.5px}
+.loop strong{color:var(--bad)}
+
+.badge{display:inline-flex;align-items:center;gap:6px;padding:3px 10px;border-radius:999px;font-size:12.5px;font-weight:700;width:max-content}
+.badge::before{content:"";width:7px;height:7px;border-radius:50%;background:currentColor}
+.b-draft{background:var(--draft-bg);color:var(--draft)}
+.b-wait{background:var(--wait-bg);color:var(--wait)}
+.b-bad{background:var(--bad-bg);color:var(--bad)}
+.b-done{background:var(--done-bg);color:var(--done)}
+
+/* Peran */
+.roles{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+@media (max-width:900px){.roles{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:520px){.roles{grid-template-columns:minmax(0,1fr)}}
+.role{border:1px solid var(--line);border-radius:12px;padding:14px 16px;background:var(--surface);display:flex;flex-direction:column;gap:8px}
+.role h4{margin:0;font-size:14.5px}
+.role p{margin:0;font-size:13px;color:var(--muted)}
+.role .links{display:flex;flex-wrap:wrap;gap:6px;margin-top:auto}
+.role .links a{font-family:var(--mono);font-size:11.5px;text-decoration:none;padding:2px 8px;border-radius:6px;background:var(--accent-soft);color:var(--accent-ink)}
+.role .links a:hover{background:var(--accent);color:var(--surface)}
+
+.attention{list-style:none;margin:0;padding:0;display:grid;gap:10px}
+.attention li{display:grid;grid-template-columns:72px minmax(0,1fr);gap:12px;align-items:start;font-size:14px}
+.sev{font-family:var(--mono);font-size:11px;font-weight:600;padding:2px 8px;border-radius:6px;margin-top:2px;text-align:center}
+.sev-h{background:var(--bad-bg);color:var(--bad)}
+.sev-m{background:var(--wait-bg);color:var(--wait)}
+
+/* Konten dokumen */
+.doc{padding-top:8px}
+.group-divider{margin:64px 0 0;display:flex;align-items:center;gap:14px;color:var(--accent);font-size:12px;font-weight:800;letter-spacing:.12em;text-transform:uppercase}
+.group-divider::after{content:"";flex:1;height:2px;background:var(--accent);opacity:.25}
+.doc h2{font-size:clamp(22px,3vw,27px);line-height:1.2;letter-spacing:-.01em;margin:40px 0 14px;display:flex;align-items:baseline;gap:14px;text-wrap:balance}
+.sec-no{font-family:var(--mono);font-size:14px;color:var(--accent);font-weight:600;padding:3px 8px;border:1px solid var(--accent);border-radius:6px;flex:none;transform:translateY(-3px)}
+.doc h3{font-size:18px;margin:30px 0 10px;text-wrap:balance}
+.doc h4{font-size:15.5px;margin:22px 0 8px}
+.doc p,.doc li{max-width:78ch;color:var(--ink-2)}
+.doc strong{color:var(--ink)}
+.doc hr{display:none}
+.doc code{font-family:var(--mono);font-size:.86em;background:var(--surface-2);padding:1px 5px;border-radius:5px;color:var(--ink);overflow-wrap:anywhere}
+.doc .chip{font-weight:600;border-radius:999px;padding:1px 8px}
+.doc .chip-draft{background:var(--draft-bg);color:var(--draft)}
+.doc .chip-wait{background:var(--wait-bg);color:var(--wait)}
+.doc .chip-bad{background:var(--bad-bg);color:var(--bad)}
+.doc .chip-done{background:var(--done-bg);color:var(--done)}
+.doc .chip-neutral{background:var(--neutral-bg);color:var(--neutral)}
+
+.table-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:12px;background:var(--surface);margin:14px 0 20px}
+table{border-collapse:collapse;width:100%;font-size:13.5px;font-variant-numeric:tabular-nums}
+th{text-align:left;background:var(--surface-2);color:var(--ink);font-weight:700;font-size:12.5px;letter-spacing:.02em;padding:10px 12px;border-bottom:1px solid var(--line);white-space:nowrap}
+td{padding:9px 12px;border-bottom:1px solid var(--line);vertical-align:top;color:var(--ink-2);min-width:90px}
+tr:last-child td{border-bottom:0}
+tbody tr:hover td{background:var(--accent-soft)}
+
+.code{position:relative;margin:14px 0 20px}
+.code-lang{position:absolute;top:8px;right:12px;font-family:var(--mono);font-size:10.5px;color:var(--code-muted);letter-spacing:.08em;text-transform:uppercase}
+.doc .code pre{background:var(--code-bg);color:var(--code-ink);border-radius:12px;padding:18px;overflow-x:auto;margin:0;font-size:12.8px;line-height:1.6}
+.doc .code pre code{background:none;color:inherit;padding:0;font-size:inherit;overflow-wrap:normal}
+.diagram{overflow-x:auto;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:18px;margin:14px 0 20px}
+.diagram pre{margin:0}
+.diagram pre.mermaid{font-family:var(--mono);font-size:12px;color:var(--muted);white-space:pre;text-align:center}
+.diagram pre.mermaid[data-processed]{color:inherit;white-space:normal}
+.diagram svg{max-width:100%;height:auto}
+
+.callout{border-radius:12px;padding:12px 16px;margin:14px 0;border:1px solid var(--line);background:var(--surface)}
+.callout p{margin:4px 0}
+.callout-warn{background:var(--wait-bg);border-color:transparent}
+.doc .callout-warn p,.doc .callout-warn strong{color:var(--ink)}
+.callout-note{border-left:3px solid var(--accent)}
+
+.doc .task{list-style:none;padding-left:4px}
+.task::before{content:"";display:inline-block;width:14px;height:14px;border:1.5px solid var(--muted);border-radius:4px;margin-right:10px;vertical-align:-2px}
+.task.done::before{background:var(--done);border-color:var(--done);box-shadow:inset 0 0 0 2px var(--surface)}
+footer{margin-top:64px;padding-top:18px;border-top:1px solid var(--line);color:var(--muted);font-size:13px}
+.to-top{position:fixed;right:16px;bottom:calc(env(safe-area-inset-bottom,0px) + 16px);width:40px;height:40px;border-radius:50%;border:1px solid var(--line);background:var(--surface);color:var(--ink);box-shadow:var(--shadow);cursor:pointer;font-size:16px}
+.dl{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0 12px}.dl a{font-size:12px;font-weight:600;text-decoration:none;border:1px solid var(--line);border-radius:999px;padding:3px 10px;color:var(--ink);background:var(--surface)}.dl a:hover{border-color:var(--accent);color:var(--accent)}.dl[hidden]{display:none}
+</style>
+
+<div class="shell">
+  <aside class="sidebar" aria-label="Daftar isi">
+    <a class="back" href="index.html">← Semua dokumen</a>
+    <div class="dl" aria-label="Unduh dokumen"><a href="dokumentasi-asset-pemeliharaan-karyawan.html" download>⬇ HTML</a><a href="dokumentasi-asset-pemeliharaan-karyawan.md" download>⬇ Markdown</a></div>
+    <div class="brand"><span class="brand-mark">PML01</span>Pemeliharaan Asset</div>
+    <input class="search" id="nav-search" type="search" placeholder="Cari bagian… (mis. API, status)" aria-label="Cari bagian">
+    <nav class="nav" id="nav"><div class="nav-group"><p>Gambaran & Bisnis</p><a href="#s1" data-sec="s1"><span>01</span>Informasi Dokumen</a><a href="#s3" data-sec="s3"><span>03</span>Quick Overview</a><a href="#s4" data-sec="s4"><span>04</span>Ringkasan Fitur</a><a href="#s5" data-sec="s5"><span>05</span>Tujuan Fitur</a><a href="#s6" data-sec="s6"><span>06</span>Aktor</a><a href="#s7" data-sec="s7"><span>07</span>Hak Akses</a><a href="#s8" data-sec="s8"><span>08</span>Terminologi</a><a href="#s9" data-sec="s9"><span>09</span>Business Rules</a><a href="#s10" data-sec="s10"><span>10</span>Business Flow</a><a href="#s11" data-sec="s11"><span>11</span>Flow Berdasarkan Role</a><a href="#s12" data-sec="s12"><span>12</span>Flow Diagram</a><a href="#s13" data-sec="s13"><span>13</span>Sequence Diagram</a><a href="#s14" data-sec="s14"><span>14</span>Status Transaksi</a><a href="#s15" data-sec="s15"><span>15</span>State Transition</a></div><div class="nav-group"><p>Database</p><a href="#s16" data-sec="s16"><span>16</span>Struktur Database</a><a href="#s17" data-sec="s17"><span>17</span>Relasi Database</a><a href="#s18" data-sec="s18"><span>18</span>Data Dictionary</a><a href="#s19" data-sec="s19"><span>19</span>Database Index</a></div><div class="nav-group"><p>Backend & API</p><a href="#s20" data-sec="s20"><span>20</span>Backend Architecture</a><a href="#s21" data-sec="s21"><span>21</span>Backend Business Logic</a><a href="#s22" data-sec="s22"><span>22</span>Dampak terhadap asset_data</a><a href="#s23" data-sec="s23"><span>23</span>API Documentation</a><a href="#s24" data-sec="s24"><span>24</span>Detail Setiap API</a></div><div class="nav-group"><p>Mobile</p><a href="#s25" data-sec="s25"><span>25</span>Mobile Architecture</a><a href="#s26" data-sec="s26"><span>26</span>Mobile Screen</a><a href="#s27" data-sec="s27"><span>27</span>Mobile → API</a><a href="#s28" data-sec="s28"><span>28</span>API → Mobile</a><a href="#s29" data-sec="s29"><span>29</span>Mapping Mobile → API → Database</a><a href="#s30" data-sec="s30"><span>30</span>Mapping Database → API → Mobile</a></div><div class="nav-group"><p>Validasi, Error & Keamanan</p><a href="#s31" data-sec="s31"><span>31</span>Validation</a><a href="#s32" data-sec="s32"><span>32</span>Error Handling</a><a href="#s33" data-sec="s33"><span>33</span>Audit Trail</a><a href="#s34" data-sec="s34"><span>34</span>Notification</a><a href="#s35" data-sec="s35"><span>35</span>Security</a></div><div class="nav-group"><p>Manual Book</p><a href="#s36" data-sec="s36"><span>36</span>Manual Book User/Admin</a><a href="#s37" data-sec="s37"><span>37</span>Kondisi Button</a></div><div class="nav-group"><p>QA & Risiko</p><a href="#s38" data-sec="s38"><span>38</span>Testing Scenario</a><a href="#s39" data-sec="s39"><span>39</span>Temuan Ketidaksesuaian</a><a href="#s40" data-sec="s40"><span>40</span>Edge Case</a><a href="#s41" data-sec="s41"><span>41</span>Potential Bug / Technical Risk</a></div><div class="nav-group"><p>Referensi Developer</p><a href="#s42" data-sec="s42"><span>42</span>Dependency</a><a href="#s43" data-sec="s43"><span>43</span>Source Code Reference</a><a href="#s44" data-sec="s44"><span>44</span>Developer Notes</a><a href="#s45" data-sec="s45"><span>45</span>End-to-End Traceability</a><a href="#s46" data-sec="s46"><span>46</span>Ringkasan Database Impact</a><a href="#s47" data-sec="s47"><span>47</span>Checklist Implementasi</a><a href="#s48" data-sec="s48"><span>48</span>Changelog</a></div></nav>
+  </aside>
+
+  <main>
+    <p class="back-mobile"><a class="back" href="index.html">← Semua dokumen</a> <div class="dl" aria-label="Unduh dokumen"><a href="dokumentasi-asset-pemeliharaan-karyawan.html" download>⬇ HTML</a><a href="dokumentasi-asset-pemeliharaan-karyawan.md" download>⬇ Markdown</a></div></p>
+    <header class="hero">
+      <div>
+        <p class="eyebrow">Asset Management · Dokumentasi Teknis &amp; Manual Book</p>
+        <h1>Pemeliharaan Terjadwal Asset Karyawan</h1>
+        <p class="lede">Asset yang dipegang karyawan diservis berkala sesuai interval. Jadwal disepakati bersama karyawan, PM dikerjakan vendor dengan didampingi PIC atau lewat Admin/HR, lalu hasil lima tingkat per item menentukan tindak lanjut. Seluruh isi diturunkan dari source code <code>API</code> (Lumen) dan <code>MOBILE</code> (Flutter).</p>
+      </div>
+      <div class="tag" aria-label="Identitas dokumen">
+        <dl>
+          <dt>Kode</dt><dd>PML01</dd>
+          <dt>Modul</dt><dd>Pemeliharaan Aset</dd>
+          <dt>Versi</dt><dd>1.1 · 12 Okt 2026</dd>
+          <dt>Stack</dt><dd>Lumen 10 · Flutter</dd>
+          <dt>API</dt><dd>16 endpoint</dd>
+        </dl>
+        <div class="barcode" aria-hidden="true"></div>
+        <div class="trx">PML01-2-YYYYMMNNN</div>
+      </div>
+    </header>
+
+    <details class="mobile-toc">
+      <summary>Daftar isi</summary>
+      <nav class="nav"><div class="nav-group"><p>Gambaran & Bisnis</p><a href="#s1" data-sec="s1"><span>01</span>Informasi Dokumen</a><a href="#s3" data-sec="s3"><span>03</span>Quick Overview</a><a href="#s4" data-sec="s4"><span>04</span>Ringkasan Fitur</a><a href="#s5" data-sec="s5"><span>05</span>Tujuan Fitur</a><a href="#s6" data-sec="s6"><span>06</span>Aktor</a><a href="#s7" data-sec="s7"><span>07</span>Hak Akses</a><a href="#s8" data-sec="s8"><span>08</span>Terminologi</a><a href="#s9" data-sec="s9"><span>09</span>Business Rules</a><a href="#s10" data-sec="s10"><span>10</span>Business Flow</a><a href="#s11" data-sec="s11"><span>11</span>Flow Berdasarkan Role</a><a href="#s12" data-sec="s12"><span>12</span>Flow Diagram</a><a href="#s13" data-sec="s13"><span>13</span>Sequence Diagram</a><a href="#s14" data-sec="s14"><span>14</span>Status Transaksi</a><a href="#s15" data-sec="s15"><span>15</span>State Transition</a></div><div class="nav-group"><p>Database</p><a href="#s16" data-sec="s16"><span>16</span>Struktur Database</a><a href="#s17" data-sec="s17"><span>17</span>Relasi Database</a><a href="#s18" data-sec="s18"><span>18</span>Data Dictionary</a><a href="#s19" data-sec="s19"><span>19</span>Database Index</a></div><div class="nav-group"><p>Backend & API</p><a href="#s20" data-sec="s20"><span>20</span>Backend Architecture</a><a href="#s21" data-sec="s21"><span>21</span>Backend Business Logic</a><a href="#s22" data-sec="s22"><span>22</span>Dampak terhadap asset_data</a><a href="#s23" data-sec="s23"><span>23</span>API Documentation</a><a href="#s24" data-sec="s24"><span>24</span>Detail Setiap API</a></div><div class="nav-group"><p>Mobile</p><a href="#s25" data-sec="s25"><span>25</span>Mobile Architecture</a><a href="#s26" data-sec="s26"><span>26</span>Mobile Screen</a><a href="#s27" data-sec="s27"><span>27</span>Mobile → API</a><a href="#s28" data-sec="s28"><span>28</span>API → Mobile</a><a href="#s29" data-sec="s29"><span>29</span>Mapping Mobile → API → Database</a><a href="#s30" data-sec="s30"><span>30</span>Mapping Database → API → Mobile</a></div><div class="nav-group"><p>Validasi, Error & Keamanan</p><a href="#s31" data-sec="s31"><span>31</span>Validation</a><a href="#s32" data-sec="s32"><span>32</span>Error Handling</a><a href="#s33" data-sec="s33"><span>33</span>Audit Trail</a><a href="#s34" data-sec="s34"><span>34</span>Notification</a><a href="#s35" data-sec="s35"><span>35</span>Security</a></div><div class="nav-group"><p>Manual Book</p><a href="#s36" data-sec="s36"><span>36</span>Manual Book User/Admin</a><a href="#s37" data-sec="s37"><span>37</span>Kondisi Button</a></div><div class="nav-group"><p>QA & Risiko</p><a href="#s38" data-sec="s38"><span>38</span>Testing Scenario</a><a href="#s39" data-sec="s39"><span>39</span>Temuan Ketidaksesuaian</a><a href="#s40" data-sec="s40"><span>40</span>Edge Case</a><a href="#s41" data-sec="s41"><span>41</span>Potential Bug / Technical Risk</a></div><div class="nav-group"><p>Referensi Developer</p><a href="#s42" data-sec="s42"><span>42</span>Dependency</a><a href="#s43" data-sec="s43"><span>43</span>Source Code Reference</a><a href="#s44" data-sec="s44"><span>44</span>Developer Notes</a><a href="#s45" data-sec="s45"><span>45</span>End-to-End Traceability</a><a href="#s46" data-sec="s46"><span>46</span>Ringkasan Database Impact</a><a href="#s47" data-sec="s47"><span>47</span>Checklist Implementasi</a><a href="#s48" data-sec="s48"><span>48</span>Changelog</a></div></nav>
+    </details>
+
+    <section class="overview" aria-label="Ringkasan">
+      <div class="panel">
+        <h3>Ringkasan dalam 1 menit: dua cara melaksanakan PM</h3>
+        <p class="sub">Admin memilih mekanisme setelah jadwal disepakati. Pilihan ini menentukan siapa yang mengisi hasil dan apakah asset berpindah tangan.</p>
+        <div class="three">
+          <div class="fact"><b>Karyawan Hadir Langsung</b><p>Asset tetap <code>terpakai</code> di karyawan. <strong>PIC Pendamping</strong> (boleh pemegang sendiri) mendampingi teknisi dan mengisi hasil dari akunnya.</p></div>
+          <div class="fact"><b>Diserahkan ke Admin/HR</b><p>Admin mengambil asset dengan checklist, karyawan menyerahkan, asset <code>dalam_perbaikan</code>. Admin mengisi hasil dari laporan vendor, lalu mengembalikan.</p></div>
+          <div class="fact"><b>Hasil lima tingkat</b><p>Dinilai per item; hasil akhir = item <strong>terberat</strong>. Hasil 1–3 → PM berikutnya otomatis. Hasil 4–5 → asset ditarik, unit pengganti opsional.</p></div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h3>Siklus pemeliharaan</h3>
+        <p class="sub">Fase (<code>fase_pemeliharaan</code>), pelaku, dan dampaknya ke asset.</p>
+        <div class="flow">
+          <div class="step"><span class="badge b-wait">Konfirmasi Jadwal</span><span class="who">Admin: Jadwalkan PM</span><p>Dari daftar Jatuh Tempo (H-14). Karyawan setuju atau usulkan jadwal lain, berulang sampai sepakat.</p><span class="db">asset tetap terpakai</span></div>
+          <div class="step"><span class="badge b-draft">Pelaksanaan PM</span><span class="who">Admin: Atur Pelaksanaan</span><p>Mekanisme, vendor, lokasi, PIC Pendamping atau jadwal pengambilan.</p><span class="db">diserahkan → dalam_perbaikan</span></div>
+          <div class="step"><span class="badge b-draft">Menunggu Review</span><span class="who">Pendamping / Admin: Kirim Hasil</span><p>Checklist per item: normal sampai tidak dapat diperbaiki, keterangan temuan wajib.</p><span class="db">item.status_item_pendamping</span></div>
+          <div class="step"><span class="badge b-done">Selesai</span><span class="who">Admin: Simpan Review</span><p>Jadwal PM berikutnya dihitung, atau asset ditarik ke gudang untuk perbaikan/disposal.</p><span class="db">jadwal_pemeliharaan baru · asset_log</span></div>
+        </div>
+        <div class="loop"><span class="badge b-bad">Diserahkan</span><span>Mekanisme diserahkan menambah <strong>Menunggu Pengambilan</strong> sebelum pelaksanaan dan <strong>Menunggu Pengembalian</strong> setelah review (hasil 1–3); karyawan menerima kembali dengan checklist. Hasil 4–5 menutup transaksi dengan asset <code>rusak</code> di gudang.</span></div>
+      </div>
+
+      <div class="panel">
+        <h3>Mulai dari sini sesuai peran</h3>
+        <p class="sub">Lompat langsung ke bagian yang paling relevan.</p>
+        <div class="roles">
+          <div class="role"><h4>Business Analyst / PM</h4><p>Aturan bisnis, mekanisme, status, perbedaan dengan dokumen bisnis.</p><div class="links"><a href="#s3">§3</a><a href="#s9">§9 Rules</a><a href="#s14">§14 Status</a><a href="#s39">§39 INC</a></div></div>
+          <div class="role"><h4>Backend Developer</h4><p>Fase, hasil terberat, penarikan, kontrak API.</p><div class="links"><a href="#s21">§21 Logic</a><a href="#s22">§22 asset_data</a><a href="#s24">§24 API</a></div></div>
+          <div class="role"><h4>Mobile Developer</h4><p>Bloc, route, layar, objek <code>aksi</code> per peran.</p><div class="links"><a href="#s25">§25</a><a href="#s26">§26 Screen</a><a href="#s29">§29 Mapping</a></div></div>
+          <div class="role"><h4>QA / Tester</h4><p>15 test otomatis, 23 skenario, edge case, risiko.</p><div class="links"><a href="#s38">§38 Test</a><a href="#s40">§40 Edge</a><a href="#s41">§41 Risk</a></div></div>
+          <div class="role"><h4>Technical Support</h4><p>Pesan error, audit trail, 14 notifikasi.</p><div class="links"><a href="#s32">§32 Error</a><a href="#s33">§33 Audit</a><a href="#s34">§34 Notif</a></div></div>
+          <div class="role"><h4>User / Admin Asset</h4><p>Langkah menjadwalkan sampai menerima asset kembali.</p><div class="links"><a href="#s36">§36 Manual Book</a><a href="#s37">§37 Tombol</a></div></div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h3>Perlu perhatian</h3>
+        <p class="sub">Temuan terpenting dari analisis source. Detail lengkap di <a href="#s39">§39</a> dan <a href="#s41">§41</a>.</p>
+        <ul class="attention">
+          <li><span class="sev sev-h">TINGGI</span><span>Kolom PML01 berasal dari <strong>SQL manual</strong>, bukan migration. Environment yang belum menjalankannya gagal di semua endpoint PML01. <a href="#s41">RISK-001</a></span></li>
+          <li><span class="sev sev-m">SEDANG</span><span>Belum ada <strong>notifikasi otomatis jatuh tempo</strong> (Jalur A); admin harus membuka daftar Jatuh Tempo secara rutin. <a href="#s39">INC-02</a></span></li>
+          <li><span class="sev sev-m">SEDANG</span><span>Hasil 4–5 menandai asset untuk <strong>Perbaikan/Disposal</strong>, tetapi modul PML02/PML04 belum ada sehingga tindak lanjut masih manual. <a href="#s39">INC-05</a></span></li>
+          <li><span class="sev sev-m">SEDANG</span><span>Tidak ada <strong>pembatalan</strong>; PM yang tertahan mengunci asset dari Upgrade, Kerusakan, Retur, dan Offboarding. <a href="#s41">RISK-002</a></span></li>
+        </ul>
+      </div>
+    </section>
+
+    <article class="doc">
+<div class="group-divider" id="g1"><span>Gambaran & Bisnis</span></div><h2 id="s1"><span class="sec-no">01</span>Informasi Dokumen</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Informasi</th>
+<th>Nilai</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Nama Fitur</td>
+<td>Pemeliharaan Terjadwal Asset Karyawan (UI: <strong>"Pemeliharaan Terjadwal"</strong>; menu <strong>"Pemeliharaan"</strong>)</td>
+</tr>
+<tr>
+<td>Kode Fitur</td>
+<td><strong>PML01</strong> (nomor transaksi <code>PML01-2-YYYYMMNNN</code>; <code>-2-</code> = konteks karyawan, <code>-1-</code> dicadangkan untuk ruangan)</td>
+</tr>
+<tr>
+<td>Modul</td>
+<td>Asset Management — Pemeliharaan Aset</td>
+</tr>
+<tr>
+<td>Backend</td>
+<td>Laravel <strong>Lumen ^10.0</strong>, PHP ^8.1, JWT, Query Builder</td>
+</tr>
+<tr>
+<td>Database</td>
+<td><code>API/diagram-asset.dbml</code> (tanda <code>[FIX PML01]</code>) + SQL manual <code>Claude outputs/sql-pml01-pemeliharaan-karyawan.sql</code>. ⚠️ SQL harus dijalankan manual; tidak ada migration Lumen</td>
+</tr>
+<tr>
+<td>Mobile</td>
+<td>Flutter (<code>professional_flutter_3_35</code>), <code>flutter_bloc</code>, <code>dio</code></td>
+</tr>
+<tr>
+<td>Web</td>
+<td>⚠️ Belum ditemukan: tidak ada source web di workspace</td>
+</tr>
+<tr>
+<td>Test otomatis</td>
+<td>API <code>tests/Asset/AssetPemeliharaanKaryawanTest.php</code> (7 test) · Mobile <code>test/asset/asset_pemeliharaan_test.dart</code> (8 test)</td>
+</tr>
+<tr>
+<td>Versi Dokumen</td>
+<td>1.1</td>
+</tr>
+<tr>
+<td>Tanggal Dokumentasi</td>
+<td>2026-10-12</td>
+</tr>
+<tr>
+<td>Dokumen terkait</td>
+<td>Upgrade (KRY03), Kerusakan (KRY06), Retur (KRY04), Offboarding (KRY02), Request/Penambahan (KRY-03-1, unit pengganti), PML02 Perbaikan &amp; PML04 Disposal (sudah diimplementasikan, tetapi belum dipicu otomatis dari hasil 4–5)</td>
+</tr>
+</tbody>
+</table></div>
+<hr />
+<h2 id="s3"><span class="sec-no">03</span>Quick Overview</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Item</th>
+<th>Informasi</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Feature</td>
+<td>Preventive maintenance (PM) <strong>satu asset</strong> yang dipegang karyawan, sesuai interval yang dikonfigurasi di data asset</td>
+</tr>
+<tr>
+<td>Module</td>
+<td>Asset Management — Pemeliharaan</td>
+</tr>
+<tr>
+<td>Inisiasi</td>
+<td><strong>Jalur B (Dashboard)</strong>: admin membuka <em>Jatuh Tempo Pemeliharaan</em> (asset jatuh tempo mulai H-14) lalu mengusulkan jadwal. ⚠️ Jalur A (notifikasi otomatis berkala) belum diimplementasikan</td>
+</tr>
+<tr>
+<td>Mekanisme</td>
+<td><strong>Karyawan Hadir Langsung</strong> (asset tetap <code class="chip chip-done">terpakai</code>, PIC Pendamping wajib) · <strong>Diserahkan ke Admin/HR</strong> (asset <code>dalam_perbaikan</code> selama PM)</td>
+</tr>
+<tr>
+<td>Actor</td>
+<td>Admin Asset, Karyawan pemegang asset, PIC Pendamping (karyawan), Vendor/Teknisi (di luar sistem), System</td>
+</tr>
+<tr>
+<td>Main Transaction</td>
+<td><code>asset_trx_pemeliharaan_karyawan</code></td>
+</tr>
+<tr>
+<td>Detail Transaction</td>
+<td><code>asset_trx_pemeliharaan_karyawan_item</code> (satu baris per asset) + <code>asset_trx_pemeliharaan_karyawan_jadwal</code> (riwayat negosiasi &amp; jadwal)</td>
+</tr>
+<tr>
+<td>Asset Master</td>
+<td><code>asset_data</code> (<code>flag_pemeliharaan</code>, <code>interval_pemeliharaan</code>, <code>jadwal_pemeliharaan</code>)</td>
+</tr>
+<tr>
+<td>Log</td>
+<td><code>asset_log</code> <code>jenis_log = pemeliharaan_karyawan</code></td>
+</tr>
+<tr>
+<td>Status</td>
+<td><code>fase_pemeliharaan</code>: <code>konfirmasi_jadwal → penjadwalan → [menunggu_pengambilan] → pelaksanaan → menunggu_review → [menunggu_pengembalian] → selesai</code></td>
+</tr>
+<tr>
+<td>Hasil PM</td>
+<td>5 tingkat per item: normal · perlu tindak lanjut · komponen rusak tidak segera · komponen rusak perlu segera · tidak dapat diperbaiki. Hasil akhir = item <strong>terberat</strong></td>
+</tr>
+<tr>
+<td>Tindak lanjut</td>
+<td>Hasil 1–3: jadwal PM berikutnya otomatis. Hasil 4–5: asset ditarik ke gudang (<code class="chip chip-bad">rusak</code>), opsional unit pengganti lewat Penambahan</td>
+</tr>
+<tr>
+<td>API</td>
+<td>10 endpoint admin + 6 endpoint karyawan</td>
+</tr>
+<tr>
+<td>Mobile Screen</td>
+<td>Pemeliharaan Terjadwal (list), Jatuh Tempo Pemeliharaan (admin), Detail Pemeliharaan, sheet Atur Pelaksanaan, banner Asset Saya, panel beranda admin</td>
+</tr>
+</tbody>
+</table></div>
+<div class="code"><span class="code-lang">Alur</span><pre><code class="language-text">Admin: Jatuh Tempo Pemeliharaan → pilih asset → Usulkan Jadwal               konfirmasi_jadwal
+Karyawan: Setujui Jadwal  ⇄  Usulkan Jadwal Lain (admin usulkan ulang, berulang)
+                                                                         penjadwalan
+Admin: Atur Pelaksanaan (mekanisme, vendor, lokasi)
+   ├─ Hadir Langsung + PIC Pendamping ─────────────────────────────────── pelaksanaan
+   └─ Diserahkan + jadwal pengambilan ────────────────────────────────── menunggu_pengambilan
+        Admin: Checklist Pengambilan → Karyawan: Serahkan Aset (asset dalam_perbaikan) ── pelaksanaan
+Checklist Hasil PM (5 tingkat per item)
+   ├─ Hadir Langsung: diisi PIC Pendamping (akun karyawan)
+   └─ Diserahkan: diisi Admin berdasarkan laporan vendor ─────────────── menunggu_review
+Admin: Review &amp; Tindak Lanjut
+   ├─ Hasil 1–3: jadwal PM berikutnya = hari review + interval
+   │     ├─ Hadir Langsung ─────────────────────────────────────────────── selesai
+   │     └─ Diserahkan + jadwal pengembalian ──────────────────────────── menunggu_pengembalian
+   │           Karyawan: Checklist Pengembalian → Terima Aset (asset terpakai) ── selesai
+   └─ Hasil 4–5: asset ditarik → rusak @gudang (+ unit pengganti opsional) ── selesai
+</code></pre></div>
+<hr />
+<h2 id="s4"><span class="sec-no">04</span>Ringkasan Fitur</h2>
+<p>Pemeliharaan Terjadwal memastikan asset yang dipegang karyawan (misalnya laptop, kendaraan dinas) diservis berkala sesuai interval. Asset yang ikut PM adalah asset dengan <strong>Perlu Pemeliharaan Terjadwal = Ya</strong> (<code>flag_pemeliharaan = 1</code>), berstatus <code class="chip chip-done">terpakai</code>, dan dipegang karyawan aktif.</p>
+<p>Admin memulai PM dari daftar <strong>Jatuh Tempo Pemeliharaan</strong> (asset yang jadwalnya ≤ 14 hari lagi atau sudah lewat) dan mengusulkan jadwal. Karyawan menyetujui atau mengusulkan jadwal lain; negosiasi berulang sampai disepakati. Admin lalu memilih mekanisme:</p>
+<ul>
+<li><strong>Karyawan Hadir Langsung</strong> — karyawan membawa asset ke vendor atau vendor datang. Asset tidak berpindah tangan dan tetap <code class="chip chip-done">terpakai</code>. Seorang <strong>PIC Pendamping</strong> (boleh karyawan pemegang sendiri) mendampingi teknisi dan mengisi checklist hasil dari akunnya.</li>
+<li><strong>Diserahkan ke Admin/HR</strong> — admin mengambil asset (checklist pengambilan), karyawan mengonfirmasi penyerahan, asset menjadi <code>dalam_perbaikan</code> (DALAM SERVICE). Admin mengisi hasil berdasarkan laporan vendor lalu mengembalikan asset.</li>
+</ul>
+<p>Checklist hasil PM dinilai <strong>per item asset</strong> (unit utama &amp; kelengkapan) dengan lima tingkat. Hasil akhir mengikuti item terberat dan menentukan tindak lanjut: jadwal PM berikutnya otomatis (hasil 1–3, dengan catatan <em>watchlist</em> untuk hasil 2–3) atau penarikan asset ke gudang berstatus <code class="chip chip-bad">rusak</code> untuk diteruskan ke Perbaikan (PML02) / Disposal (PML04), opsional dengan unit pengganti.</p>
+<hr />
+<h2 id="s5"><span class="sec-no">05</span>Tujuan Fitur</h2>
+<h3>5.1 Tujuan Bisnis (diturunkan dari dokumen bisnis &amp; kode)</h3>
+<ul>
+<li>Asset karyawan dipelihara tepat waktu sesuai interval.</li>
+<li>Jadwal disepakati bersama karyawan agar operasional tidak terganggu.</li>
+<li>Hasil pemeriksaan per komponen terdokumentasi, termasuk siapa yang mengisi.</li>
+<li>Temuan ringan dipantau (<em>watchlist</em>) dan diingatkan pada PM berikutnya.</li>
+<li>Asset yang tidak layak segera ditarik, dengan opsi unit pengganti.</li>
+</ul>
+<h3>5.2 Tujuan Sistem</h3>
+<ul>
+<li>Menampilkan asset jatuh tempo yang belum punya PM aktif.</li>
+<li>Menyimpan riwayat negosiasi jadwal (usulan admin, usulan karyawan, konfirmasi).</li>
+<li>Mengunci asset dari Upgrade, Kerusakan, Retur, dan Offboarding selama PM aktif.</li>
+<li>Memperbarui <code>asset_data</code> (status, pemegang, <code>jadwal_pemeliharaan</code>) dan mencatat <code>asset_log</code>.</li>
+</ul>
+<hr />
+<h2 id="s6"><span class="sec-no">06</span>Aktor</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Aktor</th>
+<th>Role</th>
+<th>Fungsi</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Admin Asset</td>
+<td><code>asset_admin</code> + karyawan aktif</td>
+<td>Usul/ubah jadwal, atur pelaksanaan, checklist pengambilan, isi hasil (mekanisme diserahkan / fallback), review &amp; tindak lanjut</td>
+</tr>
+<tr>
+<td>Karyawan pemegang</td>
+<td>User login aktif, <code>id_karyawan</code> pada header</td>
+<td>Setujui / usulkan jadwal lain, serahkan asset, terima asset kembali</td>
+</tr>
+<tr>
+<td>PIC Pendamping</td>
+<td>Karyawan aktif, <code>id_pic_pendamping</code> pada header</td>
+<td>Mengisi checklist hasil PM (khusus hadir langsung)</td>
+</tr>
+<tr>
+<td>Vendor / Teknisi</td>
+<td>Di luar sistem</td>
+<td>Melaksanakan PM. Dipilih dari <code>asset_vendor_m</code> atau teks bebas. ⚠️ Tidak menerima notifikasi</td>
+</tr>
+<tr>
+<td>System</td>
+<td>Backend + FCM</td>
+<td>Validasi, lock, penomoran, hasil terberat, jadwal berikutnya, update asset, log, notifikasi</td>
+</tr>
+</tbody>
+</table></div>
+<hr />
+<h2 id="s7"><span class="sec-no">07</span>Hak Akses</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th style="text-align: left;">Action</th>
+<th style="text-align: center;">Admin Asset</th>
+<th style="text-align: center;">Karyawan pemegang</th>
+<th style="text-align: center;">PIC Pendamping</th>
+<th style="text-align: left;">Keterangan</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">Melihat jatuh tempo &amp; semua PM</td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: center;">❌</td>
+<td style="text-align: center;">❌</td>
+<td style="text-align: left;"><code>/asset/pemeliharaan-karyawan*</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">Melihat PM sendiri</td>
+<td style="text-align: center;">–</td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: left;">Daftar gabungan sebagai pemegang <strong>atau</strong> pendamping</td>
+</tr>
+<tr>
+<td style="text-align: left;">Membuat PM (usul jadwal pertama)</td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: center;">❌</td>
+<td style="text-align: center;">❌</td>
+<td style="text-align: left;">Asset jatuh tempo</td>
+</tr>
+<tr>
+<td style="text-align: left;">Usul jadwal ulang</td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: center;">❌</td>
+<td style="text-align: center;">❌</td>
+<td style="text-align: left;">Fase <code>konfirmasi_jadwal</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">Setujui / usulkan jadwal lain</td>
+<td style="text-align: center;">❌</td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: center;">❌</td>
+<td style="text-align: left;">Ada usulan admin yang terbuka</td>
+</tr>
+<tr>
+<td style="text-align: left;">Atur pelaksanaan</td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: center;">❌</td>
+<td style="text-align: center;">❌</td>
+<td style="text-align: left;">Fase <code>penjadwalan</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">Ubah jadwal pengambilan / pengembalian</td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: center;">❌</td>
+<td style="text-align: center;">❌</td>
+<td style="text-align: left;">Fase terkait</td>
+</tr>
+<tr>
+<td style="text-align: left;">Checklist pengambilan</td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: center;">❌</td>
+<td style="text-align: center;">❌</td>
+<td style="text-align: left;">Mekanisme diserahkan</td>
+</tr>
+<tr>
+<td style="text-align: left;">Serahkan aset</td>
+<td style="text-align: center;">❌</td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: center;">❌</td>
+<td style="text-align: left;">Setelah checklist pengambilan</td>
+</tr>
+<tr>
+<td style="text-align: left;">Isi checklist hasil</td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: center;">❌</td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: left;">Pendamping hanya hadir langsung; admin untuk semua mekanisme</td>
+</tr>
+<tr>
+<td style="text-align: left;">Review &amp; tindak lanjut</td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: center;">❌</td>
+<td style="text-align: center;">❌</td>
+<td style="text-align: left;">Fase <code>menunggu_review</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">Terima aset kembali</td>
+<td style="text-align: center;">❌</td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: center;">❌</td>
+<td style="text-align: left;">Fase <code>menunggu_pengembalian</code></td>
+</tr>
+<tr>
+<td style="text-align: left;">Batalkan PM</td>
+<td style="text-align: center;">❌</td>
+<td style="text-align: center;">❌</td>
+<td style="text-align: center;">❌</td>
+<td style="text-align: left;">⚠️ Belum ditemukan (RISK-002)</td>
+</tr>
+</tbody>
+</table></div>
+<hr />
+<h2 id="s8"><span class="sec-no">08</span>Terminologi</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Istilah</th>
+<th>Arti di sistem</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>PM</td>
+<td>Preventive maintenance / pemeliharaan terjadwal</td>
+</tr>
+<tr>
+<td>Jatuh tempo</td>
+<td><code>asset_data.jadwal_pemeliharaan ≤ hari ini + 14 hari</code></td>
+</tr>
+<tr>
+<td>Interval</td>
+<td><code>asset_data.interval_pemeliharaan</code> dalam <strong>bulan</strong></td>
+</tr>
+<tr>
+<td>Usulan jadwal</td>
+<td>Baris jadwal <code>jenis_jadwal = pemeliharaan</code>, <code>jenis_alur = menunggu</code>, <code>label_alur = admin</code></td>
+</tr>
+<tr>
+<td>Usulan alternatif</td>
+<td>Baris jadwal <code>jenis_alur = revisi</code>, <code>label_alur = karyawan</code> (wajib alasan)</td>
+</tr>
+<tr>
+<td>Mekanisme</td>
+<td><code>hadir_langsung</code> atau <code>diserahkan_admin</code></td>
+</tr>
+<tr>
+<td>DALAM SERVICE</td>
+<td>Istilah bisnis untuk asset yang diserahkan; di sistem <code>status_asset = dalam_perbaikan</code> (sama dengan Upgrade KRY03)</td>
+</tr>
+<tr>
+<td>PIC Pendamping</td>
+<td>Karyawan yang mendampingi teknisi; tercatat juga di <code>asset_pendamping_m</code></td>
+</tr>
+<tr>
+<td>Hasil akhir</td>
+<td><code>status_item_pendamping</code> = hasil item terberat dari <code>checklist_hasil</code></td>
+</tr>
+<tr>
+<td>Watchlist</td>
+<td>Hasil 2 atau 3 pada PM terakhir yang selesai; ditampilkan lagi di daftar jatuh tempo</td>
+</tr>
+<tr>
+<td>Ditarik</td>
+<td>Hasil 4/5: asset → <code class="chip chip-bad">rusak</code> @gudang, <code>nama_tabel_tindak_lanjut</code> = tabel PML02/PML04</td>
+</tr>
+</tbody>
+</table></div>
+<hr />
+<h2 id="s9"><span class="sec-no">09</span>Business Rules</h2>
+<h3>BR-001 — Asset yang boleh dipelihara</h3>
+<p><code>asset_data</code> dipegang karyawan (<code>pemegang_asset = karyawan</code>), <code>status_asset = terpakai</code>, <code>flag_pemeliharaan = '1'</code>, dan pemegang adalah karyawan aktif → "Asset tidak ditemukan atau tidak dipegang karyawan." / "Hanya asset berstatus terpakai yang dapat dipelihara." / "Asset tidak memiliki jadwal pemeliharaan aktif." / "Karyawan pemegang asset tidak ditemukan atau tidak aktif."</p>
+<h3>BR-002 — Satu PM aktif per asset, tidak bentrok flow lain</h3>
+<p>Dicek saat membuat PM: pemeliharaan aktif (fase ≠ <code>selesai</code>), upgrade aktif, laporan kerusakan aktif, retur aktif, offboarding aktif → "Asset sedang diproses pada pemeliharaan lain." / "…pada upgrade." / "…pada laporan kerusakan." / "…pada retur." / "…pada offboarding."</p>
+<h3>BR-003 — PM aktif mengunci asset di modul lain</h3>
+<p><code>hasActivePemeliharaanAsset</code> dipanggil oleh Upgrade &amp; Kerusakan ("Asset sedang diproses pada pemeliharaan."), Retur &amp; Offboarding ("Satu atau beberapa asset sedang diproses pada pemeliharaan."). Asset juga hilang dari daftar jatuh tempo selama PM aktif.</p>
+<h3>BR-004 — Negosiasi jadwal (Fase 2B)</h3>
+<ul>
+<li>Admin membuat PM dengan usulan jadwal (tanggal ≥ hari ini). Usulan admin berikutnya boleh diberikan kapan saja selama fase <code>konfirmasi_jadwal</code>.</li>
+<li>Karyawan hanya bisa menjawab bila baris jadwal PM <strong>terakhir</strong> adalah usulan admin (<code>menunggu</code>) → "Tidak ada usulan jadwal yang perlu dikonfirmasi."</li>
+<li><strong>Setujui</strong>: jadwal usulan disalin ke <code>tgl_pemeliharaan</code>/<code>jam_pemeliharaan</code>, fase → <code>penjadwalan</code>.</li>
+<li><strong>Usulkan jadwal lain</strong>: tanggal, jam, dan alasan wajib → "Alasan usulan jadwal alternatif wajib diisi."; fase tetap, admin wajib mengusulkan ulang.</li>
+</ul>
+<h3>BR-005 — Atur pelaksanaan (Fase 2B.4 + 3)</h3>
+<p>Hanya fase <code>penjadwalan</code> → "Jadwal pemeliharaan belum disepakati karyawan." Asset harus masih <code class="chip chip-done">terpakai</code> di karyawan.
+- Vendor: <code>id_asset_vendor_m</code> dari master <strong>atau</strong> <code>nama_vendor</code> teks → "Vendor tidak ditemukan." / "Vendor / teknisi wajib diisi."
+- Lokasi wajib → "Lokasi pemeliharaan wajib diisi."
+- <strong>Hadir langsung</strong>: PIC Pendamping wajib karyawan aktif (boleh pemegang) → "PIC Pendamping wajib dipilih dari karyawan aktif."; fase → <code>pelaksanaan</code>; pendamping dicatat ke <code>asset_pendamping_m</code> bila belum ada.
+- <strong>Diserahkan</strong>: jadwal pengambilan wajib; fase → <code>menunggu_pengambilan</code>.</p>
+<h3>BR-006 — Pengambilan (mekanisme diserahkan, Fase 2C)</h3>
+<p>Admin mengisi checklist kondisi seluruh item asset (normal/rusak, rusak wajib keterangan) → "Checklist pengambilan tidak dapat diisi saat ini." / "Seluruh item aset wajib dicek." Karyawan baru bisa <strong>Serahkan Aset</strong> setelah checklist ada → "Aset belum siap diserahkan untuk pemeliharaan." Penyerahan: <code>status_asset = dalam_perbaikan</code> (<strong>pemegang tetap karyawan</strong>), log karyawan → gudang, fase → <code>pelaksanaan</code>.</p>
+<h3>BR-007 — Checklist hasil PM (Fase 4)</h3>
+<p>Hanya fase <code>pelaksanaan</code> → "Pemeliharaan belum berada pada tahap pelaksanaan."
+- Pengisi: <strong>PIC Pendamping</strong> lewat endpoint karyawan (hanya mekanisme hadir langsung dan <code>id_pic_pendamping</code> = dirinya) → "Hanya PIC Pendamping yang dapat mengisi hasil pemeliharaan."; atau <strong>admin</strong> (semua mekanisme).
+- Semua item asset wajib dinilai → "Seluruh item aset wajib diperiksa."; hasil harus salah satu dari 5 → "Hasil pemeriksaan item tidak valid."; selain normal wajib keterangan → "Keterangan temuan wajib diisi untuk hasil selain normal."
+- Hasil akhir = item terberat → <code>status_item_pendamping</code>. Fase → <code>menunggu_review</code>, <code>tgl_hasil</code>/<code>user_hasil</code> diisi.</p>
+<h3>BR-008 — Review hasil 1–3 (asset tetap dipakai)</h3>
+<ul>
+<li>Jadwal PM berikutnya = tanggal review + <code>interval_pemeliharaan</code> bulan (tanpa overflow akhir bulan) → <code>asset_data.jadwal_pemeliharaan</code> dan <code>item.tgl_pemeliharaan_selanjutnya</code>. Interval 0 → tidak dijadwalkan ulang.</li>
+<li>Hasil 3 wajib tanggal rencana penggantian komponen → "Tanggal rencana penggantian komponen wajib diisi."</li>
+<li>Hadir langsung → <code>selesai</code>. Diserahkan → jadwal pengembalian wajib, fase <code>menunggu_pengembalian</code>.</li>
+</ul>
+<h3>BR-009 — Review hasil 4–5 (asset ditarik)</h3>
+<p>Asset → <code>status_asset = rusak</code>, <code>kondisi_awal = rusak</code>, <code>ket_rusak</code> = keterangan hasil + review, <code>status_rusak = "sudah tidak bisa di gunakan"</code>, <code>pemegang_asset = gudang</code>. Log dengan <code>kondisi_akhir = rusak</code>. <code>nama_tabel_tindak_lanjut</code> = <code>asset_trx_perbaikan</code> (hasil 4) atau <code>asset_trx_disposal</code> (hasil 5); ⚠️ transaksi PML02/PML04 belum dibuat (INC-05). Fase → <code>selesai</code>.</p>
+<h3>BR-010 — Unit pengganti (hasil 4–5, opsional)</h3>
+<p>Bila admin memilih unit pengganti, sistem membuat <strong>Penambahan asset (KRY-03-1)</strong> untuk karyawan yang sama (<code>urgensi = mendesak</code>, jadwal serah terima dari admin) di dalam transaksi review. <code>flag_unit_pengganti = 1</code>, <code>id_trx_request_pengganti</code> diisi, notifikasi <code>penambahan.dikirim</code> dikirim. Aturan Penambahan berlaku (asset harus <code class="chip chip-neutral">tersedia</code> @gudang).</p>
+<h3>BR-011 — Pengembalian (mekanisme diserahkan, Fase 5)</h3>
+<p>Hanya fase <code>menunggu_pengembalian</code> → "Aset belum dijadwalkan untuk dikembalikan." Karyawan mengisi checklist kondisi seluruh item; asset → <code class="chip chip-done">terpakai</code>, log gudang → karyawan, fase <code>selesai</code>.</p>
+<h3>BR-012 — Ubah jadwal</h3>
+<p>Admin: fase <code>konfirmasi_jadwal</code> → usulan PM baru; <code>menunggu_pengambilan</code> → jadwal pengambilan; <code>menunggu_pengembalian</code> → jadwal pengembalian. Fase lain → "Jadwal tidak dapat diubah pada tahap ini." Tanggal tidak boleh sebelum tanggal transaksi dibuat.</p>
+<h3>BR-013 — Penomoran</h3>
+<p>Header/item/jadwal <code>id_company + YYYYMM + 3 digit</code>; <code>no_trx = PML01-2-YYYYMMNNN</code>; <code>asset_pendamping_m</code> 3 digit; log 5 digit.</p>
+<h3>BR-014 — Skema harus sudah diterapkan</h3>
+<p>Dashboard dan pengecekan lintas modul memanggil <code>skemaSiap()</code> (kolom <code>fase_pemeliharaan</code> ada). Sebelum SQL diterapkan, bagian PML01 di dashboard kosong dan modul lain tidak terblokir; endpoint PML01 sendiri akan gagal (RISK-001).</p>
+<hr />
+<h2 id="s10"><span class="sec-no">10</span>Business Flow</h2>
+<div class="code"><span class="code-lang">Alur</span><pre><code class="language-text">1. Admin: Asset Karyawan → Pemeliharaan → ikon Jatuh Tempo (atau kartu &quot;Pemeliharaan Jatuh Tempo&quot;)
+   → pilih asset → Jadwalkan PM → tanggal, jam, catatan                 [Konfirmasi Jadwal · notif karyawan]
+2. Karyawan: banner &quot;Konfirmasi Jadwal PM&quot; → Detail
+   → Setujui Jadwal                                                      [Penjadwalan · notif admin]
+     atau Usulkan Jadwal Lain (tanggal, jam, alasan)                     [notif admin → admin usulkan ulang]
+3. Admin: Detail → Atur Pelaksanaan → mekanisme, vendor, keterangan vendor, lokasi
+   a. Hadir Langsung + PIC Pendamping                                    [Pelaksanaan PM · notif karyawan &amp; pendamping]
+   b. Diserahkan + Jadwal Pengambilan                                    [Menunggu Pengambilan · notif karyawan]
+      → Admin: Simpan Checklist (pengambilan)                            [notif karyawan]
+      → Karyawan: Serahkan Aset                                          [Pelaksanaan PM · asset dalam_perbaikan · notif admin]
+4. Checklist Hasil PM → Kirim Hasil
+   a. Hadir Langsung: PIC Pendamping (banner &quot;Isi Hasil PM&quot;)
+   b. Diserahkan: Admin                                                  [Menunggu Review · notif admin]
+5. Admin: Review &amp; Tindak Lanjut → Simpan Review
+   - Hasil 1–3 hadir langsung                                            [Selesai · notif karyawan]
+   - Hasil 1–3 diserahkan + Jadwal Pengembalian                          [Menunggu Pengembalian · notif karyawan]
+       → Karyawan: Checklist Pengembalian → Terima Aset                  [Selesai · notif admin]
+   - Hasil 4–5 (+ unit pengganti &amp; jadwal pengiriman)                    [Selesai · asset ditarik · notif karyawan]
+</code></pre></div>
+<hr />
+<h2 id="s11"><span class="sec-no">11</span>Flow Berdasarkan Role</h2>
+<h3>11.1 Karyawan pemegang</h3>
+<ol>
+<li><strong>Asset Saya</strong> → menu <strong>Pemeliharaan</strong> → <strong>Pemeliharaan Terjadwal</strong> (tab Jadwal / Proses / Selesai).</li>
+<li>Banner Asset Saya: <strong>Konfirmasi Jadwal PM</strong>, <strong>Serahkan Aset untuk PM</strong>, <strong>Terima Aset Hasil PM</strong>.</li>
+<li>Detail → <strong>Setujui Jadwal</strong> / <strong>Usulkan Jadwal Lain</strong>, <strong>Serahkan Aset</strong>, <strong>Terima Aset</strong>.</li>
+</ol>
+<h3>11.2 PIC Pendamping</h3>
+<ol>
+<li>Banner <strong>Isi Hasil PM</strong> ("Anda PIC Pendamping pemeliharaan {asset}. Isi checklist hasil.") atau daftar Pemeliharaan (kartu bertanda "Anda PIC Pendamping").</li>
+<li>Detail → pilih hasil setiap item + keterangan temuan → <strong>Kirim Hasil</strong>.</li>
+</ol>
+<h3>11.3 Admin Asset</h3>
+<ol>
+<li><strong>Asset Karyawan</strong> → aksi <strong>Pemeliharaan</strong>, kartu <strong>Pemeliharaan Perlu Diproses</strong>, atau kartu <strong>Pemeliharaan Jatuh Tempo</strong>.</li>
+<li>Daftar → ikon <strong>Jatuh Tempo</strong> → <strong>Jadwalkan PM</strong>.</li>
+<li>Detail → <strong>Usulkan Jadwal</strong>, <strong>Atur Pelaksanaan</strong>, <strong>Ubah Jadwal</strong>, <strong>Simpan Checklist</strong>, <strong>Kirim Hasil</strong>, <strong>Simpan Review</strong>.</li>
+</ol>
+<h3>11.4 System</h3>
+<p>Hitung jatuh tempo &amp; watchlist, validasi, hasil terberat, jadwal berikutnya, update asset &amp; log, buat Penambahan unit pengganti, notifikasi.</p>
+<hr />
+<h2 id="s12"><span class="sec-no">12</span>Flow Diagram</h2>
+<div class="diagram"><pre class="mermaid">flowchart TD
+    A[Admin: pilih asset jatuh tempo + usulkan jadwal] --&gt; B[Konfirmasi Jadwal]
+    B --&gt; C{Karyawan}
+    C --&gt;|Usulkan jadwal lain| D[Admin usulkan ulang]
+    D --&gt; B
+    C --&gt;|Setujui| E[Penjadwalan]
+    E --&gt; F{Admin: mekanisme}
+    F --&gt;|Hadir langsung + PIC Pendamping| G[Pelaksanaan PM]
+    F --&gt;|Diserahkan + jadwal pengambilan| H[Menunggu Pengambilan]
+    H --&gt; I[Admin: checklist pengambilan]
+    I --&gt; J[Karyawan: Serahkan Aset, asset dalam_perbaikan]
+    J --&gt; G
+    G --&gt; K[Checklist hasil 5 tingkat: PIC Pendamping atau Admin]
+    K --&gt; L{Admin: review hasil akhir}
+    L --&gt;|Hasil 1-3| M[Jadwal PM berikutnya dihitung]
+    M --&gt; N{Mekanisme}
+    N --&gt;|Hadir langsung| Z[Selesai]
+    N --&gt;|Diserahkan| O[Menunggu Pengembalian]
+    O --&gt; P[Karyawan: checklist + Terima Aset, asset terpakai]
+    P --&gt; Z
+    L --&gt;|Hasil 4-5| Q[Asset ditarik: rusak di gudang]
+    Q --&gt; R{Unit pengganti?}
+    R --&gt;|Ya| S[Buat Penambahan asset untuk karyawan]
+    R --&gt;|Tidak| Z
+    S --&gt; Z
+</pre></div>
+<hr />
+<h2 id="s13"><span class="sec-no">13</span>Sequence Diagram</h2>
+<div class="diagram"><pre class="mermaid">sequenceDiagram
+    actor A as Admin
+    actor K as Karyawan
+    actor P as PIC Pendamping
+    participant M as Mobile
+    participant CA as AssetAdminPemeliharaan_c
+    participant CK as AssetKaryawanPemeliharaan_c
+    participant PM as AssetPemeliharaanKaryawan_m
+    participant DB
+    participant N as AssetNotification
+
+    A-&gt;&gt;M: Jadwalkan PM (asset jatuh tempo)
+    M-&gt;&gt;CA: POST /asset/pemeliharaan-karyawan
+    CA-&gt;&gt;PM: store()
+    PM-&gt;&gt;DB: cek asset, flag, karyawan aktif, flow lain
+    PM-&gt;&gt;DB: INSERT header + item + jadwal (menunggu)
+    CA-&gt;&gt;N: pemeliharaan.usulan_jadwal (karyawan)
+    K-&gt;&gt;M: Setujui Jadwal
+    M-&gt;&gt;CK: POST /asset/karyawan/pemeliharaan/{id}/jadwal
+    CK-&gt;&gt;PM: konfirmasiJadwal()
+    PM-&gt;&gt;DB: INSERT jadwal konfirmasi, header penjadwalan
+    CK-&gt;&gt;N: pemeliharaan.jadwal_disetujui (admin)
+    A-&gt;&gt;M: Atur Pelaksanaan (hadir langsung)
+    M-&gt;&gt;CA: POST /asset/pemeliharaan-karyawan/{id}/pelaksanaan
+    CA-&gt;&gt;PM: aturPelaksanaan()
+    PM-&gt;&gt;DB: vendor, lokasi, pendamping, header pelaksanaan
+    CA-&gt;&gt;N: pemeliharaan.pendamping + pemeliharaan.dijadwalkan
+    P-&gt;&gt;M: Checklist hasil, Kirim Hasil
+    M-&gt;&gt;CK: POST /asset/karyawan/pemeliharaan/{id}/hasil
+    CK-&gt;&gt;PM: hasil()
+    PM-&gt;&gt;DB: item checklist_hasil + hasil terberat, header menunggu_review
+    CK-&gt;&gt;N: pemeliharaan.hasil (admin)
+    A-&gt;&gt;M: Simpan Review
+    M-&gt;&gt;CA: POST /asset/pemeliharaan-karyawan/{id}/review
+    CA-&gt;&gt;PM: review()
+    PM-&gt;&gt;DB: jadwal_pemeliharaan berikutnya atau asset ditarik + asset_log
+    PM-&gt;&gt;DB: header selesai (atau menunggu_pengembalian)
+    CA-&gt;&gt;N: pemeliharaan.selesai / pengembalian / ditarik (karyawan)
+</pre></div>
+<hr />
+<h2 id="s14"><span class="sec-no">14</span>Status Transaksi</h2>
+<p>Kolom utama <code>fase_pemeliharaan</code> (enum). Kolom <code>status</code> (<code class="chip chip-wait">proses</code>/<code>selesai</code>) mengikuti: <code>selesai</code> hanya saat fase <code>selesai</code>.</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>fase_pemeliharaan</th>
+<th>Label API</th>
+<th>Tab</th>
+<th>Arti</th>
+<th>Menunggu</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>konfirmasi_jadwal</code></td>
+<td>Konfirmasi Jadwal</td>
+<td>jadwal</td>
+<td>Negosiasi jadwal PM</td>
+<td>Karyawan (ada usulan admin) / Admin (ada usulan karyawan)</td>
+</tr>
+<tr>
+<td><code>penjadwalan</code></td>
+<td>Penjadwalan</td>
+<td>jadwal</td>
+<td>Jadwal disepakati</td>
+<td>Admin: atur pelaksanaan</td>
+</tr>
+<tr>
+<td><code>menunggu_pengambilan</code></td>
+<td>Menunggu Pengambilan</td>
+<td>proses</td>
+<td>Mekanisme diserahkan</td>
+<td>Admin: checklist → Karyawan: serahkan</td>
+</tr>
+<tr>
+<td><code>pelaksanaan</code></td>
+<td>Pelaksanaan PM</td>
+<td>proses</td>
+<td>PM berlangsung</td>
+<td>PIC Pendamping (hadir) / Admin (diserahkan)</td>
+</tr>
+<tr>
+<td><code>menunggu_review</code></td>
+<td>Menunggu Review</td>
+<td>proses</td>
+<td>Hasil sudah dikirim</td>
+<td>Admin</td>
+</tr>
+<tr>
+<td><code>menunggu_pengembalian</code></td>
+<td>Menunggu Pengembalian</td>
+<td>proses</td>
+<td>Diserahkan, hasil 1–3</td>
+<td>Karyawan: terima</td>
+</tr>
+<tr>
+<td><code>selesai</code></td>
+<td>Selesai</td>
+<td>selesai</td>
+<td>Tuntas atau asset ditarik</td>
+<td>–</td>
+</tr>
+</tbody>
+</table></div>
+<p>Hasil PM (<code>status_item_pendamping</code>, NULL sebelum diisi): <code class="chip chip-done">normal</code>, <code>perlu_tindak_lanjut</code>, <code>komponen_rusak_tidak_segera</code>, <code>komponen_rusak_perlu_segera</code>, <code>tidak_dapat_diperbaiki</code>.</p>
+<hr />
+<h2 id="s15"><span class="sec-no">15</span>State Transition</h2>
+<div class="diagram"><pre class="mermaid">stateDiagram-v2
+    [*] --&gt; konfirmasi_jadwal: Admin usulkan jadwal
+    konfirmasi_jadwal --&gt; konfirmasi_jadwal: Karyawan usulkan lain / Admin usulkan ulang
+    konfirmasi_jadwal --&gt; penjadwalan: Karyawan setujui
+    penjadwalan --&gt; pelaksanaan: Atur pelaksanaan (hadir langsung)
+    penjadwalan --&gt; menunggu_pengambilan: Atur pelaksanaan (diserahkan)
+    menunggu_pengambilan --&gt; pelaksanaan: Checklist admin + Karyawan serahkan
+    pelaksanaan --&gt; menunggu_review: Kirim hasil
+    menunggu_review --&gt; selesai: Review (hadir, hasil 1-3) / hasil 4-5
+    menunggu_review --&gt; menunggu_pengembalian: Review (diserahkan, hasil 1-3)
+    menunggu_pengembalian --&gt; selesai: Karyawan terima
+    selesai --&gt; [*]
+</pre></div>
+<hr />
+<div class="group-divider" id="g16"><span>Database</span></div><h2 id="s16"><span class="sec-no">16</span>Struktur Database</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Tabel</th>
+<th>Peran</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>asset_trx_pemeliharaan_karyawan</code></td>
+<td>Header: fase, mekanisme, karyawan, PIC Pendamping, vendor, jadwal PM/pengambilan/pengembalian, checklist pengambilan/pengembalian, jejak hasil &amp; review</td>
+</tr>
+<tr>
+<td><code>asset_trx_pemeliharaan_karyawan_item</code></td>
+<td>Satu baris per asset: hasil akhir, checklist hasil (JSON), jadwal PM berikutnya, tindak lanjut, unit pengganti</td>
+</tr>
+<tr>
+<td><code>asset_trx_pemeliharaan_karyawan_jadwal</code></td>
+<td>Riwayat jadwal: usulan/revisi/konfirmasi PM, jadwal pengambilan &amp; pengembalian</td>
+</tr>
+<tr>
+<td><code>asset_pendamping_m</code></td>
+<td>Master PIC Pendamping (diisi otomatis)</td>
+</tr>
+<tr>
+<td><code>asset_vendor_m</code></td>
+<td>Master vendor (dibaca)</td>
+</tr>
+<tr>
+<td><code>asset_data</code></td>
+<td><code>flag_pemeliharaan</code>, <code>interval_pemeliharaan</code>, <code>jadwal_pemeliharaan</code>, status &amp; pemegang</td>
+</tr>
+<tr>
+<td><code>asset_log</code></td>
+<td>Jejak perpindahan (<code>pemeliharaan_karyawan</code>)</td>
+</tr>
+</tbody>
+</table></div>
+<aside class="callout callout-warn">
+<p>⚠️ Kolom PML01 berasal dari <strong>SQL manual</strong> (<code>sql-pml01-pemeliharaan-karyawan.sql</code>) yang menyesuaikan tabel yang sudah ada di DB (kosong saat ditulis). Tidak ada migration Lumen.</p>
+</aside>
+<hr />
+<h2 id="s17"><span class="sec-no">17</span>Relasi Database</h2>
+<div class="diagram"><pre class="mermaid">erDiagram
+    asset_trx_pemeliharaan_karyawan ||--|{ asset_trx_pemeliharaan_karyawan_item : &quot;id_asset_trx_pemeliharaan_karyawan&quot;
+    asset_trx_pemeliharaan_karyawan ||--o{ asset_trx_pemeliharaan_karyawan_jadwal : &quot;id_asset_trx_pemeliharaan_karyawan&quot;
+    asset_trx_pemeliharaan_karyawan }o--o| asset_vendor_m : &quot;id_asset_vendor_m&quot;
+    asset_trx_pemeliharaan_karyawan }o--o| asset_pendamping_m : &quot;id_asset_pendamping_m&quot;
+    asset_trx_pemeliharaan_karyawan_item }o--|| asset_data : &quot;id_asset_data&quot;
+    asset_data ||--o{ asset_log : &quot;id_asset_data&quot;
+</pre></div>
+<p>Relasi logis (tanpa FK): <code>id_karyawan</code> / <code>id_pic_pendamping</code> → <code>data_karyawan</code>; <code>id_trx_request_pengganti</code> → <code>asset_trx_request_karyawan</code>; <code>id_trx_tindak_lanjut</code> + <code>nama_tabel_tindak_lanjut</code> → PML02/PML04 (⚠️ belum terisi).</p>
+<hr />
+<h2 id="s18"><span class="sec-no">18</span>Data Dictionary</h2>
+<h3>18.1 asset_trx_pemeliharaan_karyawan</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Kolom</th>
+<th>Tipe</th>
+<th>Keterangan</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>id_asset_trx_pemeliharaan_karyawan</code></td>
+<td>varchar(50) PK</td>
+<td><code>id_company + YYYYMM + NNN</code></td>
+</tr>
+<tr>
+<td><code>no_trx</code></td>
+<td>varchar(50)</td>
+<td><code>PML01-2-YYYYMMNNN</code></td>
+</tr>
+<tr>
+<td><code>mekanisme_pelaksanaan</code></td>
+<td>enum</td>
+<td><code>hadir_langsung</code> (default) / <code>diserahkan_admin</code></td>
+</tr>
+<tr>
+<td><code>fase_pemeliharaan</code></td>
+<td>enum</td>
+<td>Lihat §14</td>
+</tr>
+<tr>
+<td><code>id_karyawan</code>, <code>nik_karyawan</code>, <code>nama_karyawan</code></td>
+<td>varchar</td>
+<td>Pemegang asset (snapshot)</td>
+</tr>
+<tr>
+<td><code>nama_cabang</code>, <code>nama_departemen</code></td>
+<td>varchar</td>
+<td>Snapshot karyawan</td>
+</tr>
+<tr>
+<td><code>id_asset_pendamping_m</code></td>
+<td>varchar NULL, FK</td>
+<td>Master pendamping</td>
+</tr>
+<tr>
+<td><code>id_pic_pendamping</code>, <code>nama_pic_pendamping</code>, <code>nik_pic_pendamping</code></td>
+<td>varchar</td>
+<td>Kosong untuk mekanisme diserahkan</td>
+</tr>
+<tr>
+<td><code>id_asset_vendor_m</code></td>
+<td>varchar NULL, FK</td>
+<td>NULL bila vendor teks bebas</td>
+</tr>
+<tr>
+<td><code>nama_vendor</code>, <code>keterangan_vendor</code></td>
+<td>varchar(255)</td>
+<td>Nama &amp; kontak vendor</td>
+</tr>
+<tr>
+<td><code>tgl_pemeliharaan</code>, <code>jam_pemeliharaan</code></td>
+<td>date/time NULL</td>
+<td>Jadwal PM disepakati</td>
+</tr>
+<tr>
+<td><code>lokasi_pemeliharaan</code></td>
+<td>varchar(255)</td>
+<td>Lokasi PM</td>
+</tr>
+<tr>
+<td><code>tgl_pengambilan</code>, <code>jam_pengambilan</code>, <code>checklist_pengambilan</code></td>
+<td>date/time/JSON</td>
+<td>Fase 2C</td>
+</tr>
+<tr>
+<td><code>tgl_pelepasan</code>, <code>user_pelepasan</code></td>
+<td>timestamp/varchar</td>
+<td>Konfirmasi serah karyawan</td>
+</tr>
+<tr>
+<td><code>tgl_hasil</code>, <code>user_hasil</code></td>
+<td>timestamp/varchar</td>
+<td>Pengisi checklist hasil</td>
+</tr>
+<tr>
+<td><code>tgl_review</code>, <code>user_review</code>, <code>keterangan_review</code></td>
+<td>timestamp/varchar/text</td>
+<td>Review admin</td>
+</tr>
+<tr>
+<td><code>tgl_pengembalian</code>, <code>jam_pengembalian</code>, <code>checklist_pengembalian</code></td>
+<td>date/time/JSON</td>
+<td>Fase 5</td>
+</tr>
+<tr>
+<td><code>tgl_diterima</code>, <code>user_diterima</code></td>
+<td>timestamp/varchar</td>
+<td>Konfirmasi terima karyawan</td>
+</tr>
+<tr>
+<td><code>status</code></td>
+<td>enum <code class="chip chip-wait">proses</code>/<code>selesai</code></td>
+<td>Ringkasan</td>
+</tr>
+<tr>
+<td><code>id_company</code>, <code>tgl_input</code>, <code>user_input</code>, <code>tgl_update</code>, <code>user_update</code></td>
+<td>–</td>
+<td>Standar</td>
+</tr>
+</tbody>
+</table></div>
+<p>Format JSON <code>checklist_pengambilan</code> / <code>checklist_pengembalian</code>: <code>[{id_item, nama_item, jenis, kondisi: normal|rusak, ket_rusak}]</code>.</p>
+<h3>18.2 asset_trx_pemeliharaan_karyawan_item</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Kolom</th>
+<th>Tipe</th>
+<th>Keterangan</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>id_asset_trx_pemeliharaan_karyawan_item</code></td>
+<td>varchar PK</td>
+<td></td>
+</tr>
+<tr>
+<td><code>id_asset_data</code></td>
+<td>varchar FK</td>
+<td>Asset yang dipelihara</td>
+</tr>
+<tr>
+<td><code>nama_asset</code>, <code>deskripsi_asset</code>, <code>kategori_asset</code></td>
+<td>varchar</td>
+<td>Snapshot</td>
+</tr>
+<tr>
+<td><code>status_item_pendamping</code></td>
+<td>enum NULL</td>
+<td>Hasil akhir (item terberat)</td>
+</tr>
+<tr>
+<td><code>checklist_hasil</code></td>
+<td>text JSON</td>
+<td><code>[{id_item, nama_item, jenis, hasil, keterangan}]</code></td>
+</tr>
+<tr>
+<td><code>keterangan_konfirmasi</code></td>
+<td>varchar(255)</td>
+<td>Catatan umum pengisi hasil</td>
+</tr>
+<tr>
+<td><code>tgl_pemeliharaan_selanjutnya</code></td>
+<td>datetime NULL</td>
+<td>Hasil 1–3 dengan interval &gt; 0</td>
+</tr>
+<tr>
+<td><code>tgl_rencana_penggantian_komponen</code></td>
+<td>date NULL</td>
+<td>Wajib untuk hasil 3</td>
+</tr>
+<tr>
+<td><code>id_trx_tindak_lanjut</code>, <code>nama_tabel_tindak_lanjut</code></td>
+<td>varchar</td>
+<td>Hasil 4/5 (id kosong, lihat INC-05)</td>
+</tr>
+<tr>
+<td><code>flag_unit_pengganti</code>, <code>id_trx_request_pengganti</code></td>
+<td>enum('0','1'), varchar</td>
+<td>Unit pengganti</td>
+</tr>
+</tbody>
+</table></div>
+<h3>18.3 asset_trx_pemeliharaan_karyawan_jadwal</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Kolom</th>
+<th>Tipe</th>
+<th>Keterangan</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>jenis_jadwal</code></td>
+<td>enum</td>
+<td><code>pemeliharaan</code> / <code>pengambilan</code> / <code>pengembalian</code></td>
+</tr>
+<tr>
+<td><code>tanggal</code>, <code>jam</code></td>
+<td>date/time</td>
+<td></td>
+</tr>
+<tr>
+<td><code>jenis_alur</code></td>
+<td>enum</td>
+<td><code>menunggu</code> (usulan admin), <code>revisi</code> (usulan karyawan), <code>konfirmasi</code></td>
+</tr>
+<tr>
+<td><code>label_alur</code></td>
+<td>varchar</td>
+<td><code>admin</code> / <code>karyawan</code></td>
+</tr>
+<tr>
+<td><code>keterangan</code></td>
+<td>varchar(255)</td>
+<td>Catatan / alasan usulan alternatif</td>
+</tr>
+<tr>
+<td><code>user_input</code>, <code>tgl_input</code></td>
+<td>–</td>
+<td>Pelaku &amp; waktu</td>
+</tr>
+</tbody>
+</table></div>
+<h3>18.4 asset_log (<code>jenis_log = pemeliharaan_karyawan</code>)</h3>
+<p>Dicatat saat <strong>serahkan</strong> (karyawan → gudang), <strong>terima</strong> (gudang → karyawan), dan <strong>asset ditarik</strong> (hasil 4/5, <code>kondisi_akhir = rusak</code>). <code>id_pemegang</code>/<code>nama_pemegang</code> diisi hanya bila posisi akhir karyawan.</p>
+<hr />
+<h2 id="s19"><span class="sec-no">19</span>Database Index</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Tabel</th>
+<th>Index</th>
+<th>Kolom</th>
+<th>Dipakai oleh</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>header</td>
+<td>PK</td>
+<td><code>id_asset_trx_pemeliharaan_karyawan</code></td>
+<td>Detail, lock</td>
+</tr>
+<tr>
+<td>header</td>
+<td><code>atpk_company_fase_idx</code></td>
+<td><code>id_company, fase_pemeliharaan, tgl_input, id_…</code></td>
+<td>List admin, pending admin</td>
+</tr>
+<tr>
+<td>header</td>
+<td><code>atpk_company_karyawan_fase_idx</code></td>
+<td><code>id_company, id_karyawan, fase_pemeliharaan, tgl_input</code></td>
+<td>List &amp; pending karyawan</td>
+</tr>
+<tr>
+<td>item</td>
+<td><code>atpki_company_asset_hasil_idx</code></td>
+<td><code>id_company, id_asset_data, status_item_pendamping</code></td>
+<td>Blokir lintas modul, watchlist</td>
+</tr>
+<tr>
+<td>item / jadwal</td>
+<td>FK index</td>
+<td><code>id_asset_trx_pemeliharaan_karyawan</code>, <code>id_asset_data</code></td>
+<td>Join</td>
+</tr>
+</tbody>
+</table></div>
+<p>⚠️ Pencarian karyawan sebagai <strong>pendamping</strong> (<code>id_pic_pendamping</code>) tidak punya index khusus.</p>
+<hr />
+<div class="group-divider" id="g20"><span>Backend & API</span></div><h2 id="s20"><span class="sec-no">20</span>Backend Architecture</h2>
+<div class="code"><span class="code-lang">Alur</span><pre><code class="language-text">routes/modules/asset/RouteAsset.php
+   ↓
+AssetAdminPemeliharaan_c (10 endpoint)        AssetKaryawanPemeliharaan_c (6 endpoint, pemegang &amp; pendamping)
+   ↓  mutateAssetTrx / mutateTrxSaya → AssetNotification::send
+AssetPemeliharaanKaryawan_m extends Asset_m
+   ↓   ↔ AssetUpgradeKaryawan_m / AssetRusakKaryawan_m / AssetReturKaryawan_m / AssetOffboardingKaryawan_m (cek flow lain)
+   ↓   → AssetRequestKaryawan_m::store (unit pengganti)
+DB (header, item, jadwal, asset_pendamping_m, asset_data, asset_log)
+</code></pre></div>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Layer</th>
+<th>File</th>
+<th>Isi</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Route</td>
+<td><code>API/routes/modules/asset/RouteAsset.php</code></td>
+<td>16 route PML01</td>
+</tr>
+<tr>
+<td>Controller</td>
+<td><code>AssetAdminPemeliharaan_c.php</code></td>
+<td>getMonitoringPemeliharaan, getPemeliharaanOptions, getPemeliharaanKaryawan, getDetailPemeliharaanKaryawan, storePemeliharaanKaryawan, updateJadwalPemeliharaan, aturPelaksanaanPemeliharaan, checklistPengambilanPemeliharaan, hasilPemeliharaanKaryawan, reviewPemeliharaanKaryawan</td>
+</tr>
+<tr>
+<td>Controller</td>
+<td><code>AssetKaryawanPemeliharaan_c.php</code></td>
+<td>getPemeliharaanSaya, getDetailPemeliharaanSaya, konfirmasiJadwalPemeliharaanSaya, pelepasanPemeliharaanSaya, hasilPemeliharaanSaya, terimaPemeliharaanSaya</td>
+</tr>
+<tr>
+<td>Model</td>
+<td><code>AssetPemeliharaanKaryawan_m</code></td>
+<td>getMonitoring, countJatuhTempo, getAdminOptions, getPage, getDetail, store, updateJadwal, konfirmasiJadwal, aturPelaksanaan, checklistPengambilan, pelepasan, hasil, review, terima, getPendingForEmployee, getPendingForAdmin, countPendingForAdmin, hasActivePemeliharaanAsset</td>
+</tr>
+<tr>
+<td>Helper bersama</td>
+<td><code>Asset_m</code></td>
+<td><code>normalizeKondisiChecklist</code> (dipakai juga Upgrade), <code>komponenAssets</code>, <code>parseJadwalValue</code>, <code>insertAssetLog</code>, <code>nextSequence</code>, <code>lockCompany</code></td>
+</tr>
+<tr>
+<td>Notifikasi</td>
+<td><code>App\Support\Asset\AssetNotification</code></td>
+<td>14 event <code>pemeliharaan.*</code>, penerima baru <code>pendamping</code></td>
+</tr>
+<tr>
+<td>Dashboard</td>
+<td><code>AssetAdmin_m::getSummary</code>, <code>AssetKaryawan_m</code></td>
+<td><code>pemeliharaan_*</code> &amp; <code>pemeliharaan[]</code></td>
+</tr>
+</tbody>
+</table></div>
+<hr />
+<h2 id="s21"><span class="sec-no">21</span>Backend Business Logic</h2>
+<h3>21.1 Buat PM — <code>store</code></h3>
+<p>Lock company → admin → jadwal valid (≥ hari ini) → asset dipegang karyawan (FOR UPDATE), <code class="chip chip-done">terpakai</code>, <code>flag_pemeliharaan = 1</code> → <code>assetBlockMessage</code> → karyawan aktif + cabang/departemen → ID + <code>PML01-2-…</code> → INSERT header (<code>konfirmasi_jadwal</code>, <code>hadir_langsung</code>) → INSERT item (hasil NULL) → INSERT jadwal (<code>pemeliharaan</code>, <code>menunggu</code>, <code>admin</code>).</p>
+<h3>21.2 Usul/ubah jadwal — <code>updateJadwal</code></h3>
+<p>Fase menentukan jenis jadwal (§BR-012); insert baris jadwal (<code>menunggu</code> untuk PM, <code>konfirmasi</code> untuk pengambilan/pengembalian) dan perbarui kolom tanggal header untuk pengambilan/pengembalian.</p>
+<h3>21.3 Konfirmasi jadwal — <code>konfirmasiJadwal</code></h3>
+<p>Karyawan aktif, header milik karyawan, fase <code>konfirmasi_jadwal</code>, usulan admin terakhir terbuka → <code>revisi</code> (insert baris revisi) atau <code>konfirmasi</code> (insert baris konfirmasi, salin jadwal ke header, fase <code>penjadwalan</code>).</p>
+<h3>21.4 Atur pelaksanaan — <code>aturPelaksanaan</code></h3>
+<p>Fase <code>penjadwalan</code> → mekanisme valid → asset <code class="chip chip-done">terpakai</code> → vendor (master/teks) → lokasi → hadir: pendamping aktif + <code>pendampingMasterId</code> → fase <code>pelaksanaan</code>; diserahkan: jadwal pengambilan + baris jadwal → fase <code>menunggu_pengambilan</code>.</p>
+<h3>21.5 Checklist pengambilan — <code>checklistPengambilan</code></h3>
+<p>Fase <code>menunggu_pengambilan</code>, checklist kosong, asset <code class="chip chip-done">terpakai</code> → <code>normalizeKondisiChecklist</code> → simpan JSON.</p>
+<h3>21.6 Serahkan — <code>pelepasan</code></h3>
+<p>Karyawan aktif, milik karyawan, checklist ada → asset <code>dalam_perbaikan</code> → log karyawan → gudang → fase <code>pelaksanaan</code>, <code>tgl/user_pelepasan</code>.</p>
+<h3>21.7 Hasil — <code>hasil</code></h3>
+<p>Pengisi = pendamping (payload <code>id_karyawan</code>) atau admin (<code>user_id</code>) → fase <code>pelaksanaan</code> → cek hak pendamping → asset dipegang (status sesuai mekanisme) → <code>normalizeHasilChecklist</code> → hasil terberat → UPDATE item → fase <code>menunggu_review</code>.</p>
+<h3>21.8 Review — <code>review</code></h3>
+<p>Fase <code>menunggu_review</code> → asset dipegang (<code>dalam_perbaikan</code> untuk diserahkan, <code class="chip chip-done">terpakai</code> untuk hadir) → hasil 4/5: tarik asset + log + (opsional) <code>AssetRequestKaryawan_m::store</code> → <code>selesai</code>; hasil 1–3: <code>jadwalBerikutnya</code> (+ rencana penggantian hasil 3) → hadir <code>selesai</code> / diserahkan jadwal pengembalian + <code>menunggu_pengembalian</code>. Respons menambah <code>hasil</code>, <code>ditarik</code>, <code>id_request_pengganti</code>.</p>
+<h3>21.9 Terima — <code>terima</code></h3>
+<p>Fase <code>menunggu_pengembalian</code> → asset <code>dalam_perbaikan</code> di karyawan → checklist → asset <code class="chip chip-done">terpakai</code> → log gudang → karyawan → <code>selesai</code>, <code>tgl/user_diterima</code>.</p>
+<h3>21.10 Query baca</h3>
+<ul>
+<li><strong>Monitoring</strong>: asset <code>flag = 1</code>, karyawan, <code class="chip chip-done">terpakai</code>, jadwal ≤ H+14, tanpa PM aktif; urut jadwal terdekat; <code>sisa_hari</code> negatif = terlambat; <code>watchlist</code> dari PM selesai terakhir bila hasil 2/3.</li>
+<li><strong>List</strong>: tab <code>jadwal</code> (konfirmasi_jadwal, penjadwalan), <code class="chip chip-wait">proses</code> (fase lain kecuali selesai), <code>selesai</code>; karyawan melihat PM sebagai pemegang <strong>atau</strong> pendamping (<code>peran</code>).</li>
+<li><strong>Detail</strong>: header, riwayat jadwal, <code>usulan_jadwal</code> terbuka, komponen, checklist, hasil, review, objek <code>aksi</code> sesuai peran.</li>
+<li><strong>Pending admin</strong>: usulan karyawan terakhir (<code>revisi</code>), <code>penjadwalan</code>, pengambilan tanpa checklist, <code>pelaksanaan</code> mekanisme diserahkan, <code>menunggu_review</code>.</li>
+<li><strong>Pending karyawan</strong>: <code>konfirmasi_jadwal</code> (ada usulan admin), <code>pelepasan</code>, <code>terima</code>, <code>hasil</code> (pendamping).</li>
+</ul>
+<hr />
+<h2 id="s22"><span class="sec-no">22</span>Dampak terhadap asset_data</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Tahap</th>
+<th>status_asset</th>
+<th>pemegang</th>
+<th>Kolom lain</th>
+<th>asset_log</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Buat PM s/d penjadwalan</td>
+<td>tetap <code class="chip chip-done">terpakai</code></td>
+<td>karyawan</td>
+<td>–</td>
+<td>–</td>
+</tr>
+<tr>
+<td>Serahkan (diserahkan)</td>
+<td><code>dalam_perbaikan</code></td>
+<td>tetap karyawan</td>
+<td>–</td>
+<td>karyawan → gudang</td>
+</tr>
+<tr>
+<td>Review hasil 1–3</td>
+<td>tetap</td>
+<td>tetap</td>
+<td><code>jadwal_pemeliharaan</code> = review + interval</td>
+<td>–</td>
+</tr>
+<tr>
+<td>Terima kembali (diserahkan)</td>
+<td><code class="chip chip-done">terpakai</code></td>
+<td>karyawan</td>
+<td>–</td>
+<td>gudang → karyawan</td>
+</tr>
+<tr>
+<td>Review hasil 4–5</td>
+<td><code class="chip chip-bad">rusak</code></td>
+<td><code>gudang</code> (<code>id_pemegang_asset</code> kosong)</td>
+<td><code>kondisi_awal = rusak</code>, <code>ket_rusak</code>, <code>status_rusak</code></td>
+<td>karyawan/gudang → gudang, kondisi_akhir rusak</td>
+</tr>
+<tr>
+<td>Unit pengganti</td>
+<td><code class="chip chip-wait">proses</code> (oleh Penambahan)</td>
+<td>gudang → karyawan saat penambahan dikonfirmasi</td>
+<td>–</td>
+<td>log Penambahan</td>
+</tr>
+</tbody>
+</table></div>
+<aside class="callout callout-note">
+<p>Mekanisme hadir langsung dengan hasil 1–3 <strong>tidak</strong> menulis <code>asset_log</code>; jejaknya ada di transaksi PM dan <code>jadwal_pemeliharaan</code> baru.</p>
+</aside>
+<hr />
+<h2 id="s23"><span class="sec-no">23</span>API Documentation</h2>
+<p>Prefix <code>/asset</code>, header <code>Authorization: Bearer &lt;JWT&gt;</code>. Admin divalidasi <code>accessError</code> (admin asset aktif).</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>ID</th>
+<th>Method</th>
+<th>Endpoint</th>
+<th>Aktor</th>
+<th>Fungsi</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>API-001</td>
+<td>GET</td>
+<td><code>/pemeliharaan-karyawan/monitoring</code></td>
+<td>Admin</td>
+<td>Asset jatuh tempo</td>
+</tr>
+<tr>
+<td>API-002</td>
+<td>GET</td>
+<td><code>/pemeliharaan-karyawan/options</code></td>
+<td>Admin</td>
+<td>Vendor, karyawan aktif, unit pengganti, mekanisme, hasil</td>
+</tr>
+<tr>
+<td>API-003</td>
+<td>GET</td>
+<td><code>/pemeliharaan-karyawan</code></td>
+<td>Admin</td>
+<td>List (<code>tab</code>, <code>limit</code> ≤ 50, <code>offset</code>)</td>
+</tr>
+<tr>
+<td>API-004</td>
+<td>POST</td>
+<td><code>/pemeliharaan-karyawan</code></td>
+<td>Admin</td>
+<td>Buat PM + usulan jadwal</td>
+</tr>
+<tr>
+<td>API-005</td>
+<td>PUT</td>
+<td><code>/pemeliharaan-karyawan/{id}/jadwal</code></td>
+<td>Admin</td>
+<td>Usul/ubah jadwal</td>
+</tr>
+<tr>
+<td>API-006</td>
+<td>POST</td>
+<td><code>/pemeliharaan-karyawan/{id}/pelaksanaan</code></td>
+<td>Admin</td>
+<td>Atur pelaksanaan</td>
+</tr>
+<tr>
+<td>API-007</td>
+<td>POST</td>
+<td><code>/pemeliharaan-karyawan/{id}/checklist-pengambilan</code></td>
+<td>Admin</td>
+<td>Checklist pengambilan</td>
+</tr>
+<tr>
+<td>API-008</td>
+<td>POST</td>
+<td><code>/pemeliharaan-karyawan/{id}/hasil</code></td>
+<td>Admin</td>
+<td>Checklist hasil</td>
+</tr>
+<tr>
+<td>API-009</td>
+<td>POST</td>
+<td><code>/pemeliharaan-karyawan/{id}/review</code></td>
+<td>Admin</td>
+<td>Review &amp; tindak lanjut</td>
+</tr>
+<tr>
+<td>API-010</td>
+<td>GET</td>
+<td><code>/pemeliharaan-karyawan/{id}</code></td>
+<td>Admin</td>
+<td>Detail</td>
+</tr>
+<tr>
+<td>API-011</td>
+<td>GET</td>
+<td><code>/karyawan/pemeliharaan</code></td>
+<td>Karyawan</td>
+<td>List pemegang/pendamping</td>
+</tr>
+<tr>
+<td>API-012</td>
+<td>POST</td>
+<td><code>/karyawan/pemeliharaan/{id}/jadwal</code></td>
+<td>Pemegang</td>
+<td>Setujui / usulkan lain</td>
+</tr>
+<tr>
+<td>API-013</td>
+<td>POST</td>
+<td><code>/karyawan/pemeliharaan/{id}/pelepasan</code></td>
+<td>Pemegang</td>
+<td>Serahkan aset</td>
+</tr>
+<tr>
+<td>API-014</td>
+<td>POST</td>
+<td><code>/karyawan/pemeliharaan/{id}/hasil</code></td>
+<td>Pendamping</td>
+<td>Checklist hasil</td>
+</tr>
+<tr>
+<td>API-015</td>
+<td>POST</td>
+<td><code>/karyawan/pemeliharaan/{id}/terima</code></td>
+<td>Pemegang</td>
+<td>Terima aset</td>
+</tr>
+<tr>
+<td>API-016</td>
+<td>GET</td>
+<td><code>/karyawan/pemeliharaan/{id}</code></td>
+<td>Pemegang/Pendamping</td>
+<td>Detail</td>
+</tr>
+</tbody>
+</table></div>
+<p>Terkait: <code>GET /asset/summary</code> (<code>pemeliharaan_perlu_proses</code>, <code>pemeliharaan_pending</code>, <code>pemeliharaan_jatuh_tempo_jumlah</code>, <code>pemeliharaan_jatuh_tempo</code>) dan Asset Saya (<code>pemeliharaan[]</code>).</p>
+<hr />
+<h2 id="s24"><span class="sec-no">24</span>Detail Setiap API</h2>
+<h3>API-001 — Monitoring jatuh tempo</h3>
+<div class="code"><span class="code-lang">JSON</span><pre><code class="language-json">{
+  &quot;code&quot;: &quot;SUCCESS&quot;,
+  &quot;data&quot;: {
+    &quot;records&quot;: [
+      {
+        &quot;id_asset_data&quot;: &quot;C0012026090001&quot;,
+        &quot;kode_asset&quot;: &quot;LTP-2026-0001&quot;,
+        &quot;nama_asset&quot;: &quot;Laptop Kerja&quot;,
+        &quot;kategori_asset&quot;: &quot;Laptop&quot;,
+        &quot;interval_pemeliharaan&quot;: 6,
+        &quot;jadwal_pemeliharaan&quot;: &quot;2026-10-03&quot;,
+        &quot;sisa_hari&quot;: 5,
+        &quot;karyawan&quot;: {&quot;id_karyawan&quot;: &quot;EMP-01&quot;, &quot;nik&quot;: &quot;343242&quot;, &quot;nama_karyawan&quot;: &quot;Karyawan Contoh&quot;},
+        &quot;watchlist&quot;: {&quot;no_trx&quot;: &quot;PML01-2-202603001&quot;, &quot;hasil&quot;: &quot;perlu_tindak_lanjut&quot;, &quot;hasil_label&quot;: &quot;Perlu Tindak Lanjut&quot;, &quot;keterangan&quot;: &quot;Kipas bising&quot;}
+      }
+    ]
+  }
+}
+</code></pre></div>
+<h3>API-004 — Buat PM</h3>
+<div class="code"><span class="code-lang">HTTP</span><pre><code class="language-http">POST /asset/pemeliharaan-karyawan
+{&quot;id_asset_data&quot;: &quot;C0012026090001&quot;, &quot;tgl_jadwal&quot;: &quot;2026-10-02&quot;, &quot;jam_jadwal&quot;: &quot;10:00&quot;, &quot;keterangan_jadwal&quot;: &quot;PM rutin 6 bulan&quot;}
+</code></pre></div>
+<p>Validasi: <code>id_asset_data</code> wajib, <code>tgl_jadwal</code> <code>Y-m-d</code> wajib, <code>jam_jadwal</code> <code>H:i</code> wajib. Respons 201 <code>{id, no_trx, mekanisme_pelaksanaan, fase_pemeliharaan, status_label, tab}</code>. Notif <code>pemeliharaan.usulan_jadwal</code>.</p>
+<h3>API-005 — Usul/ubah jadwal</h3>
+<p><code>tgl_jadwal</code>, <code>jam_jadwal</code> wajib, <code>keterangan_jadwal</code> opsional. Notif <code>pemeliharaan.usulan_jadwal</code> (fase konfirmasi_jadwal) atau <code>pemeliharaan.jadwal_diubah</code>.</p>
+<h3>API-012 — Konfirmasi jadwal (karyawan)</h3>
+<div class="code"><span class="code-lang">JSON</span><pre><code class="language-json">{&quot;aksi&quot;: &quot;revisi&quot;, &quot;tgl_jadwal&quot;: &quot;2026-10-05&quot;, &quot;jam_jadwal&quot;: &quot;13:00&quot;, &quot;keterangan_jadwal&quot;: &quot;Sedang dinas luar&quot;}
+</code></pre></div>
+<p><code>aksi</code> <code>konfirmasi|revisi</code>; untuk <code>revisi</code> tanggal, jam, keterangan wajib. Notif <code>pemeliharaan.jadwal_disetujui</code> / <code>pemeliharaan.jadwal_revisi</code> ke admin.</p>
+<h3>API-006 — Atur pelaksanaan</h3>
+<div class="code"><span class="code-lang">JSON</span><pre><code class="language-json">{
+  &quot;mekanisme_pelaksanaan&quot;: &quot;hadir_langsung&quot;,
+  &quot;id_asset_vendor_m&quot;: &quot;&quot;,
+  &quot;nama_vendor&quot;: &quot;Servis Laptop Contoh&quot;,
+  &quot;keterangan_vendor&quot;: &quot;0812-0000-0000&quot;,
+  &quot;lokasi_pemeliharaan&quot;: &quot;Ruang IT lantai 2&quot;,
+  &quot;id_pic_pendamping&quot;: &quot;EMP-01&quot;
+}
+</code></pre></div>
+<p><code>nama_vendor</code> wajib bila <code>id_asset_vendor_m</code> kosong; <code>lokasi_pemeliharaan</code> wajib; <code>id_pic_pendamping</code> wajib untuk hadir langsung; <code>tgl_jadwal</code>/<code>jam_jadwal</code> (pengambilan) wajib untuk diserahkan. Notif hadir: <code>pemeliharaan.pendamping</code> (ke pendamping) + <code>pemeliharaan.dijadwalkan</code> (ke karyawan); diserahkan: <code>pemeliharaan.pengambilan</code>.</p>
+<h3>API-007 — Checklist pengambilan &amp; API-015 — Terima</h3>
+<div class="code"><span class="code-lang">JSON</span><pre><code class="language-json">{&quot;items&quot;: [{&quot;id_item&quot;: &quot;C001…UNIT&quot;, &quot;kondisi&quot;: &quot;normal&quot;, &quot;ket_rusak&quot;: &quot;&quot;}, {&quot;id_item&quot;: &quot;C001…CHG&quot;, &quot;kondisi&quot;: &quot;rusak&quot;, &quot;ket_rusak&quot;: &quot;Kabel longgar&quot;}]}
+</code></pre></div>
+<p>Semua item asset (<code>komponen</code> di detail) wajib. Notif <code>pemeliharaan.checklist_pengambilan</code> / <code>pemeliharaan.diterima</code>.</p>
+<h3>API-013 — Serahkan aset</h3>
+<p>Tanpa body. Notif <code>pemeliharaan.dilepas</code> ke admin.</p>
+<h3>API-008 / API-014 — Checklist hasil</h3>
+<div class="code"><span class="code-lang">JSON</span><pre><code class="language-json">{
+  &quot;items&quot;: [
+    {&quot;id_item&quot;: &quot;C001…UNIT&quot;, &quot;hasil&quot;: &quot;normal&quot;, &quot;keterangan&quot;: &quot;&quot;},
+    {&quot;id_item&quot;: &quot;C001…CHG&quot;, &quot;hasil&quot;: &quot;komponen_rusak_tidak_segera&quot;, &quot;keterangan&quot;: &quot;Adaptor panas&quot;}
+  ],
+  &quot;keterangan&quot;: &quot;Dikerjakan vendor, dibersihkan&quot;
+}
+</code></pre></div>
+<p>Respons menambah <code>hasil</code> (hasil akhir). Notif <code>pemeliharaan.hasil</code> ke admin.</p>
+<h3>API-009 — Review &amp; tindak lanjut</h3>
+<div class="code"><span class="code-lang">JSON</span><pre><code class="language-json">{
+  &quot;keterangan_review&quot;: &quot;Pantau adaptor&quot;,
+  &quot;tgl_rencana_penggantian_komponen&quot;: &quot;2026-11-01&quot;,
+  &quot;id_asset_pengganti&quot;: &quot;&quot;,
+  &quot;tgl_jadwal&quot;: &quot;2026-10-10&quot;,
+  &quot;jam_jadwal&quot;: &quot;09:00&quot;,
+  &quot;keterangan_jadwal&quot;: &quot;Ambil di ruang HR&quot;
+}
+</code></pre></div>
+<p><code>tgl_rencana_penggantian_komponen</code> wajib untuk hasil 3; jadwal wajib untuk diserahkan hasil 1–3 (pengembalian) atau bila unit pengganti dipilih (serah terima Penambahan). Respons <code>{…, hasil, ditarik, id_request_pengganti}</code>. Notif <code>pemeliharaan.selesai</code> / <code>pemeliharaan.pengembalian</code> / <code>pemeliharaan.ditarik</code> (+ <code>penambahan.dikirim</code>).</p>
+<h3>API-010 / API-016 — Detail (ringkas)</h3>
+<div class="code"><span class="code-lang">JSON</span><pre><code class="language-json">{
+  &quot;id&quot;: &quot;C001202609001&quot;,
+  &quot;no_trx&quot;: &quot;PML01-2-202609001&quot;,
+  &quot;fase_pemeliharaan&quot;: &quot;menunggu_review&quot;,
+  &quot;status_label&quot;: &quot;Menunggu Review&quot;,
+  &quot;tab&quot;: &quot;proses&quot;,
+  &quot;peran&quot;: &quot;pendamping&quot;,
+  &quot;mekanisme_pelaksanaan&quot;: &quot;hadir_langsung&quot;,
+  &quot;karyawan&quot;: {&quot;id_karyawan&quot;: &quot;EMP-01&quot;, &quot;nik&quot;: &quot;343242&quot;, &quot;nama_karyawan&quot;: &quot;Karyawan Contoh&quot;, &quot;cabang&quot;: &quot;Pusat&quot;, &quot;divisi&quot;: &quot;IT&quot;},
+  &quot;pendamping&quot;: {&quot;id_karyawan&quot;: &quot;EMP-02&quot;, &quot;nik&quot;: &quot;343243&quot;, &quot;nama_karyawan&quot;: &quot;Pendamping Contoh&quot;},
+  &quot;vendor&quot;: {&quot;id_asset_vendor_m&quot;: &quot;&quot;, &quot;nama_vendor&quot;: &quot;Servis Laptop Contoh&quot;, &quot;keterangan_vendor&quot;: &quot;0812-0000-0000&quot;},
+  &quot;lokasi_pemeliharaan&quot;: &quot;Ruang IT lantai 2&quot;,
+  &quot;tgl_pemeliharaan&quot;: &quot;2026-10-02&quot;, &quot;jam_pemeliharaan&quot;: &quot;10:00&quot;,
+  &quot;usulan_jadwal&quot;: null,
+  &quot;riwayat_jadwal&quot;: [{&quot;jenis_jadwal&quot;: &quot;pemeliharaan&quot;, &quot;jenis_alur&quot;: &quot;menunggu&quot;, &quot;label_alur&quot;: &quot;admin&quot;, &quot;tanggal&quot;: &quot;2026-10-02&quot;, &quot;jam&quot;: &quot;10:00&quot;, &quot;keterangan&quot;: &quot;&quot;}],
+  &quot;asset&quot;: {&quot;id_asset_data&quot;: &quot;C0012026090001&quot;, &quot;nama_asset&quot;: &quot;Laptop Kerja&quot;, &quot;status_asset&quot;: &quot;terpakai&quot;, &quot;interval_pemeliharaan&quot;: 6},
+  &quot;komponen&quot;: [{&quot;id_item&quot;: &quot;C001…UNIT&quot;, &quot;nama_item&quot;: &quot;Unit Utama&quot;, &quot;jenis&quot;: &quot;aset_utama&quot;}],
+  &quot;hasil&quot;: {&quot;status&quot;: &quot;perlu_tindak_lanjut&quot;, &quot;label&quot;: &quot;Perlu Tindak Lanjut&quot;, &quot;checklist&quot;: [], &quot;user_hasil&quot;: &quot;343243 - Pendamping Contoh&quot;},
+  &quot;review&quot;: {&quot;tgl_pemeliharaan_selanjutnya&quot;: &quot;&quot;, &quot;tindak_lanjut&quot;: &quot;&quot;, &quot;flag_unit_pengganti&quot;: false},
+  &quot;aksi&quot;: {&quot;konfirmasi_jadwal&quot;: false, &quot;pelepasan&quot;: false, &quot;hasil&quot;: false, &quot;terima&quot;: false}
+}
+</code></pre></div>
+<p>Objek <code>aksi</code> admin: <code>usul_jadwal</code>, <code>ubah_jadwal</code>, <code>atur_pelaksanaan</code>, <code>checklist_pengambilan</code>, <code>hasil</code>, <code>review</code>. Karyawan hanya melihat PM miliknya atau yang ia dampingi (lainnya 404).</p>
+<hr />
+<div class="group-divider" id="g25"><span>Mobile</span></div><h2 id="s25"><span class="sec-no">25</span>Mobile Architecture</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Layer</th>
+<th>File</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Model</td>
+<td><code>lib/Repository/Model/Asset/mAssetPemeliharaan.dart</code> (Record, Aksi, HasilData, Review, Monitoring, Options, Pelaksanaan, konstanta Fase/Mekanisme/Hasil)</td>
+</tr>
+<tr>
+<td>Service</td>
+<td><code>lib/Repository/Service/assetPemeliharaanApi.dart</code> (<code>admin</code> memilih prefix)</td>
+</tr>
+<tr>
+<td>Bloc</td>
+<td><code>lib/Bloc/Asset/AssetPemeliharaanBloc.dart</code> (list, loadMore, monitoring, options, detail, submit)</td>
+</tr>
+<tr>
+<td>UI</td>
+<td><code>lib/UI/Modul/Asset/Pemeliharaan/</code> — <code>HalamanAssetPemeliharaan</code>, <code>HalamanMonitoringPemeliharaan</code>, <code>HalamanDetailAssetPemeliharaan</code>, <code>AssetPemeliharaanWidgets</code></td>
+</tr>
+<tr>
+<td>Bahasa</td>
+<td><code>assets/id|en/asset.json</code> grup <code>pemeliharaan</code> (124 teks) → <code>AssetPemeliharaanText</code> di <code>mAssetPage.dart</code></td>
+</tr>
+<tr>
+<td>Route</td>
+<td><code>/asset_pemeliharaan</code>, <code>/asset_detail_pemeliharaan</code>, <code>/asset_admin_pemeliharaan</code>, <code>/asset_admin_detail_pemeliharaan</code>, <code>/asset_admin_monitoring_pemeliharaan</code> (dua rute detail juga tujuan notifikasi)</td>
+</tr>
+<tr>
+<td>Navigator</td>
+<td><code>NavigateToAssetPemeliharaan</code>, <code>NavigateToAssetMonitoringPemeliharaan</code>, <code>NavigateToAssetDetailPemeliharaan</code> (<code>fromAssetSaya</code> / <code>fromAdminHome</code>)</td>
+</tr>
+<tr>
+<td>Entry point</td>
+<td>Asset Saya (menu + banner), hub Asset Karyawan admin (tile + 2 kartu)</td>
+</tr>
+</tbody>
+</table></div>
+<hr />
+<h2 id="s26"><span class="sec-no">26</span>Mobile Screen</h2>
+<h3>26.1 Pemeliharaan Terjadwal — list</h3>
+<p>Tab <strong>Jadwal / Proses / Selesai</strong>; kartu menampilkan asset, no_trx, badge fase, karyawan (admin), "Anda PIC Pendamping", hasil akhir berwarna, dan notice jadwal aktif. Admin punya ikon <strong>Jatuh Tempo</strong> di app bar.</p>
+<h3>26.2 Jatuh Tempo Pemeliharaan (admin)</h3>
+<p>Kartu per asset: nama, kategori/kode, badge <strong>"5 hari lagi" / "Hari ini" / "Terlambat 2 hari"</strong>, pemegang, jadwal PM, interval, notice <strong>Catatan PM sebelumnya</strong> (watchlist), tombol <strong>Jadwalkan PM</strong> (sheet jadwal).</p>
+<h3>26.3 Detail Pemeliharaan</h3>
+<p>Header (no_trx, badge, asset, pemegang, interval) → timeline (Jadwal · Pelaksanaan · Review · [Pengembalian] · Selesai) → notice jadwal aktif (+ tombol Ubah Jadwal admin) → notice info fase sesuai peran → ringkasan pelaksanaan (mekanisme, jadwal, vendor, lokasi, pendamping) → form checklist kondisi / form checklist hasil (chip 5 tingkat + keterangan temuan + catatan umum) → ringkasan hasil → form review (catatan, rencana penggantian untuk hasil 3, unit pengganti untuk hasil 4–5) → ringkasan review → checklist pengambilan/pengembalian → riwayat jadwal. Tombol bawah sesuai <code>aksi</code>.</p>
+<h3>26.4 Sheet Atur Pelaksanaan</h3>
+<p>Segmented mekanisme, dropdown vendor master + "Isi nama vendor manual", keterangan vendor, lokasi, pemilih PIC Pendamping (default pemegang). Mekanisme diserahkan lanjut ke sheet <strong>Jadwal Pengambilan</strong>.</p>
+<h3>26.5 Entry point</h3>
+<ul>
+<li>Asset Saya: menu <strong>Pemeliharaan</strong>; banner teal sesuai <code>aksi</code> (<code>konfirmasi_jadwal</code>, <code>pelepasan</code>, <code>terima</code>, <code>hasil</code>).</li>
+<li>Admin: tile <strong>Pemeliharaan</strong>, kartu <strong>Pemeliharaan Perlu Diproses</strong> (label aksi per fase) dan <strong>Pemeliharaan Jatuh Tempo</strong> (chip merah bila terlambat).</li>
+</ul>
+<hr />
+<h2 id="s27"><span class="sec-no">27</span>Mobile → API</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Aksi UI</th>
+<th>Method API</th>
+<th>Endpoint</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Buka daftar / ganti tab</td>
+<td><code>getList(tab)</code></td>
+<td>API-003 / API-011</td>
+</tr>
+<tr>
+<td>Buka Jatuh Tempo</td>
+<td><code>getMonitoring()</code></td>
+<td>API-001</td>
+</tr>
+<tr>
+<td>Jadwalkan PM</td>
+<td><code>store(idAsset, jadwal)</code></td>
+<td>API-004</td>
+</tr>
+<tr>
+<td>Usulkan Jadwal / Ubah Jadwal (admin)</td>
+<td><code>updateJadwal(id, jadwal)</code></td>
+<td>API-005</td>
+</tr>
+<tr>
+<td>Setujui Jadwal</td>
+<td><code>konfirmasiJadwal(id)</code></td>
+<td>API-012</td>
+</tr>
+<tr>
+<td>Usulkan Jadwal Lain</td>
+<td><code>revisiJadwal(id, jadwal)</code></td>
+<td>API-012</td>
+</tr>
+<tr>
+<td>Atur Pelaksanaan</td>
+<td><code>aturPelaksanaan(id, data, jadwalPengambilan?)</code></td>
+<td>API-006</td>
+</tr>
+<tr>
+<td>Simpan Checklist (pengambilan)</td>
+<td><code>checklistPengambilan(id, items)</code></td>
+<td>API-007</td>
+</tr>
+<tr>
+<td>Serahkan Aset</td>
+<td><code>pelepasan(id)</code></td>
+<td>API-013</td>
+</tr>
+<tr>
+<td>Kirim Hasil</td>
+<td><code>hasil(id, items, keterangan)</code></td>
+<td>API-008 / API-014</td>
+</tr>
+<tr>
+<td>Simpan Review</td>
+<td><code>review(id, …)</code></td>
+<td>API-009</td>
+</tr>
+<tr>
+<td>Terima Aset</td>
+<td><code>terima(id, items)</code></td>
+<td>API-015</td>
+</tr>
+<tr>
+<td>Buka detail (admin memuat options)</td>
+<td><code>getDetail(id)</code> + <code>getOptions()</code></td>
+<td>API-010 / API-016 + API-002</td>
+</tr>
+</tbody>
+</table></div>
+<hr />
+<h2 id="s28"><span class="sec-no">28</span>API → Mobile</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Field API</th>
+<th>Model</th>
+<th>Tampilan</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>fase_pemeliharaan</code>, <code>tab</code></td>
+<td><code>fase</code>, <code>tab</code></td>
+<td>Badge, timeline, tab</td>
+</tr>
+<tr>
+<td><code>peran</code></td>
+<td><code>peran</code> → <code>pendampingSaya</code></td>
+<td>Label "Anda PIC Pendamping"</td>
+</tr>
+<tr>
+<td><code>usulan_jadwal</code></td>
+<td><code>usulanTanggal/Jam/Keterangan</code></td>
+<td>Notice "Usulan Jadwal Admin"; kosong → "Menunggu jadwal baru dari admin"</td>
+</tr>
+<tr>
+<td><code>riwayat_jadwal[]</code></td>
+<td><code>riwayatJadwal</code></td>
+<td>Riwayat Jadwal</td>
+</tr>
+<tr>
+<td><code>komponen[]</code></td>
+<td><code>komponen</code></td>
+<td>Item checklist</td>
+</tr>
+<tr>
+<td><code>hasil</code> (objek di detail, string di list)</td>
+<td><code>hasil.status/checklist</code></td>
+<td>Warna &amp; label hasil</td>
+</tr>
+<tr>
+<td><code>review</code></td>
+<td><code>review</code></td>
+<td>PM berikutnya, rencana penggantian, tindak lanjut</td>
+</tr>
+<tr>
+<td><code>aksi</code></td>
+<td><code>AssetPemeliharaanAksi</code></td>
+<td>Tombol bawah</td>
+</tr>
+<tr>
+<td><code>sisa_hari</code>, <code>watchlist</code></td>
+<td><code>AssetPemeliharaanMonitoring</code></td>
+<td>Badge jatuh tempo, catatan PM sebelumnya</td>
+</tr>
+</tbody>
+</table></div>
+<hr />
+<h2 id="s29"><span class="sec-no">29</span>Mapping Mobile → API → Database</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Field UI</th>
+<th>Payload</th>
+<th>Kolom DB</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Tanggal/jam/catatan jadwal</td>
+<td><code>tgl_jadwal</code>, <code>jam_jadwal</code>, <code>keterangan_jadwal</code></td>
+<td><code>…_jadwal.tanggal/jam/keterangan</code> (+ header <code>tgl_pengambilan</code>/<code>tgl_pengembalian</code>)</td>
+</tr>
+<tr>
+<td>Setujui Jadwal</td>
+<td><code>aksi = konfirmasi</code></td>
+<td>header <code>tgl_pemeliharaan</code>, <code>jam_pemeliharaan</code>, <code>fase_pemeliharaan</code></td>
+</tr>
+<tr>
+<td>Mekanisme</td>
+<td><code>mekanisme_pelaksanaan</code></td>
+<td>header <code>mekanisme_pelaksanaan</code></td>
+</tr>
+<tr>
+<td>Vendor</td>
+<td><code>id_asset_vendor_m</code> / <code>nama_vendor</code></td>
+<td>header <code>id_asset_vendor_m</code>, <code>nama_vendor</code></td>
+</tr>
+<tr>
+<td>Kontak vendor</td>
+<td><code>keterangan_vendor</code></td>
+<td>header <code>keterangan_vendor</code></td>
+</tr>
+<tr>
+<td>Lokasi</td>
+<td><code>lokasi_pemeliharaan</code></td>
+<td>header <code>lokasi_pemeliharaan</code></td>
+</tr>
+<tr>
+<td>PIC Pendamping</td>
+<td><code>id_pic_pendamping</code></td>
+<td>header <code>id/nama/nik_pic_pendamping</code>, <code>id_asset_pendamping_m</code></td>
+</tr>
+<tr>
+<td>Checklist kondisi</td>
+<td><code>items[{id_item,kondisi,ket_rusak}]</code></td>
+<td>header <code>checklist_pengambilan</code> / <code>checklist_pengembalian</code></td>
+</tr>
+<tr>
+<td>Checklist hasil</td>
+<td><code>items[{id_item,hasil,keterangan}]</code>, <code>keterangan</code></td>
+<td>item <code>checklist_hasil</code>, <code>status_item_pendamping</code>, <code>keterangan_konfirmasi</code></td>
+</tr>
+<tr>
+<td>Catatan review</td>
+<td><code>keterangan_review</code></td>
+<td>header <code>keterangan_review</code></td>
+</tr>
+<tr>
+<td>Rencana penggantian</td>
+<td><code>tgl_rencana_penggantian_komponen</code></td>
+<td>item <code>tgl_rencana_penggantian_komponen</code></td>
+</tr>
+<tr>
+<td>Unit pengganti</td>
+<td><code>id_asset_pengganti</code></td>
+<td>item <code>flag_unit_pengganti</code>, <code>id_trx_request_pengganti</code> (+ tabel request)</td>
+</tr>
+</tbody>
+</table></div>
+<hr />
+<h2 id="s30"><span class="sec-no">30</span>Mapping Database → API → Mobile</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Kolom DB</th>
+<th>Field API</th>
+<th>UI</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>asset_data.jadwal_pemeliharaan</code></td>
+<td><code>jadwal_pemeliharaan</code>, <code>sisa_hari</code></td>
+<td>Jatuh Tempo</td>
+</tr>
+<tr>
+<td>header <code>fase_pemeliharaan</code></td>
+<td><code>fase_pemeliharaan</code>, <code>status_label</code>, <code>tab</code></td>
+<td>Badge</td>
+</tr>
+<tr>
+<td>header <code>nama_vendor</code>, <code>lokasi_pemeliharaan</code></td>
+<td><code>vendor.nama_vendor</code>, <code>lokasi_pemeliharaan</code></td>
+<td>Ringkasan pelaksanaan</td>
+</tr>
+<tr>
+<td>item <code>status_item_pendamping</code></td>
+<td><code>hasil.status</code> / <code>hasil</code></td>
+<td>Hasil akhir</td>
+</tr>
+<tr>
+<td>item <code>tgl_pemeliharaan_selanjutnya</code></td>
+<td><code>review.tgl_pemeliharaan_selanjutnya</code></td>
+<td>"PM berikutnya"</td>
+</tr>
+<tr>
+<td>item <code>nama_tabel_tindak_lanjut</code></td>
+<td><code>review.tindak_lanjut</code></td>
+<td>"Ditarik ke alur Perbaikan/Disposal"</td>
+</tr>
+<tr>
+<td>jadwal baris terakhir <code>menunggu</code> admin</td>
+<td><code>usulan_jadwal</code></td>
+<td>Tombol Setujui/Usulkan Lain</td>
+</tr>
+</tbody>
+</table></div>
+<hr />
+<div class="group-divider" id="g31"><span>Validasi, Error & Keamanan</span></div><h2 id="s31"><span class="sec-no">31</span>Validation</h2>
+<h3>31.1 Mobile</h3>
+<ul>
+<li>Sheet jadwal: tanggal (≥ hari ini) &amp; jam wajib.</li>
+<li>Checklist hasil: semua item wajib dipilih ("Pilih hasil untuk setiap item."); keterangan temuan wajib untuk hasil selain normal.</li>
+<li>Sheet pelaksanaan: vendor (manual) wajib, lokasi wajib, PIC Pendamping wajib untuk hadir langsung.</li>
+<li>Review: tanggal rencana penggantian wajib untuk hasil 3.</li>
+<li>Checklist kondisi: semua item wajib, rusak wajib keterangan.</li>
+</ul>
+<h3>31.2 Backend — §9 &amp; §24.</h3>
+<h3>31.3 Database — enum <code>mekanisme_pelaksanaan</code>, <code>fase_pemeliharaan</code>, <code>jenis_jadwal</code>, <code>jenis_alur</code>, <code>status_item_pendamping</code>, <code>status</code>; FK vendor, pendamping, asset.</h3>
+<hr />
+<h2 id="s32"><span class="sec-no">32</span>Error Handling</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Kondisi</th>
+<th>HTTP / code</th>
+<th>Pesan contoh</th>
+<th>Mobile</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Validasi request</td>
+<td>422 <code>VALIDATION_ERROR</code></td>
+<td>"Tanggal jadwal alternatif wajib diisi."</td>
+<td>Snackbar warning</td>
+</tr>
+<tr>
+<td>Aturan bisnis</td>
+<td>422 <code>BUSINESS_RULE_VIOLATION</code></td>
+<td>"Tidak ada usulan jadwal yang perlu dikonfirmasi."</td>
+<td>Snackbar error</td>
+</tr>
+<tr>
+<td>Bukan admin</td>
+<td>403</td>
+<td>"Pengguna tidak terdaftar sebagai admin asset."</td>
+<td>Snackbar</td>
+</tr>
+<tr>
+<td>Detail bukan milik/pendamping</td>
+<td>404 <code>NOT_FOUND</code></td>
+<td>"Pemeliharaan asset tidak ditemukan."</td>
+<td>Halaman gagal muat</td>
+</tr>
+<tr>
+<td>Error sistem</td>
+<td>500 <code>SYSTEM_ERROR</code></td>
+<td>"Terjadi kesalahan saat memproses transaksi asset."</td>
+<td>Snackbar</td>
+</tr>
+</tbody>
+</table></div>
+<p>422 lain: "Asset sedang diproses pada pemeliharaan lain.", "Jadwal tidak dapat diubah pada tahap ini.", "Jadwal pemeliharaan belum disepakati karyawan.", "Mekanisme pelaksanaan tidak valid.", "Vendor tidak ditemukan.", "Checklist pengambilan tidak dapat diisi saat ini.", "Aset belum siap diserahkan untuk pemeliharaan.", "Hasil pemeliharaan belum dikirim.", "Status asset sudah berubah atau tidak lagi dipegang karyawan.", "Tanggal serah terima tidak boleh sebelum tanggal pengajuan." (pesan helper jadwal bersama).</p>
+<hr />
+<h2 id="s33"><span class="sec-no">33</span>Audit Trail</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Kejadian</th>
+<th>Jejak</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Setiap usulan/konfirmasi/perubahan jadwal</td>
+<td>Baris <code>…_jadwal</code> (<code>user_input</code>, <code>tgl_input</code>, <code>label_alur</code>)</td>
+</tr>
+<tr>
+<td>Setiap mutasi header</td>
+<td><code>tgl_update</code>, <code>user_update</code> (<code>nik - nama</code>)</td>
+</tr>
+<tr>
+<td>Serah karyawan</td>
+<td><code>tgl_pelepasan</code>, <code>user_pelepasan</code> + <code>asset_log</code></td>
+</tr>
+<tr>
+<td>Pengisi hasil</td>
+<td><code>tgl_hasil</code>, <code>user_hasil</code></td>
+</tr>
+<tr>
+<td>Review</td>
+<td><code>tgl_review</code>, <code>user_review</code>, <code>keterangan_review</code></td>
+</tr>
+<tr>
+<td>Terima karyawan</td>
+<td><code>tgl_diterima</code>, <code>user_diterima</code> + <code>asset_log</code></td>
+</tr>
+<tr>
+<td>Asset ditarik</td>
+<td><code>asset_log</code> (kondisi_akhir rusak), <code>asset_data.user_update</code></td>
+</tr>
+</tbody>
+</table></div>
+<hr />
+<h2 id="s34"><span class="sec-no">34</span>Notification</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Event</th>
+<th>Penerima</th>
+<th>Judul (ID)</th>
+<th>Rute</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>pemeliharaan.usulan_jadwal</code></td>
+<td>Karyawan</td>
+<td>Konfirmasi Jadwal Pemeliharaan</td>
+<td>asset_detail_pemeliharaan</td>
+</tr>
+<tr>
+<td><code>pemeliharaan.jadwal_disetujui</code></td>
+<td>Admin</td>
+<td>Jadwal Pemeliharaan Disetujui</td>
+<td>asset_admin_detail_pemeliharaan</td>
+</tr>
+<tr>
+<td><code>pemeliharaan.jadwal_revisi</code></td>
+<td>Admin</td>
+<td>Usulan Jadwal Alternatif</td>
+<td>asset_admin_detail_pemeliharaan</td>
+</tr>
+<tr>
+<td><code>pemeliharaan.dijadwalkan</code></td>
+<td>Karyawan</td>
+<td>Pemeliharaan Dijadwalkan</td>
+<td>asset_detail_pemeliharaan</td>
+</tr>
+<tr>
+<td><code>pemeliharaan.pendamping</code></td>
+<td>PIC Pendamping</td>
+<td>Tugas PIC Pendamping</td>
+<td>asset_detail_pemeliharaan</td>
+</tr>
+<tr>
+<td><code>pemeliharaan.pengambilan</code></td>
+<td>Karyawan</td>
+<td>Jadwal Pengambilan Asset</td>
+<td>asset_detail_pemeliharaan</td>
+</tr>
+<tr>
+<td><code>pemeliharaan.jadwal_diubah</code></td>
+<td>Karyawan</td>
+<td>Jadwal Pemeliharaan Diperbarui</td>
+<td>asset_detail_pemeliharaan</td>
+</tr>
+<tr>
+<td><code>pemeliharaan.checklist_pengambilan</code></td>
+<td>Karyawan</td>
+<td>Konfirmasi Penyerahan Asset</td>
+<td>asset_detail_pemeliharaan</td>
+</tr>
+<tr>
+<td><code>pemeliharaan.dilepas</code></td>
+<td>Admin</td>
+<td>Asset Diserahkan untuk Pemeliharaan</td>
+<td>asset_admin_detail_pemeliharaan</td>
+</tr>
+<tr>
+<td><code>pemeliharaan.hasil</code></td>
+<td>Admin</td>
+<td>Hasil Pemeliharaan Masuk</td>
+<td>asset_admin_detail_pemeliharaan</td>
+</tr>
+<tr>
+<td><code>pemeliharaan.pengembalian</code></td>
+<td>Karyawan</td>
+<td>Jadwal Pengembalian Asset</td>
+<td>asset_detail_pemeliharaan</td>
+</tr>
+<tr>
+<td><code>pemeliharaan.selesai</code></td>
+<td>Karyawan</td>
+<td>Pemeliharaan Selesai</td>
+<td>asset_detail_pemeliharaan</td>
+</tr>
+<tr>
+<td><code>pemeliharaan.ditarik</code></td>
+<td>Karyawan</td>
+<td>Asset Ditarik</td>
+<td>asset_detail_pemeliharaan</td>
+</tr>
+<tr>
+<td><code>pemeliharaan.diterima</code></td>
+<td>Admin</td>
+<td>Asset Pemeliharaan Diterima</td>
+<td>asset_admin_detail_pemeliharaan</td>
+</tr>
+</tbody>
+</table></div>
+<p>Semua event punya versi ID &amp; EN, disimpan ke <code>notif_data</code> dan dikirim FCM setelah transaksi commit. Penerima <code>pendamping</code> diambil dari <code>id_pic_pendamping</code> header. ⚠️ Vendor tidak menerima notifikasi (INC-01).</p>
+<hr />
+<h2 id="s35"><span class="sec-no">35</span>Security</h2>
+<ul>
+<li>Semua endpoint di balik JWT; identitas diambil dari token (<code>ctx</code>), bukan dari body.</li>
+<li>Endpoint admin memanggil <code>accessError</code> + <code>actorAdmin</code> (admin asset &amp; karyawan aktif).</li>
+<li>Endpoint karyawan membatasi header: aksi pemegang memakai <code>lockHeader(..., id_karyawan)</code>; pengisian hasil memeriksa <code>id_pic_pendamping</code> + mekanisme; detail hanya untuk pemegang/pendamping.</li>
+<li>Semua mutasi di dalam <code>DB::transaction</code> dengan <code>lockCompany</code> + <code>lockForUpdate</code> pada header, item, dan asset.</li>
+<li>Validasi enum di controller dan model; JSON checklist dibangun ulang server-side dari komponen asset (bukan disimpan mentah dari klien).</li>
+</ul>
+<hr />
+<div class="group-divider" id="g36"><span>Manual Book</span></div><h2 id="s36"><span class="sec-no">36</span>Manual Book User/Admin</h2>
+<h3>A. Admin — Menjadwalkan PM</h3>
+<ol>
+<li><strong>Asset Karyawan</strong> → <strong>Pemeliharaan</strong> → ikon <strong>Jatuh Tempo</strong> (atau kartu <em>Pemeliharaan Jatuh Tempo</em>).</li>
+<li>Periksa sisa hari dan <em>Catatan PM sebelumnya</em> bila ada.</li>
+<li>Tekan <strong>Jadwalkan PM</strong>, isi tanggal, jam, catatan → simpan.</li>
+</ol>
+<h3>B. Karyawan — Menyetujui jadwal</h3>
+<ol>
+<li>Buka banner <strong>Konfirmasi Jadwal PM</strong> atau menu <strong>Pemeliharaan</strong>.</li>
+<li>Tekan <strong>Setujui Jadwal</strong>, atau <strong>Usulkan Jadwal Lain</strong> dengan tanggal, jam, dan alasan.</li>
+</ol>
+<h3>C. Admin — Menanggapi usulan karyawan</h3>
+<p>Buka detail (kartu <em>Pemeliharaan Perlu Diproses</em> menampilkan "Usulkan Jadwal"), lihat <strong>Riwayat Jadwal</strong>, tekan <strong>Usulkan Jadwal</strong>.</p>
+<h3>D. Admin — Mengatur pelaksanaan</h3>
+<p>Tekan <strong>Atur Pelaksanaan</strong> → pilih mekanisme → vendor (dari daftar atau isi manual), kontak vendor, lokasi → <strong>Karyawan Hadir Langsung</strong>: pilih PIC Pendamping → <strong>Simpan</strong>; <strong>Diserahkan ke Admin/HR</strong>: isi <strong>Jadwal Pengambilan</strong>.</p>
+<h3>E. Mekanisme diserahkan — Pengambilan</h3>
+<ol>
+<li>Admin: saat mengambil asset, isi <strong>Checklist Pengambilan</strong> → <strong>Simpan Checklist</strong>.</li>
+<li>Karyawan: banner <strong>Serahkan Aset untuk PM</strong> → <strong>Serahkan Aset</strong>.</li>
+</ol>
+<h3>F. Mengisi hasil PM</h3>
+<ul>
+<li>Hadir langsung: PIC Pendamping membuka banner <strong>Isi Hasil PM</strong>, memilih hasil setiap item bersama teknisi, mengisi keterangan temuan → <strong>Kirim Hasil</strong>.</li>
+<li>Diserahkan: admin mengisi berdasarkan laporan vendor.</li>
+</ul>
+<h3>G. Admin — Review &amp; tindak lanjut</h3>
+<p>Buka detail → periksa hasil → isi catatan → hasil 3: <strong>Rencana penggantian komponen</strong>; hasil 4–5: pilih <strong>Unit pengganti</strong> bila perlu → <strong>Simpan Review</strong> (diserahkan: isi <strong>Jadwal Pengembalian</strong>; unit pengganti: isi <strong>Jadwal Pengiriman Unit Pengganti</strong>).</p>
+<h3>H. Karyawan — Menerima asset kembali</h3>
+<p>Banner <strong>Terima Aset Hasil PM</strong> → isi checklist kondisi → <strong>Terima Aset</strong>.</p>
+<hr />
+<h2 id="s37"><span class="sec-no">37</span>Kondisi Button</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Button</th>
+<th>Peran</th>
+<th>Tampil bila</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Jadwalkan PM</td>
+<td>Admin</td>
+<td>Asset di daftar Jatuh Tempo</td>
+</tr>
+<tr>
+<td>Usulkan Jadwal</td>
+<td>Admin</td>
+<td><code>aksi.usul_jadwal</code> (fase konfirmasi_jadwal)</td>
+</tr>
+<tr>
+<td>Ubah Jadwal</td>
+<td>Admin</td>
+<td><code>aksi.ubah_jadwal</code> (menunggu_pengambilan / menunggu_pengembalian)</td>
+</tr>
+<tr>
+<td>Atur Pelaksanaan</td>
+<td>Admin</td>
+<td><code>aksi.atur_pelaksanaan</code></td>
+</tr>
+<tr>
+<td>Simpan Checklist</td>
+<td>Admin</td>
+<td><code>aksi.checklist_pengambilan</code></td>
+</tr>
+<tr>
+<td>Kirim Hasil</td>
+<td>Admin / Pendamping</td>
+<td><code>aksi.hasil</code></td>
+</tr>
+<tr>
+<td>Simpan Review</td>
+<td>Admin</td>
+<td><code>aksi.review</code></td>
+</tr>
+<tr>
+<td>Setujui Jadwal + Usulkan Jadwal Lain</td>
+<td>Pemegang</td>
+<td><code>aksi.konfirmasi_jadwal</code></td>
+</tr>
+<tr>
+<td>Serahkan Aset</td>
+<td>Pemegang</td>
+<td><code>aksi.pelepasan</code></td>
+</tr>
+<tr>
+<td>Terima Aset</td>
+<td>Pemegang</td>
+<td><code>aksi.terima</code></td>
+</tr>
+</tbody>
+</table></div>
+<hr />
+<div class="group-divider" id="g38"><span>QA & Risiko</span></div><h2 id="s38"><span class="sec-no">38</span>Testing Scenario</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>ID</th>
+<th>Skenario</th>
+<th>Hasil yang diharapkan</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>TC-01</td>
+<td>Asset jatuh tempo muncul di monitoring</td>
+<td>Tercantum dengan <code>sisa_hari</code>, hilang setelah PM dibuat</td>
+</tr>
+<tr>
+<td>TC-02</td>
+<td>Buat PM asset tanpa flag pemeliharaan</td>
+<td>422 "Asset tidak memiliki jadwal pemeliharaan aktif."</td>
+</tr>
+<tr>
+<td>TC-03</td>
+<td>Buat PM kedua untuk asset yang sama</td>
+<td>422 "…pemeliharaan lain."</td>
+</tr>
+<tr>
+<td>TC-04</td>
+<td>Upgrade / Kerusakan / Retur / Offboarding untuk asset dalam PM</td>
+<td>Ditolak "…pemeliharaan."</td>
+</tr>
+<tr>
+<td>TC-05</td>
+<td>Karyawan usulkan jadwal lain tanpa alasan</td>
+<td>422</td>
+</tr>
+<tr>
+<td>TC-06</td>
+<td>Karyawan konfirmasi saat usulan terakhir miliknya</td>
+<td>422 "Tidak ada usulan jadwal…"</td>
+</tr>
+<tr>
+<td>TC-07</td>
+<td>Admin usulkan ulang lalu karyawan setujui</td>
+<td>Fase <code>penjadwalan</code>, jadwal tersalin ke header</td>
+</tr>
+<tr>
+<td>TC-08</td>
+<td>Atur hadir langsung dengan pendamping nonaktif</td>
+<td>422</td>
+</tr>
+<tr>
+<td>TC-09</td>
+<td>Hadir langsung: pemegang bukan pendamping kirim hasil</td>
+<td>422 "Hanya PIC Pendamping…"</td>
+</tr>
+<tr>
+<td>TC-10</td>
+<td>Hasil selain normal tanpa keterangan</td>
+<td>422</td>
+</tr>
+<tr>
+<td>TC-11</td>
+<td>Hasil campuran (normal + komponen rusak tidak segera)</td>
+<td>Hasil akhir = komponen_rusak_tidak_segera</td>
+</tr>
+<tr>
+<td>TC-12</td>
+<td>Review hasil 2 hadir langsung</td>
+<td><code>selesai</code>, <code>jadwal_pemeliharaan</code> = hari ini + interval, tanpa asset_log</td>
+</tr>
+<tr>
+<td>TC-13</td>
+<td>Review hasil 3 tanpa rencana penggantian</td>
+<td>422</td>
+</tr>
+<tr>
+<td>TC-14</td>
+<td>Diserahkan: serahkan sebelum checklist</td>
+<td>422 "Aset belum siap diserahkan…"</td>
+</tr>
+<tr>
+<td>TC-15</td>
+<td>Diserahkan: serahkan</td>
+<td>Asset <code>dalam_perbaikan</code>, pemegang tetap karyawan</td>
+</tr>
+<tr>
+<td>TC-16</td>
+<td>Diserahkan: review tanpa jadwal pengembalian</td>
+<td>422</td>
+</tr>
+<tr>
+<td>TC-17</td>
+<td>Diserahkan: terima dengan checklist</td>
+<td>Asset <code class="chip chip-done">terpakai</code>, 2 asset_log, PM selesai</td>
+</tr>
+<tr>
+<td>TC-18</td>
+<td>Review hasil 5 tanpa pengganti</td>
+<td>Asset <code class="chip chip-bad">rusak</code> @gudang, <code>nama_tabel_tindak_lanjut = asset_trx_disposal</code></td>
+</tr>
+<tr>
+<td>TC-19</td>
+<td>Review hasil 4 dengan unit pengganti tersedia</td>
+<td>Penambahan dibuat, <code>flag_unit_pengganti = 1</code>, notif penambahan</td>
+</tr>
+<tr>
+<td>TC-20</td>
+<td>Watchlist tampil pada PM berikutnya</td>
+<td>Monitoring menampilkan <code>watchlist</code></td>
+</tr>
+<tr>
+<td>TC-21</td>
+<td>Karyawan lain membuka detail</td>
+<td>404</td>
+</tr>
+<tr>
+<td>TC-22</td>
+<td>Notifikasi rute</td>
+<td>Admin: <code>asset_admin_detail_pemeliharaan</code>; karyawan: <code>asset_detail_pemeliharaan</code></td>
+</tr>
+<tr>
+<td>TC-23</td>
+<td>Dashboard sebelum SQL diterapkan</td>
+<td>Bagian PML01 kosong, modul lain tetap jalan</td>
+</tr>
+</tbody>
+</table></div>
+<p>Test otomatis API (6): <code>test_monitoring_lists_due_asset_and_store_blocks_duplicates</code>, <code>test_retur_and_offboarding_reject_asset_in_maintenance</code>, <code>test_hadir_langsung_flow_with_negotiation_and_pendamping</code>, <code>test_diserahkan_flow_returns_asset_after_review</code>, <code>test_tidak_dapat_diperbaiki_withdraws_asset_to_warehouse</code>, <code>test_routes_confirm_schedule_and_notify_admin</code>. Mobile (6): teks id/en, parsing detail/list, hasil terberat, summary &amp; Asset Saya, monitoring. ⚠️ TC-19 (unit pengganti) belum diuji otomatis.</p>
+<hr />
+<h2 id="s39"><span class="sec-no">39</span>Temuan Ketidaksesuaian</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>ID</th>
+<th>Dokumen bisnis</th>
+<th>Implementasi</th>
+<th>Dampak</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>INC-01</td>
+<td>3.4: notifikasi ke Vendor/Teknisi</td>
+<td>Vendor tidak punya akun; tidak ada notifikasi</td>
+<td>Admin menghubungi vendor manual (kontak di <code>keterangan_vendor</code>)</td>
+</tr>
+<tr>
+<td>INC-02</td>
+<td>Jalur A: notifikasi otomatis &amp; kirim ulang berkala</td>
+<td>Belum ada scheduler; hanya dashboard &amp; kartu beranda</td>
+<td>Admin harus rutin membuka Jatuh Tempo</td>
+</tr>
+<tr>
+<td>INC-03</td>
+<td>Aturan 8: jadwal berikutnya hanya untuk hasil Normal</td>
+<td>Dijadwalkan untuk hasil 1–3</td>
+<td>Watchlist hasil 2–3 bisa diingatkan pada PM berikutnya</td>
+</tr>
+<tr>
+<td>INC-04</td>
+<td>Diagram: Fase 5 (pengembalian) sebelum Fase 6 (review)</td>
+<td>Review dulu, pengembalian hanya hasil 1–3</td>
+<td>Asset hasil 4–5 tidak sempat dikembalikan ke karyawan</td>
+</tr>
+<tr>
+<td>INC-05</td>
+<td>Hasil 4/5 masuk alur PML02 / PML04</td>
+<td>Modul PML02/PML04 kini sudah ada, tetapi hanya <code>nama_tabel_tindak_lanjut</code> yang dicatat; <code>id_trx_tindak_lanjut</code> kosong dan transaksi tujuan tidak dibuat otomatis</td>
+<td>Admin menindaklanjuti manual</td>
+</tr>
+<tr>
+<td>INC-06</td>
+<td>Interval dikonfigurasi di Kategori Aset; contoh interval km</td>
+<td>Interval per asset (<code>asset_data</code>) dalam bulan; km tidak didukung</td>
+<td>Kendaraan berbasis km dijadwalkan manual</td>
+</tr>
+<tr>
+<td>INC-07</td>
+<td>Status DALAM SERVICE</td>
+<td><code>dalam_perbaikan</code> (sama dengan Upgrade &amp; PML02)</td>
+<td>Status perlu dibaca bersama fase transaksi</td>
+</tr>
+<tr>
+<td>INC-08</td>
+<td>Skenario 10 unit AC dalam satu PM</td>
+<td>Satu asset per transaksi</td>
+<td>PM massal = banyak transaksi</td>
+</tr>
+<tr>
+<td>INC-09</td>
+<td>Hasil 4 hadir langsung: "aset ditarik dari karyawan"</td>
+<td>Status langsung berubah saat review, tanpa checklist/konfirmasi penarikan</td>
+<td>Lihat RISK-004</td>
+</tr>
+<tr>
+<td>INC-10</td>
+<td>Konteks ruangan (PIC Ruangan)</td>
+<td>Tidak diimplementasikan (di luar cakupan)</td>
+<td>Tabel <code>…_ruangan</code> masih skema lama</td>
+</tr>
+</tbody>
+</table></div>
+<hr />
+<h2 id="s40"><span class="sec-no">40</span>Edge Case</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Kasus</th>
+<th>Perilaku</th>
+<th>Risiko</th>
+<th>Saran</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Karyawan tidak pernah menjawab usulan</td>
+<td>PM tertahan di <code>konfirmasi_jadwal</code></td>
+<td>Asset terkunci dari flow lain</td>
+<td>Pembatalan / kedaluwarsa</td>
+</tr>
+<tr>
+<td>Interval 0</td>
+<td>Tidak ada jadwal berikutnya; asset tak muncul lagi di monitoring</td>
+<td>PM berkala terhenti</td>
+<td>Validasi interval saat flag aktif</td>
+</tr>
+<tr>
+<td>Asset pindah tangan di tengah PM</td>
+<td>Aksi berikutnya 422 "Status asset sudah berubah…"</td>
+<td>Transaksi macet</td>
+<td>Pembatalan admin</td>
+</tr>
+<tr>
+<td>Pendamping = pemegang</td>
+<td>Diizinkan; karyawan menilai asset sendiri</td>
+<td>Objektivitas</td>
+<td>Review admin (sudah wajib)</td>
+</tr>
+<tr>
+<td>Pendamping dinonaktifkan</td>
+<td>Tidak bisa kirim hasil; admin masih bisa (fallback)</td>
+<td>–</td>
+<td>–</td>
+</tr>
+<tr>
+<td>Unit pengganti tidak tersedia saat review</td>
+<td>Seluruh review gagal (rollback)</td>
+<td>–</td>
+<td>Pilih unit lain</td>
+</tr>
+<tr>
+<td>Jadwal PM lewat tanpa pelaksanaan</td>
+<td>Tidak ada pengingat</td>
+<td>–</td>
+<td>Jalur A</td>
+</tr>
+<tr>
+<td>SQL belum diterapkan</td>
+<td>Endpoint PML01 500; dashboard kosong</td>
+<td>–</td>
+<td>Terapkan SQL (RISK-001)</td>
+</tr>
+</tbody>
+</table></div>
+<hr />
+<h2 id="s41"><span class="sec-no">41</span>Potential Bug / Technical Risk</h2>
+<h3>RISK-001 — Skema dari SQL manual (TINGGI)</h3>
+<p><strong>Lokasi:</strong> kolom PML01 hanya ada di <code>sql-pml01-pemeliharaan-karyawan.sql</code>; tidak ada migration.
+<strong>Masalah:</strong> environment yang belum menjalankan SQL akan gagal di semua endpoint PML01 (kolom tidak ada), sementara dashboard diam-diam kosong karena <code>skemaSiap()</code>. Rollback migration Upgrade menulis ulang enum <code>jenis_log</code> tanpa <code>pemeliharaan_karyawan</code>.
+<strong>Recommendation:</strong> jalankan SQL di semua environment; buat migration padanan; sertakan <code>pemeliharaan_karyawan</code> di daftar enum migration lain.</p>
+<h3>RISK-002 — Tidak ada pembatalan / kedaluwarsa (SEDANG)</h3>
+<p>PM yang tidak berlanjut mengunci asset dari Upgrade, Kerusakan, Retur, dan Offboarding tanpa jalan keluar.</p>
+<h3>RISK-003 — Karyawan nonaktif menghentikan alur (SEDANG)</h3>
+<p>Konfirmasi jadwal, serahkan, dan terima mensyaratkan karyawan aktif; admin tidak punya aksi pengganti (kecuali isi hasil).</p>
+<h3>RISK-004 — Penarikan tanpa serah terima fisik (SEDANG)</h3>
+<p>Hasil 4–5 mekanisme hadir langsung langsung memindahkan asset ke gudang saat review, walau fisik masih di karyawan.</p>
+<h3>RISK-005 — Kueri pending karyawan N+1 (RENDAH)</h3>
+<p><code>getPendingForEmployee</code> membaca riwayat jadwal per transaksi <code>konfirmasi_jadwal</code>.</p>
+<h3>RISK-006 — Notifikasi di luar transaksi (RENDAH)</h3>
+<p>Notifikasi (termasuk pendamping &amp; penambahan pengganti) dikirim setelah commit; kegagalan hanya dicatat log.</p>
+<h3>RISK-007 — Kapasitas penomoran (RENDAH)</h3>
+<p>999 transaksi per bulan per company (header, item, jadwal).</p>
+<hr />
+<div class="group-divider" id="g42"><span>Referensi Developer</span></div><h2 id="s42"><span class="sec-no">42</span>Dependency</h2>
+<div class="code"><span class="code-lang">Alur</span><pre><code class="language-text">asset_data (flag_pemeliharaan, interval, jadwal) + asset_data_item (komponen checklist)
+      ↓
+Pemeliharaan PML01 (konfirmasi_jadwal → … → selesai) ──► Notifikasi (karyawan / admin / pendamping)
+      ↓
+asset_data (dalam_perbaikan ↔ terpakai | rusak @gudang, jadwal_pemeliharaan baru), asset_log pemeliharaan_karyawan
+      ↓ (hasil 4–5)
+Penambahan KRY-03-1 (unit pengganti) · PML02 / PML04 (ada, belum terhubung otomatis)
+
+Aturan silang:
+  - PML01 mengecek: pemeliharaan lain, Upgrade, Kerusakan, Retur, Offboarding
+  - Dicek oleh: Upgrade, Kerusakan, Retur, Offboarding (hasActivePemeliharaanAsset)
+  - Summary admin: pemeliharaan_perlu_proses / _pending / _jatuh_tempo(_jumlah); Asset Saya: pemeliharaan[]
+</code></pre></div>
+<hr />
+<h2 id="s43"><span class="sec-no">43</span>Source Code Reference</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>File</th>
+<th>Layer</th>
+<th>Isi</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>API/app/Models/Asset/AssetPemeliharaanKaryawan_m.php</code></td>
+<td>Model</td>
+<td>Seluruh logika PML01</td>
+</tr>
+<tr>
+<td><code>API/app/Models/Asset/Asset_m.php</code></td>
+<td>Model</td>
+<td><code>normalizeKondisiChecklist</code> + helper bersama</td>
+</tr>
+<tr>
+<td><code>API/app/Http/Controllers/Asset/Admin/AssetAdminPemeliharaan_c.php</code></td>
+<td>Controller</td>
+<td>10 endpoint admin, <code>PEMELIHARAAN_HASIL_RULES</code></td>
+</tr>
+<tr>
+<td><code>API/app/Http/Controllers/Asset/Karyawan/AssetKaryawanPemeliharaan_c.php</code></td>
+<td>Controller</td>
+<td>6 endpoint karyawan</td>
+</tr>
+<tr>
+<td><code>API/routes/modules/asset/RouteAsset.php</code></td>
+<td>Route</td>
+<td>16 route</td>
+</tr>
+<tr>
+<td><code>API/app/Support/Asset/AssetNotification.php</code></td>
+<td>Notifikasi</td>
+<td>14 event, penerima <code>pendamping</code></td>
+</tr>
+<tr>
+<td><code>API/app/Models/Asset/AssetAdmin_m.php</code>, <code>AssetKaryawan_m.php</code></td>
+<td>Dashboard</td>
+<td>Summary &amp; pending</td>
+</tr>
+<tr>
+<td><code>API/app/Models/Asset/AssetUpgradeKaryawan_m.php</code>, <code>AssetRusakKaryawan_m.php</code>, <code>AssetReturKaryawan_m.php</code>, <code>AssetOffboardingKaryawan_m.php</code></td>
+<td>Model</td>
+<td>Pemakai <code>hasActivePemeliharaanAsset</code></td>
+</tr>
+<tr>
+<td><code>API/tests/Asset/AssetPemeliharaanKaryawanTest.php</code></td>
+<td>Test</td>
+<td>6 test</td>
+</tr>
+<tr>
+<td><code>API/diagram-asset.dbml</code>, <code>Claude outputs/sql-pml01-pemeliharaan-karyawan.sql</code></td>
+<td>DB</td>
+<td>Skema &amp; SQL</td>
+</tr>
+<tr>
+<td><code>MOBILE/lib/Repository/Model/Asset/mAssetPemeliharaan.dart</code></td>
+<td>Model</td>
+<td></td>
+</tr>
+<tr>
+<td><code>MOBILE/lib/Repository/Service/assetPemeliharaanApi.dart</code></td>
+<td>Service</td>
+<td></td>
+</tr>
+<tr>
+<td><code>MOBILE/lib/Bloc/Asset/AssetPemeliharaanBloc.dart</code></td>
+<td>Bloc</td>
+<td></td>
+</tr>
+<tr>
+<td><code>MOBILE/lib/UI/Modul/Asset/Pemeliharaan/*</code></td>
+<td>UI</td>
+<td>List, monitoring, detail, widget</td>
+</tr>
+<tr>
+<td><code>MOBILE/lib/Setting/router.dart</code>, <code>lib/Bloc/NavigatorBloc.dart</code></td>
+<td>Navigasi</td>
+<td>Route &amp; event</td>
+</tr>
+<tr>
+<td><code>MOBILE/lib/UI/Modul/Asset/AssetSaya/HalamanAssetSaya.dart</code>, <code>…/AssetAdminKaryawan/HalamanAssetAdminKaryawan.dart</code></td>
+<td>Entry point</td>
+<td>Menu, banner, kartu</td>
+</tr>
+<tr>
+<td><code>MOBILE/assets/id/asset.json</code>, <code>assets/en/asset.json</code></td>
+<td>Bahasa</td>
+<td>Grup <code>pemeliharaan</code></td>
+</tr>
+<tr>
+<td><code>MOBILE/test/asset/asset_pemeliharaan_test.dart</code></td>
+<td>Test</td>
+<td>6 test</td>
+</tr>
+</tbody>
+</table></div>
+<hr />
+<h2 id="s44"><span class="sec-no">44</span>Developer Notes</h2>
+<ul>
+<li><strong>Terapkan SQL dulu.</strong> Tanpa kolom baru, endpoint PML01 gagal; <code>skemaSiap()</code> hanya melindungi dashboard dan modul lain.</li>
+<li><strong>Hasil akhir dihitung server.</strong> Klien mengirim hasil per item; <code>status_item_pendamping</code> = item terberat (urutan konstanta <code>HASIL</code>).</li>
+<li><strong>Peran dari header.</strong> Karyawan yang sama bisa pemegang sekaligus pendamping (<code>peran = pemegang_pendamping</code>); aksi hasil hanya dibuka untuk hadir langsung.</li>
+<li><strong>Unit pengganti memakai Penambahan.</strong> <code>AssetRequestKaryawan_m::store</code> dipanggil di dalam transaksi review; kegagalannya membatalkan review.</li>
+<li><strong>Jadwal berikutnya</strong> memakai <code>addMonthsNoOverflow</code> (31 Jan + 1 bulan → 28/29 Feb).</li>
+<li><strong>Tab list</strong> berbeda dari modul lain (<code>jadwal / proses / selesai</code>); <code>AssetTrxListBody</code> kini menerima parameter <code>filters</code>.</li>
+<li><strong>Format kode Mobile:</strong> jalankan <code>dart format</code> hanya pada file yang diubah (repo MOBILE memiliki banyak perubahan lokal).</li>
+</ul>
+<hr />
+<h2 id="s45"><span class="sec-no">45</span>End-to-End Traceability</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Langkah bisnis</th>
+<th>Mobile</th>
+<th>API</th>
+<th>Model</th>
+<th>DB</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Monitoring (Jalur B)</td>
+<td>HalamanMonitoringPemeliharaan</td>
+<td>API-001</td>
+<td>getMonitoring</td>
+<td>asset_data</td>
+</tr>
+<tr>
+<td>Konfirmasi jadwal (2B)</td>
+<td>Detail: Setujui / Usulkan Lain</td>
+<td>API-004, 005, 012</td>
+<td>store, updateJadwal, konfirmasiJadwal</td>
+<td>header, jadwal</td>
+</tr>
+<tr>
+<td>Mekanisme + Fase 3</td>
+<td>Sheet Atur Pelaksanaan</td>
+<td>API-006</td>
+<td>aturPelaksanaan</td>
+<td>header, asset_pendamping_m</td>
+</tr>
+<tr>
+<td>Pengambilan (2C)</td>
+<td>Checklist + Serahkan</td>
+<td>API-007, 013</td>
+<td>checklistPengambilan, pelepasan</td>
+<td>header, asset_data, asset_log</td>
+</tr>
+<tr>
+<td>Pelaksanaan (4)</td>
+<td>Checklist Hasil</td>
+<td>API-008, 014</td>
+<td>hasil</td>
+<td>item</td>
+</tr>
+<tr>
+<td>Review (6)</td>
+<td>Form Review</td>
+<td>API-009</td>
+<td>review</td>
+<td>item, asset_data, asset_log, request</td>
+</tr>
+<tr>
+<td>Pengembalian (5)</td>
+<td>Checklist + Terima</td>
+<td>API-015</td>
+<td>terima</td>
+<td>header, asset_data, asset_log</td>
+</tr>
+</tbody>
+</table></div>
+<hr />
+<h2 id="s46"><span class="sec-no">46</span>Ringkasan Database Impact</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Aksi</th>
+<th>Header</th>
+<th>Item</th>
+<th>Jadwal</th>
+<th>asset_data</th>
+<th>asset_log</th>
+<th>Lain</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Buat PM</td>
+<td>INSERT</td>
+<td>INSERT</td>
+<td>INSERT</td>
+<td>–</td>
+<td>–</td>
+<td>–</td>
+</tr>
+<tr>
+<td>Usul/konfirmasi/revisi jadwal</td>
+<td>UPDATE</td>
+<td>–</td>
+<td>INSERT</td>
+<td>–</td>
+<td>–</td>
+<td>–</td>
+</tr>
+<tr>
+<td>Atur pelaksanaan</td>
+<td>UPDATE</td>
+<td>–</td>
+<td>INSERT (diserahkan)</td>
+<td>–</td>
+<td>–</td>
+<td><code>asset_pendamping_m</code> INSERT bila baru</td>
+</tr>
+<tr>
+<td>Checklist pengambilan</td>
+<td>UPDATE</td>
+<td>–</td>
+<td>–</td>
+<td>–</td>
+<td>–</td>
+<td>–</td>
+</tr>
+<tr>
+<td>Serahkan</td>
+<td>UPDATE</td>
+<td>–</td>
+<td>–</td>
+<td>UPDATE</td>
+<td>INSERT</td>
+<td>–</td>
+</tr>
+<tr>
+<td>Hasil</td>
+<td>UPDATE</td>
+<td>UPDATE</td>
+<td>–</td>
+<td>–</td>
+<td>–</td>
+<td>–</td>
+</tr>
+<tr>
+<td>Review 1–3</td>
+<td>UPDATE</td>
+<td>UPDATE</td>
+<td>INSERT (diserahkan)</td>
+<td>UPDATE jadwal_pemeliharaan</td>
+<td>–</td>
+<td>–</td>
+</tr>
+<tr>
+<td>Review 4–5</td>
+<td>UPDATE</td>
+<td>UPDATE</td>
+<td>–</td>
+<td>UPDATE</td>
+<td>INSERT</td>
+<td>Request KRY-03-1 (opsional)</td>
+</tr>
+<tr>
+<td>Terima</td>
+<td>UPDATE</td>
+<td>–</td>
+<td>–</td>
+<td>UPDATE</td>
+<td>INSERT</td>
+<td>–</td>
+</tr>
+</tbody>
+</table></div>
+<hr />
+<h2 id="s47"><span class="sec-no">47</span>Checklist Implementasi</h2>
+<h3>Database</h3>
+<ul>
+<li class="task done">DBML diperbarui (<code>[FIX PML01]</code>)</li>
+<li class="task done">SQL manual + rollback</li>
+<li class="task">SQL dijalankan di semua environment</li>
+<li class="task">Migration Lumen padanan</li>
+</ul>
+<h3>Backend</h3>
+<ul>
+<li class="task done">Monitoring jatuh tempo + watchlist</li>
+<li class="task done">Negosiasi jadwal</li>
+<li class="task done">Dua mekanisme + PIC Pendamping</li>
+<li class="task done">Checklist hasil 5 tingkat, hasil terberat</li>
+<li class="task done">Review: jadwal berikutnya, penarikan, unit pengganti</li>
+<li class="task done">Blokir lintas modul dua arah</li>
+<li class="task done">Notifikasi 14 event</li>
+<li class="task done">Test otomatis (6)</li>
+<li class="task">Notifikasi otomatis Jalur A (scheduler)</li>
+<li class="task">Integrasi otomatis ke PML02 / PML04 (modulnya sudah ada)</li>
+<li class="task">Pembatalan / kedaluwarsa</li>
+<li class="task">Test unit pengganti</li>
+</ul>
+<h3>Mobile</h3>
+<ul>
+<li class="task done">List, monitoring, detail, sheet pelaksanaan</li>
+<li class="task done">Banner Asset Saya &amp; kartu beranda admin</li>
+<li class="task done">Bahasa id/en</li>
+<li class="task done">Test model (6)</li>
+<li class="task">Uji end-to-end di perangkat</li>
+</ul>
+<h3>Documentation</h3>
+<ul>
+<li class="task done">Business Flow, DB, API, Mobile, Mapping, Manual Book, Testing</li>
+<li class="task">Screenshot</li>
+</ul>
+<hr />
+<h2 id="s48"><span class="sec-no">48</span>Changelog</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Version</th>
+<th>Date</th>
+<th>Changes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1.1</td>
+<td>2026-10-12</td>
+<td>Sinkronisasi dengan kode 12 Okt 2026: path file mobile mengikuti struktur folder baru (<code>UI/Modul/Asset/&lt;Fitur&gt;/</code> berhuruf kapital, model di <code>Repository/Model/Asset/</code>).</td>
+</tr>
+<tr>
+<td>1.0</td>
+<td>2026-09-28</td>
+<td>Initial documentation — disusun dari source lokal API &amp; MOBILE setelah implementasi PML01 konteks karyawan; dibandingkan dengan dokumen bisnis PML01 V2.0</td>
+</tr>
+</tbody>
+</table></div>
+    </article>
+
+    <footer>Dokumentasi Pemeliharaan Terjadwal Asset v1.0 · 28 September 2026 · Disusun dari source lokal API (Lumen) &amp; MOBILE (Flutter). Contoh ID dan nama pada payload adalah data sintetis.</footer>
+  </main>
+</div>
+<button class="to-top" id="to-top" type="button" aria-label="Kembali ke atas">↑</button>
+
+<script>
+(function(){
+  var search=document.getElementById('nav-search');
+  var navs=document.querySelectorAll('.nav');
+  search.addEventListener('input',function(){
+    var q=search.value.trim().toLowerCase();
+    navs.forEach(function(nav){
+      nav.querySelectorAll('.nav-group').forEach(function(g){
+        var any=false;
+        g.querySelectorAll('a').forEach(function(a){
+          var hit=!q||a.textContent.toLowerCase().indexOf(q)>-1;
+          a.hidden=!hit; if(hit) any=true;
+        });
+        g.hidden=!any;
+      });
+    });
+  });
+  var links={};
+  document.querySelectorAll('#nav a').forEach(function(a){links[a.dataset.sec]=a;});
+  var current=null;
+  if('IntersectionObserver' in window){
+    var io=new IntersectionObserver(function(entries){
+      entries.forEach(function(e){
+        if(e.isIntersecting){
+          if(current) current.classList.remove('active');
+          current=links[e.target.id];
+          if(current){current.classList.add('active');var nav=current.closest('.nav');var top=current.offsetTop-nav.offsetTop;if(top<nav.scrollTop||top>nav.scrollTop+nav.clientHeight-30){nav.scrollTop=top-nav.clientHeight/2;}}
+        }
+      });
+    },{rootMargin:'0px 0px -75% 0px'});
+    document.querySelectorAll('.doc h2[id]').forEach(function(h){io.observe(h);});
+  }
+  document.querySelectorAll('.mobile-toc a').forEach(function(a){
+    a.addEventListener('click',function(){a.closest('details').open=false;});
+  });
+  document.getElementById('to-top').addEventListener('click',function(){window.scrollTo({top:0});});
+})();
+</script>
+<script type="module">
+// Fallback renderer: hanya jalan bila viewer belum merender diagram (mis. file dibuka langsung).
+const blocks=[...document.querySelectorAll('pre.mermaid')].filter(function(el){return !el.hasAttribute('data-claude-mermaid-claimed');});
+if(blocks.length){
+  blocks.forEach(function(el){el.setAttribute('data-claude-mermaid-claimed','1');el.dataset.src=el.textContent;});
+  const {default:mermaid}=await import("https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs");
+  const media=window.matchMedia('(prefers-color-scheme: dark)');
+  const render=async function(){
+    const css=getComputedStyle(document.documentElement);
+    const v=function(n){return css.getPropertyValue(n).trim();};
+    mermaid.initialize({startOnLoad:false,securityLevel:'strict',theme:'base',fontFamily:'inherit',
+      themeVariables:{background:v('--surface'),primaryColor:v('--accent-soft'),primaryTextColor:v('--ink'),
+        primaryBorderColor:v('--accent'),lineColor:v('--muted'),secondaryColor:v('--surface-2'),tertiaryColor:v('--surface'),
+        textColor:v('--ink'),mainBkg:v('--accent-soft'),nodeBorder:v('--accent'),clusterBkg:v('--surface-2'),
+        noteBkgColor:v('--surface-2'),noteTextColor:v('--ink'),noteBorderColor:v('--line'),
+        actorBkg:v('--accent-soft'),actorBorder:v('--accent'),actorTextColor:v('--ink'),actorLineColor:v('--muted'),
+        signalColor:v('--ink-2'),signalTextColor:v('--ink'),labelBoxBkgColor:v('--surface-2'),labelTextColor:v('--ink'),
+        edgeLabelBackground:v('--surface'),attributeBackgroundColorOdd:v('--surface'),attributeBackgroundColorEven:v('--surface-2')}});
+    blocks.forEach(function(el){el.removeAttribute('data-processed');el.textContent=el.dataset.src;});
+    try{await mermaid.run({nodes:blocks});}catch(e){console.error(e);}
+  };
+  render();
+  if(media.addEventListener) media.addEventListener('change',render);
+}
+</script>
+<script>
+// Kembali ke index lokal bila dibuka dari komputer, ke index artifact bila dibuka dari claude.ai.
+(function(){var h=location.hostname;var art=location.protocol!=='file:'&&/claude/i.test(h);
+if(art){document.querySelectorAll('a.back').forEach(function(a){a.href='https://claude.ai/artifact/X39UeaJRpBKwqFjswGNqip';a.target='_blank';a.rel='noopener';});
+document.querySelectorAll('.dl').forEach(function(d){d.hidden=true;});}})();
+</script>

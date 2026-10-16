@@ -1,0 +1,3852 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Peminjaman Asset Karyawan</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap">
+<style>
+:root{
+  --ground:#F3F5F9; --surface:#FFFFFF; --surface-2:#EAEEF5; --ink:#162033; --ink-2:#3A4559; --muted:#657089;
+  --line:#D9DFEA; --accent:#1F5AA6; --accent-soft:#E3ECF8; --accent-ink:#163F75;
+  --wait:#B45F00; --wait-bg:#FFE9C7; --draft:#0078A8; --draft-bg:#D6F1FA;
+  --bad:#C22F2F; --bad-bg:#FDE1E1; --done:#157A41; --done-bg:#D9F2E3; --neutral:#4E5A70; --neutral-bg:#E6EAF1;
+  --code-bg:#0F1A2C; --code-ink:#DCE6F5; --code-muted:#8FA3C2;
+  --shadow:0 1px 2px rgba(22,32,51,.06),0 8px 24px rgba(22,32,51,.06);
+  --font:"Plus Jakarta Sans",ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  color-scheme:dark;
+  --ground:#0E1420; --surface:#151D2C; --surface-2:#1C2638; --ink:#E7ECF5; --ink-2:#C3CBDA; --muted:#8E99AF;
+  --line:#28334A; --accent:#7FAEF0; --accent-soft:#1B2A45; --accent-ink:#B8D2F7;
+  --wait:#FFB861; --wait-bg:#3A2A12; --draft:#6CD3F5; --draft-bg:#113442; --bad:#FF8A8A; --bad-bg:#3D1C1F;
+  --done:#6FD69C; --done-bg:#15321F; --neutral:#B7C1D3; --neutral-bg:#243047;
+  --code-bg:#0A101B; --code-ink:#DCE6F5; --code-muted:#7F93B3; --shadow:0 1px 2px rgba(0,0,0,.3),0 8px 24px rgba(0,0,0,.25);
+}}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --ground:#0E1420; --surface:#151D2C; --surface-2:#1C2638; --ink:#E7ECF5; --ink-2:#C3CBDA; --muted:#8E99AF;
+  --line:#28334A; --accent:#7FAEF0; --accent-soft:#1B2A45; --accent-ink:#B8D2F7;
+  --wait:#FFB861; --wait-bg:#3A2A12; --draft:#6CD3F5; --draft-bg:#113442; --bad:#FF8A8A; --bad-bg:#3D1C1F;
+  --done:#6FD69C; --done-bg:#15321F; --neutral:#B7C1D3; --neutral-bg:#243047;
+  --code-bg:#0A101B; --code-ink:#DCE6F5; --code-muted:#7F93B3; --shadow:0 1px 2px rgba(0,0,0,.3),0 8px 24px rgba(0,0,0,.25);
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth;scroll-padding-top:24px}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+body{background:var(--ground);color:var(--ink);font-family:var(--font);font-size:15px;line-height:1.65;padding-inline:16px}
+a{color:var(--accent)}
+a:focus-visible,button:focus-visible,input:focus-visible,summary:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:4px}
+
+.shell{max-width:1320px;margin:0 auto;display:grid;grid-template-columns:270px minmax(0,1fr);gap:40px;padding-block:28px 80px}
+@media (max-width:960px){.shell{grid-template-columns:minmax(0,1fr);gap:20px}}
+
+/* Navigasi */
+.sidebar{position:sticky;top:calc(env(safe-area-inset-top,0px) + 16px);align-self:start;max-height:calc(100vh - 32px);display:flex;flex-direction:column;gap:12px}
+@media (max-width:960px){.sidebar{display:none}}
+.back{font-size:13px;font-weight:600;text-decoration:none}
+.back-mobile{display:none;margin:0 0 8px}
+@media (max-width:960px){.back-mobile{display:block}}
+.brand{display:flex;align-items:center;gap:10px;font-weight:700;font-size:14px}
+.brand-mark{height:30px;padding-inline:8px;border-radius:8px;background:var(--accent);color:var(--surface);display:grid;place-items:center;font-family:var(--mono);font-size:12px;font-weight:600}
+.search{width:100%;padding:9px 12px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--ink);font:inherit;font-size:13.5px}
+.nav{overflow-y:auto;padding-right:6px;display:flex;flex-direction:column;gap:14px}
+.nav-group p{margin:0 0 4px;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:700}
+.nav a{display:flex;gap:10px;padding:4px 8px;border-radius:6px;text-decoration:none;color:var(--ink-2);font-size:13.5px;line-height:1.4}
+.nav a span{font-family:var(--mono);font-size:11.5px;color:var(--muted);padding-top:1px;min-width:18px}
+.nav a:hover{background:var(--surface-2)}
+.nav a.active{background:var(--accent-soft);color:var(--accent-ink);font-weight:600}
+.nav a.active span{color:var(--accent)}
+.mobile-toc{display:none;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px 14px}
+.mobile-toc summary{font-weight:700;cursor:pointer}
+.mobile-toc .nav{max-height:60vh;margin-top:10px}
+@media (max-width:960px){.mobile-toc{display:block}}
+
+main{min-width:0}
+
+/* Header bergaya label asset */
+.hero{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:28px;align-items:end;padding-block:8px 28px;border-bottom:1px solid var(--line)}
+@media (max-width:760px){.hero{grid-template-columns:minmax(0,1fr)}}
+.eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:.06em;color:var(--accent);text-transform:uppercase;margin:0 0 8px}
+.hero h1{font-size:clamp(30px,5vw,46px);line-height:1.08;letter-spacing:-.02em;margin:0 0 12px;font-weight:800;text-wrap:balance}
+.hero .lede{max-width:62ch;color:var(--ink-2);margin:0;font-size:16px}
+.hero .lede code{font-family:var(--mono);font-size:.86em;background:var(--surface-2);padding:1px 5px;border-radius:5px}
+.tag{background:var(--surface);border:1px dashed var(--muted);border-radius:12px;padding:14px 16px;min-width:250px;font-family:var(--mono);font-size:12px;box-shadow:var(--shadow);position:relative}
+@media (max-width:760px){.tag{min-width:0}}
+.tag::before{content:"";position:absolute;left:14px;top:-7px;width:12px;height:12px;border-radius:50%;background:var(--ground);border:1px dashed var(--muted)}
+.tag dl{display:grid;grid-template-columns:auto 1fr;gap:4px 14px;margin:0}
+.tag dt{color:var(--muted)}
+.tag dd{margin:0;color:var(--ink);font-weight:500}
+.barcode{height:26px;margin-top:10px;background:repeating-linear-gradient(90deg,var(--ink) 0 2px,transparent 2px 4px,var(--ink) 4px 5px,transparent 5px 8px,var(--ink) 8px 11px,transparent 11px 12px);opacity:.75;border-radius:2px}
+.tag .trx{margin-top:4px;text-align:center;letter-spacing:.2em;font-size:11px;color:var(--ink-2)}
+
+/* Panel ringkas */
+.overview{display:grid;gap:18px;padding-block:28px 8px}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:22px}
+.panel h3{margin:0 0 4px;font-size:18px}
+.panel .sub{margin:0 0 18px;color:var(--muted);font-size:14px}
+.panel code{font-family:var(--mono);font-size:.86em;background:var(--surface-2);padding:1px 5px;border-radius:5px;overflow-wrap:anywhere}
+.three{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
+@media (max-width:760px){.three{grid-template-columns:minmax(0,1fr)}}
+.fact{border-left:3px solid var(--accent);padding:2px 0 2px 14px}
+.fact b{display:block;font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.fact p{margin:4px 0 0;font-size:14.5px}
+
+/* Lifecycle */
+.flow{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;align-items:stretch}
+@media (max-width:760px){.flow{grid-template-columns:minmax(0,1fr)}}
+.step{border:1px solid var(--line);border-radius:12px;padding:14px;background:var(--surface);display:flex;flex-direction:column;gap:6px}
+.step .who{font-size:11.5px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.06em}
+.step p{margin:0;font-size:13.5px;color:var(--ink-2)}
+.step .db{font-family:var(--mono);font-size:11.5px;color:var(--muted);margin-top:auto;padding-top:8px;border-top:1px dashed var(--line)}
+.loop{margin-top:12px;display:flex;flex-wrap:wrap;gap:10px;align-items:center;padding:12px 14px;border-radius:12px;background:var(--bad-bg);color:var(--ink);font-size:13.5px}
+.loop strong{color:var(--bad)}
+
+.badge{display:inline-flex;align-items:center;gap:6px;padding:3px 10px;border-radius:999px;font-size:12.5px;font-weight:700;width:max-content}
+.badge::before{content:"";width:7px;height:7px;border-radius:50%;background:currentColor}
+.b-draft{background:var(--draft-bg);color:var(--draft)}
+.b-wait{background:var(--wait-bg);color:var(--wait)}
+.b-bad{background:var(--bad-bg);color:var(--bad)}
+.b-done{background:var(--done-bg);color:var(--done)}
+
+/* Peran */
+.roles{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+@media (max-width:900px){.roles{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:520px){.roles{grid-template-columns:minmax(0,1fr)}}
+.role{border:1px solid var(--line);border-radius:12px;padding:14px 16px;background:var(--surface);display:flex;flex-direction:column;gap:8px}
+.role h4{margin:0;font-size:14.5px}
+.role p{margin:0;font-size:13px;color:var(--muted)}
+.role .links{display:flex;flex-wrap:wrap;gap:6px;margin-top:auto}
+.role .links a{font-family:var(--mono);font-size:11.5px;text-decoration:none;padding:2px 8px;border-radius:6px;background:var(--accent-soft);color:var(--accent-ink)}
+.role .links a:hover{background:var(--accent);color:var(--surface)}
+
+.attention{list-style:none;margin:0;padding:0;display:grid;gap:10px}
+.attention li{display:grid;grid-template-columns:72px minmax(0,1fr);gap:12px;align-items:start;font-size:14px}
+.sev{font-family:var(--mono);font-size:11px;font-weight:600;padding:2px 8px;border-radius:6px;margin-top:2px;text-align:center}
+.sev-h{background:var(--bad-bg);color:var(--bad)}
+.sev-m{background:var(--wait-bg);color:var(--wait)}
+
+/* Konten dokumen */
+.doc{padding-top:8px}
+.group-divider{margin:64px 0 0;display:flex;align-items:center;gap:14px;color:var(--accent);font-size:12px;font-weight:800;letter-spacing:.12em;text-transform:uppercase}
+.group-divider::after{content:"";flex:1;height:2px;background:var(--accent);opacity:.25}
+.doc h2{font-size:clamp(22px,3vw,27px);line-height:1.2;letter-spacing:-.01em;margin:40px 0 14px;display:flex;align-items:baseline;gap:14px;text-wrap:balance}
+.sec-no{font-family:var(--mono);font-size:14px;color:var(--accent);font-weight:600;padding:3px 8px;border:1px solid var(--accent);border-radius:6px;flex:none;transform:translateY(-3px)}
+.doc h3{font-size:18px;margin:30px 0 10px;text-wrap:balance}
+.doc h4{font-size:15.5px;margin:22px 0 8px}
+.doc p,.doc li{max-width:78ch;color:var(--ink-2)}
+.doc strong{color:var(--ink)}
+.doc hr{display:none}
+.doc code{font-family:var(--mono);font-size:.86em;background:var(--surface-2);padding:1px 5px;border-radius:5px;color:var(--ink);overflow-wrap:anywhere}
+.doc .chip{font-weight:600;border-radius:999px;padding:1px 8px}
+.doc .chip-draft{background:var(--draft-bg);color:var(--draft)}
+.doc .chip-wait{background:var(--wait-bg);color:var(--wait)}
+.doc .chip-bad{background:var(--bad-bg);color:var(--bad)}
+.doc .chip-done{background:var(--done-bg);color:var(--done)}
+.doc .chip-neutral{background:var(--neutral-bg);color:var(--neutral)}
+
+.table-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:12px;background:var(--surface);margin:14px 0 20px}
+table{border-collapse:collapse;width:100%;font-size:13.5px;font-variant-numeric:tabular-nums}
+th{text-align:left;background:var(--surface-2);color:var(--ink);font-weight:700;font-size:12.5px;letter-spacing:.02em;padding:10px 12px;border-bottom:1px solid var(--line);white-space:nowrap}
+td{padding:9px 12px;border-bottom:1px solid var(--line);vertical-align:top;color:var(--ink-2);min-width:90px}
+tr:last-child td{border-bottom:0}
+tbody tr:hover td{background:var(--accent-soft)}
+
+.code{position:relative;margin:14px 0 20px}
+.code-lang{position:absolute;top:8px;right:12px;font-family:var(--mono);font-size:10.5px;color:var(--code-muted);letter-spacing:.08em;text-transform:uppercase}
+.doc .code pre{background:var(--code-bg);color:var(--code-ink);border-radius:12px;padding:18px;overflow-x:auto;margin:0;font-size:12.8px;line-height:1.6}
+.doc .code pre code{background:none;color:inherit;padding:0;font-size:inherit;overflow-wrap:normal}
+.diagram{overflow-x:auto;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:18px;margin:14px 0 20px}
+.diagram pre{margin:0}
+.diagram pre.mermaid{font-family:var(--mono);font-size:12px;color:var(--muted);white-space:pre;text-align:center}
+.diagram pre.mermaid[data-processed]{color:inherit;white-space:normal}
+.diagram svg{max-width:100%;height:auto}
+
+.callout{border-radius:12px;padding:12px 16px;margin:14px 0;border:1px solid var(--line);background:var(--surface)}
+.callout p{margin:4px 0}
+.callout-warn{background:var(--wait-bg);border-color:transparent}
+.doc .callout-warn p,.doc .callout-warn strong{color:var(--ink)}
+.callout-note{border-left:3px solid var(--accent)}
+
+.doc .task{list-style:none;padding-left:4px}
+.task::before{content:"";display:inline-block;width:14px;height:14px;border:1.5px solid var(--muted);border-radius:4px;margin-right:10px;vertical-align:-2px}
+.task.done::before{background:var(--done);border-color:var(--done);box-shadow:inset 0 0 0 2px var(--surface)}
+footer{margin-top:64px;padding-top:18px;border-top:1px solid var(--line);color:var(--muted);font-size:13px}
+.to-top{position:fixed;right:16px;bottom:calc(env(safe-area-inset-bottom,0px) + 16px);width:40px;height:40px;border-radius:50%;border:1px solid var(--line);background:var(--surface);color:var(--ink);box-shadow:var(--shadow);cursor:pointer;font-size:16px}
+.dl{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0 12px}.dl a{font-size:12px;font-weight:600;text-decoration:none;border:1px solid var(--line);border-radius:999px;padding:3px 10px;color:var(--ink);background:var(--surface)}.dl a:hover{border-color:var(--accent);color:var(--accent)}.dl[hidden]{display:none}
+</style>
+
+<div class="shell">
+  <aside class="sidebar" aria-label="Daftar isi">
+    <a class="back" href="index.html">← Semua dokumen</a>
+    <div class="dl" aria-label="Unduh dokumen"><a href="dokumentasi-asset-peminjaman-karyawan.html" download>⬇ HTML</a><a href="dokumentasi-asset-peminjaman-karyawan.md" download>⬇ Markdown</a></div>
+    <div class="brand"><span class="brand-mark">KRY05</span>Peminjaman Asset</div>
+    <input class="search" id="nav-search" type="search" placeholder="Cari bagian… (mis. API, status)" aria-label="Cari bagian">
+    <nav class="nav" id="nav"><div class="nav-group"><p>Gambaran & Bisnis</p><a href="#s1" data-sec="s1"><span>01</span>Informasi Dokumen</a><a href="#s3" data-sec="s3"><span>03</span>Quick Overview</a><a href="#s4" data-sec="s4"><span>04</span>Ringkasan Fitur</a><a href="#s5" data-sec="s5"><span>05</span>Tujuan Fitur</a><a href="#s6" data-sec="s6"><span>06</span>Aktor</a><a href="#s7" data-sec="s7"><span>07</span>Hak Akses</a><a href="#s8" data-sec="s8"><span>08</span>Terminologi</a><a href="#s9" data-sec="s9"><span>09</span>Business Rules</a><a href="#s10" data-sec="s10"><span>10</span>Business Flow</a><a href="#s11" data-sec="s11"><span>11</span>Flow Berdasarkan Role</a><a href="#s12" data-sec="s12"><span>12</span>Flow Diagram</a><a href="#s13" data-sec="s13"><span>13</span>Sequence Diagram</a><a href="#s14" data-sec="s14"><span>14</span>Status Transaksi</a><a href="#s15" data-sec="s15"><span>15</span>State Transition</a></div><div class="nav-group"><p>Database</p><a href="#s16" data-sec="s16"><span>16</span>Struktur Database</a><a href="#s17" data-sec="s17"><span>17</span>Relasi Database</a><a href="#s18" data-sec="s18"><span>18</span>Data Dictionary</a><a href="#s19" data-sec="s19"><span>19</span>Database Index</a></div><div class="nav-group"><p>Backend & API</p><a href="#s20" data-sec="s20"><span>20</span>Backend Architecture</a><a href="#s21" data-sec="s21"><span>21</span>Backend Business Logic</a><a href="#s22" data-sec="s22"><span>22</span>Dampak terhadap asset_data</a><a href="#s23" data-sec="s23"><span>23</span>API Documentation</a><a href="#s24" data-sec="s24"><span>24</span>Detail Setiap API</a></div><div class="nav-group"><p>Mobile</p><a href="#s25" data-sec="s25"><span>25</span>Mobile Architecture</a><a href="#s26" data-sec="s26"><span>26</span>Mobile Screen</a><a href="#s27" data-sec="s27"><span>27</span>Mobile → API</a><a href="#s28" data-sec="s28"><span>28</span>API → Mobile</a><a href="#s29" data-sec="s29"><span>29</span>Mapping Mobile → API → Database</a><a href="#s30" data-sec="s30"><span>30</span>Mapping Database → API → Mobile</a></div><div class="nav-group"><p>Validasi, Error & Keamanan</p><a href="#s31" data-sec="s31"><span>31</span>Validation</a><a href="#s32" data-sec="s32"><span>32</span>Error Handling</a><a href="#s33" data-sec="s33"><span>33</span>Audit Trail</a><a href="#s34" data-sec="s34"><span>34</span>Notification</a><a href="#s35" data-sec="s35"><span>35</span>Security</a></div><div class="nav-group"><p>Manual Book</p><a href="#s36" data-sec="s36"><span>36</span>Manual Book User/Admin</a><a href="#s37" data-sec="s37"><span>37</span>Kondisi Button</a></div><div class="nav-group"><p>QA & Risiko</p><a href="#s38" data-sec="s38"><span>38</span>Testing Scenario</a><a href="#s39" data-sec="s39"><span>39</span>Temuan Ketidaksesuaian</a><a href="#s40" data-sec="s40"><span>40</span>Edge Case</a><a href="#s41" data-sec="s41"><span>41</span>Potential Bug / Technical Risk</a></div><div class="nav-group"><p>Referensi Developer</p><a href="#s42" data-sec="s42"><span>42</span>Dependency</a><a href="#s43" data-sec="s43"><span>43</span>Source Code Reference</a><a href="#s44" data-sec="s44"><span>44</span>Developer Notes</a><a href="#s45" data-sec="s45"><span>45</span>End-to-End Traceability</a><a href="#s46" data-sec="s46"><span>46</span>Ringkasan Database Impact</a><a href="#s47" data-sec="s47"><span>47</span>Checklist Implementasi</a><a href="#s48" data-sec="s48"><span>48</span>Changelog</a></div></nav>
+  </aside>
+
+  <main>
+    <p class="back-mobile"><a class="back" href="index.html">← Semua dokumen</a> <div class="dl" aria-label="Unduh dokumen"><a href="dokumentasi-asset-peminjaman-karyawan.html" download>⬇ HTML</a><a href="dokumentasi-asset-peminjaman-karyawan.md" download>⬇ Markdown</a></div></p>
+    <header class="hero">
+      <div>
+        <p class="eyebrow">Asset Management · Dokumentasi Teknis &amp; Manual Book</p>
+        <h1>Peminjaman Asset Karyawan</h1>
+        <p class="lede">Karyawan meminjam asset gudang untuk periode tertentu, Admin menyetujui per asset dan menjadwalkan serah terima, lalu asset dikembalikan dan diperiksa kondisinya. Seluruh isi diturunkan dari source code <code>API</code> (Lumen) dan <code>MOBILE</code> (Flutter).</p>
+      </div>
+      <div class="tag" aria-label="Identitas dokumen">
+        <dl>
+          <dt>Kode</dt><dd>KRY05</dd>
+          <dt>Modul</dt><dd>Asset Management</dd>
+          <dt>Versi</dt><dd>1.3 · 12 Okt 2026</dd>
+          <dt>Stack</dt><dd>Lumen 10 · Flutter</dd>
+          <dt>API</dt><dd>15 endpoint</dd>
+        </dl>
+        <div class="barcode" aria-hidden="true"></div>
+        <div class="trx">KRY05-YYYYMMNNN</div>
+      </div>
+    </header>
+
+    <details class="mobile-toc">
+      <summary>Daftar isi</summary>
+      <nav class="nav"><div class="nav-group"><p>Gambaran & Bisnis</p><a href="#s1" data-sec="s1"><span>01</span>Informasi Dokumen</a><a href="#s3" data-sec="s3"><span>03</span>Quick Overview</a><a href="#s4" data-sec="s4"><span>04</span>Ringkasan Fitur</a><a href="#s5" data-sec="s5"><span>05</span>Tujuan Fitur</a><a href="#s6" data-sec="s6"><span>06</span>Aktor</a><a href="#s7" data-sec="s7"><span>07</span>Hak Akses</a><a href="#s8" data-sec="s8"><span>08</span>Terminologi</a><a href="#s9" data-sec="s9"><span>09</span>Business Rules</a><a href="#s10" data-sec="s10"><span>10</span>Business Flow</a><a href="#s11" data-sec="s11"><span>11</span>Flow Berdasarkan Role</a><a href="#s12" data-sec="s12"><span>12</span>Flow Diagram</a><a href="#s13" data-sec="s13"><span>13</span>Sequence Diagram</a><a href="#s14" data-sec="s14"><span>14</span>Status Transaksi</a><a href="#s15" data-sec="s15"><span>15</span>State Transition</a></div><div class="nav-group"><p>Database</p><a href="#s16" data-sec="s16"><span>16</span>Struktur Database</a><a href="#s17" data-sec="s17"><span>17</span>Relasi Database</a><a href="#s18" data-sec="s18"><span>18</span>Data Dictionary</a><a href="#s19" data-sec="s19"><span>19</span>Database Index</a></div><div class="nav-group"><p>Backend & API</p><a href="#s20" data-sec="s20"><span>20</span>Backend Architecture</a><a href="#s21" data-sec="s21"><span>21</span>Backend Business Logic</a><a href="#s22" data-sec="s22"><span>22</span>Dampak terhadap asset_data</a><a href="#s23" data-sec="s23"><span>23</span>API Documentation</a><a href="#s24" data-sec="s24"><span>24</span>Detail Setiap API</a></div><div class="nav-group"><p>Mobile</p><a href="#s25" data-sec="s25"><span>25</span>Mobile Architecture</a><a href="#s26" data-sec="s26"><span>26</span>Mobile Screen</a><a href="#s27" data-sec="s27"><span>27</span>Mobile → API</a><a href="#s28" data-sec="s28"><span>28</span>API → Mobile</a><a href="#s29" data-sec="s29"><span>29</span>Mapping Mobile → API → Database</a><a href="#s30" data-sec="s30"><span>30</span>Mapping Database → API → Mobile</a></div><div class="nav-group"><p>Validasi, Error & Keamanan</p><a href="#s31" data-sec="s31"><span>31</span>Validation</a><a href="#s32" data-sec="s32"><span>32</span>Error Handling</a><a href="#s33" data-sec="s33"><span>33</span>Audit Trail</a><a href="#s34" data-sec="s34"><span>34</span>Notification</a><a href="#s35" data-sec="s35"><span>35</span>Security</a></div><div class="nav-group"><p>Manual Book</p><a href="#s36" data-sec="s36"><span>36</span>Manual Book User/Admin</a><a href="#s37" data-sec="s37"><span>37</span>Kondisi Button</a></div><div class="nav-group"><p>QA & Risiko</p><a href="#s38" data-sec="s38"><span>38</span>Testing Scenario</a><a href="#s39" data-sec="s39"><span>39</span>Temuan Ketidaksesuaian</a><a href="#s40" data-sec="s40"><span>40</span>Edge Case</a><a href="#s41" data-sec="s41"><span>41</span>Potential Bug / Technical Risk</a></div><div class="nav-group"><p>Referensi Developer</p><a href="#s42" data-sec="s42"><span>42</span>Dependency</a><a href="#s43" data-sec="s43"><span>43</span>Source Code Reference</a><a href="#s44" data-sec="s44"><span>44</span>Developer Notes</a><a href="#s45" data-sec="s45"><span>45</span>End-to-End Traceability</a><a href="#s46" data-sec="s46"><span>46</span>Ringkasan Database Impact</a><a href="#s47" data-sec="s47"><span>47</span>Checklist Implementasi</a><a href="#s48" data-sec="s48"><span>48</span>Changelog</a></div></nav>
+    </details>
+
+    <section class="overview" aria-label="Ringkasan">
+      <div class="panel">
+        <h3>Ringkasan dalam 1 menit</h3>
+        <p class="sub">Asset pinjaman berstatus <code>dipinjam</code> dan wajib kembali — berbeda dengan Onboarding/Penambahan yang permanen.</p>
+        <div class="three">
+          <div class="fact"><b>Siapa</b><p><strong>Karyawan</strong> mengajukan, menerima, dan mengembalikan. <strong>Admin Asset</strong> memutuskan per asset dan memeriksa kondisi saat kembali.</p></div>
+          <div class="fact"><b>Periode</b><p>Tanggal pinjam ≥ hari ini, tanggal kembali ≥ tanggal pinjam. Jadwal serah terima wajib berada <strong>di dalam</strong> periode pinjam.</p></div>
+          <div class="fact"><b>Satu tabel, dua jenis</b><p>Pengembalian adalah <strong>header baru</strong> (<code>jenis_status = pengembalian</code>) yang merujuk <code>id_peminjaman_asal</code>.</p></div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h3>Siklus peminjaman</h3>
+        <p class="sub">Status transaksi dan posisi asset di setiap langkah.</p>
+        <div class="flow">
+          <div class="step"><span class="badge b-wait">Menunggu Konfirmasi</span><span class="who">Karyawan: Ajukan Peminjaman</span><p>Asset, keperluan, tujuan, tanggal pinjam–kembali.</p><span class="db">asset → proses</span></div>
+          <div class="step"><span class="badge b-draft">Dikonfirmasi</span><span class="who">Admin: setujui/tolak per asset</span><p>Jadwal serah terima ditetapkan. Asset ditolak kembali ke gudang.</p><span class="db">ditolak → tersedia</span></div>
+          <div class="step"><span class="badge b-done">Aktif</span><span class="who">Karyawan: Terima Asset</span><p>Asset dipegang karyawan. H-1 muncul pengingat, lewat tanggal = Terlambat.</p><span class="db">dipinjam @karyawan · asset_log</span></div>
+          <div class="step"><span class="badge b-done">Selesai</span><span class="who">Admin: cek kondisi</span><p>Karyawan menekan Kembalikan Asset; admin menilai Normal / Rusak.</p><span class="db">tersedia / rusak @gudang · asset_log</span></div>
+        </div>
+        <div class="loop"><span class="badge b-bad">Ditolak</span><span>Terjadi bila admin menolak <strong>semua</strong> asset, atau karyawan menekan <strong>Batalkan</strong> sebelum menerima asset.</span></div>
+      </div>
+
+      <div class="panel">
+        <h3>Mulai dari sini sesuai peran</h3>
+        <p class="sub">Lompat langsung ke bagian yang paling relevan.</p>
+        <div class="roles">
+          <div class="role"><h4>Business Analyst / PM</h4><p>Aturan bisnis, siklus, dan status.</p><div class="links"><a href="#s3">§3</a><a href="#s9">§9 Rules</a><a href="#s10">§10 Flow</a><a href="#s14">§14 Status</a></div></div>
+          <div class="role"><h4>Backend Developer</h4><p>Logika transaksi, dampak asset, dan kontrak API.</p><div class="links"><a href="#s21">§21 Logic</a><a href="#s22">§22 asset_data</a><a href="#s24">§24 API</a></div></div>
+          <div class="role"><h4>Mobile Developer</h4><p>Bloc, route, screen, dan mapping field.</p><div class="links"><a href="#s25">§25</a><a href="#s26">§26 Screen</a><a href="#s29">§29 Mapping</a></div></div>
+          <div class="role"><h4>QA / Tester</h4><p>37 skenario uji, edge case, dan risiko.</p><div class="links"><a href="#s38">§38 Test</a><a href="#s40">§40 Edge</a><a href="#s41">§41 Risk</a></div></div>
+          <div class="role"><h4>Technical Support</h4><p>Pesan error, audit trail, dan notifikasi.</p><div class="links"><a href="#s32">§32 Error</a><a href="#s33">§33 Audit</a><a href="#s34">§34 Notif</a></div></div>
+          <div class="role"><h4>User / Admin Asset</h4><p>Langkah meminjam, menerima, dan mengembalikan.</p><div class="links"><a href="#s36">§36 Manual Book</a><a href="#s37">§37 Tombol</a></div></div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h3>Perlu perhatian</h3>
+        <p class="sub">Temuan terpenting dari analisis source. Detail lengkap di <a href="#s39">§39</a> dan <a href="#s41">§41</a>.</p>
+        <ul class="attention">
+          <li><span class="sev sev-h">TINGGI</span><span>Peminjaman yang sudah disetujui tetapi <strong>tidak pernah diterima</strong> karyawan mengunci asset tanpa batas waktu; admin tidak punya aksi batal. <a href="#s41">RISK-001</a></span></li>
+          <li><span class="sev sev-m">SEDANG</span><span>Karyawan <strong>tidak bisa membatalkan pengajuan</strong> sebelum admin memutuskan. <a href="#s41">RISK-002</a></span></li>
+          <li><span class="sev sev-m">SEDANG</span><span><strong>Tidak ada pengingat otomatis</strong> jatuh tempo (scheduler kosong); hanya banner di aplikasi. <a href="#s41">RISK-003</a></span></li>
+          <li><span class="sev sev-m">SEDANG</span><span>Pengembalian <strong>tidak bisa ditolak</strong> atau dibatalkan. <a href="#s41">RISK-004</a></span></li>
+          <li><span class="sev sev-m">SEDANG</span><span>Pembatalan karyawan disimpan sebagai <code>ditolak</code>; riwayat peminjaman selesai tidak punya tab sendiri. <a href="#s39">INC-03/04</a></span></li>
+        </ul>
+      </div>
+    </section>
+
+    <article class="doc">
+<div class="group-divider" id="g1"><span>Gambaran & Bisnis</span></div><h2 id="s1"><span class="sec-no">01</span>Informasi Dokumen</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Informasi</th>
+<th>Nilai</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Nama Fitur</td>
+<td>Peminjaman Asset Karyawan (termasuk <strong>Pengembalian</strong> pinjaman)</td>
+</tr>
+<tr>
+<td>Kode Fitur</td>
+<td><strong>KRY05</strong> (prefix nomor transaksi <code>KRY05-YYYYMMNNN</code>, dipakai untuk peminjaman dan pengembalian)</td>
+</tr>
+<tr>
+<td>Modul</td>
+<td>Asset Management</td>
+</tr>
+<tr>
+<td>Backend</td>
+<td>Laravel <strong>Lumen ^10.0</strong>, PHP ^8.1, JWT <code>tymon/jwt-auth ^2.3</code>, Query Builder</td>
+</tr>
+<tr>
+<td>Database</td>
+<td>Struktur mengacu <code>API/diagram-asset.dbml</code> + migrations. ⚠️ Asumsi: MySQL/MariaDB</td>
+</tr>
+<tr>
+<td>Mobile</td>
+<td>Flutter (package <code>professional_flutter_3_35</code>), <code>flutter_bloc</code>, <code>dio</code></td>
+</tr>
+<tr>
+<td>Web</td>
+<td>⚠️ Belum ditemukan: tidak ada source web di workspace</td>
+</tr>
+<tr>
+<td>Versi Dokumen</td>
+<td>1.3</td>
+</tr>
+<tr>
+<td>Tanggal Dokumentasi</td>
+<td>2026-10-12</td>
+</tr>
+<tr>
+<td>Dokumen terkait</td>
+<td>Onboarding, Request/Penambahan (helper &amp; pola bersama), Offboarding (mengembalikan pinjaman saat karyawan keluar)</td>
+</tr>
+</tbody>
+</table></div>
+<hr />
+<h2 id="s3"><span class="sec-no">03</span>Quick Overview</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Item</th>
+<th>Informasi</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Feature</td>
+<td>Peminjaman &amp; Pengembalian Asset Karyawan</td>
+</tr>
+<tr>
+<td>Module</td>
+<td>Asset Management</td>
+</tr>
+<tr>
+<td>Actor</td>
+<td>Karyawan (peminjam), Admin Asset (penyetuju &amp; penerima pengembalian), System</td>
+</tr>
+<tr>
+<td>Main Transaction</td>
+<td><code>asset_trx_peminjaman_karyawan</code> (dua jenis baris: <code>jenis_status = peminjaman</code> dan <code>pengembalian</code>)</td>
+</tr>
+<tr>
+<td>Detail Transaction</td>
+<td><code>asset_trx_peminjaman_karyawan_item</code></td>
+</tr>
+<tr>
+<td>Relasi pengembalian</td>
+<td><code>id_peminjaman_asal</code> → header peminjaman</td>
+</tr>
+<tr>
+<td>Asset Master</td>
+<td><code>asset_data</code> (<code>status_asset = dipinjam</code> selama dipinjam)</td>
+</tr>
+<tr>
+<td>Log</td>
+<td><code>asset_log</code>: <code>peminjaman_karyawan</code> (serah terima) dan <code>pengembalian_karyawan</code> (pengembalian)</td>
+</tr>
+<tr>
+<td>Status</td>
+<td>Peminjaman: <code>pengajuan → dikonfirmasi → aktif → selesai</code> atau <code class="chip chip-bad">ditolak</code>. Pengembalian: <code>pengajuan → selesai</code></td>
+</tr>
+<tr>
+<td>Approval</td>
+<td>Admin memutuskan <strong>per asset</strong> (setujui/tolak) lalu menetapkan jadwal serah terima</td>
+</tr>
+<tr>
+<td>API</td>
+<td>6 endpoint admin + 9 endpoint karyawan</td>
+</tr>
+<tr>
+<td>Mobile Screen</td>
+<td>Karyawan: Peminjaman Asset (switch Peminjaman / Pengembalian), Tambah Peminjaman Asset, Detail Peminjaman / Pengembalian. Admin: Peminjaman Asset (switch Peminjaman / Pengembalian), Detail + sheet Konfirmasi Peminjaman Asset. Banner &amp; kartu di Asset Saya</td>
+</tr>
+</tbody>
+</table></div>
+<div class="code"><span class="code-lang">Alur</span><pre><code class="language-text">Karyawan: pilih asset gudang + keperluan + tujuan + tanggal pinjam–kembali → Ajukan Peminjaman
+      │  asset_data → proses                                          status: pengajuan
+      ▼
+Admin: setujui / tolak tiap asset + jadwal serah terima (dalam periode pinjam)
+      │  asset ditolak → tersedia                                     status: dikonfirmasi (atau ditolak bila semua ditolak)
+      ▼
+Karyawan: Terima Asset ─────────────► asset → dipinjam @karyawan + asset_log     status: aktif
+      │   (atau Batalkan → asset → tersedia, status: ditolak)
+      ▼
+Pengingat H-1 / terlambat (banner di aplikasi)
+      ▼
+Karyawan: Kembalikan Asset ─► header baru jenis pengembalian               status: pengajuan
+      ▼
+Admin: kondisi + lokasi gudang tiap asset ─► asset → tersedia / rusak @gudang pilihan admin + asset_log
+                                            pengembalian: selesai · peminjaman asal: selesai
+</code></pre></div>
+<hr />
+<h2 id="s4"><span class="sec-no">04</span>Ringkasan Fitur</h2>
+<p>Peminjaman Asset memungkinkan <strong>karyawan meminjam asset gudang untuk jangka waktu tertentu</strong> (mis. dinas, pelatihan) dan mengembalikannya. Berbeda dengan Onboarding/Penambahan yang memindahkan asset secara tetap (<code class="chip chip-done">terpakai</code>), asset pinjaman berstatus <strong><code>dipinjam</code></strong> dan wajib kembali.</p>
+<p>Alur utama:
+- <strong>Pengajuan</strong> oleh karyawan: memilih satu atau lebih asset yang tersedia, keperluan (Kantor/Dinas/Pelatihan/Lainnya), tujuan, tanggal pinjam dan tanggal kembali. Asset langsung dikunci.
+- <strong>Konfirmasi admin per asset</strong>: setiap asset disetujui atau ditolak (dengan alasan). Jika ada yang disetujui, admin menentukan <strong>jadwal serah terima</strong> yang harus berada dalam periode pinjam.
+- <strong>Serah terima</strong>: karyawan menekan <strong>Terima Asset</strong> setelah menerima fisik asset → status <strong>Aktif</strong>, asset tercatat dipinjam karyawan. Karyawan juga bisa <strong>Batalkan</strong> sebelum menerima.
+- <strong>Jatuh tempo</strong>: mulai H-1 tanggal kembali, peminjaman tampil sebagai pengingat; lewat tanggal ditandai <strong>Terlambat</strong>.
+- <strong>Pengembalian</strong>: karyawan mengajukan pengembalian <strong>seluruh</strong> asset pinjaman; admin memeriksa kondisi tiap asset (Normal → kembali tersedia, Rusak → status rusak di gudang). Peminjaman asal otomatis <strong>Selesai</strong>.</p>
+<hr />
+<h2 id="s5"><span class="sec-no">05</span>Tujuan Fitur</h2>
+<h3>5.1 Tujuan Bisnis (diturunkan dari kode)</h3>
+<ul>
+<li>Peminjaman asset tercatat dengan keperluan, tujuan, dan periode yang jelas.</li>
+<li>Admin mengontrol asset mana yang boleh dipinjam dan kapan diserahkan.</li>
+<li>Karyawan bertanggung jawab atas asset setelah menyatakan menerima secara fisik.</li>
+<li>Keterlambatan pengembalian terlihat oleh karyawan dan admin.</li>
+<li>Kondisi asset saat kembali tercatat; asset rusak tidak kembali ke stok tersedia.</li>
+</ul>
+<h3>5.2 Tujuan Sistem</h3>
+<ul>
+<li>Menyimpan pengajuan, keputusan per asset, jadwal serah terima, dan pengembalian.</li>
+<li>Mengunci asset selama proses (<code class="chip chip-wait">proses</code>) dan selama dipinjam (<code>dipinjam</code>).</li>
+<li>Menghitung status jatuh tempo (<code>sisa_hari</code>, <code>terlambat</code>).</li>
+<li>Mencatat <code>asset_log</code> saat serah terima dan saat pengembalian.</li>
+<li>Mengirim notifikasi di setiap perubahan status.</li>
+</ul>
+<hr />
+<h2 id="s6"><span class="sec-no">06</span>Aktor</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Aktor</th>
+<th>Role</th>
+<th>Fungsi</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Karyawan (peminjam)</td>
+<td>User login (JWT)</td>
+<td>Mengajukan peminjaman, menerima/membatalkan, mengajukan pengembalian</td>
+</tr>
+<tr>
+<td>Admin Asset</td>
+<td><code>asset_admin</code> + karyawan aktif</td>
+<td>Menyetujui/menolak per asset, menetapkan jadwal serah terima, memeriksa kondisi pengembalian dan memilih lokasi gudang tiap asset</td>
+</tr>
+<tr>
+<td>System</td>
+<td>Backend + FCM</td>
+<td>Validasi, lock, penomoran, update asset, log, pengingat jatuh tempo (tampilan), notifikasi</td>
+</tr>
+</tbody>
+</table></div>
+<hr />
+<h2 id="s7"><span class="sec-no">07</span>Hak Akses</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Action</th>
+<th style="text-align: center;">Admin Asset</th>
+<th style="text-align: center;">Karyawan</th>
+<th>Keterangan</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Melihat semua peminjaman &amp; pengembalian</td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: center;">❌</td>
+<td><code>/asset/peminjaman-karyawan</code>, <code>/asset/pengembalian-karyawan</code></td>
+</tr>
+<tr>
+<td>Melihat peminjaman &amp; pengembalian sendiri</td>
+<td style="text-align: center;">–</td>
+<td style="text-align: center;">✅</td>
+<td><code>/asset/karyawan/peminjaman</code>, <code>/asset/karyawan/pengembalian</code></td>
+</tr>
+<tr>
+<td>Mengajukan peminjaman</td>
+<td style="text-align: center;">–</td>
+<td style="text-align: center;">✅</td>
+<td>Untuk diri sendiri</td>
+</tr>
+<tr>
+<td>Membatalkan pengajuan (sebelum admin memutuskan)</td>
+<td style="text-align: center;">❌</td>
+<td style="text-align: center;">❌</td>
+<td>⚠️ Belum ditemukan (RISK-002)</td>
+</tr>
+<tr>
+<td>Setujui / tolak per asset</td>
+<td style="text-align: center;">✅ (status pengajuan)</td>
+<td style="text-align: center;">❌</td>
+<td></td>
+</tr>
+<tr>
+<td>Terima asset</td>
+<td style="text-align: center;">❌</td>
+<td style="text-align: center;">✅ (status dikonfirmasi)</td>
+<td></td>
+</tr>
+<tr>
+<td>Batalkan setelah disetujui</td>
+<td style="text-align: center;">❌</td>
+<td style="text-align: center;">✅ (status dikonfirmasi)</td>
+<td>Disimpan sebagai <code class="chip chip-bad">ditolak</code></td>
+</tr>
+<tr>
+<td>Ajukan pengembalian</td>
+<td style="text-align: center;">❌</td>
+<td style="text-align: center;">✅ (status aktif)</td>
+<td>Seluruh asset</td>
+</tr>
+<tr>
+<td>Konfirmasi kondisi &amp; lokasi gudang pengembalian</td>
+<td style="text-align: center;">✅ (status pengajuan)</td>
+<td style="text-align: center;">❌</td>
+<td></td>
+</tr>
+<tr>
+<td>Menolak pengembalian</td>
+<td style="text-align: center;">❌</td>
+<td style="text-align: center;">❌</td>
+<td>⚠️ Belum ditemukan (RISK-004)</td>
+</tr>
+</tbody>
+</table></div>
+<hr />
+<h2 id="s8"><span class="sec-no">08</span>Terminologi</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Istilah</th>
+<th>Arti di sistem</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Peminjaman</td>
+<td>Baris header <code>jenis_status = peminjaman</code></td>
+</tr>
+<tr>
+<td>Pengembalian</td>
+<td>Baris header <code>jenis_status = pengembalian</code>, merujuk <code>id_peminjaman_asal</code></td>
+</tr>
+<tr>
+<td>Keperluan</td>
+<td><code>kantor</code>, <code>dinas</code>, <code>pelatihan</code>, <code>lainnya</code></td>
+</tr>
+<tr>
+<td>Tujuan peminjaman</td>
+<td>Teks bebas (maks. 255)</td>
+</tr>
+<tr>
+<td>Periode pinjam</td>
+<td><code>tgl_peminjaman</code> s.d. <code>tgl_dikembalikan</code></td>
+</tr>
+<tr>
+<td>Jadwal serah terima</td>
+<td>Tanggal + jam penyerahan fisik yang ditetapkan admin, harus di dalam periode pinjam</td>
+</tr>
+<tr>
+<td>Aktif</td>
+<td>Karyawan sudah menerima asset (<code>status_asset = dipinjam</code>)</td>
+</tr>
+<tr>
+<td>Jatuh tempo</td>
+<td>Peminjaman aktif dengan <code>tgl_dikembalikan</code> ≤ besok dan belum diajukan pengembalian</td>
+</tr>
+<tr>
+<td>Terlambat</td>
+<td>Aktif dan hari ini &gt; <code>tgl_dikembalikan</code></td>
+</tr>
+<tr>
+<td><code>sisa_hari</code></td>
+<td>Selisih hari ke tanggal kembali; negatif = terlambat</td>
+</tr>
+<tr>
+<td><code>dapat_dikembalikan</code></td>
+<td>Flag detail karyawan: aktif, semua asset masih dipegang, belum ada pengembalian berjalan</td>
+</tr>
+</tbody>
+</table></div>
+<hr />
+<h2 id="s9"><span class="sec-no">09</span>Business Rules</h2>
+<h3>BR-001 — Peminjaman diajukan oleh karyawan untuk dirinya sendiri</h3>
+<p><code>id_karyawan</code> diambil dari JWT; karyawan harus aktif → "Karyawan tidak ditemukan atau tidak aktif."</p>
+<h3>BR-002 — Data pengajuan wajib lengkap</h3>
+<p><code>keperluan</code> (maks 255), <code>tujuan_peminjaman</code> (maks 255), <code>tgl_pinjam</code>, <code>tgl_kembali</code>, <code>asset_ids</code> (min 1, distinct) → pesan pada §24 API-009.</p>
+<h3>BR-003 — Tanggal pinjam tidak boleh lampau; tanggal kembali ≥ tanggal pinjam</h3>
+<p><code>tgl_pinjam after_or_equal:today</code>, <code>tgl_kembali after_or_equal:tgl_pinjam</code> → "Tanggal pinjam tidak boleh sebelum hari ini." / "Tanggal kembali tidak boleh sebelum tanggal pinjam." Tidak ada batas maksimal durasi.</p>
+<h3>BR-004 — Asset harus tersedia di gudang</h3>
+<p><code>getLockedAssets</code>: <code>status_asset = tersedia</code> &amp; <code>pemegang_asset = gudang</code> (FOR UPDATE) → "Satu atau beberapa asset tidak tersedia untuk dipinjam."</p>
+<h3>BR-005 — Asset tidak boleh sedang di onboarding atau peminjaman lain</h3>
+<p><code>hasActiveOnboardingAsset</code> → "…sedang diproses pada onboarding." <code>hasActivePeminjamanAsset</code> (peminjaman <code>pengajuan</code>/<code class="chip chip-done">dikonfirmasi</code>/<code>aktif</code>, item tidak ditolak) → "…sedang diproses pada peminjaman lain."</p>
+<h3>BR-006 — Asset langsung dikunci saat diajukan</h3>
+<p><code>asset_data.status_asset = proses</code>.</p>
+<h3>BR-007 — Admin wajib memutuskan seluruh asset</h3>
+<p>Semua item harus diberi <code>disetujui</code>/<code class="chip chip-bad">ditolak</code> → "Seluruh asset peminjaman wajib dikonfirmasi." Tolak wajib alasan → "Alasan penolakan asset wajib diisi."</p>
+<h3>BR-008 — Jadwal serah terima wajib jika ada asset disetujui dan harus dalam periode pinjam</h3>
+<p>→ "Tanggal serah terima wajib diisi." / "Jam serah terima wajib diisi." / "Tanggal serah terima harus berada dalam periode peminjaman."</p>
+<h3>BR-009 — Hasil keputusan admin</h3>
+<p>Minimal satu disetujui → <code class="chip chip-done">dikonfirmasi</code>; semua ditolak → <code class="chip chip-bad">ditolak</code> dengan <code>ket_tolak = "Seluruh asset peminjaman ditolak."</code> Asset ditolak kembali <code class="chip chip-neutral">tersedia</code> di gudang; asset disetujui tetap <code class="chip chip-wait">proses</code>.</p>
+<h3>BR-010 — Konfirmasi admin hanya untuk status pengajuan dan bukan milik offboarding</h3>
+<p>→ "Peminjaman asset sudah tidak menunggu konfirmasi." / "Pengembalian ini diproses melalui offboarding."</p>
+<h3>BR-011 — Terima asset hanya saat dikonfirmasi</h3>
+<p>Karyawan aktif, status <code class="chip chip-done">dikonfirmasi</code>, asset disetujui masih <code class="chip chip-wait">proses</code> di gudang → asset <code>dipinjam</code> @karyawan, status <code>aktif</code>, <code>asset_log</code> → "Peminjaman asset belum dapat diterima." / "Satu atau beberapa asset belum siap diserahterimakan."</p>
+<h3>BR-012 — Batalkan hanya saat dikonfirmasi</h3>
+<p>Asset disetujui kembali <code class="chip chip-neutral">tersedia</code>; status <code class="chip chip-bad">ditolak</code>, <code>ket_tolak = "Dibatalkan oleh karyawan."</code> → "Peminjaman asset sudah tidak dapat dibatalkan."</p>
+<h3>BR-013 — Pengembalian hanya untuk peminjaman aktif, seluruh asset</h3>
+<p>Semua asset disetujui harus masih <code>dipinjam</code> oleh karyawan; tidak boleh ada pengembalian berjalan; tidak sedang di offboarding → "Hanya peminjaman aktif yang dapat dikembalikan." / "Satu atau beberapa asset tidak sedang dipinjam oleh karyawan." / "Pengembalian asset sedang menunggu konfirmasi." / "Asset sedang diproses pada offboarding."</p>
+<h3>BR-014 — Admin wajib mengisi kondisi dan lokasi gudang setiap asset yang dikembalikan</h3>
+<p><code class="chip chip-done">normal</code>/<code class="chip chip-bad">rusak</code>; rusak wajib keterangan → "Seluruh kondisi asset pengembalian wajib diisi." / "Keterangan kerusakan asset wajib diisi." (v1.1) Setiap item juga wajib punya <code>id_asset_lokasi_m</code> bertipe <code>gudang</code> pada company yang sama, tepat satu kali per item → "Lokasi gudang tujuan setiap asset wajib dipilih." / "Lokasi gudang tujuan tidak valid." / "Lokasi gudang tujuan asset tidak sesuai."</p>
+<h3>BR-015 — Dampak pengembalian</h3>
+<p>Normal → <code class="chip chip-neutral">tersedia</code> @gudang; Rusak → <code class="chip chip-bad">rusak</code> @gudang + <code>ket_rusak</code>; keduanya di gudang pilihan admin (<code>asset_data.id_asset_lokasi_m</code>, item <code>id_asset_lokasi_m_tujuan</code>). Pengembalian <code>selesai</code>; peminjaman asal <code>selesai</code> bila tidak ada asset pinjaman yang masih dipegang.</p>
+<h3>BR-015a — Lokasi dikosongkan saat asset keluar gudang (v1.1)</h3>
+<p>Saat karyawan menerima asset pinjaman (Terima Asset), <code>asset_data.id_asset_lokasi_m</code> di-set <code>NULL</code> (kolom FK ke asset_lokasi_m; nilai '' ditolak database) karena asset tidak lagi berada di gudang.</p>
+<h3>BR-016 — Pengingat jatuh tempo</h3>
+<p>Peminjaman <code>aktif</code> dengan <code>tgl_dikembalikan ≤ besok</code>, asset masih dipegang, dan belum ada pengembalian <code>pengajuan</code>/<code class="chip chip-done">dikonfirmasi</code> → tampil di Asset Saya (karyawan) dan ringkasan admin. ⚠️ Belum ditemukan: scheduler/push otomatis.</p>
+<h3>BR-017 — Pengembalian lewat offboarding dipisahkan</h3>
+<p>Pengembalian yang dibuat oleh proses offboarding (tercatat di <code>asset_trx_offboarding_relasi</code>) disembunyikan dari daftar dan tidak dapat dikonfirmasi lewat menu peminjaman.</p>
+<h3>BR-018 — Penomoran</h3>
+<p>ID header/item <code>id_company + YYYYMM + 3 digit</code>; <code>no_trx = KRY05-YYYYMMNNN</code> (sequence yang sama untuk peminjaman &amp; pengembalian).</p>
+<hr />
+<h2 id="s10"><span class="sec-no">10</span>Business Flow</h2>
+<div class="code"><span class="code-lang">Alur</span><pre><code class="language-text">1. Karyawan: Asset Saya → Peminjaman → (+) Tambah Peminjaman Asset
+   → Pilih Asset (Tambah Asset) → Pilih Keperluan → Tujuan Peminjaman → Tanggal Pinjam–Kembali
+   → Ajukan Peminjaman                         [pengajuan · asset proses · notif admin]
+2. Admin: Asset Karyawan → Peminjaman → tab Pengajuan → Detail
+   → Setujui / Tolak tiap asset (+ alasan) → Konfirmasi
+   → Sheet &quot;Konfirmasi Peminjaman Asset&quot;: Jadwal Serah Terima + Jam + Catatan → Submit
+                                               [dikonfirmasi / ditolak · notif karyawan]
+3. Karyawan: banner / Detail → &quot;Siap untuk meminjam Asset?&quot;
+   → Terima Asset   [aktif · asset dipinjam · asset_log · notif admin]
+   → Batalkan       [ditolak &quot;Dibatalkan oleh karyawan.&quot; · asset tersedia · notif admin]
+4. H-1 tanggal kembali → pengingat jatuh tempo; lewat tanggal → &quot;Terlambat&quot;
+5. Karyawan: Detail peminjaman aktif → Kembalikan Asset
+                                               [header pengembalian: pengajuan · notif admin]
+6. Admin: Peminjaman → switch Pengembalian → Detail → Normal / Rusak tiap asset → Konfirmasi
+                                               [pengembalian selesai · asset tersedia/rusak · asset_log
+                                                · peminjaman asal selesai · notif karyawan]
+</code></pre></div>
+<hr />
+<h2 id="s11"><span class="sec-no">11</span>Flow Berdasarkan Role</h2>
+<h3>11.1 Karyawan</h3>
+<ol>
+<li><strong>Asset Saya</strong> → menu <strong>Peminjaman</strong> → halaman <strong>Peminjaman Asset</strong> (switch <strong>Peminjaman</strong> / <strong>Pengembalian</strong>; tab Pengajuan, Dikonfirmasi, Ditolak, Aktif untuk peminjaman; Pengajuan, Selesai untuk pengembalian).</li>
+<li>Tekan <strong>+</strong> → <strong>Tambah Peminjaman Asset</strong> → <strong>Ajukan Peminjaman</strong>.</li>
+<li>Setelah admin mengonfirmasi: banner di Asset Saya / detail → <strong>Terima Asset</strong> atau <strong>Batalkan</strong>.</li>
+<li>Selama aktif: kartu peminjaman aktif di Asset Saya, pengingat jatuh tempo, label <strong>Terlambat</strong> bila lewat.</li>
+<li><strong>Kembalikan Asset</strong> di detail peminjaman aktif → pantau di switch Pengembalian.</li>
+</ol>
+<h3>11.2 Admin Asset</h3>
+<ol>
+<li><strong>Asset Karyawan</strong> → aksi <strong>Peminjaman</strong> (juga panel ringkasan "perlu diproses" dan "jatuh tempo").</li>
+<li>Tab <strong>Pengajuan</strong> → detail → <strong>Setujui</strong>/<strong>Tolak</strong> per asset → <strong>Konfirmasi</strong> → isi jadwal → <strong>Submit</strong>.</li>
+<li>Switch <strong>Pengembalian</strong> → tab Pengajuan → detail → <strong>Normal</strong>/<strong>Rusak</strong> per asset → <strong>Konfirmasi</strong>.</li>
+</ol>
+<h3>11.3 Approver</h3>
+<p>Dijalankan Admin Asset (§11.2 langkah 2).</p>
+<h3>11.4 System</h3>
+<p>Lock company, penomoran, penguncian/pelepasan asset, validasi jadwal dalam periode, perhitungan <code>sisa_hari</code>/<code>terlambat</code>/<code>dapat_dikembalikan</code>, <code>asset_log</code>, penutupan peminjaman asal, notifikasi setelah commit.</p>
+<hr />
+<h2 id="s12"><span class="sec-no">12</span>Flow Diagram</h2>
+<div class="diagram"><pre class="mermaid">flowchart TD
+    A[Karyawan ajukan peminjaman] --&gt; B{Validasi}
+    B --&gt;|Gagal| X[Pesan error]
+    B --&gt;|OK| C[status pengajuan, asset proses, notif admin]
+    C --&gt; D{Admin putuskan per asset}
+    D --&gt;|Semua ditolak| E[status ditolak, asset tersedia, notif karyawan]
+    D --&gt;|Ada yang disetujui + jadwal| F[status dikonfirmasi, asset ditolak tersedia, notif karyawan]
+    F --&gt; G{Karyawan}
+    G --&gt;|Batalkan| H[status ditolak - dibatalkan, asset tersedia, notif admin]
+    G --&gt;|Terima Asset| I[status aktif, asset dipinjam, asset_log, notif admin]
+    I --&gt; J{Tanggal kembali}
+    J --&gt;|H-1 atau lewat| K[Pengingat jatuh tempo / Terlambat]
+    J --&gt; L[Karyawan: Kembalikan Asset]
+    K --&gt; L
+    L --&gt; M[Header pengembalian status pengajuan, notif admin]
+    M --&gt; N[Admin isi kondisi dan pilih lokasi gudang tiap asset]
+    N --&gt; O[Asset tersedia atau rusak di gudang, asset_log]
+    O --&gt; P[Pengembalian selesai, peminjaman asal selesai, notif karyawan]
+</pre></div>
+<hr />
+<h2 id="s13"><span class="sec-no">13</span>Sequence Diagram</h2>
+<h3>13.1 Pengajuan sampai aktif</h3>
+<div class="diagram"><pre class="mermaid">sequenceDiagram
+    actor K as Karyawan
+    actor A as Admin
+    participant M as Mobile
+    participant CK as AssetKaryawanPeminjaman_c
+    participant CA as AssetAdminPeminjaman_c
+    participant P as AssetPeminjamanKaryawan_m
+    participant DB
+    participant N as AssetNotification
+
+    K-&gt;&gt;M: Pilih asset, keperluan, tujuan, tanggal, Ajukan
+    M-&gt;&gt;CK: POST /asset/karyawan/peminjaman
+    CK-&gt;&gt;P: store()
+    P-&gt;&gt;DB: lock company, cek karyawan, asset tersedia, tidak aktif
+    P-&gt;&gt;DB: INSERT header + item, UPDATE asset_data proses
+    CK-&gt;&gt;N: peminjaman.diajukan (admin)
+    A-&gt;&gt;M: Setujui/Tolak per asset, isi jadwal, Submit
+    M-&gt;&gt;CA: POST /asset/peminjaman-karyawan/{id}/konfirmasi
+    CA-&gt;&gt;P: konfirmasiAdmin()
+    P-&gt;&gt;DB: UPDATE item keputusan, UPDATE header dikonfirmasi + jadwal
+    P-&gt;&gt;DB: UPDATE asset_data ditolak menjadi tersedia
+    CA-&gt;&gt;N: peminjaman.disetujui (karyawan)
+    K-&gt;&gt;M: Terima Asset
+    M-&gt;&gt;CK: POST /asset/karyawan/peminjaman/{id}/terima
+    CK-&gt;&gt;P: terimaKaryawan()
+    P-&gt;&gt;DB: UPDATE asset_data dipinjam @karyawan, header aktif
+    P-&gt;&gt;DB: INSERT asset_log peminjaman_karyawan
+    CK-&gt;&gt;N: peminjaman.diterima (admin)
+</pre></div>
+<h3>13.2 Pengembalian</h3>
+<div class="diagram"><pre class="mermaid">sequenceDiagram
+    actor K as Karyawan
+    actor A as Admin
+    participant M as Mobile
+    participant CK as AssetKaryawanPeminjaman_c
+    participant CA as AssetAdminPengembalian_c
+    participant P as AssetPeminjamanKaryawan_m
+    participant DB
+    participant N as AssetNotification
+
+    K-&gt;&gt;M: Kembalikan Asset
+    M-&gt;&gt;CK: POST /asset/karyawan/peminjaman/{id}/pengembalian
+    CK-&gt;&gt;P: ajukanPengembalianKaryawan()
+    P-&gt;&gt;DB: cek aktif, asset masih dipinjam, tidak ada pengembalian/offboarding
+    P-&gt;&gt;DB: INSERT header pengembalian (id_peminjaman_asal) + item
+    CK-&gt;&gt;N: pengembalian.diajukan (admin)
+    A-&gt;&gt;M: Isi Normal/Rusak per asset, Konfirmasi
+    M-&gt;&gt;CA: POST /asset/pengembalian-karyawan/{id}/konfirmasi
+    CA-&gt;&gt;P: konfirmasiPengembalianAdmin()
+    P-&gt;&gt;DB: UPDATE item, UPDATE asset_data tersedia atau rusak @gudang, id_asset_lokasi_m
+    P-&gt;&gt;DB: INSERT asset_log pengembalian_karyawan
+    P-&gt;&gt;DB: UPDATE pengembalian selesai, peminjaman asal selesai
+    CA-&gt;&gt;N: pengembalian.dikonfirmasi (karyawan)
+</pre></div>
+<hr />
+<h2 id="s14"><span class="sec-no">14</span>Status Transaksi</h2>
+<p>Kolom <code>status</code> (enum <code>status_peminjaman</code>: <code>pengajuan</code>, <code class="chip chip-done">dikonfirmasi</code>, <code class="chip chip-bad">ditolak</code>, <code>aktif</code>, <code>selesai</code>; default <code>pengajuan</code>). Di API dikirim sebagai <code>status_approval</code>.</p>
+<h3>14.1 Peminjaman (<code>jenis_status = peminjaman</code>)</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Status</th>
+<th>Label API</th>
+<th>Tab</th>
+<th>Arti</th>
+<th>Aksi berikutnya</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>pengajuan</code></td>
+<td>Menunggu Konfirmasi</td>
+<td>pengajuan</td>
+<td>Menunggu keputusan admin</td>
+<td>Admin: Konfirmasi</td>
+</tr>
+<tr>
+<td><code class="chip chip-done">dikonfirmasi</code></td>
+<td>Dikonfirmasi</td>
+<td>dikonfirmasi</td>
+<td>Minimal satu asset disetujui, jadwal ditetapkan</td>
+<td>Karyawan: Terima / Batalkan</td>
+</tr>
+<tr>
+<td><code class="chip chip-bad">ditolak</code></td>
+<td>Ditolak</td>
+<td>ditolak</td>
+<td>Semua asset ditolak admin <strong>atau</strong> dibatalkan karyawan</td>
+<td>–</td>
+</tr>
+<tr>
+<td><code>aktif</code></td>
+<td>Aktif (mobile: <strong>Terlambat</strong> bila lewat tanggal kembali)</td>
+<td>aktif</td>
+<td>Asset dipegang karyawan</td>
+<td>Karyawan: Kembalikan Asset</td>
+</tr>
+<tr>
+<td><code>selesai</code></td>
+<td>Selesai</td>
+<td>selesai</td>
+<td>Seluruh asset sudah kembali</td>
+<td>– (tidak tampil di daftar peminjaman)</td>
+</tr>
+</tbody>
+</table></div>
+<h3>14.2 Pengembalian (<code>jenis_status = pengembalian</code>)</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Status</th>
+<th>Label API</th>
+<th>Tab</th>
+<th>Arti</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>pengajuan</code></td>
+<td>Menunggu Konfirmasi</td>
+<td>pengajuan</td>
+<td>Menunggu pemeriksaan admin</td>
+</tr>
+<tr>
+<td><code class="chip chip-done">dikonfirmasi</code></td>
+<td>Dikonfirmasi</td>
+<td>pengajuan</td>
+<td>Hanya dipakai pengembalian yang dibuat <strong>offboarding</strong></td>
+</tr>
+<tr>
+<td><code class="chip chip-bad">ditolak</code></td>
+<td>Ditolak</td>
+<td>selesai</td>
+<td>⚠️ Tidak pernah di-set</td>
+</tr>
+<tr>
+<td><code>selesai</code></td>
+<td>Selesai</td>
+<td>selesai</td>
+<td>Kondisi dicatat, asset kembali ke gudang</td>
+</tr>
+</tbody>
+</table></div>
+<h3>14.3 Status item (<code>status_item</code>, enum <code>approval_item</code>)</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Konteks</th>
+<th>Nilai DB</th>
+<th>Nilai API</th>
+<th>Arti</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Peminjaman</td>
+<td>NULL</td>
+<td><code>''</code></td>
+<td>Belum diputuskan</td>
+</tr>
+<tr>
+<td>Peminjaman</td>
+<td><code>disetujui</code> / <code class="chip chip-bad">ditolak</code></td>
+<td>sama</td>
+<td>Keputusan admin (+<code>ket_tolak</code>)</td>
+</tr>
+<tr>
+<td>Pengembalian</td>
+<td><code>disetujui</code></td>
+<td><code class="chip chip-done">normal</code></td>
+<td>Kondisi normal</td>
+</tr>
+<tr>
+<td>Pengembalian</td>
+<td><code class="chip chip-bad">ditolak</code></td>
+<td><code class="chip chip-bad">rusak</code></td>
+<td>Kondisi rusak (<code>ket_tolak</code> = keterangan kerusakan)</td>
+</tr>
+</tbody>
+</table></div>
+<p>Migrasi <code>2026_09_17_000009</code>: nilai lama 1=pengajuan, 2=dikonfirmasi, 3=ditolak, 4=aktif (peminjaman) / selesai (pengembalian).</p>
+<hr />
+<h2 id="s15"><span class="sec-no">15</span>State Transition</h2>
+<div class="diagram"><pre class="mermaid">stateDiagram-v2
+    [*] --&gt; pengajuan: Ajukan Peminjaman (Karyawan)
+    pengajuan --&gt; dikonfirmasi: Konfirmasi, ada asset disetujui (Admin)
+    pengajuan --&gt; ditolak: Konfirmasi, semua ditolak (Admin)
+    dikonfirmasi --&gt; aktif: Terima Asset (Karyawan)
+    dikonfirmasi --&gt; ditolak: Batalkan (Karyawan)
+    aktif --&gt; selesai: Pengembalian dikonfirmasi (Admin)
+    ditolak --&gt; [*]
+    selesai --&gt; [*]
+</pre></div>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Status Awal</th>
+<th>Action</th>
+<th>Status Akhir</th>
+<th>Actor</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>–</td>
+<td>Ajukan Peminjaman</td>
+<td>pengajuan</td>
+<td>Karyawan</td>
+</tr>
+<tr>
+<td>pengajuan</td>
+<td>Konfirmasi (≥1 disetujui)</td>
+<td>dikonfirmasi</td>
+<td>Admin</td>
+</tr>
+<tr>
+<td>pengajuan</td>
+<td>Konfirmasi (semua ditolak)</td>
+<td>ditolak</td>
+<td>Admin</td>
+</tr>
+<tr>
+<td>dikonfirmasi</td>
+<td>Terima Asset</td>
+<td>aktif</td>
+<td>Karyawan</td>
+</tr>
+<tr>
+<td>dikonfirmasi</td>
+<td>Batalkan</td>
+<td>ditolak</td>
+<td>Karyawan</td>
+</tr>
+<tr>
+<td>aktif</td>
+<td>Ajukan pengembalian</td>
+<td>aktif (+ header pengembalian <code>pengajuan</code>)</td>
+<td>Karyawan</td>
+</tr>
+<tr>
+<td>aktif</td>
+<td>Pengembalian dikonfirmasi</td>
+<td>selesai</td>
+<td>Admin (otomatis)</td>
+</tr>
+<tr>
+<td>pengajuan (pengembalian)</td>
+<td>Konfirmasi kondisi</td>
+<td>selesai</td>
+<td>Admin</td>
+</tr>
+</tbody>
+</table></div>
+<p>Status <code>asset_data</code>:
+| Dari | Ke | Trigger |
+|---|---|---|
+| tersedia @gudang | proses | Ajukan peminjaman |
+| proses | tersedia @gudang | Asset ditolak admin / peminjaman dibatalkan karyawan |
+| proses @gudang | dipinjam @karyawan | Terima Asset |
+| dipinjam @karyawan | tersedia @gudang | Pengembalian, kondisi normal |
+| dipinjam @karyawan | rusak @gudang | Pengembalian, kondisi rusak |</p>
+<hr />
+<div class="group-divider" id="g16"><span>Database</span></div><h2 id="s16"><span class="sec-no">16</span>Struktur Database</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Table</th>
+<th>Type</th>
+<th>Fungsi</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>asset_trx_peminjaman_karyawan</code></td>
+<td>Transaction Header</td>
+<td>Peminjaman &amp; pengembalian (<code>jenis_status</code>)</td>
+</tr>
+<tr>
+<td><code>asset_trx_peminjaman_karyawan_item</code></td>
+<td>Transaction Detail</td>
+<td>Asset per transaksi + keputusan/kondisi</td>
+</tr>
+<tr>
+<td><code>asset_data</code></td>
+<td>Master</td>
+<td>Status &amp; pemegang asset</td>
+</tr>
+<tr>
+<td><code>asset_kategori_m</code></td>
+<td>Master</td>
+<td>Nama kategori (snapshot)</td>
+</tr>
+<tr>
+<td><code>data_karyawan</code>, <code>master_cabang</code>, <code>master_departemen</code></td>
+<td>Master HR</td>
+<td>Karyawan aktif, cabang, divisi</td>
+</tr>
+<tr>
+<td><code>asset_admin</code></td>
+<td>Master akses</td>
+<td>Admin asset</td>
+</tr>
+<tr>
+<td><code>master_company</code></td>
+<td>Master</td>
+<td>Lock transaksi</td>
+</tr>
+<tr>
+<td><code>asset_log</code></td>
+<td>Log</td>
+<td><code>peminjaman_karyawan</code>, <code>pengembalian_karyawan</code></td>
+</tr>
+<tr>
+<td><code>asset_trx_offboarding_relasi</code></td>
+<td>Relasi</td>
+<td>Menandai pengembalian yang dibuat offboarding</td>
+</tr>
+<tr>
+<td><code>notif_data</code>, <code>users</code></td>
+<td>Notifikasi</td>
+<td>Inbox &amp; token FCM</td>
+</tr>
+</tbody>
+</table></div>
+<aside class="callout callout-warn">
+<p>⚠️ Belum ditemukan: migration <code>CREATE TABLE</code> untuk tabel peminjaman; struktur mengacu DBML + migrations <code>2026_09_17_000006</code>, <code>2026_09_17_000009</code>.</p>
+</aside>
+<hr />
+<h2 id="s17"><span class="sec-no">17</span>Relasi Database</h2>
+<div class="diagram"><pre class="mermaid">erDiagram
+    ASSET_TRX_PEMINJAMAN_KARYAWAN ||--o{ ASSET_TRX_PEMINJAMAN_KARYAWAN_ITEM : &quot;id_asset_trx_peminjaman&quot;
+    ASSET_TRX_PEMINJAMAN_KARYAWAN |o--o{ ASSET_TRX_PEMINJAMAN_KARYAWAN : &quot;id_peminjaman_asal (pengembalian)&quot;
+    ASSET_DATA ||--o{ ASSET_TRX_PEMINJAMAN_KARYAWAN_ITEM : &quot;id_asset_data&quot;
+    DATA_KARYAWAN ||--o{ ASSET_TRX_PEMINJAMAN_KARYAWAN : &quot;id_karyawan (logis)&quot;
+    ASSET_DATA ||--o{ ASSET_LOG : &quot;id_asset_data&quot;
+    ASSET_TRX_PEMINJAMAN_KARYAWAN ||--o{ ASSET_LOG : &quot;id_transaksi (logis)&quot;
+    ASSET_TRX_PEMINJAMAN_KARYAWAN ||--o| ASSET_TRX_OFFBOARDING_RELASI : &quot;id_tabel (logis)&quot;
+
+    ASSET_TRX_PEMINJAMAN_KARYAWAN {
+        varchar id_asset_trx_peminjaman_karyawan PK
+        varchar no_trx
+        date tgl_peminjaman
+        date tgl_dikembalikan
+        varchar keperluan
+        varchar id_karyawan
+        enum jenis_status
+        varchar id_peminjaman_asal FK
+        enum status
+        varchar id_company
+    }
+    ASSET_TRX_PEMINJAMAN_KARYAWAN_ITEM {
+        varchar id_asset_trx_peminjaman_item PK
+        varchar id_asset_trx_peminjaman FK
+        varchar id_asset_data FK
+        enum status_item
+        varchar ket_tolak
+    }
+    ASSET_DATA {
+        varchar id_asset_data PK
+        enum status_asset
+        enum pemegang_asset
+        varchar id_pemegang_asset
+    }
+    ASSET_LOG {
+        varchar id_asset_log PK
+        varchar id_asset_data FK
+        enum jenis_log
+        varchar id_transaksi
+    }
+</pre></div>
+<p>Semua JOIN mencocokkan <code>id_company</code>. <code>id_peminjaman_asal</code> memiliki <code>ref</code> di DBML (self-reference).</p>
+<hr />
+<h2 id="s18"><span class="sec-no">18</span>Data Dictionary</h2>
+<h3>18.1 asset_trx_peminjaman_karyawan</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th style="text-align: center;">Null</th>
+<th>Default</th>
+<th>Key</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>id_asset_trx_peminjaman_karyawan</td>
+<td>varchar(50)</td>
+<td style="text-align: center;">No</td>
+<td>–</td>
+<td>PK</td>
+<td><code>id_company + YYYYMM + 3 digit</code></td>
+</tr>
+<tr>
+<td>no_trx</td>
+<td>varchar(50)</td>
+<td style="text-align: center;">No</td>
+<td>''</td>
+<td>–</td>
+<td><code>KRY05-YYYYMMNNN</code> (tidak unique)</td>
+</tr>
+<tr>
+<td>tgl_peminjaman</td>
+<td>date</td>
+<td style="text-align: center;">No</td>
+<td>CURRENT_DATE</td>
+<td>–</td>
+<td>Tanggal pinjam (API: <code>tgl_pinjam</code>)</td>
+</tr>
+<tr>
+<td>tgl_dikembalikan</td>
+<td>date</td>
+<td style="text-align: center;">No</td>
+<td>CURRENT_DATE</td>
+<td>–</td>
+<td>Tanggal wajib kembali (API: <code>tgl_kembali</code>)</td>
+</tr>
+<tr>
+<td>keperluan</td>
+<td>varchar(255)</td>
+<td style="text-align: center;">No</td>
+<td>''</td>
+<td>–</td>
+<td><code>kantor</code>/<code>dinas</code>/<code>pelatihan</code>/<code>lainnya</code></td>
+</tr>
+<tr>
+<td>tujuan_peminjaman</td>
+<td>varchar(255)</td>
+<td style="text-align: center;">No</td>
+<td>''</td>
+<td>–</td>
+<td>Teks tujuan</td>
+</tr>
+<tr>
+<td>tgl_serah_terima</td>
+<td>date</td>
+<td style="text-align: center;">No</td>
+<td>0000-00-00</td>
+<td>–</td>
+<td>Jadwal serah terima (admin)</td>
+</tr>
+<tr>
+<td>jam_serah_terima</td>
+<td>time</td>
+<td style="text-align: center;">No</td>
+<td>00:00:00</td>
+<td>–</td>
+<td>Jam serah terima</td>
+</tr>
+<tr>
+<td>keterangan_serah_terima</td>
+<td>varchar(255)</td>
+<td style="text-align: center;">–</td>
+<td>''</td>
+<td>–</td>
+<td>Catatan admin</td>
+</tr>
+<tr>
+<td>ket_tolak</td>
+<td>varchar(255)</td>
+<td style="text-align: center;">No</td>
+<td>''</td>
+<td>–</td>
+<td>"Seluruh asset peminjaman ditolak." / "Dibatalkan oleh karyawan."</td>
+</tr>
+<tr>
+<td>id_karyawan, nik_karyawan, nama_karyawan</td>
+<td>varchar</td>
+<td style="text-align: center;">–</td>
+<td>''</td>
+<td>IDX</td>
+<td>Peminjam (snapshot)</td>
+</tr>
+<tr>
+<td>jenis_status</td>
+<td>enum(peminjaman, pengembalian)</td>
+<td style="text-align: center;">No</td>
+<td>peminjaman</td>
+<td>IDX</td>
+<td>Jenis baris</td>
+</tr>
+<tr>
+<td>id_peminjaman_asal</td>
+<td>varchar(50)</td>
+<td style="text-align: center;">Yes</td>
+<td>NULL</td>
+<td>FK</td>
+<td>Wajib untuk pengembalian</td>
+</tr>
+<tr>
+<td>status</td>
+<td>enum(pengajuan, dikonfirmasi, ditolak, aktif, selesai)</td>
+<td style="text-align: center;">No</td>
+<td>pengajuan</td>
+<td>IDX</td>
+<td>API: <code>status_approval</code></td>
+</tr>
+<tr>
+<td>user_approval / tgl_approval</td>
+<td>varchar / timestamp</td>
+<td style="text-align: center;">–</td>
+<td>'' / NULL</td>
+<td>–</td>
+<td>Admin pemutus / pemeriksa pengembalian</td>
+</tr>
+<tr>
+<td>id_company</td>
+<td>varchar(50)</td>
+<td style="text-align: center;">No</td>
+<td>''</td>
+<td>IDX</td>
+<td>Company</td>
+</tr>
+<tr>
+<td>tgl_input, user_input</td>
+<td>–</td>
+<td style="text-align: center;">–</td>
+<td>–</td>
+<td>IDX</td>
+<td>Pembuat (API: <code>tgl_pengajuan</code>)</td>
+</tr>
+<tr>
+<td>tgl_update, user_update</td>
+<td>–</td>
+<td style="text-align: center;">Yes</td>
+<td>NULL</td>
+<td>–</td>
+<td>Perubahan terakhir; dipakai sebagai <strong>tanggal diterima</strong> saat <code>aktif</code></td>
+</tr>
+</tbody>
+</table></div>
+<h3>18.2 asset_trx_peminjaman_karyawan_item</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th style="text-align: center;">Null</th>
+<th>Default</th>
+<th>Key</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>id_asset_trx_peminjaman_item</td>
+<td>varchar(50)</td>
+<td style="text-align: center;">No</td>
+<td>–</td>
+<td>PK</td>
+<td><code>id_company + YYYYMM + 3 digit</code></td>
+</tr>
+<tr>
+<td>id_asset_trx_peminjaman</td>
+<td>varchar(50)</td>
+<td style="text-align: center;">–</td>
+<td>–</td>
+<td>FK, IDX</td>
+<td>→ header</td>
+</tr>
+<tr>
+<td>id_asset_data</td>
+<td>varchar(50)</td>
+<td style="text-align: center;">–</td>
+<td>–</td>
+<td>FK, IDX</td>
+<td>→ asset_data</td>
+</tr>
+<tr>
+<td>nama_asset, deskripsi_asset, kategori_asset</td>
+<td>varchar(255)</td>
+<td style="text-align: center;">–</td>
+<td>''</td>
+<td>–</td>
+<td>Snapshot</td>
+</tr>
+<tr>
+<td>status_item</td>
+<td>enum(disetujui, ditolak)</td>
+<td style="text-align: center;">Yes</td>
+<td>NULL</td>
+<td>IDX</td>
+<td>Keputusan (peminjaman) / kondisi (pengembalian)</td>
+</tr>
+<tr>
+<td>ket_tolak</td>
+<td>varchar(255)</td>
+<td style="text-align: center;">No</td>
+<td>''</td>
+<td>–</td>
+<td>Alasan tolak / keterangan kerusakan</td>
+</tr>
+<tr>
+<td>id_asset_lokasi_m_tujuan</td>
+<td>varchar(50)</td>
+<td style="text-align: center;">No</td>
+<td>''</td>
+<td>–</td>
+<td>Lokasi gudang tujuan asset (pengembalian), dipilih admin (v1.1; migration <code>2026_10_05_000003</code>, SQL <code>sql-lokasi-retur-pengembalian.sql</code>)</td>
+</tr>
+<tr>
+<td>id_company, tgl_input, user_input</td>
+<td>–</td>
+<td style="text-align: center;">–</td>
+<td>–</td>
+<td>IDX</td>
+<td>–</td>
+</tr>
+</tbody>
+</table></div>
+<h3>18.3 asset_data (field yang dipakai)</h3>
+<p><code>status_asset</code> (tersedia → proses → dipinjam → tersedia/rusak), <code>pemegang_asset</code> (gudang ↔ karyawan), <code>id_pemegang_asset</code>, <code>id_asset_lokasi_m</code> (lokasi gudang; dikosongkan saat dipinjam, diisi saat kembali), <code>ket_rusak</code> (diisi saat kembali rusak), <code>kondisi_awal</code> (disalin ke log), <code>nama_asset</code>, <code>kode_asset</code>, <code>merek</code>, <code>deskripsi</code>, <code>tgl_update</code>, <code>user_update</code>.</p>
+<h3>18.4 asset_log</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Event</th>
+<th>jenis_log</th>
+<th>kondisi_awal → kondisi_akhir</th>
+<th>posisi_awal → akhir</th>
+<th>pemegang</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Terima Asset</td>
+<td><code>peminjaman_karyawan</code></td>
+<td>kondisi_awal → kondisi_awal</td>
+<td>gudang → karyawan</td>
+<td>karyawan (id, nama)</td>
+</tr>
+<tr>
+<td>Pengembalian</td>
+<td><code>pengembalian_karyawan</code></td>
+<td>kondisi_awal → normal/rusak</td>
+<td>karyawan → gudang</td>
+<td>gudang (kosong)</td>
+</tr>
+</tbody>
+</table></div>
+<hr />
+<h2 id="s19"><span class="sec-no">19</span>Database Index</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Index</th>
+<th>Table</th>
+<th>Columns</th>
+<th>Tujuan</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>atpk_admin_list_idx</code></td>
+<td>header</td>
+<td>(id_company, jenis_status, status, tgl_input, id_asset_trx_peminjaman_karyawan)</td>
+<td>List admin per jenis &amp; tab</td>
+</tr>
+<tr>
+<td><code>atpk_employee_list_idx</code></td>
+<td>header</td>
+<td>(id_company, id_karyawan, jenis_status, status, tgl_input, id_asset_trx_peminjaman_karyawan)</td>
+<td>List karyawan</td>
+</tr>
+<tr>
+<td><code>atpki_loan_status_idx</code></td>
+<td>item</td>
+<td>(id_asset_trx_peminjaman, id_company, status_item, id_asset_data)</td>
+<td>Hitung item, cek asset per header</td>
+</tr>
+</tbody>
+</table></div>
+<p>Dibuat migration <code>2026_09_17_000006</code>, dibuat ulang <code>2026_09_17_000009</code>. Pencarian <code>hasActivePeminjamanAsset</code>/<code>hasActivePengembalianAsset</code> berdasarkan <code>atpki.id_asset_data</code> tidak diawali kolom index (⚠️ belum diukur).</p>
+<hr />
+<div class="group-divider" id="g20"><span>Backend & API</span></div><h2 id="s20"><span class="sec-no">20</span>Backend Architecture</h2>
+<div class="code"><span class="code-lang">Alur</span><pre><code class="language-text">RouteAsset.php (prefix /asset, jwt.api + jwt.ctx)
+   ↓
+AssetAdminPeminjaman_c + AssetAdminPengembalian_c (admin) / AssetKaryawanPeminjaman_c (karyawan; terima &amp; batalkan lewat prosesSerahTerimaPeminjaman)
+   ↓ validateRequest + accessError
+AssetPeminjamanKaryawan_m ← Asset_m (lock, sequence, getLockedAssets, findActiveKaryawan, findAssetAdmin, hasActiveOnboardingAsset)
+   ↓                      ← AssetOffboardingKaryawan_m::hasActiveOffboardingAsset
+DB::transaction (retry 3)
+   ↓
+ApiResponse + AssetNotification (setelah commit)
+</code></pre></div>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Layer</th>
+<th>File/Class</th>
+<th>Function</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Route</td>
+<td><code>RouteAsset.php</code></td>
+<td>15 route peminjaman/pengembalian</td>
+</tr>
+<tr>
+<td>Controller</td>
+<td><code>AssetAdminPeminjaman_c</code> (peminjaman), <code>AssetAdminPengembalian_c</code> (pengembalian)</td>
+<td>getPeminjamanKaryawan, getDetailPeminjamanKaryawan, konfirmasiPeminjamanKaryawan, getPengembalianKaryawan, getDetailPengembalianKaryawan, konfirmasiPengembalianKaryawan</td>
+</tr>
+<tr>
+<td>Controller</td>
+<td><code>AssetKaryawanPeminjaman_c</code></td>
+<td>getPeminjamanOptions, getPeminjamanSaya, storePeminjamanSaya, getDetailPeminjamanSaya, terimaPeminjamanSaya, batalkanPeminjamanSaya, ajukanPengembalianSaya, getPengembalianSaya, getDetailPengembalianSaya</td>
+</tr>
+<tr>
+<td>Model</td>
+<td><code>AssetPeminjamanKaryawan_m</code></td>
+<td>getOptions, getPeminjaman/Page, getPengembalian(Admin), getDetail(Admin), getDetailPengembalian(Admin), store, konfirmasiAdmin, terimaKaryawan, batalkanKaryawan, ajukanPengembalianKaryawan, konfirmasiPengembalianAdmin (lokasi gudang per item via <code>resolveItemLocations</code> di <code>Asset_m</code>), getPendingForEmployee, getPendingForAdmin, countPendingForAdmin, getJatuhTempo, countJatuhTempo</td>
+</tr>
+<tr>
+<td>Enum</td>
+<td><code>PeminjamanStatus</code></td>
+<td>pengajuan/dikonfirmasi/ditolak/aktif/selesai (dipakai lewat konstanta model)</td>
+</tr>
+<tr>
+<td>Support</td>
+<td><code>AssetNotification</code></td>
+<td>Event <code>peminjaman.*</code>, <code>pengembalian.*</code></td>
+</tr>
+</tbody>
+</table></div>
+<hr />
+<h2 id="s21"><span class="sec-no">21</span>Backend Business Logic</h2>
+<h3>21.1 Ajukan — <code>store</code></h3>
+<p>Lock → karyawan aktif → <code>getLockedAssets</code> (tersedia + gudang) → tidak aktif di onboarding/peminjaman → tgl_kembali ≥ tgl_pinjam → ID + <code>KRY05-…</code> → INSERT header (<code>pengajuan</code>, jadwal kosong) → INSERT item (<code>status_item</code> NULL) → UPDATE asset <code class="chip chip-wait">proses</code> → notif <code>peminjaman.diajukan</code>. Response 201.</p>
+<h3>21.2 Konfirmasi admin — <code>konfirmasiAdmin</code></h3>
+<p>Lock → admin → header peminjaman FOR UPDATE → bukan milik offboarding → status <code>pengajuan</code> → semua item diputuskan (tolak wajib alasan) → UPDATE item → bila ada disetujui: jadwal wajib, format valid, di dalam periode pinjam → UPDATE header (<code class="chip chip-done">dikonfirmasi</code>/<code class="chip chip-bad">ditolak</code>, jadwal atau nol, <code>ket_tolak</code>, <code>user_approval</code>, <code>tgl_approval</code>) → asset ditolak → <code class="chip chip-neutral">tersedia</code> @gudang → notif <code>peminjaman.disetujui</code>/<code class="chip chip-bad">ditolak</code>. Response 200 (+<code>jumlah_disetujui</code>, <code>jumlah_ditolak</code>).</p>
+<h3>21.3 Terima — <code>terimaKaryawan</code></h3>
+<p>Lock → header milik karyawan FOR UPDATE → status <code class="chip chip-done">dikonfirmasi</code> → karyawan aktif → item disetujui → asset harus <code class="chip chip-wait">proses</code> @gudang → UPDATE asset <code>dipinjam</code> @karyawan (<code>id_asset_lokasi_m = NULL</code>) → header <code>aktif</code> → INSERT <code>asset_log peminjaman_karyawan</code> → notif <code>peminjaman.diterima</code>.</p>
+<h3>21.4 Batalkan — <code>batalkanKaryawan</code></h3>
+<p>Lock → header milik karyawan → status <code class="chip chip-done">dikonfirmasi</code> → karyawan aktif → asset disetujui → <code class="chip chip-neutral">tersedia</code> @gudang → header <code class="chip chip-bad">ditolak</code>, <code>ket_tolak = "Dibatalkan oleh karyawan."</code> → notif <code>peminjaman.dibatalkan</code>.</p>
+<h3>21.5 Ajukan pengembalian — <code>ajukanPengembalianKaryawan</code></h3>
+<p>Lock → peminjaman milik karyawan <code>aktif</code> → item disetujui → semua asset masih <code>dipinjam</code> oleh karyawan → tidak ada pengembalian <code>pengajuan</code>/<code class="chip chip-done">dikonfirmasi</code> → tidak di offboarding → INSERT header <code>jenis_status = pengembalian</code>, <code>id_peminjaman_asal</code>, salinan periode/keperluan, <code>pengajuan</code> → INSERT item (salinan item disetujui, <code>status_item</code> NULL) → notif <code>pengembalian.diajukan</code>. Response 201.</p>
+<h3>21.6 Konfirmasi pengembalian — <code>konfirmasiPengembalianAdmin</code></h3>
+<p>Lock → admin → header pengembalian <code>pengajuan</code> → peminjaman asal ada &amp; <code>aktif</code> → semua item diisi kondisi + lokasi gudang (<code>resolveItemLocations</code>) → asset masih <code>dipinjam</code> oleh karyawan → per item: UPDATE item (<code>disetujui</code> = normal / <code class="chip chip-bad">ditolak</code> = rusak + keterangan, <code>id_asset_lokasi_m_tujuan</code>), UPDATE asset (<code class="chip chip-neutral">tersedia</code>/<code class="chip chip-bad">rusak</code> @gudang, <code>id_asset_lokasi_m</code> pilihan admin, <code>ket_rusak</code>), siapkan <code>asset_log pengembalian_karyawan</code> → INSERT log → header pengembalian <code>selesai</code> (+<code>user_approval</code>, <code>tgl_approval</code>) → bila tidak ada asset pinjaman yang masih dipegang: peminjaman asal <code>selesai</code> → notif <code>pengembalian.dikonfirmasi</code>. Response 200 (+<code>jumlah_normal</code>, <code>jumlah_rusak</code>).</p>
+<h3>21.7 Query baca</h3>
+<ul>
+<li><strong>Options</strong>: asset <code class="chip chip-neutral">tersedia</code> @gudang yang tidak ada di peminjaman berjalan (item tidak ditolak) + daftar keperluan.</li>
+<li><strong>List peminjaman</strong>: tidak menampilkan <code>selesai</code>, dan <code>aktif</code> hanya jika asset masih dipegang karyawan.</li>
+<li><strong>List pengembalian</strong>: mengecualikan pengembalian milik offboarding.</li>
+<li><strong>Detail</strong>: menghitung <code>terlambat</code>, <code>tgl_diterima</code> (= <code>tgl_update</code> saat aktif), <code>dapat_dikembalikan</code> (hanya untuk karyawan).</li>
+<li><strong>Jatuh tempo</strong>: aktif, <code>tgl_dikembalikan ≤ besok</code>, asset masih dipegang, belum ada pengembalian berjalan; <code>sisa_hari</code> negatif = terlambat.</li>
+</ul>
+<hr />
+<h2 id="s22"><span class="sec-no">22</span>Dampak terhadap asset_data</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Sebelum</th>
+<th>Sesudah</th>
+<th>Trigger</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>status_asset</td>
+<td>tersedia</td>
+<td>proses</td>
+<td>Ajukan peminjaman</td>
+</tr>
+<tr>
+<td>status_asset / pemegang</td>
+<td>proses</td>
+<td>tersedia / gudang</td>
+<td>Asset ditolak admin; peminjaman dibatalkan</td>
+</tr>
+<tr>
+<td>status_asset</td>
+<td>proses</td>
+<td>dipinjam</td>
+<td>Terima Asset</td>
+</tr>
+<tr>
+<td>pemegang_asset / id_pemegang_asset</td>
+<td>gudang / ''</td>
+<td>karyawan / id_karyawan</td>
+<td>Terima Asset</td>
+</tr>
+<tr>
+<td>id_asset_lokasi_m</td>
+<td>lokasi gudang</td>
+<td>NULL (v1.1)</td>
+<td>Terima Asset</td>
+</tr>
+<tr>
+<td>status_asset</td>
+<td>dipinjam</td>
+<td>tersedia</td>
+<td>Pengembalian normal</td>
+</tr>
+<tr>
+<td>status_asset</td>
+<td>dipinjam</td>
+<td>rusak</td>
+<td>Pengembalian rusak</td>
+</tr>
+<tr>
+<td>pemegang_asset / id_pemegang_asset</td>
+<td>karyawan / id</td>
+<td>gudang / ''</td>
+<td>Pengembalian</td>
+</tr>
+<tr>
+<td>id_asset_lokasi_m</td>
+<td>NULL</td>
+<td>lokasi gudang pilihan admin (v1.1)</td>
+<td>Pengembalian</td>
+</tr>
+<tr>
+<td>ket_rusak</td>
+<td>–</td>
+<td>keterangan (rusak) / '' (normal)</td>
+<td>Pengembalian</td>
+</tr>
+<tr>
+<td>tgl_update / user_update</td>
+<td>–</td>
+<td>now / pelaku</td>
+<td>Setiap perubahan</td>
+</tr>
+</tbody>
+</table></div>
+<hr />
+<h2 id="s23"><span class="sec-no">23</span>API Documentation</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>ID</th>
+<th>Method</th>
+<th>Endpoint</th>
+<th>Function</th>
+<th>Auth</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>API-001</td>
+<td>GET</td>
+<td><code>/asset/peminjaman-karyawan</code></td>
+<td>List peminjaman (admin)</td>
+<td>Admin</td>
+</tr>
+<tr>
+<td>API-002</td>
+<td>GET</td>
+<td><code>/asset/peminjaman-karyawan/{id}</code></td>
+<td>Detail peminjaman (admin)</td>
+<td>Admin</td>
+</tr>
+<tr>
+<td>API-003</td>
+<td>POST</td>
+<td><code>/asset/peminjaman-karyawan/{id}/konfirmasi</code></td>
+<td>Setujui/tolak per asset + jadwal</td>
+<td>Admin</td>
+</tr>
+<tr>
+<td>API-004</td>
+<td>GET</td>
+<td><code>/asset/pengembalian-karyawan</code></td>
+<td>List pengembalian (admin)</td>
+<td>Admin</td>
+</tr>
+<tr>
+<td>API-005</td>
+<td>GET</td>
+<td><code>/asset/pengembalian-karyawan/{id}</code></td>
+<td>Detail pengembalian (admin)</td>
+<td>Admin</td>
+</tr>
+<tr>
+<td>API-006</td>
+<td>POST</td>
+<td><code>/asset/pengembalian-karyawan/{id}/konfirmasi</code></td>
+<td>Konfirmasi kondisi + lokasi gudang per asset</td>
+<td>Admin</td>
+</tr>
+<tr>
+<td>API-007</td>
+<td>GET</td>
+<td><code>/asset/karyawan/peminjaman/options</code></td>
+<td>Opsi keperluan &amp; asset</td>
+<td>JWT</td>
+</tr>
+<tr>
+<td>API-008</td>
+<td>GET</td>
+<td><code>/asset/karyawan/peminjaman</code></td>
+<td>List peminjaman saya</td>
+<td>JWT</td>
+</tr>
+<tr>
+<td>API-009</td>
+<td>POST</td>
+<td><code>/asset/karyawan/peminjaman</code></td>
+<td>Ajukan peminjaman</td>
+<td>JWT</td>
+</tr>
+<tr>
+<td>API-010</td>
+<td>GET</td>
+<td><code>/asset/karyawan/peminjaman/{id}</code></td>
+<td>Detail peminjaman saya</td>
+<td>JWT, pemilik</td>
+</tr>
+<tr>
+<td>API-011</td>
+<td>POST</td>
+<td><code>/asset/karyawan/peminjaman/{id}/terima</code></td>
+<td>Terima asset</td>
+<td>JWT, pemilik</td>
+</tr>
+<tr>
+<td>API-012</td>
+<td>POST</td>
+<td><code>/asset/karyawan/peminjaman/{id}/batalkan</code></td>
+<td>Batalkan (setelah dikonfirmasi)</td>
+<td>JWT, pemilik</td>
+</tr>
+<tr>
+<td>API-013</td>
+<td>POST</td>
+<td><code>/asset/karyawan/peminjaman/{id}/pengembalian</code></td>
+<td>Ajukan pengembalian</td>
+<td>JWT, pemilik</td>
+</tr>
+<tr>
+<td>API-014</td>
+<td>GET</td>
+<td><code>/asset/karyawan/pengembalian</code></td>
+<td>List pengembalian saya</td>
+<td>JWT</td>
+</tr>
+<tr>
+<td>API-015</td>
+<td>GET</td>
+<td><code>/asset/karyawan/pengembalian/{id}</code></td>
+<td>Detail pengembalian saya</td>
+<td>JWT, pemilik</td>
+</tr>
+</tbody>
+</table></div>
+<p>Terkait: <code>GET /asset/karyawan/onboarding</code> (Asset Saya: <code>peminjaman[]</code>, <code>jatuh_tempo[]</code>, <code>peminjaman_aktif[]</code>) dan <code>GET /asset/summary</code> (<code>peminjaman_perlu_proses</code>, <code>peminjaman_pending</code>, <code>jatuh_tempo_jumlah</code>, <code>jatuh_tempo</code>).
+Batalkan pengajuan, tolak pengembalian, perpanjangan: ⚠️ Belum ditemukan.</p>
+<hr />
+<h2 id="s24"><span class="sec-no">24</span>Detail Setiap API</h2>
+<p>Header umum: <code>Authorization: Bearer &lt;token&gt;</code>, <code>Content-Type: application/json</code>, <code>Accept</code>, <code>locale</code>, <code>versi-app</code>. Format response <code>{ code, message, data }</code>.</p>
+<h3>API-001 / API-008 — List Peminjaman</h3>
+<div class="code"><span class="code-lang">HTTP</span><pre><code class="language-http">GET /asset/peminjaman-karyawan?tab=pengajuan&amp;limit=20&amp;offset=0          (admin)
+GET /asset/karyawan/peminjaman?tab=aktif&amp;limit=20&amp;offset=0              (karyawan)
+</code></pre></div>
+<p><code>tab</code>: <code>pengajuan</code> | <code class="chip chip-done">dikonfirmasi</code> | <code class="chip chip-bad">ditolak</code> | <code>aktif</code> ("Filter peminjaman asset tidak valid."); <code>limit</code> 1–50; <code>offset</code> ≥ 0. Tanpa parameter → array.</p>
+<div class="code"><span class="code-lang">JSON</span><pre><code class="language-json">{
+  &quot;code&quot;: &quot;SUCCESS&quot;,
+  &quot;message&quot;: &quot;Data peminjaman asset berhasil ditemukan.&quot;,
+  &quot;data&quot;: {
+    &quot;filters&quot;: [
+      {&quot;value&quot;: &quot;pengajuan&quot;, &quot;label&quot;: &quot;Pengajuan&quot;},
+      {&quot;value&quot;: &quot;dikonfirmasi&quot;, &quot;label&quot;: &quot;Dikonfirmasi&quot;},
+      {&quot;value&quot;: &quot;ditolak&quot;, &quot;label&quot;: &quot;Ditolak&quot;},
+      {&quot;value&quot;: &quot;aktif&quot;, &quot;label&quot;: &quot;Aktif&quot;}
+    ],
+    &quot;records&quot;: [
+      {
+        &quot;id&quot;: &quot;CMP001202609007&quot;,
+        &quot;no_trx&quot;: &quot;KRY05-202609007&quot;,
+        &quot;tgl_pengajuan&quot;: &quot;2026-09-26&quot;,
+        &quot;keperluan&quot;: &quot;dinas&quot;,
+        &quot;tujuan_peminjaman&quot;: &quot;Presentasi klien di Surabaya&quot;,
+        &quot;tgl_pinjam&quot;: &quot;2026-09-28&quot;,
+        &quot;tgl_kembali&quot;: &quot;2026-10-02&quot;,
+        &quot;tgl_serah_terima&quot;: &quot;2026-09-28&quot;,
+        &quot;jam_serah_terima&quot;: &quot;08:30:00&quot;,
+        &quot;keterangan_serah_terima&quot;: &quot;Ambil di ruang IT&quot;,
+        &quot;ket_tolak&quot;: &quot;&quot;,
+        &quot;id_karyawan&quot;: &quot;KRY0003&quot;,
+        &quot;nik_karyawan&quot;: &quot;EMP-003&quot;,
+        &quot;nama_karyawan&quot;: &quot;Andi Contoh&quot;,
+        &quot;jenis_status&quot;: &quot;peminjaman&quot;,
+        &quot;id_peminjaman_asal&quot;: &quot;&quot;,
+        &quot;status_approval&quot;: &quot;aktif&quot;,
+        &quot;status_label&quot;: &quot;Aktif&quot;,
+        &quot;tab&quot;: &quot;aktif&quot;,
+        &quot;jumlah_asset&quot;: 1,
+        &quot;tgl_diterima&quot;: &quot;2026-09-28&quot;,
+        &quot;terlambat&quot;: false
+      }
+    ],
+    &quot;pagination&quot;: {&quot;limit&quot;: 20, &quot;offset&quot;: 0, &quot;next_offset&quot;: 1, &quot;has_more&quot;: false}
+  }
+}
+</code></pre></div>
+<h3>API-002 / API-010 — Detail Peminjaman</h3>
+<div class="code"><span class="code-lang">HTTP</span><pre><code class="language-http">GET /asset/peminjaman-karyawan/{id}        (admin)
+GET /asset/karyawan/peminjaman/{id}        (karyawan, hanya miliknya)
+</code></pre></div>
+<p>Field sama dengan record list (tanpa <code>id_karyawan</code>, <code>nik/nama</code> di dalam <code>karyawan</code>) ditambah:</p>
+<div class="code"><span class="code-lang">JSON</span><pre><code class="language-json">{
+  &quot;dapat_dikembalikan&quot;: true,
+  &quot;karyawan&quot;: {&quot;nik&quot;: &quot;EMP-003&quot;, &quot;nama_karyawan&quot;: &quot;Andi Contoh&quot;, &quot;cabang&quot;: &quot;Kantor Pusat&quot;, &quot;divisi&quot;: &quot;Sales&quot;},
+  &quot;assets&quot;: [
+    {
+      &quot;id_item&quot;: &quot;CMP001202609021&quot;,
+      &quot;id_asset_data&quot;: &quot;CMP00120260100009&quot;,
+      &quot;kode_asset&quot;: &quot;PRJ-0002&quot;,
+      &quot;nama_asset&quot;: &quot;Proyektor Mini&quot;,
+      &quot;deskripsi&quot;: &quot;Kabel HDMI, tas&quot;,
+      &quot;kategori_asset&quot;: &quot;Proyektor&quot;,
+      &quot;merek&quot;: &quot;MerekY&quot;,
+      &quot;status_item&quot;: &quot;disetujui&quot;,
+      &quot;ket_tolak&quot;: &quot;&quot;
+    }
+  ]
+}
+</code></pre></div>
+<p><code>dapat_dikembalikan</code> hanya bernilai true pada endpoint karyawan. 404: "Peminjaman asset tidak ditemukan."</p>
+<h3>API-003 — Konfirmasi Peminjaman (Admin)</h3>
+<div class="code"><span class="code-lang">HTTP</span><pre><code class="language-http">POST /asset/peminjaman-karyawan/{id}/konfirmasi
+</code></pre></div>
+<div class="code"><span class="code-lang">JSON</span><pre><code class="language-json">{
+  &quot;items&quot;: [
+    {&quot;id_item&quot;: &quot;CMP001202609021&quot;, &quot;status_item&quot;: &quot;disetujui&quot;},
+    {&quot;id_item&quot;: &quot;CMP001202609022&quot;, &quot;status_item&quot;: &quot;ditolak&quot;, &quot;ket_tolak&quot;: &quot;Sedang dijadwalkan servis&quot;}
+  ],
+  &quot;tgl_serah_terima&quot;: &quot;2026-09-28&quot;,
+  &quot;jam_serah_terima&quot;: &quot;08:30&quot;,
+  &quot;keterangan_serah_terima&quot;: &quot;Ambil di ruang IT&quot;
+}
+</code></pre></div>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Rule</th>
+<th>Message</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>items</td>
+<td>required|array|min:1</td>
+<td>Keputusan asset wajib diisi.</td>
+</tr>
+<tr>
+<td>items.*.id_item</td>
+<td>required|string|max:50|distinct</td>
+<td>Asset yang sama tidak boleh dikirim lebih dari sekali.</td>
+</tr>
+<tr>
+<td>items.*.status_item</td>
+<td>required|in:disetujui,ditolak</td>
+<td>Keputusan setiap asset wajib dipilih. / Keputusan asset harus disetujui atau ditolak.</td>
+</tr>
+<tr>
+<td>items.*.ket_tolak</td>
+<td>nullable|max:255|required_if ditolak</td>
+<td>Alasan penolakan asset wajib diisi.</td>
+</tr>
+<tr>
+<td>tgl_serah_terima</td>
+<td>nullable|date_format:Y-m-d (wajib di model bila ada disetujui)</td>
+<td>Format tanggal serah terima harus YYYY-MM-DD.</td>
+</tr>
+<tr>
+<td>jam_serah_terima</td>
+<td>nullable|date_format:H:i (wajib di model bila ada disetujui)</td>
+<td>Format jam serah terima harus HH:MM.</td>
+</tr>
+<tr>
+<td>keterangan_serah_terima</td>
+<td>nullable|max:255</td>
+<td>–</td>
+</tr>
+</tbody>
+</table></div>
+<p>Database impact:</p>
+<div class="code"><span class="code-lang">Alur</span><pre><code class="language-text">UPDATE asset_trx_peminjaman_karyawan_item (status_item, ket_tolak)
+UPDATE asset_trx_peminjaman_karyawan (status, jadwal, ket_tolak, user_approval, tgl_approval)
+UPDATE asset_data (item ditolak → tersedia @gudang)
+INSERT notif_data
+</code></pre></div>
+<div class="code"><span class="code-lang">JSON</span><pre><code class="language-json">{ &quot;code&quot;: &quot;UPDATED&quot;, &quot;message&quot;: &quot;Peminjaman asset berhasil dikonfirmasi.&quot;,
+  &quot;data&quot;: { &quot;id&quot;: &quot;CMP001202609007&quot;, &quot;no_trx&quot;: &quot;KRY05-202609007&quot;, &quot;status_approval&quot;: &quot;dikonfirmasi&quot;,
+            &quot;status_label&quot;: &quot;Dikonfirmasi&quot;, &quot;tab&quot;: &quot;dikonfirmasi&quot;, &quot;jumlah_disetujui&quot;: 1, &quot;jumlah_ditolak&quot;: 1 } }
+</code></pre></div>
+<p>Semua ditolak: "Peminjaman asset berhasil ditolak.", <code>status_approval: ditolak</code>.
+422: "Peminjaman asset tidak ditemukan.", "Pengembalian ini diproses melalui offboarding.", "Peminjaman asset sudah tidak menunggu konfirmasi.", "Seluruh asset peminjaman wajib dikonfirmasi.", "Tanggal/Jam serah terima wajib diisi.", "Format jadwal serah terima tidak valid.", "Tanggal serah terima harus berada dalam periode peminjaman." 500: "Terjadi kesalahan saat mengonfirmasi peminjaman asset."</p>
+<h3>API-004 / API-014 — List Pengembalian</h3>
+<div class="code"><span class="code-lang">HTTP</span><pre><code class="language-http">GET /asset/pengembalian-karyawan?tab=pengajuan     (admin)
+GET /asset/karyawan/pengembalian?tab=selesai       (karyawan)
+</code></pre></div>
+<p><code>tab</code>: <code>pengajuan</code> (pengajuan/dikonfirmasi) | <code>selesai</code> (ditolak/selesai). Filters: Pengajuan, Selesai. Record sama dengan API-001 dengan <code>jenis_status = pengembalian</code> dan <code>id_peminjaman_asal</code> terisi.</p>
+<h3>API-005 / API-015 — Detail Pengembalian</h3>
+<div class="code"><span class="code-lang">HTTP</span><pre><code class="language-http">GET /asset/pengembalian-karyawan/{id}
+GET /asset/karyawan/pengembalian/{id}
+</code></pre></div>
+<p>Struktur seperti API-002; <code>assets[].status_item</code> bernilai <code class="chip chip-done">normal</code>/<code class="chip chip-bad">rusak</code> (dipetakan dari <code>disetujui</code>/<code class="chip chip-bad">ditolak</code>), <code>ket_tolak</code> = keterangan kerusakan. 404: "Pengembalian asset tidak ditemukan."</p>
+<h3>API-006 — Konfirmasi Pengembalian (Admin)</h3>
+<div class="code"><span class="code-lang">HTTP</span><pre><code class="language-http">POST /asset/pengembalian-karyawan/{id}/konfirmasi
+</code></pre></div>
+<div class="code"><span class="code-lang">JSON</span><pre><code class="language-json">{
+  &quot;items&quot;: [
+    {&quot;id_item&quot;: &quot;CMP001202610003&quot;, &quot;kondisi&quot;: &quot;rusak&quot;, &quot;id_asset_lokasi_m&quot;: &quot;CMP001202610001&quot;, &quot;keterangan_kerusakan&quot;: &quot;Lensa tergores&quot;}
+  ]
+}
+</code></pre></div>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Rule</th>
+<th>Message</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>items</td>
+<td>required|array|min:1</td>
+<td>Kondisi asset wajib diisi.</td>
+</tr>
+<tr>
+<td>items.*.id_item</td>
+<td>required|distinct</td>
+<td>Asset yang sama tidak boleh dikirim lebih dari sekali.</td>
+</tr>
+<tr>
+<td>items.*.kondisi</td>
+<td>required|in:normal,rusak</td>
+<td>Kondisi setiap asset wajib dipilih. / Kondisi asset harus normal atau rusak.</td>
+</tr>
+<tr>
+<td>items.*.keterangan_kerusakan</td>
+<td>nullable|max:255|required_if rusak</td>
+<td>Keterangan kerusakan asset wajib diisi.</td>
+</tr>
+<tr>
+<td>items.*.id_asset_lokasi_m</td>
+<td>required|string|max:50</td>
+<td>Lokasi gudang tujuan wajib dipilih. (v1.1)</td>
+</tr>
+</tbody>
+</table></div>
+<p>Database impact:</p>
+<div class="code"><span class="code-lang">Alur</span><pre><code class="language-text">UPDATE asset_trx_peminjaman_karyawan_item (status_item, ket_tolak, id_asset_lokasi_m_tujuan)
+UPDATE asset_data (tersedia / rusak @gudang, id_asset_lokasi_m, ket_rusak)
+INSERT asset_log (pengembalian_karyawan)
+UPDATE asset_trx_peminjaman_karyawan (pengembalian → selesai; peminjaman asal → selesai)
+INSERT notif_data
+</code></pre></div>
+<div class="code"><span class="code-lang">JSON</span><pre><code class="language-json">{ &quot;code&quot;: &quot;UPDATED&quot;, &quot;message&quot;: &quot;Pengembalian asset berhasil dikonfirmasi.&quot;,
+  &quot;data&quot;: { &quot;id&quot;: &quot;CMP001202610001&quot;, &quot;no_trx&quot;: &quot;KRY05-202610001&quot;, &quot;jenis_status&quot;: &quot;pengembalian&quot;,
+            &quot;id_peminjaman_asal&quot;: &quot;CMP001202609007&quot;, &quot;status_approval&quot;: &quot;selesai&quot;, &quot;status_label&quot;: &quot;Selesai&quot;,
+            &quot;tab&quot;: &quot;selesai&quot;, &quot;jumlah_normal&quot;: 0, &quot;jumlah_rusak&quot;: 1 } }
+</code></pre></div>
+<p>422: "Pengembalian asset tidak ditemukan.", "Pengembalian asset sudah tidak menunggu konfirmasi.", "Peminjaman asal pengembalian tidak ditemukan.", "Peminjaman asal pengembalian tidak ditemukan atau sudah tidak aktif.", "Seluruh kondisi asset pengembalian wajib diisi.", "Satu atau beberapa asset tidak sedang dipinjam oleh karyawan.", "Lokasi gudang tujuan setiap asset wajib dipilih.", "Lokasi gudang tujuan tidak valid.", "Lokasi gudang tujuan asset tidak sesuai." 500: "Terjadi kesalahan saat mengonfirmasi pengembalian asset."</p>
+<p>Detail pengembalian admin (API-005) mulai v1.1 memuat <code>lokasi_gudang[]</code> (gudang milik company), <code>karyawan.id_cabang</code>, dan <code>assets[].id_asset_lokasi_m_tujuan</code> serta <code>nama_lokasi_tujuan</code> (kosong sampai dikonfirmasi). Pesan umum validasi: "Data konfirmasi pengembalian belum lengkap."</p>
+<h3>API-007 — Opsi Peminjaman</h3>
+<div class="code"><span class="code-lang">HTTP</span><pre><code class="language-http">GET /asset/karyawan/peminjaman/options
+</code></pre></div>
+<div class="code"><span class="code-lang">JSON</span><pre><code class="language-json">{
+  &quot;code&quot;: &quot;SUCCESS&quot;,
+  &quot;message&quot;: &quot;Opsi peminjaman asset berhasil ditemukan.&quot;,
+  &quot;data&quot;: {
+    &quot;keperluan&quot;: [
+      {&quot;value&quot;: &quot;kantor&quot;, &quot;label&quot;: &quot;Kantor&quot;},
+      {&quot;value&quot;: &quot;dinas&quot;, &quot;label&quot;: &quot;Dinas&quot;},
+      {&quot;value&quot;: &quot;pelatihan&quot;, &quot;label&quot;: &quot;Pelatihan&quot;},
+      {&quot;value&quot;: &quot;lainnya&quot;, &quot;label&quot;: &quot;Lainnya&quot;}
+    ],
+    &quot;assets&quot;: [
+      {&quot;id_asset_data&quot;: &quot;CMP00120260100009&quot;, &quot;kode_asset&quot;: &quot;PRJ-0002&quot;, &quot;nama_asset&quot;: &quot;Proyektor Mini&quot;,
+       &quot;kategori_asset&quot;: &quot;Proyektor&quot;, &quot;merek&quot;: &quot;MerekY&quot;, &quot;deskripsi&quot;: &quot;Kabel HDMI, tas&quot;}
+    ]
+  }
+}
+</code></pre></div>
+<h3>API-009 — Ajukan Peminjaman</h3>
+<div class="code"><span class="code-lang">HTTP</span><pre><code class="language-http">POST /asset/karyawan/peminjaman
+</code></pre></div>
+<div class="code"><span class="code-lang">JSON</span><pre><code class="language-json">{
+  &quot;keperluan&quot;: &quot;dinas&quot;,
+  &quot;tujuan_peminjaman&quot;: &quot;Presentasi klien di Surabaya&quot;,
+  &quot;tgl_pinjam&quot;: &quot;2026-09-28&quot;,
+  &quot;tgl_kembali&quot;: &quot;2026-10-02&quot;,
+  &quot;asset_ids&quot;: [&quot;CMP00120260100009&quot;]
+}
+</code></pre></div>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Rule</th>
+<th>Message</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>keperluan</td>
+<td>required|string|max:255</td>
+<td>Keperluan wajib diisi.</td>
+</tr>
+<tr>
+<td>tujuan_peminjaman</td>
+<td>required|string|max:255</td>
+<td>Tujuan peminjaman wajib diisi.</td>
+</tr>
+<tr>
+<td>tgl_pinjam</td>
+<td>required|date_format:Y-m-d|after_or_equal:today</td>
+<td>Tanggal pinjam wajib diisi. / Format … / Tanggal pinjam tidak boleh sebelum hari ini.</td>
+</tr>
+<tr>
+<td>tgl_kembali</td>
+<td>required|date_format:Y-m-d|after_or_equal:tgl_pinjam</td>
+<td>Tanggal kembali wajib diisi. / Format … / Tanggal kembali tidak boleh sebelum tanggal pinjam.</td>
+</tr>
+<tr>
+<td>asset_ids</td>
+<td>required|array|min:1</td>
+<td>Asset yang dipinjam wajib dipilih.</td>
+</tr>
+<tr>
+<td>asset_ids.*</td>
+<td>required|max:50|distinct</td>
+<td>Asset yang sama tidak boleh dipilih lebih dari sekali.</td>
+</tr>
+</tbody>
+</table></div>
+<aside class="callout callout-note">
+<p><code>keperluan</code> tidak divalidasi terhadap daftar opsi di backend (hanya string ≤255).</p>
+</aside>
+<p>Database impact: <code>INSERT header (pengajuan)</code>, <code>INSERT item</code>, <code>UPDATE asset_data (proses)</code>, <code>INSERT notif_data</code>.</p>
+<div class="code"><span class="code-lang">JSON</span><pre><code class="language-json">{ &quot;code&quot;: &quot;CREATED&quot;, &quot;message&quot;: &quot;Pengajuan peminjaman asset berhasil dikirim.&quot;,
+  &quot;data&quot;: { &quot;id&quot;: &quot;CMP001202609007&quot;, &quot;no_trx&quot;: &quot;KRY05-202609007&quot;, &quot;status_approval&quot;: &quot;pengajuan&quot;,
+            &quot;status_label&quot;: &quot;Menunggu Konfirmasi&quot;, &quot;tab&quot;: &quot;pengajuan&quot; } }
+</code></pre></div>
+<p>422: "Karyawan tidak ditemukan atau tidak aktif.", "Satu atau beberapa asset tidak tersedia untuk dipinjam.", "…sedang diproses pada onboarding.", "…sedang diproses pada peminjaman lain.", "Nomor transaksi untuk periode ini sudah mencapai batas." 500: "Terjadi kesalahan saat menyimpan peminjaman asset."</p>
+<h3>API-011 — Terima Asset</h3>
+<div class="code"><span class="code-lang">HTTP</span><pre><code class="language-http">POST /asset/karyawan/peminjaman/{id}/terima
+</code></pre></div>
+<p>Tanpa body. Database impact: <code>UPDATE asset_data (dipinjam @karyawan)</code>, <code>UPDATE header (aktif)</code>, <code>INSERT asset_log (peminjaman_karyawan)</code>, <code>INSERT notif_data</code>.</p>
+<div class="code"><span class="code-lang">JSON</span><pre><code class="language-json">{ &quot;code&quot;: &quot;UPDATED&quot;, &quot;message&quot;: &quot;Asset peminjaman berhasil diterima.&quot;,
+  &quot;data&quot;: { &quot;id&quot;: &quot;CMP001202609007&quot;, &quot;no_trx&quot;: &quot;KRY05-202609007&quot;, &quot;status_approval&quot;: &quot;aktif&quot;,
+            &quot;status_label&quot;: &quot;Aktif&quot;, &quot;tab&quot;: &quot;aktif&quot;, &quot;jumlah_asset&quot;: 1 } }
+</code></pre></div>
+<p>422: "Peminjaman asset tidak ditemukan.", "Peminjaman asset belum dapat diterima.", "Karyawan tidak ditemukan atau tidak aktif.", "Tidak ada asset yang disetujui untuk diterima.", "Satu atau beberapa asset belum siap diserahterimakan." 500: "Terjadi kesalahan saat memproses serah terima asset."</p>
+<h3>API-012 — Batalkan Peminjaman</h3>
+<div class="code"><span class="code-lang">HTTP</span><pre><code class="language-http">POST /asset/karyawan/peminjaman/{id}/batalkan
+</code></pre></div>
+<p>Tanpa body. Database impact: <code>UPDATE asset_data (tersedia @gudang)</code>, <code>UPDATE header (ditolak, ket_tolak)</code>, <code>INSERT notif_data</code>.</p>
+<div class="code"><span class="code-lang">JSON</span><pre><code class="language-json">{ &quot;code&quot;: &quot;UPDATED&quot;, &quot;message&quot;: &quot;Peminjaman asset berhasil dibatalkan.&quot;,
+  &quot;data&quot;: { &quot;id&quot;: &quot;CMP001202609007&quot;, &quot;no_trx&quot;: &quot;KRY05-202609007&quot;, &quot;status_approval&quot;: &quot;ditolak&quot;,
+            &quot;status_label&quot;: &quot;Ditolak&quot;, &quot;tab&quot;: &quot;ditolak&quot; } }
+</code></pre></div>
+<p>422: "Peminjaman asset sudah tidak dapat dibatalkan." (status bukan <code class="chip chip-done">dikonfirmasi</code>).</p>
+<h3>API-013 — Ajukan Pengembalian</h3>
+<div class="code"><span class="code-lang">HTTP</span><pre><code class="language-http">POST /asset/karyawan/peminjaman/{id}/pengembalian
+</code></pre></div>
+<p>Tanpa body (semua asset disetujui ikut dikembalikan). Database impact: <code>INSERT header pengembalian</code>, <code>INSERT item</code>, <code>INSERT notif_data</code>.</p>
+<div class="code"><span class="code-lang">JSON</span><pre><code class="language-json">{ &quot;code&quot;: &quot;CREATED&quot;, &quot;message&quot;: &quot;Pengajuan pengembalian asset berhasil dikirim.&quot;,
+  &quot;data&quot;: { &quot;id&quot;: &quot;CMP001202610001&quot;, &quot;no_trx&quot;: &quot;KRY05-202610001&quot;, &quot;jenis_status&quot;: &quot;pengembalian&quot;,
+            &quot;id_peminjaman_asal&quot;: &quot;CMP001202609007&quot;, &quot;status_approval&quot;: &quot;pengajuan&quot;,
+            &quot;status_label&quot;: &quot;Menunggu Konfirmasi&quot;, &quot;tab&quot;: &quot;pengajuan&quot;, &quot;jumlah_asset&quot;: 1 } }
+</code></pre></div>
+<p>422: "Peminjaman asset tidak ditemukan.", "Hanya peminjaman aktif yang dapat dikembalikan.", "Tidak ada asset aktif yang dapat dikembalikan.", "Satu atau beberapa asset tidak sedang dipinjam oleh karyawan.", "Pengembalian asset sedang menunggu konfirmasi.", "Asset sedang diproses pada offboarding."</p>
+<hr />
+<div class="group-divider" id="g25"><span>Mobile</span></div><h2 id="s25"><span class="sec-no">25</span>Mobile Architecture</h2>
+<div class="code"><span class="code-lang">Alur</span><pre><code class="language-text">Page → Bloc (AssetPeminjamanBloc / AssetPeminjamanAdminBloc) → Api (AssetPeminjamanApi / AssetPeminjamanAdminApi) → ApiClient → Backend
+</code></pre></div>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Layer</th>
+<th>File</th>
+<th>Function</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Api</td>
+<td><code>Repository/Service/assetPeminjamanApi.dart</code></td>
+<td>getPeminjaman, getOptions, store, getDetail, terima, batalkan, getPengembalian, getDetailPengembalian, ajukanPengembalian</td>
+</tr>
+<tr>
+<td>Api</td>
+<td><code>Repository/Service/assetPeminjamanAdminApi.dart</code></td>
+<td>getPeminjaman, getDetail, konfirmasi, getPengembalian, getDetailPengembalian, konfirmasiPengembalian (+ <code>id_asset_lokasi_m</code> per item)</td>
+</tr>
+<tr>
+<td>Model</td>
+<td><code>Repository/Model/Asset/mAssetPeminjaman.dart</code></td>
+<td>AssetPeminjamanAsset, AssetPeminjamanKeperluan, AssetPeminjamanOptions, AssetPeminjamanKaryawan, <code>AssetPeminjamanApproval</code> + <code>parseAssetPeminjamanApproval</code>, AssetPeminjamanRecord, AssetPeminjamanPage, AssetPeminjamanRequest</td>
+</tr>
+<tr>
+<td>Model</td>
+<td><code>Repository/Model/Asset/mAssetPeminjamanAdmin.dart</code></td>
+<td>AssetPeminjamanAdminKeputusan, AssetPeminjamanAdminKonfirmasiRequest, AssetPengembalianAdminKondisi (kini + <code>idLokasi</code>), AssetPengembalianAdminKonfirmasiRequest; model bersama <code>AssetWarehouseLocation</code> (<code>mAssetWarehouseLocation.dart</code>)</td>
+</tr>
+<tr>
+<td>Bloc</td>
+<td><code>Bloc/Asset/AssetPeminjamanBloc.dart</code></td>
+<td>List peminjaman/pengembalian, options, detail, submit, terima, batalkan, ajukan pengembalian</td>
+</tr>
+<tr>
+<td>Bloc</td>
+<td><code>Bloc/Asset/AssetPeminjamanAdminBloc.dart</code></td>
+<td>List, detail, konfirmasi peminjaman &amp; pengembalian</td>
+</tr>
+<tr>
+<td>UI karyawan</td>
+<td><code>UI/Modul/Asset/AssetSaya/Peminjaman/*</code></td>
+<td>HalamanAssetPeminjaman, HalamanTambahAssetPeminjaman, HalamanDetailAssetPeminjaman, AssetPeminjamanPicker, AssetPeminjamanWidgets</td>
+</tr>
+<tr>
+<td>UI admin</td>
+<td><code>UI/Modul/Asset/AssetAdmin/AssetAdminKaryawan/Peminjaman/*</code></td>
+<td>HalamanAssetAdminPeminjaman, HalamanAssetAdminDetailPeminjaman, AssetPeminjamanAdminConfirmationSheet, AssetPeminjamanAdminWidgets</td>
+</tr>
+<tr>
+<td>UI</td>
+<td><code>UI/Modul/Asset/AssetSaya/HalamanAssetSaya.dart</code></td>
+<td>Banner terima, pengingat jatuh tempo, kartu peminjaman aktif</td>
+</tr>
+</tbody>
+</table></div>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Route</th>
+<th>Page</th>
+<th>Event awal</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>/asset_peminjaman</code></td>
+<td>Peminjaman Asset (argumen <code>true</code> = buka mode Pengembalian)</td>
+<td>LoadAssetPeminjamanList / LoadAssetPengembalianList</td>
+</tr>
+<tr>
+<td><code>/asset_tambah_peminjaman</code></td>
+<td>Tambah Peminjaman Asset</td>
+<td>LoadAssetPeminjamanOptions</td>
+</tr>
+<tr>
+<td><code>/asset_detail_peminjaman</code></td>
+<td>Detail Peminjaman Asset</td>
+<td>LoadAssetPeminjamanDetail(id)</td>
+</tr>
+<tr>
+<td><code>/asset_detail_pengembalian</code></td>
+<td>Detail Pengembalian Asset (<code>isPengembalian</code>)</td>
+<td>LoadAssetPengembalianDetail(id)</td>
+</tr>
+<tr>
+<td><code>/asset_admin_peminjaman</code></td>
+<td>Peminjaman Asset (admin)</td>
+<td>LoadAssetPeminjamanAdminList</td>
+</tr>
+<tr>
+<td><code>/asset_admin_detail_peminjaman</code></td>
+<td>Detail Peminjaman (admin)</td>
+<td>LoadAssetPeminjamanAdminDetail(id)</td>
+</tr>
+<tr>
+<td><code>/asset_admin_detail_pengembalian</code></td>
+<td>Detail Pengembalian (admin, <code>isPengembalian</code>)</td>
+<td>LoadAssetPengembalianAdminDetail(id)</td>
+</tr>
+</tbody>
+</table></div>
+<hr />
+<h2 id="s26"><span class="sec-no">26</span>Mobile Screen</h2>
+<h3>26.1 Peminjaman Asset (Karyawan)</h3>
+<p>Switch <strong>Peminjaman</strong> / <strong>Pengembalian</strong>; tab peminjaman: Pengajuan, Dikonfirmasi, Ditolak, Aktif; tab pengembalian: Pengajuan, Selesai. Kartu: nomor, Tanggal Pengajuan / <strong>Tanggal Diterima</strong> (bila aktif), status (Menunggu Konfirmasi, Dikonfirmasi, Ditolak, Aktif, <strong>Terlambat</strong>), Keperluan, Tanggal Pinjam, Tanggal Kembali, "{jumlah} Asset", info jadwal serah terima, peringatan "Sudah lewat tanggal pengembalian. Silakan kembalikan asset sekarang." Tombol <strong>+</strong>.</p>
+<h3>26.2 Tambah Peminjaman Asset</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Field UI</th>
+<th>Widget</th>
+<th style="text-align: center;">Required</th>
+<th>Source</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Pilih Asset → Tambah Asset</td>
+<td>Bottom sheet "Tambah Pinjam Asset" (cari nama/kode/merek)</td>
+<td style="text-align: center;">Ya, min 1</td>
+<td><code>options.assets</code></td>
+</tr>
+<tr>
+<td>Form Peminjaman: Pilih Keperluan</td>
+<td>Bottom sheet</td>
+<td style="text-align: center;">Ya</td>
+<td><code>options.keperluan</code></td>
+</tr>
+<tr>
+<td>Tujuan Peminjaman</td>
+<td>Text field</td>
+<td style="text-align: center;">Ya</td>
+<td>Input</td>
+</tr>
+<tr>
+<td>Tanggal Pinjam – Tanggal Kembali</td>
+<td>Date range picker</td>
+<td style="text-align: center;">Ya, kembali ≥ pinjam</td>
+<td>Input</td>
+</tr>
+<tr>
+<td>Tombol</td>
+<td><strong>Ajukan Peminjaman</strong></td>
+<td style="text-align: center;">–</td>
+<td>–</td>
+</tr>
+</tbody>
+</table></div>
+<h3>26.3 Detail Peminjaman / Pengembalian (Karyawan)</h3>
+<p>Header (Tanggal Pengajuan/Diterima, status, Nomor Pengajuan), Data Karyawan, Detail Peminjaman (Tanggal Pinjam, Tanggal Kembali, Keperluan, Tujuan Peminjaman), Jadwal Serah Terima, daftar asset dengan status <strong>Disetujui Admin</strong>/<strong>Ditolak Admin</strong> (+Alasan Penolakan) atau kondisi <strong>Normal</strong>/<strong>Rusak</strong> (+Keterangan Kerusakan) untuk pengembalian.
+- Status <code class="chip chip-done">dikonfirmasi</code>: panel "Siap untuk meminjam Asset?" + instruksi, tombol <strong>Batalkan</strong> dan <strong>Terima Asset</strong> (dialog konfirmasi).
+- <code>dapat_dikembalikan</code>: tombol <strong>Kembalikan Asset</strong> (dialog "Asset aktif pada peminjaman ini akan diajukan untuk dikembalikan.").</p>
+<p><strong>Alur status</strong>: <code>AssetAlurStepper.peminjaman</code> (Pengajuan → Konfirmasi → Dipinjam → Pengembalian → Selesai; transaksi pengembalian mulai dari langkah Pengembalian; disembunyikan bila ditolak) dan satu kartu timeline per aset (<code>AssetPeminjamanTimelineCards</code>). Transaksi peminjaman: Pengajuan (keperluan, periode) · Konfirmasi (jadwal serah terima; chip <strong>Ditolak</strong> per aset) · Dipinjam (tanggal diterima, batas kembali; chip <strong>Terlambat</strong>) · Pengembalian · Selesai (lokasi gudang). Transaksi pengembalian: Pengembalian (jadwal) · Konfirmasi (kondisi Normal/Rusak; chip <strong>Rusak</strong>) · Selesai (lokasi gudang). Alasan penolakan tetap di kartu aset. File: <code>Shared/Widgets/AssetAlurWidgets.dart</code>, <code>Shared/Widgets/AssetPeminjamanTimeline.dart</code>.</p>
+<h3>26.4 Peminjaman Asset (Admin)</h3>
+<p>Switch Peminjaman/Pengembalian dan tab seperti karyawan; kartu menampilkan karyawan, keperluan, periode, jumlah asset.</p>
+<h3>26.5 Detail Peminjaman (Admin)</h3>
+<p>Data karyawan, detail peminjaman, daftar asset. Status <code>pengajuan</code>: tiap asset tombol <strong>Setujui</strong>/<strong>Tolak</strong> (+Alasan Penolakan) dan tombol bawah <strong>Konfirmasi</strong> → sheet <strong>Konfirmasi Peminjaman Asset</strong> (ringkasan, Jadwal Serah Terima dibatasi periode pinjam, Jam Serah Terima, Catatan Tambahan, <strong>Submit</strong>). Jadwal hanya diminta bila ada asset disetujui.</p>
+<p>Stepper dan kartu timeline sama seperti §26.3; kartu timeline disembunyikan saat form keputusan admin terbuka.</p>
+<h3>26.6 Detail Pengembalian (Admin)</h3>
+<p>Status <code>pengajuan</code>: tiap asset <strong>Normal</strong>/<strong>Rusak</strong> (+Keterangan Kerusakan) dropdown <strong>Lokasi Tujuan Asset</strong> per asset (v1.1; default gudang di cabang karyawan) dan tombol <strong>Konfirmasi</strong> (langsung dikirim, tanpa sheet). Bila belum ada pilihan lokasi: "Pilih lokasi gudang tujuan untuk seluruh asset.". Setelah selesai: kondisi dan lokasi tujuan read-only.</p>
+<p>Stepper dan kartu timeline transaksi pengembalian sama seperti §26.3; kartu timeline disembunyikan saat form kondisi dan lokasi admin terbuka.</p>
+<h3>26.7 Asset Saya</h3>
+<p>Banner per peminjaman <code class="chip chip-done">dikonfirmasi</code> (aksi terima), banner jatuh tempo (label dari <code>sisa_hari</code>), bagian <strong>Peminjaman Asset</strong> berisi kartu peminjaman aktif.</p>
+<hr />
+<h2 id="s27"><span class="sec-no">27</span>Mobile → API</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>UI Field</th>
+<th>Mobile Variable</th>
+<th>JSON Field</th>
+<th>Type</th>
+<th style="text-align: center;">Required</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Pilih Keperluan</td>
+<td><code>_selectedPurpose.value</code></td>
+<td><code>keperluan</code></td>
+<td>string</td>
+<td style="text-align: center;">Ya</td>
+</tr>
+<tr>
+<td>Tujuan Peminjaman</td>
+<td><code>_detailController.text.trim()</code></td>
+<td><code>tujuan_peminjaman</code></td>
+<td>string</td>
+<td style="text-align: center;">Ya</td>
+</tr>
+<tr>
+<td>Tanggal Pinjam</td>
+<td><code>tanggalPeminjamanApi(_borrowDate)</code></td>
+<td><code>tgl_pinjam</code></td>
+<td>Y-m-d</td>
+<td style="text-align: center;">Ya</td>
+</tr>
+<tr>
+<td>Tanggal Kembali</td>
+<td><code>tanggalPeminjamanApi(_returnDate)</code></td>
+<td><code>tgl_kembali</code></td>
+<td>Y-m-d</td>
+<td style="text-align: center;">Ya</td>
+</tr>
+<tr>
+<td>Tambah Asset</td>
+<td><code>_selectedAssets[].idAssetData</code></td>
+<td><code>asset_ids[]</code></td>
+<td>array</td>
+<td style="text-align: center;">Ya</td>
+</tr>
+<tr>
+<td>Setujui / Tolak (admin)</td>
+<td><code>AssetPeminjamanAdminKeputusan.statusItem</code></td>
+<td><code>items[].status_item</code></td>
+<td><code>disetujui</code>/<code class="chip chip-bad">ditolak</code></td>
+<td style="text-align: center;">Ya</td>
+</tr>
+<tr>
+<td>Alasan Penolakan</td>
+<td><code>ketTolak.trim()</code></td>
+<td><code>items[].ket_tolak</code></td>
+<td>string</td>
+<td style="text-align: center;">Bila ditolak</td>
+</tr>
+<tr>
+<td>Jadwal &amp; Jam Serah Terima</td>
+<td>sheet <code>_handoverDate</code>, <code>_handoverTime</code></td>
+<td><code>tgl_serah_terima</code>, <code>jam_serah_terima</code></td>
+<td>Y-m-d, H:i</td>
+<td style="text-align: center;">Bila ada disetujui</td>
+</tr>
+<tr>
+<td>Catatan Tambahan</td>
+<td>sheet</td>
+<td><code>keterangan_serah_terima</code></td>
+<td>string</td>
+<td style="text-align: center;">Tidak</td>
+</tr>
+<tr>
+<td>Normal / Rusak (admin pengembalian)</td>
+<td><code>AssetPengembalianAdminKondisi.kondisi</code></td>
+<td><code>items[].kondisi</code></td>
+<td>string</td>
+<td style="text-align: center;">Ya</td>
+</tr>
+<tr>
+<td>Lokasi Tujuan Asset (admin pengembalian)</td>
+<td><code>AssetPengembalianAdminKondisi.idLokasi</code></td>
+<td><code>items[].id_asset_lokasi_m</code></td>
+<td>string</td>
+<td>Ya (v1.1)</td>
+</tr>
+<tr>
+<td>Keterangan Kerusakan</td>
+<td><code>keteranganKerusakan.trim()</code></td>
+<td><code>items[].keterangan_kerusakan</code></td>
+<td>string</td>
+<td style="text-align: center;">Bila rusak</td>
+</tr>
+<tr>
+<td>Terima / Batalkan / Kembalikan</td>
+<td>–</td>
+<td>(tanpa body)</td>
+<td>–</td>
+<td style="text-align: center;">–</td>
+</tr>
+</tbody>
+</table></div>
+<hr />
+<h2 id="s28"><span class="sec-no">28</span>API → Mobile</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>API JSON</th>
+<th>Mobile Model (<code>AssetPeminjamanRecord</code>)</th>
+<th>UI</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>id</code>, <code>no_trx</code></td>
+<td>id, noTrx</td>
+<td>Navigasi, "Nomor Pengajuan"</td>
+</tr>
+<tr>
+<td><code>tgl_pengajuan</code> / <code>tgl_diterima</code></td>
+<td>tanggalPengajuan / tanggalDiterima</td>
+<td>"Tanggal Pengajuan" / "Tanggal Diterima"</td>
+</tr>
+<tr>
+<td><code>keperluan</code>, <code>tujuan_peminjaman</code></td>
+<td>keperluan, tujuanPeminjaman</td>
+<td>"Keperluan", "Tujuan Peminjaman"</td>
+</tr>
+<tr>
+<td><code>tgl_pinjam</code>, <code>tgl_kembali</code></td>
+<td>tanggalPinjam, tanggalKembali</td>
+<td>"Tanggal Pinjam", "Tanggal Kembali"</td>
+</tr>
+<tr>
+<td><code>tgl_serah_terima</code>, <code>jam_serah_terima</code>, <code>keterangan_serah_terima</code></td>
+<td>idem</td>
+<td>Info "Jadwal serah terima asset pada {tanggal}, jam {jam}."</td>
+</tr>
+<tr>
+<td><code>ket_tolak</code></td>
+<td>ketTolak</td>
+<td>Alasan</td>
+</tr>
+<tr>
+<td><code>status_approval</code> (+<code>jenis_status</code>)</td>
+<td>statusApproval (<code>parseAssetPeminjamanApproval</code>)</td>
+<td>Badge, tombol</td>
+</tr>
+<tr>
+<td><code>status_label</code>, <code>tab</code></td>
+<td>statusLabel, tab</td>
+<td>Badge</td>
+</tr>
+<tr>
+<td><code>terlambat</code></td>
+<td>terlambat</td>
+<td>"Terlambat" + peringatan</td>
+</tr>
+<tr>
+<td><code>dapat_dikembalikan</code></td>
+<td>dapatDikembalikan</td>
+<td>Tombol Kembalikan Asset</td>
+</tr>
+<tr>
+<td><code>jenis_status</code>, <code>id_peminjaman_asal</code></td>
+<td>jenisStatus, idPeminjamanAsal</td>
+<td>Mode pengembalian</td>
+</tr>
+<tr>
+<td><code>karyawan.*</code></td>
+<td>karyawan</td>
+<td>Data Karyawan</td>
+</tr>
+<tr>
+<td><code>assets[]</code></td>
+<td>assets (<code>AssetPeminjamanAsset</code>)</td>
+<td>Daftar asset, keputusan/kondisi</td>
+</tr>
+<tr>
+<td><code>lokasi_gudang[]</code>, <code>karyawan.id_cabang</code>, <code>assets[].nama_lokasi_tujuan</code></td>
+<td>AssetPeminjamanRecord.lokasiGudang, AssetPeminjamanKaryawan.idCabang, AssetPeminjamanAsset</td>
+<td>Dropdown Lokasi Tujuan Asset; lokasi tujuan di kartu</td>
+</tr>
+<tr>
+<td><code>filters</code>, <code>records</code>, <code>pagination</code></td>
+<td>AssetPeminjamanPage</td>
+<td>Tab, list, infinite scroll</td>
+</tr>
+</tbody>
+</table></div>
+<hr />
+<h2 id="s29"><span class="sec-no">29</span>Mapping Mobile → API → Database</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>UI</th>
+<th>Mobile Variable</th>
+<th>JSON</th>
+<th>Backend</th>
+<th>Table</th>
+<th>Column</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Pilih Keperluan</td>
+<td><code>keperluan</code></td>
+<td><code>keperluan</code></td>
+<td>trim</td>
+<td>header</td>
+<td>keperluan</td>
+</tr>
+<tr>
+<td>Tujuan Peminjaman</td>
+<td><code>tujuanPeminjaman</code></td>
+<td><code>tujuan_peminjaman</code></td>
+<td>trim</td>
+<td>header</td>
+<td>tujuan_peminjaman</td>
+</tr>
+<tr>
+<td>Tanggal Pinjam</td>
+<td><code>tanggalPinjam</code></td>
+<td><code>tgl_pinjam</code></td>
+<td><code>$tanggalPinjam</code></td>
+<td>header</td>
+<td>tgl_peminjaman</td>
+</tr>
+<tr>
+<td>Tanggal Kembali</td>
+<td><code>tanggalKembali</code></td>
+<td><code>tgl_kembali</code></td>
+<td><code>$tanggalKembali</code></td>
+<td>header</td>
+<td>tgl_dikembalikan</td>
+</tr>
+<tr>
+<td>Tambah Asset</td>
+<td><code>assetIds</code></td>
+<td><code>asset_ids[]</code></td>
+<td><code>$assets</code></td>
+<td>item / asset_data</td>
+<td>id_asset_data (+snapshot) / status_asset = proses</td>
+</tr>
+<tr>
+<td>(JWT karyawan)</td>
+<td>–</td>
+<td>Authorization</td>
+<td><code>$karyawan</code></td>
+<td>header</td>
+<td>id_karyawan, nik_karyawan, nama_karyawan, user_input</td>
+</tr>
+<tr>
+<td>Setujui/Tolak</td>
+<td><code>statusItem</code></td>
+<td><code>items[].status_item</code></td>
+<td><code>$statusItem</code></td>
+<td>item</td>
+<td>status_item</td>
+</tr>
+<tr>
+<td>Alasan Penolakan</td>
+<td><code>ketTolak</code></td>
+<td><code>items[].ket_tolak</code></td>
+<td><code>$ketTolak</code></td>
+<td>item</td>
+<td>ket_tolak</td>
+</tr>
+<tr>
+<td>Jadwal</td>
+<td><code>tanggalSerahTerima</code>, <code>jamSerahTerima</code></td>
+<td><code>tgl_serah_terima</code>, <code>jam_serah_terima</code></td>
+<td>Carbon</td>
+<td>header</td>
+<td>tgl_serah_terima, jam_serah_terima (H:i:s)</td>
+</tr>
+<tr>
+<td>Catatan Tambahan</td>
+<td><code>keteranganSerahTerima</code></td>
+<td><code>keterangan_serah_terima</code></td>
+<td>trim</td>
+<td>header</td>
+<td>keterangan_serah_terima</td>
+</tr>
+<tr>
+<td>Terima Asset</td>
+<td>–</td>
+<td>–</td>
+<td><code>terimaKaryawan</code></td>
+<td>asset_data / header / asset_log</td>
+<td>dipinjam, pemegang karyawan / aktif / peminjaman_karyawan</td>
+</tr>
+<tr>
+<td>Kembalikan Asset</td>
+<td>–</td>
+<td>–</td>
+<td><code>ajukanPengembalianKaryawan</code></td>
+<td>header (baru)</td>
+<td>jenis_status = pengembalian, id_peminjaman_asal</td>
+</tr>
+<tr>
+<td>Normal/Rusak</td>
+<td><code>kondisi</code></td>
+<td><code>items[].kondisi</code></td>
+<td><code>$condition</code></td>
+<td>item / asset_data</td>
+<td>status_item (disetujui/ditolak) / status_asset (tersedia/rusak)</td>
+</tr>
+<tr>
+<td>Keterangan Kerusakan</td>
+<td><code>keteranganKerusakan</code></td>
+<td><code>items[].keterangan_kerusakan</code></td>
+<td><code>$damageNote</code></td>
+<td>item / asset_data</td>
+<td>ket_tolak / ket_rusak</td>
+</tr>
+<tr>
+<td>Lokasi Tujuan Asset</td>
+<td><code>idLokasi</code></td>
+<td><code>items[].id_asset_lokasi_m</code></td>
+<td><code>resolveItemLocations</code></td>
+<td>item / asset_data</td>
+<td>id_asset_lokasi_m_tujuan / id_asset_lokasi_m</td>
+</tr>
+</tbody>
+</table></div>
+<hr />
+<h2 id="s30"><span class="sec-no">30</span>Mapping Database → API → Mobile</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Table</th>
+<th>Column</th>
+<th>Backend</th>
+<th>API JSON</th>
+<th>Mobile</th>
+<th>UI</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>header</td>
+<td>tgl_input</td>
+<td>dateOnly</td>
+<td><code>tgl_pengajuan</code></td>
+<td>tanggalPengajuan</td>
+<td>Tanggal Pengajuan</td>
+</tr>
+<tr>
+<td>header</td>
+<td>tgl_update (saat aktif)</td>
+<td>dateOnly</td>
+<td><code>tgl_diterima</code></td>
+<td>tanggalDiterima</td>
+<td>Tanggal Diterima</td>
+</tr>
+<tr>
+<td>header</td>
+<td>tgl_peminjaman, tgl_dikembalikan</td>
+<td>–</td>
+<td><code>tgl_pinjam</code>, <code>tgl_kembali</code></td>
+<td>tanggalPinjam, tanggalKembali</td>
+<td>Periode</td>
+</tr>
+<tr>
+<td>header</td>
+<td>tgl_dikembalikan + status</td>
+<td>isTerlambat</td>
+<td><code>terlambat</code></td>
+<td>terlambat</td>
+<td>Terlambat</td>
+</tr>
+<tr>
+<td>header</td>
+<td>status + jenis_status</td>
+<td>peminjamanStatusMetadata</td>
+<td><code>status_approval</code>, <code>status_label</code>, <code>tab</code></td>
+<td>statusApproval, statusLabel, tab</td>
+<td>Badge, tab</td>
+</tr>
+<tr>
+<td>header + item + asset_data</td>
+<td>–</td>
+<td>getDetail</td>
+<td><code>dapat_dikembalikan</code></td>
+<td>dapatDikembalikan</td>
+<td>Tombol Kembalikan</td>
+</tr>
+<tr>
+<td>item</td>
+<td>COUNT</td>
+<td>peminjamanQuery</td>
+<td><code>jumlah_asset</code></td>
+<td>jumlahAsset</td>
+<td>"{jumlah} Asset"</td>
+</tr>
+<tr>
+<td>item</td>
+<td>status_item (pengembalian dipetakan)</td>
+<td>getDetail</td>
+<td><code>assets[].status_item</code></td>
+<td>status</td>
+<td>Disetujui/Ditolak Admin, Normal/Rusak</td>
+</tr>
+<tr>
+<td>item</td>
+<td>ket_tolak</td>
+<td>getDetail</td>
+<td><code>assets[].ket_tolak</code></td>
+<td>ketTolak</td>
+<td>Alasan / Keterangan Kerusakan</td>
+</tr>
+<tr>
+<td>asset_data</td>
+<td>kode_asset, merek</td>
+<td>LEFT JOIN</td>
+<td><code>kode_asset</code>, <code>merek</code></td>
+<td>–</td>
+<td>Kartu asset</td>
+</tr>
+<tr>
+<td>header (jatuh tempo)</td>
+<td>tgl_dikembalikan</td>
+<td>getJatuhTempo</td>
+<td><code>sisa_hari</code></td>
+<td>sisaHari</td>
+<td>Banner jatuh tempo</td>
+</tr>
+</tbody>
+</table></div>
+<hr />
+<div class="group-divider" id="g31"><span>Validasi, Error & Keamanan</span></div><h2 id="s31"><span class="sec-no">31</span>Validation</h2>
+<h3>31.1 Mobile</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Lokasi</th>
+<th>Aturan</th>
+<th>Pesan</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Form</td>
+<td>Min 1 asset</td>
+<td>"Tambahkan minimal satu asset."</td>
+</tr>
+<tr>
+<td>Form</td>
+<td>Keperluan wajib</td>
+<td>"Keperluan wajib dipilih."</td>
+</tr>
+<tr>
+<td>Form</td>
+<td>Tujuan wajib (trim)</td>
+<td>"Tujuan peminjaman wajib diisi."</td>
+</tr>
+<tr>
+<td>Form</td>
+<td>Tanggal pinjam &amp; kembali wajib; kembali ≥ pinjam</td>
+<td>"Tanggal pinjam wajib dipilih." / "Tanggal kembali wajib dipilih." / "Tanggal kembali tidak boleh sebelum tanggal pinjam."</td>
+</tr>
+<tr>
+<td>Form</td>
+<td>Picker menyembunyikan asset yang sudah dipilih</td>
+<td>–</td>
+</tr>
+<tr>
+<td>Detail admin</td>
+<td>Semua asset diputuskan; tolak wajib alasan</td>
+<td>"Pilih keputusan untuk seluruh asset." / "Alasan penolakan wajib diisi."</td>
+</tr>
+<tr>
+<td>Sheet admin</td>
+<td>Tanggal &amp; jam wajib bila ada disetujui; tanggal dibatasi periode pinjam</td>
+<td>"Tanggal serah terima wajib dipilih." / "Jam serah terima wajib dipilih."</td>
+</tr>
+<tr>
+<td>Detail pengembalian admin</td>
+<td>Semua kondisi diisi; rusak wajib keterangan</td>
+<td>"Pilih kondisi untuk seluruh asset." / "Keterangan kerusakan wajib diisi."</td>
+</tr>
+<tr>
+<td>Detail pengembalian admin</td>
+<td>Setiap asset wajib punya lokasi gudang (v1.1)</td>
+<td>"Pilih lokasi gudang tujuan untuk seluruh asset."</td>
+</tr>
+<tr>
+<td>Terima/Batalkan/Kembalikan</td>
+<td>Dialog konfirmasi</td>
+<td>–</td>
+</tr>
+</tbody>
+</table></div>
+<h3>31.2 Backend — lihat §9 dan §24.</h3>
+<h3>31.3 Database</h3>
+<p>ENUM <code>jenis_status</code>, <code>status</code>, <code>status_item</code>; NOT NULL + default untuk tanggal (<code>CURRENT_DATE</code>, <code>0000-00-00</code>) dan teks; <code>no_trx</code> tidak unique.</p>
+<h3>31.4 Ringkasan per Field</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Mobile</th>
+<th>Backend</th>
+<th>Database</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>keperluan</td>
+<td>Wajib, dari opsi</td>
+<td>required ≤255 (tidak dicek terhadap opsi)</td>
+<td>varchar(255)</td>
+</tr>
+<tr>
+<td>tujuan_peminjaman</td>
+<td>Wajib (tanpa batas panjang)</td>
+<td>required ≤255</td>
+<td>varchar(255)</td>
+</tr>
+<tr>
+<td>tgl_pinjam</td>
+<td>Wajib</td>
+<td>≥ hari ini</td>
+<td>date</td>
+</tr>
+<tr>
+<td>tgl_kembali</td>
+<td>Wajib, ≥ pinjam</td>
+<td>≥ tgl_pinjam</td>
+<td>date</td>
+</tr>
+<tr>
+<td>asset_ids</td>
+<td>Min 1, tanpa duplikat</td>
+<td>tersedia @gudang, tidak aktif</td>
+<td>item</td>
+</tr>
+<tr>
+<td>status_item (admin)</td>
+<td>Semua dipilih</td>
+<td>in disetujui/ditolak, lengkap</td>
+<td>enum</td>
+</tr>
+<tr>
+<td>jadwal serah terima</td>
+<td>Dalam periode</td>
+<td>wajib bila ada disetujui, dalam periode</td>
+<td>date/time</td>
+</tr>
+<tr>
+<td>kondisi (pengembalian)</td>
+<td>Semua dipilih</td>
+<td>in normal/rusak, lengkap</td>
+<td>enum (disetujui/ditolak)</td>
+</tr>
+</tbody>
+</table></div>
+<hr />
+<h2 id="s32"><span class="sec-no">32</span>Error Handling</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Error</th>
+<th style="text-align: right;">HTTP</th>
+<th>Backend</th>
+<th>Mobile</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Field tidak valid</td>
+<td style="text-align: right;">422</td>
+<td>VALIDATION_ERROR + errors</td>
+<td>Error field / snackbar</td>
+</tr>
+<tr>
+<td>Aturan bisnis</td>
+<td style="text-align: right;">422</td>
+<td>BUSINESS_RULE_VIOLATION</td>
+<td>Snackbar error</td>
+</tr>
+<tr>
+<td>Detail tidak ditemukan</td>
+<td style="text-align: right;">404</td>
+<td>NOT_FOUND</td>
+<td>Halaman error + Coba Lagi</td>
+</tr>
+<tr>
+<td>Token</td>
+<td style="text-align: right;">401</td>
+<td>UNAUTHORIZED</td>
+<td>Refresh &amp; retry</td>
+</tr>
+<tr>
+<td>Bukan admin</td>
+<td style="text-align: right;">403</td>
+<td>FORBIDDEN</td>
+<td>Pesan error</td>
+</tr>
+<tr>
+<td>Exception</td>
+<td style="text-align: right;">500</td>
+<td>SYSTEM_ERROR + log</td>
+<td>Snackbar</td>
+</tr>
+<tr>
+<td>Timeout / koneksi</td>
+<td style="text-align: right;">–</td>
+<td>–</td>
+<td>"Tidak dapat terhubung ke server. Periksa koneksi Anda."</td>
+</tr>
+<tr>
+<td>Double submit</td>
+<td style="text-align: right;">–</td>
+<td>tanpa idempotency</td>
+<td>Bloc abaikan saat submitting; tombol loading</td>
+</tr>
+<tr>
+<td>Notifikasi gagal</td>
+<td style="text-align: right;">–</td>
+<td>di-log</td>
+<td>–</td>
+</tr>
+</tbody>
+</table></div>
+<hr />
+<h2 id="s33"><span class="sec-no">33</span>Audit Trail</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Data</th>
+<th style="text-align: center;">Disimpan?</th>
+<th>Lokasi</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Pengaju &amp; waktu</td>
+<td style="text-align: center;">✅</td>
+<td><code>user_input</code>, <code>tgl_input</code></td>
+</tr>
+<tr>
+<td>Admin pemutus &amp; waktu</td>
+<td style="text-align: center;">✅</td>
+<td><code>user_approval</code>, <code>tgl_approval</code></td>
+</tr>
+<tr>
+<td>Keputusan per asset + alasan</td>
+<td style="text-align: center;">✅</td>
+<td>item <code>status_item</code>, <code>ket_tolak</code></td>
+</tr>
+<tr>
+<td>Waktu diterima karyawan</td>
+<td style="text-align: center;">⚠️ tidak langsung</td>
+<td><code>tgl_update</code> saat <code>aktif</code> (tertimpa bila ada update lain)</td>
+</tr>
+<tr>
+<td>Pembatalan karyawan</td>
+<td style="text-align: center;">⚠️</td>
+<td>status <code class="chip chip-bad">ditolak</code> + <code>ket_tolak</code> teks, <code>user_update</code></td>
+</tr>
+<tr>
+<td>Serah terima fisik</td>
+<td style="text-align: center;">✅</td>
+<td><code>asset_log peminjaman_karyawan</code></td>
+</tr>
+<tr>
+<td>Pengembalian + kondisi</td>
+<td style="text-align: center;">✅</td>
+<td>item pengembalian + <code>asset_log pengembalian_karyawan</code></td>
+</tr>
+<tr>
+<td>Histori status</td>
+<td style="text-align: center;">❌</td>
+<td>⚠️ Belum ditemukan</td>
+</tr>
+</tbody>
+</table></div>
+<hr />
+<h2 id="s34"><span class="sec-no">34</span>Notification</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Event</th>
+<th>Trigger</th>
+<th>Penerima</th>
+<th>Judul</th>
+<th>Pesan</th>
+<th>Rute mobile</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>peminjaman.diajukan</code></td>
+<td>Ajukan</td>
+<td>Semua admin</td>
+<td>Pengajuan Peminjaman Asset</td>
+<td>{nama} mengajukan peminjaman asset {no_trx}.</td>
+<td><code>asset_admin_detail_peminjaman</code></td>
+</tr>
+<tr>
+<td><code>peminjaman.disetujui</code></td>
+<td>Konfirmasi (≥1 disetujui)</td>
+<td>Karyawan</td>
+<td>Peminjaman Asset Disetujui</td>
+<td>Peminjaman asset {no_trx} telah dikonfirmasi admin.</td>
+<td><code>asset_detail_peminjaman</code></td>
+</tr>
+<tr>
+<td><code>peminjaman.ditolak</code></td>
+<td>Konfirmasi (semua ditolak)</td>
+<td>Karyawan</td>
+<td>Peminjaman Asset Ditolak</td>
+<td>Peminjaman asset {no_trx} ditolak admin.</td>
+<td><code>asset_detail_peminjaman</code></td>
+</tr>
+<tr>
+<td><code>peminjaman.diterima</code></td>
+<td>Terima Asset</td>
+<td>Semua admin</td>
+<td>Asset Peminjaman Diterima</td>
+<td>{nama} telah menerima asset peminjaman {no_trx}.</td>
+<td><code>asset_admin_detail_peminjaman</code></td>
+</tr>
+<tr>
+<td><code>peminjaman.dibatalkan</code></td>
+<td>Batalkan</td>
+<td>Semua admin</td>
+<td>Peminjaman Asset Dibatalkan</td>
+<td>{nama} membatalkan peminjaman asset {no_trx}.</td>
+<td><code>asset_admin_detail_peminjaman</code></td>
+</tr>
+<tr>
+<td><code>pengembalian.diajukan</code></td>
+<td>Kembalikan Asset</td>
+<td>Semua admin</td>
+<td>Pengajuan Pengembalian Asset</td>
+<td>{nama} mengajukan pengembalian asset {no_trx}.</td>
+<td><code>asset_admin_detail_pengembalian</code></td>
+</tr>
+<tr>
+<td><code>pengembalian.dikonfirmasi</code></td>
+<td>Konfirmasi pengembalian</td>
+<td>Karyawan</td>
+<td>Pengembalian Asset Dikonfirmasi</td>
+<td>Pengembalian asset {no_trx} telah dikonfirmasi admin.</td>
+<td><code>asset_detail_pengembalian</code></td>
+</tr>
+</tbody>
+</table></div>
+<p>Pengingat jatuh tempo <strong>bukan</strong> notifikasi push: hanya daftar/banner (<code>getJatuhTempo</code>). ⚠️ Belum ditemukan: scheduler (<code>Kernel::schedule</code> kosong).</p>
+<hr />
+<h2 id="s35"><span class="sec-no">35</span>Security</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Aspek</th>
+<th>Implementasi</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Autentikasi</td>
+<td>Bearer JWT; context dari token</td>
+</tr>
+<tr>
+<td>Isolasi company</td>
+<td>Semua query <code>id_company = ctx.id_company</code></td>
+</tr>
+<tr>
+<td>Otorisasi admin</td>
+<td><code>accessError</code> + <code>findAssetAdmin</code></td>
+</tr>
+<tr>
+<td>Kepemilikan</td>
+<td>Endpoint karyawan memfilter <code>id_karyawan = ctx.id_karyawan</code>; pengajuan selalu atas nama user login</td>
+</tr>
+<tr>
+<td>Integritas asset</td>
+<td>Lock company + <code>lockForUpdate</code>; cek status &amp; pemegang asset di setiap langkah</td>
+</tr>
+<tr>
+<td>Pemisahan offboarding</td>
+<td>Pengembalian offboarding tidak bisa diproses di menu peminjaman</td>
+</tr>
+<tr>
+<td>Catatan</td>
+<td>Validasi request dijalankan sebelum cek admin (konfirmasi peminjaman/pengembalian)</td>
+</tr>
+</tbody>
+</table></div>
+<hr />
+<div class="group-divider" id="g36"><span>Manual Book</span></div><h2 id="s36"><span class="sec-no">36</span>Manual Book User/Admin</h2>
+<aside class="callout callout-warn">
+<p>Label dari <code>assets/id/asset.json</code>. ⚠️ Asumsi: halaman admin <strong>Asset Karyawan</strong> diakses dari <strong>Asset Management</strong>. Screenshot menyusul.</p>
+</aside>
+<h3>A. Karyawan — Meminjam Asset</h3>
+<ol>
+<li>Buka <strong>Asset Saya</strong> → menu <strong>Peminjaman</strong> → tekan <strong>+</strong>.</li>
+<li><strong>Pilih Asset</strong> → <strong>Tambah Asset</strong> → cari dan pilih asset → <strong>Pilih</strong>. Ulangi bila perlu.</li>
+<li>Di <strong>Form Peminjaman</strong>: <strong>Pilih Keperluan</strong> (Kantor/Dinas/Pelatihan/Lainnya), isi <strong>Tujuan Peminjaman</strong>, pilih <strong>Tanggal Pinjam</strong> dan <strong>Tanggal Kembali</strong>.</li>
+<li>Tekan <strong>Ajukan Peminjaman</strong>. Status <strong>Menunggu Konfirmasi</strong>.</li>
+</ol>
+<h3>B. Admin — Menyetujui Peminjaman</h3>
+<ol>
+<li><strong>Asset Karyawan</strong> → aksi <strong>Peminjaman</strong> → tab <strong>Pengajuan</strong> → pilih transaksi.</li>
+<li>Untuk setiap asset pilih <strong>Setujui</strong> atau <strong>Tolak</strong> (isi <strong>Alasan Penolakan</strong>).</li>
+<li>Tekan <strong>Konfirmasi</strong> → isi <strong>Jadwal Serah Terima</strong>, <strong>Jam Serah Terima</strong> (dalam periode pinjam) dan <strong>Catatan Tambahan</strong> → <strong>Submit</strong>.</li>
+</ol>
+<h3>C. Karyawan — Menerima Asset</h3>
+<ol>
+<li>Buka notifikasi <strong>Peminjaman Asset Disetujui</strong> atau banner di Asset Saya.</li>
+<li>Datang sesuai jadwal serah terima, periksa asset secara fisik.</li>
+<li>Tekan <strong>Terima Asset</strong> → konfirmasi. Status <strong>Aktif</strong>.
+   - Tidak jadi meminjam: tekan <strong>Batalkan</strong> (tidak dapat dipulihkan).</li>
+</ol>
+<h3>D. Karyawan — Mengembalikan Asset</h3>
+<ol>
+<li>Perhatikan pengingat jatuh tempo di Asset Saya; lewat tanggal akan tertulis <strong>Terlambat</strong>.</li>
+<li>Buka detail peminjaman aktif → <strong>Kembalikan Asset</strong> → konfirmasi.</li>
+<li>Serahkan asset ke admin; pantau di switch <strong>Pengembalian</strong>.</li>
+</ol>
+<h3>E. Admin — Menerima Pengembalian</h3>
+<ol>
+<li><strong>Peminjaman</strong> → switch <strong>Pengembalian</strong> → tab <strong>Pengajuan</strong> → pilih transaksi.</li>
+<li>Periksa setiap asset: <strong>Normal</strong> atau <strong>Rusak</strong> (isi <strong>Keterangan Kerusakan</strong>).</li>
+<li>Pilih <strong>Lokasi Tujuan Asset</strong> (gudang) untuk setiap asset; default-nya gudang di cabang karyawan.</li>
+<li>Tekan <strong>Konfirmasi</strong>. Asset normal kembali tersedia, asset rusak berstatus rusak, keduanya di gudang yang dipilih; peminjaman otomatis selesai.</li>
+</ol>
+<hr />
+<h2 id="s37"><span class="sec-no">37</span>Kondisi Button</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Button</th>
+<th>Role</th>
+<th>Halaman</th>
+<th>Condition</th>
+<th>Action</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>+</td>
+<td>Karyawan</td>
+<td>Peminjaman Asset</td>
+<td>Selalu</td>
+<td>Form peminjaman</td>
+</tr>
+<tr>
+<td>Ajukan Peminjaman</td>
+<td>Karyawan</td>
+<td>Form</td>
+<td>Tidak submitting</td>
+<td>POST peminjaman</td>
+</tr>
+<tr>
+<td>Terima Asset / Batalkan</td>
+<td>Karyawan</td>
+<td>Detail</td>
+<td>Status <code class="chip chip-done">dikonfirmasi</code></td>
+<td>Dialog → POST terima / batalkan</td>
+</tr>
+<tr>
+<td>Kembalikan Asset</td>
+<td>Karyawan</td>
+<td>Detail</td>
+<td><code>dapat_dikembalikan = true</code></td>
+<td>Dialog → POST pengembalian</td>
+</tr>
+<tr>
+<td>Setujui / Tolak per asset</td>
+<td>Admin</td>
+<td>Detail peminjaman</td>
+<td>Tab <code>pengajuan</code></td>
+<td>Set keputusan</td>
+</tr>
+<tr>
+<td>Konfirmasi</td>
+<td>Admin</td>
+<td>Detail peminjaman</td>
+<td>Tab <code>pengajuan</code></td>
+<td>Sheet jadwal → POST konfirmasi</td>
+</tr>
+<tr>
+<td>Submit</td>
+<td>Admin</td>
+<td>Sheet</td>
+<td>Jadwal valid bila ada disetujui</td>
+<td>Kirim</td>
+</tr>
+<tr>
+<td>Normal / Rusak per asset</td>
+<td>Admin</td>
+<td>Detail pengembalian</td>
+<td>Tab <code>pengajuan</code></td>
+<td>Set kondisi</td>
+</tr>
+<tr>
+<td>Lokasi Tujuan Asset per asset</td>
+<td>Admin</td>
+<td>Detail pengembalian</td>
+<td>Tab <code>pengajuan</code></td>
+<td>Pilih gudang (wajib, v1.1)</td>
+</tr>
+<tr>
+<td>Konfirmasi</td>
+<td>Admin</td>
+<td>Detail pengembalian</td>
+<td>Tab <code>pengajuan</code></td>
+<td>POST konfirmasi pengembalian</td>
+</tr>
+<tr>
+<td>Tolak pengembalian / Batalkan pengajuan / Perpanjang</td>
+<td>–</td>
+<td>–</td>
+<td>⚠️ Belum ditemukan</td>
+<td>–</td>
+</tr>
+</tbody>
+</table></div>
+<hr />
+<div class="group-divider" id="g38"><span>QA & Risiko</span></div><h2 id="s38"><span class="sec-no">38</span>Testing Scenario</h2>
+<h3>Happy Path</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>TC</th>
+<th>Scenario</th>
+<th>Steps</th>
+<th>Expected</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>TC-01</td>
+<td>Ajukan peminjaman</td>
+<td>Isi form lengkap → Ajukan</td>
+<td>201; <code>pengajuan</code>; asset <code class="chip chip-wait">proses</code>; notif admin</td>
+</tr>
+<tr>
+<td>TC-02</td>
+<td>Setujui semua</td>
+<td>Admin Setujui semua + jadwal dalam periode</td>
+<td><code class="chip chip-done">dikonfirmasi</code>; jadwal tersimpan; notif karyawan</td>
+</tr>
+<tr>
+<td>TC-03</td>
+<td>Setujui sebagian</td>
+<td>1 setujui, 1 tolak + alasan</td>
+<td><code class="chip chip-done">dikonfirmasi</code>; asset ditolak <code class="chip chip-neutral">tersedia</code>; item ditolak tampil "Ditolak Admin"</td>
+</tr>
+<tr>
+<td>TC-04</td>
+<td>Tolak semua</td>
+<td>Semua tolak</td>
+<td><code class="chip chip-bad">ditolak</code>, <code>ket_tolak</code> "Seluruh asset peminjaman ditolak."; asset <code class="chip chip-neutral">tersedia</code></td>
+</tr>
+<tr>
+<td>TC-05</td>
+<td>Terima asset</td>
+<td>Karyawan Terima Asset</td>
+<td><code>aktif</code>; asset <code>dipinjam</code> @karyawan; <code>asset_log peminjaman_karyawan</code>; notif admin</td>
+</tr>
+<tr>
+<td>TC-06</td>
+<td>Batalkan</td>
+<td>Karyawan Batalkan saat dikonfirmasi</td>
+<td><code class="chip chip-bad">ditolak</code>, "Dibatalkan oleh karyawan."; asset <code class="chip chip-neutral">tersedia</code></td>
+</tr>
+<tr>
+<td>TC-07</td>
+<td>Ajukan pengembalian</td>
+<td>Kembalikan Asset</td>
+<td>Header pengembalian <code>pengajuan</code> dengan <code>id_peminjaman_asal</code>; notif admin</td>
+</tr>
+<tr>
+<td>TC-08</td>
+<td>Pengembalian normal</td>
+<td>Admin Normal → Konfirmasi</td>
+<td>Asset <code class="chip chip-neutral">tersedia</code>; log; pengembalian &amp; peminjaman asal <code>selesai</code></td>
+</tr>
+<tr>
+<td>TC-09</td>
+<td>Pengembalian rusak</td>
+<td>Rusak + keterangan</td>
+<td>Asset <code class="chip chip-bad">rusak</code>, <code>ket_rusak</code>; log kondisi_akhir rusak</td>
+</tr>
+</tbody>
+</table></div>
+<h3>Validation</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>TC</th>
+<th>Scenario</th>
+<th>Expected</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>TC-10</td>
+<td>Tanpa asset</td>
+<td>"Tambahkan minimal satu asset." / 422</td>
+</tr>
+<tr>
+<td>TC-11</td>
+<td>Tanpa keperluan / tujuan</td>
+<td>422</td>
+</tr>
+<tr>
+<td>TC-12</td>
+<td>Tanggal pinjam kemarin (API)</td>
+<td>422 "Tanggal pinjam tidak boleh sebelum hari ini."</td>
+</tr>
+<tr>
+<td>TC-13</td>
+<td>Tanggal kembali &lt; pinjam</td>
+<td>422</td>
+</tr>
+<tr>
+<td>TC-14</td>
+<td>Asset tidak tersedia</td>
+<td>422 "…tidak tersedia untuk dipinjam."</td>
+</tr>
+<tr>
+<td>TC-15</td>
+<td>Admin tidak memutuskan semua asset</td>
+<td>422 "Seluruh asset peminjaman wajib dikonfirmasi."</td>
+</tr>
+<tr>
+<td>TC-16</td>
+<td>Tolak tanpa alasan</td>
+<td>422</td>
+</tr>
+<tr>
+<td>TC-17</td>
+<td>Jadwal di luar periode</td>
+<td>422 "Tanggal serah terima harus berada dalam periode peminjaman."</td>
+</tr>
+<tr>
+<td>TC-18</td>
+<td>Ada disetujui tanpa jadwal</td>
+<td>422 "Tanggal serah terima wajib diisi."</td>
+</tr>
+<tr>
+<td>TC-19</td>
+<td>Pengembalian tanpa semua kondisi</td>
+<td>422</td>
+</tr>
+<tr>
+<td>TC-20</td>
+<td>Rusak tanpa keterangan</td>
+<td>422</td>
+</tr>
+</tbody>
+</table></div>
+<h3>Status</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>TC</th>
+<th>Scenario</th>
+<th>Expected</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>TC-21</td>
+<td>Konfirmasi ulang peminjaman</td>
+<td>422 "…sudah tidak menunggu konfirmasi."</td>
+</tr>
+<tr>
+<td>TC-22</td>
+<td>Terima saat masih pengajuan</td>
+<td>422 "Peminjaman asset belum dapat diterima."</td>
+</tr>
+<tr>
+<td>TC-23</td>
+<td>Batalkan saat aktif</td>
+<td>422 "…sudah tidak dapat dibatalkan."</td>
+</tr>
+<tr>
+<td>TC-24</td>
+<td>Kembalikan saat belum aktif</td>
+<td>422 "Hanya peminjaman aktif yang dapat dikembalikan."</td>
+</tr>
+<tr>
+<td>TC-25</td>
+<td>Ajukan pengembalian dua kali</td>
+<td>422 "Pengembalian asset sedang menunggu konfirmasi."</td>
+</tr>
+<tr>
+<td>TC-26</td>
+<td>Konfirmasi pengembalian dua kali</td>
+<td>422</td>
+</tr>
+<tr>
+<td>TC-27</td>
+<td>Konfirmasi pengembalian milik offboarding</td>
+<td>Tidak tampil; API 422 / 404</td>
+</tr>
+</tbody>
+</table></div>
+<h3>Asset / Jatuh Tempo</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>TC</th>
+<th>Scenario</th>
+<th>Expected</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>TC-28</td>
+<td>Asset sedang dipinjam orang lain</td>
+<td>Tidak muncul di opsi; API 422</td>
+</tr>
+<tr>
+<td>TC-29</td>
+<td>Asset sedang di onboarding</td>
+<td>422</td>
+</tr>
+<tr>
+<td>TC-30</td>
+<td>Tanggal kembali = besok</td>
+<td>Muncul di pengingat jatuh tempo (<code>sisa_hari = 1</code>)</td>
+</tr>
+<tr>
+<td>TC-31</td>
+<td>Lewat tanggal kembali</td>
+<td><code>terlambat = true</code>; label Terlambat; <code>sisa_hari</code> negatif</td>
+</tr>
+<tr>
+<td>TC-32</td>
+<td>Sudah ajukan pengembalian saat jatuh tempo</td>
+<td>Hilang dari pengingat</td>
+</tr>
+</tbody>
+</table></div>
+<h3>API / Security / Network</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>TC</th>
+<th>Scenario</th>
+<th>Expected</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>TC-33</td>
+<td>Tanpa token</td>
+<td>401</td>
+</tr>
+<tr>
+<td>TC-34</td>
+<td>Non-admin konfirmasi</td>
+<td>403 (atau 422 bila payload invalid)</td>
+</tr>
+<tr>
+<td>TC-35</td>
+<td>Karyawan akses peminjaman orang lain</td>
+<td>404 / 422</td>
+</tr>
+<tr>
+<td>TC-36</td>
+<td>Double tap Terima</td>
+<td>Hanya satu request; request kedua 422</td>
+</tr>
+<tr>
+<td>TC-37</td>
+<td>Timeout setelah commit ajukan</td>
+<td>Ajukan ulang ditolak (asset <code class="chip chip-wait">proses</code>)</td>
+</tr>
+<tr>
+<td>TC-38</td>
+<td>Konfirmasi pengembalian dengan lokasi gudang berbeda per asset</td>
+<td><code>asset_data.id_asset_lokasi_m</code> dan item <code>id_asset_lokasi_m_tujuan</code> sesuai pilihan masing-masing; log tercatat; <code>selesai</code></td>
+</tr>
+<tr>
+<td>TC-39</td>
+<td>Konfirmasi pengembalian tanpa lokasi / lokasi tidak ada / lokasi bertipe ruangan</td>
+<td>422 "Lokasi gudang tujuan setiap asset wajib dipilih." atau "Lokasi gudang tujuan tidak valid."; status tetap <code>pengajuan</code></td>
+</tr>
+<tr>
+<td>TC-40</td>
+<td>Karyawan Terima Asset pinjaman (asset keluar gudang)</td>
+<td><code>asset_data.id_asset_lokasi_m</code> dikosongkan; status <code>dipinjam</code> @karyawan</td>
+</tr>
+</tbody>
+</table></div>
+<hr />
+<h2 id="s39"><span class="sec-no">39</span>Temuan Ketidaksesuaian</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>ID</th>
+<th>Component</th>
+<th>Finding</th>
+<th>Impact</th>
+<th>Recommendation</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>INC-01</td>
+<td>DB ↔ Backend</td>
+<td>Status pengembalian <code class="chip chip-bad">ditolak</code> tidak pernah di-set; <code class="chip chip-done">dikonfirmasi</code> hanya dipakai pengembalian offboarding</td>
+<td>Enum membingungkan</td>
+<td>Dokumentasikan / implementasi tolak pengembalian</td>
+</tr>
+<tr>
+<td>INC-02</td>
+<td>DB</td>
+<td>Enum item <code>approval_item</code> (disetujui/ditolak) dipakai ulang untuk kondisi pengembalian (normal/rusak); <code>ket_tolak</code> menyimpan keterangan kerusakan</td>
+<td>Makna kolom bergantung jenis baris</td>
+<td>Kolom kondisi terpisah</td>
+</tr>
+<tr>
+<td>INC-03</td>
+<td>Backend</td>
+<td>Pembatalan karyawan disimpan sebagai <code class="chip chip-bad">ditolak</code></td>
+<td>Tidak bisa dibedakan dari penolakan admin kecuali teks <code>ket_tolak</code></td>
+<td>Status <code>dibatalkan</code></td>
+</tr>
+<tr>
+<td>INC-04</td>
+<td>Backend ↔ Mobile</td>
+<td>Daftar peminjaman tidak menampilkan <code>selesai</code> (tidak ada tab Selesai); peminjaman yang sudah kembali hanya terlihat lewat daftar Pengembalian</td>
+<td>Riwayat peminjaman sulit ditelusuri</td>
+<td>Tambah tab Selesai</td>
+</tr>
+<tr>
+<td>INC-05</td>
+<td>Mobile ↔ Backend</td>
+<td>Field Tujuan Peminjaman tanpa batas panjang di mobile; backend maks 255</td>
+<td>Error 422 setelah submit</td>
+<td><code>maxLength: 255</code></td>
+</tr>
+<tr>
+<td>INC-06</td>
+<td>Backend</td>
+<td><code>keperluan</code> tidak divalidasi terhadap daftar opsi</td>
+<td>Nilai bebas via API</td>
+<td><code>in:kantor,dinas,pelatihan,lainnya</code></td>
+</tr>
+<tr>
+<td>INC-07</td>
+<td>Backend</td>
+<td><code>tgl_diterima</code> diambil dari <code>tgl_update</code></td>
+<td>Bisa bergeser jika header di-update</td>
+<td>Kolom khusus</td>
+</tr>
+<tr>
+<td>INC-08</td>
+<td>Backend</td>
+<td>Validasi request sebelum cek admin</td>
+<td>422 vs 403</td>
+<td>Pindahkan cek akses</td>
+</tr>
+<tr>
+<td>INC-09</td>
+<td>Backend</td>
+<td><code>konfirmasiAdmin</code> tidak memeriksa karyawan masih aktif (baru dicek saat terima)</td>
+<td>Asset tertahan bila karyawan nonaktif</td>
+<td>Cek di konfirmasi</td>
+</tr>
+</tbody>
+</table></div>
+<hr />
+<h2 id="s40"><span class="sec-no">40</span>Edge Case</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Edge Case</th>
+<th>Current Behavior</th>
+<th>Impact</th>
+<th>Recommendation</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Karyawan tidak pernah menekan Terima</td>
+<td>Status <code class="chip chip-done">dikonfirmasi</code> selamanya, asset <code class="chip chip-wait">proses</code></td>
+<td>Asset terkunci</td>
+<td>Kedaluwarsa otomatis / batal oleh admin</td>
+</tr>
+<tr>
+<td>Karyawan ingin membatalkan sebelum admin memutuskan</td>
+<td>Tidak bisa</td>
+<td>Asset terkunci sampai admin menolak</td>
+<td>Endpoint batal pengajuan</td>
+</tr>
+<tr>
+<td>Admin tidak memproses pengembalian</td>
+<td>Pengembalian <code>pengajuan</code> terus; asset tetap <code>dipinjam</code>; pengingat jatuh tempo hilang</td>
+<td>Asset lepas dari pantauan</td>
+<td>SLA / pengingat admin</td>
+</tr>
+<tr>
+<td>Pengembalian perlu ditolak (asset belum diserahkan)</td>
+<td>Tidak ada aksi tolak</td>
+<td>Admin terpaksa konfirmasi</td>
+<td>Endpoint tolak</td>
+</tr>
+<tr>
+<td>Tanggal pinjam sudah lewat saat admin konfirmasi</td>
+<td>Jadwal tetap harus di dalam periode (bisa di masa lalu)</td>
+<td>Jadwal tidak realistis</td>
+<td>Validasi jadwal ≥ hari ini</td>
+</tr>
+<tr>
+<td>Karyawan nonaktif saat meminjam</td>
+<td>Pengembalian masih bisa diajukan &amp; dikonfirmasi; offboarding juga membuat pengembalian</td>
+<td>–</td>
+<td>–</td>
+</tr>
+<tr>
+<td>Asset dipinjam lalu karyawan offboarding</td>
+<td>Offboarding membuat pengembalian anak (relasi) yang disembunyikan dari menu peminjaman</td>
+<td>Aman</td>
+<td>–</td>
+</tr>
+<tr>
+<td>Pengembalian sebagian asset</td>
+<td>Tidak didukung (semua asset ikut)</td>
+<td>Karyawan harus mengembalikan semua</td>
+<td>Pilihan item</td>
+</tr>
+<tr>
+<td>Perpanjangan peminjaman</td>
+<td>Tidak ada</td>
+<td>Harus ajukan ulang</td>
+<td>Fitur perpanjangan</td>
+</tr>
+<tr>
+<td>Dua karyawan mengajukan asset sama bersamaan</td>
+<td>Lock company; kedua 422</td>
+<td>Aman</td>
+<td>–</td>
+</tr>
+</tbody>
+</table></div>
+<hr />
+<h2 id="s41"><span class="sec-no">41</span>Potential Bug / Technical Risk</h2>
+<h3>RISK-001 — Asset terkunci bila peminjaman tidak pernah diterima (TINGGI)</h3>
+<p><strong>Lokasi:</strong> <code>konfirmasiAdmin</code>, <code>terimaKaryawan</code>, <code>batalkanKaryawan</code>.
+<strong>Masalah:</strong> Setelah <code class="chip chip-done">dikonfirmasi</code>, hanya karyawan yang bisa menerima/membatalkan. Tidak ada kedaluwarsa atau aksi admin.
+<strong>Impact:</strong> Asset disetujui tetap <code class="chip chip-wait">proses</code> tanpa batas waktu, tidak bisa dipinjam/diberikan ke orang lain.
+<strong>Recommendation:</strong> Pembatalan oleh admin dan/atau kedaluwarsa otomatis (mis. lewat <code>tgl_dikembalikan</code>).</p>
+<h3>RISK-002 — Pengajuan tidak bisa dibatalkan karyawan (SEDANG)</h3>
+<p>Asset <code class="chip chip-wait">proses</code> sejak diajukan; karyawan tidak punya aksi batal pada status <code>pengajuan</code>.</p>
+<h3>RISK-003 — Tidak ada pengingat otomatis (SEDANG)</h3>
+<p><code>Kernel::schedule</code> kosong; pengingat jatuh tempo hanya muncul ketika aplikasi dibuka. Tidak ada push/notif H-1 atau terlambat.</p>
+<h3>RISK-004 — Pengembalian tidak bisa ditolak/dibatalkan (SEDANG)</h3>
+<p>Pengembalian yang salah diajukan tidak bisa dibatalkan karyawan atau ditolak admin; admin harus mengonfirmasi (asset otomatis masuk gudang).</p>
+<h3>RISK-005 — Pengembalian wajib seluruh asset (RENDAH)</h3>
+<p>Tidak bisa mengembalikan sebagian; desain atau keterbatasan perlu dikonfirmasi bisnis.</p>
+<h3>RISK-006 — Tanggal nol <code>0000-00-00</code> (SEDANG)</h3>
+<p>Insert memakai <code>0000-00-00</code>/<code>00:00:00</code>; ⚠️ Asumsi: gagal pada MySQL strict mode <code>NO_ZERO_DATE</code>.</p>
+<h3>RISK-007 — Tanpa batas durasi pinjam (RENDAH)</h3>
+<p><code>tgl_kembali</code> bebas selama ≥ <code>tgl_pinjam</code>.</p>
+<h3>RISK-008 — Kapasitas penomoran (RENDAH)</h3>
+<p>3 digit/bulan/company dipakai bersama peminjaman &amp; pengembalian (header) serta item.</p>
+<h3>RISK-009 — Notifikasi di luar transaksi (RENDAH)</h3>
+<p>Kegagalan notif hanya di-log.</p>
+<hr />
+<div class="group-divider" id="g42"><span>Referensi Developer</span></div><h2 id="s42"><span class="sec-no">42</span>Dependency</h2>
+<div class="code"><span class="code-lang">Alur</span><pre><code class="language-text">Master Company / Data Karyawan / Asset Admin
+      ↓
+Asset Data (tersedia @gudang)
+      ↓
+Peminjaman (pengajuan → dikonfirmasi → aktif) ──► Notifikasi
+      ↓ Terima Asset → asset_log peminjaman_karyawan
+Asset Data (dipinjam @karyawan) ──► Jatuh tempo (Asset Saya, Summary Admin)
+      ↓ Pengembalian (header baru)
+Asset Data (tersedia / rusak @gudang) ──► asset_log pengembalian_karyawan
+
+Terkait:
+  - Onboarding &amp; Request: hasActiveOnboardingAsset dipakai saat pengajuan
+  - Offboarding: membuat pengembalian anak (asset_trx_offboarding_relasi); hasActiveOffboardingAsset mencegah pengembalian ganda
+  - Asset Saya &amp; Summary Admin: getPendingForEmployee, getPendingForAdmin, getJatuhTempo, getPeminjamanPage (aktif)
+</code></pre></div>
+<hr />
+<h2 id="s43"><span class="sec-no">43</span>Source Code Reference</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>File</th>
+<th>Layer</th>
+<th>Function</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>API/routes/modules/asset/RouteAsset.php</code></td>
+<td>Route</td>
+<td>15 endpoint</td>
+</tr>
+<tr>
+<td><code>API/app/Http/Controllers/Asset/Admin/AssetAdminPeminjaman_c.php</code>, <code>API/app/Http/Controllers/Asset/Admin/AssetAdminPengembalian_c.php</code></td>
+<td>Controller</td>
+<td>Admin peminjaman &amp; pengembalian</td>
+</tr>
+<tr>
+<td><code>API/app/Http/Controllers/Asset/Karyawan/AssetKaryawanPeminjaman_c.php</code></td>
+<td>Controller</td>
+<td>Karyawan + <code>prosesSerahTerimaPeminjaman</code></td>
+</tr>
+<tr>
+<td><code>API/app/Models/Asset/AssetPeminjamanKaryawan_m.php</code></td>
+<td>Model</td>
+<td>Seluruh logika</td>
+</tr>
+<tr>
+<td><code>API/app/Models/Asset/PeminjamanStatus.php</code></td>
+<td>Enum</td>
+<td>Status</td>
+</tr>
+<tr>
+<td><code>API/app/Models/Asset/Asset_m.php</code></td>
+<td>Model</td>
+<td>Helper bersama</td>
+</tr>
+<tr>
+<td><code>API/app/Models/Asset/AssetOffboardingKaryawan_m.php</code></td>
+<td>Model</td>
+<td>Pengembalian via offboarding, <code>hasActiveOffboardingAsset</code></td>
+</tr>
+<tr>
+<td><code>API/app/Models/Asset/AssetKaryawan_m.php</code>, <code>AssetAdmin_m.php</code></td>
+<td>Model</td>
+<td>Asset Saya, summary</td>
+</tr>
+<tr>
+<td><code>API/app/Support/Asset/AssetNotification.php</code></td>
+<td>Support</td>
+<td>Event <code>peminjaman.*</code>, <code>pengembalian.*</code></td>
+</tr>
+<tr>
+<td><code>API/diagram-asset.dbml</code>; migrations <code>2026_09_17_000006</code>, <code>2026_09_17_000009</code></td>
+<td>DB</td>
+<td>Struktur, index, enum</td>
+</tr>
+<tr>
+<td><code>MOBILE/lib/Repository/Service/assetPeminjamanApi.dart</code>, <code>assetPeminjamanAdminApi.dart</code></td>
+<td>Api</td>
+<td>Endpoint</td>
+</tr>
+<tr>
+<td><code>MOBILE/lib/Repository/Model/Asset/mAssetPeminjaman.dart</code>, <code>mAssetPeminjamanAdmin.dart</code></td>
+<td>Model</td>
+<td>–</td>
+</tr>
+<tr>
+<td><code>MOBILE/lib/Bloc/Asset/AssetPeminjamanBloc.dart</code>, <code>AssetPeminjamanAdminBloc.dart</code></td>
+<td>Bloc</td>
+<td>–</td>
+</tr>
+<tr>
+<td><code>MOBILE/lib/UI/Modul/Asset/AssetSaya/Peminjaman/*</code></td>
+<td>UI karyawan</td>
+<td>–</td>
+</tr>
+<tr>
+<td><code>MOBILE/lib/UI/Modul/Asset/AssetAdmin/AssetAdminKaryawan/Peminjaman/*</code></td>
+<td>UI admin</td>
+<td>–</td>
+</tr>
+<tr>
+<td><code>MOBILE/lib/UI/Modul/Asset/AssetSaya/HalamanAssetSaya.dart</code></td>
+<td>UI</td>
+<td>Banner &amp; kartu</td>
+</tr>
+<tr>
+<td><code>MOBILE/lib/Setting/router.dart</code>, <code>Bloc/NavigatorBloc.dart</code></td>
+<td>Navigasi</td>
+<td>–</td>
+</tr>
+<tr>
+<td><code>MOBILE/assets/id/asset.json</code></td>
+<td>i18n</td>
+<td>Label</td>
+</tr>
+</tbody>
+</table></div>
+<hr />
+<h2 id="s44"><span class="sec-no">44</span>Developer Notes</h2>
+<ul>
+<li><strong>Satu tabel dua jenis baris</strong>: selalu filter <code>jenis_status</code>. Pengembalian adalah header baru, bukan update status peminjaman.</li>
+<li><strong>Peminjaman asal ditutup otomatis</strong> saat tidak ada lagi asset pinjaman yang dipegang karyawan.</li>
+<li><strong>Makna <code>status_item</code> bergantung jenis baris</strong>; <code>getDetail</code> memetakan <code>disetujui</code>/<code class="chip chip-bad">ditolak</code> → <code class="chip chip-done">normal</code>/<code class="chip chip-bad">rusak</code> untuk pengembalian. Pertahankan pemetaan ini bila mengubah enum.</li>
+<li><strong>Pengembalian offboarding</strong> ditandai lewat <code>asset_trx_offboarding_relasi</code> dan selalu dikecualikan dari list/detail/konfirmasi peminjaman (cek <code>Schema::hasTable</code> sebelum dipakai).</li>
+<li><strong>List peminjaman</strong> menyembunyikan <code>aktif</code> yang asetnya sudah tidak dipegang karyawan (mis. sudah dikembalikan lewat jalur lain).</li>
+<li><strong>Jadwal serah terima</strong> divalidasi di model (bukan di request rule) terhadap periode pinjam.</li>
+<li><strong><code>sisa_hari</code></strong> dihitung <code>today → tgl_dikembalikan</code> (negatif = terlambat); pengingat mulai H-1.</li>
+<li><strong>Konstanta status</strong> memakai <code>PeminjamanStatus</code> enum (konsisten), berbeda dengan modul Request.</li>
+<li><strong>Technical debt</strong>: RISK-001–004, INC-02/03/07.</li>
+</ul>
+<hr />
+<h2 id="s45"><span class="sec-no">45</span>End-to-End Traceability</h2>
+<h3>45.1 Tanggal kembali → pengingat</h3>
+<div class="code"><span class="code-lang">Alur</span><pre><code class="language-text">Karyawan memilih rentang tanggal di Form Peminjaman
+  → _returnDate → AssetPeminjamanRequest.tanggalKembali
+  → JSON &quot;tgl_kembali&quot; (after_or_equal:tgl_pinjam)
+  → store() → asset_trx_peminjaman_karyawan.tgl_dikembalikan
+  → getJatuhTempo(): tgl_dikembalikan ≤ besok → &quot;sisa_hari&quot;
+  → Asset Saya: banner jatuh tempo; detail: &quot;terlambat&quot; → label &quot;Terlambat&quot;
+</code></pre></div>
+<h3>45.2 Asset → dipinjam → kembali</h3>
+<div class="code"><span class="code-lang">Alur</span><pre><code class="language-text">Karyawan memilih asset (Tambah Pinjam Asset) → asset_ids
+  → store(): item + asset_data.status_asset = proses
+Admin: Setujui → items[].status_item = disetujui → item.status_item
+Karyawan: Terima Asset → terimaKaryawan()
+  → asset_data: dipinjam, pemegang_asset = karyawan, id_pemegang_asset = id_karyawan
+  → asset_log (peminjaman_karyawan)
+Karyawan: Kembalikan Asset → header pengembalian (id_peminjaman_asal)
+Admin: Normal → items[].kondisi = normal → item.status_item = disetujui
+  → asset_data: tersedia, pemegang_asset = gudang, id_asset_lokasi_m = items[].id_asset_lokasi_m
+  → asset_log (pengembalian_karyawan) → peminjaman asal: selesai
+</code></pre></div>
+<h3>45.3 DB → UI</h3>
+<div class="code"><span class="code-lang">Alur</span><pre><code class="language-text">asset_trx_peminjaman_karyawan_item.ket_tolak (baris pengembalian)
+  → getDetail() → &quot;assets[].ket_tolak&quot; (status_item = rusak)
+  → AssetPeminjamanAsset → &quot;Keterangan Kerusakan&quot; di Detail Pengembalian
+</code></pre></div>
+<hr />
+<h2 id="s46"><span class="sec-no">46</span>Ringkasan Database Impact</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Event</th>
+<th>INSERT</th>
+<th>UPDATE</th>
+<th>DELETE</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Ajukan peminjaman</td>
+<td>header, item, notif</td>
+<td>asset_data → proses</td>
+<td>–</td>
+</tr>
+<tr>
+<td>Konfirmasi admin</td>
+<td>notif</td>
+<td>item (keputusan), header (dikonfirmasi/ditolak, jadwal), asset_data (ditolak → tersedia)</td>
+<td>–</td>
+</tr>
+<tr>
+<td>Terima Asset</td>
+<td>asset_log, notif</td>
+<td>asset_data → dipinjam @karyawan, header → aktif</td>
+<td>–</td>
+</tr>
+<tr>
+<td>Batalkan</td>
+<td>notif</td>
+<td>asset_data → tersedia, header → ditolak</td>
+<td>–</td>
+</tr>
+<tr>
+<td>Ajukan pengembalian</td>
+<td>header pengembalian, item, notif</td>
+<td>–</td>
+<td>–</td>
+</tr>
+<tr>
+<td>Konfirmasi pengembalian</td>
+<td>asset_log, notif</td>
+<td>item (kondisi, lokasi tujuan), asset_data → tersedia/rusak @gudang + lokasi, header pengembalian → selesai, peminjaman asal → selesai</td>
+<td>–</td>
+</tr>
+</tbody>
+</table></div>
+<hr />
+<h2 id="s47"><span class="sec-no">47</span>Checklist Implementasi</h2>
+<h3>Database</h3>
+<ul>
+<li class="task done">Header (peminjaman &amp; pengembalian) &amp; item</li>
+<li class="task done">Relasi <code>id_peminjaman_asal</code></li>
+<li class="task done">Index list admin &amp; karyawan</li>
+<li class="task done">Enum status</li>
+<li class="task done">Log serah terima &amp; pengembalian</li>
+<li class="task">Migration CREATE TABLE baseline</li>
+<li class="task">Kolom tanggal diterima &amp; kondisi terpisah</li>
+</ul>
+<h3>Backend</h3>
+<ul>
+<li class="task done">Ajukan, konfirmasi per asset + jadwal, terima, batalkan</li>
+<li class="task done">Ajukan &amp; konfirmasi pengembalian</li>
+<li class="task done">Jatuh tempo &amp; terlambat (tampilan)</li>
+<li class="task done">Integrasi offboarding</li>
+<li class="task">Batal pengajuan oleh karyawan</li>
+<li class="task">Batal/kedaluwarsa oleh admin</li>
+<li class="task">Tolak pengembalian</li>
+<li class="task">Scheduler pengingat jatuh tempo</li>
+<li class="task">Perpanjangan &amp; pengembalian sebagian</li>
+</ul>
+<h3>Mobile</h3>
+<ul>
+<li class="task done">List peminjaman/pengembalian (karyawan &amp; admin)</li>
+<li class="task done">Form pengajuan dengan picker asset &amp; rentang tanggal</li>
+<li class="task done">Detail + Terima/Batalkan/Kembalikan</li>
+<li class="task done">Konfirmasi admin + sheet jadwal</li>
+<li class="task done">Konfirmasi kondisi pengembalian</li>
+<li class="task done">Lokasi gudang tujuan per asset saat pengembalian; lokasi dikosongkan saat asset keluar gudang (v1.1)</li>
+<li class="task">Backfill lokasi asset yang sudah di gudang</li>
+<li class="task done">Banner &amp; kartu di Asset Saya</li>
+<li class="task">Tab riwayat Selesai untuk peminjaman</li>
+<li class="task"><code>maxLength</code> tujuan peminjaman</li>
+</ul>
+<h3>Documentation</h3>
+<ul>
+<li class="task done">Business Flow, DB, API, Mobile, Mapping, Manual Book, Testing</li>
+<li class="task">Screenshot</li>
+</ul>
+<hr />
+<h2 id="s48"><span class="sec-no">48</span>Changelog</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Version</th>
+<th>Date</th>
+<th>Changes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1.3</td>
+<td>2026-10-12</td>
+<td>Mobile: stepper alur status (<code>AssetAlurStepper.peminjaman</code>) dan kartu timeline vertikal per aset (<code>AssetPeminjamanTimelineCards</code>) di detail peminjaman/pengembalian karyawan dan admin (§26.3, 26.5, 26.6). Teks langkah di grup JSON <code>alur</code>. Tidak ada perubahan API.</td>
+</tr>
+<tr>
+<td>1.2</td>
+<td>2026-10-12</td>
+<td>Sinkronisasi dengan kode 12 Okt 2026: path file mobile mengikuti struktur folder baru (<code>UI/Modul/Asset/&lt;Fitur&gt;/</code> berhuruf kapital, model di <code>Repository/Model/Asset/</code>).</td>
+</tr>
+<tr>
+<td>1.1</td>
+<td>2026-10-05</td>
+<td>Konfirmasi pengembalian kini wajib memilih <strong>lokasi gudang per asset</strong> (<code>items[].id_asset_lokasi_m</code>; kolom <code>asset_trx_peminjaman_karyawan_item.id_asset_lokasi_m_tujuan</code> dan <code>asset_data.id_asset_lokasi_m</code>); lokasi dikosongkan saat karyawan menerima pinjaman. BR-014/015/015a, TC-38..40, mobile dropdown Lokasi Tujuan Asset. Nama controller disesuaikan (<code>AssetAdminPeminjaman_c</code>, <code>AssetAdminPengembalian_c</code>, <code>AssetKaryawanPeminjaman_c</code>)</td>
+</tr>
+<tr>
+<td>1.0</td>
+<td>2026-09-26</td>
+<td>Initial documentation — disusun dari source lokal API (Lumen) &amp; MOBILE (Flutter)</td>
+</tr>
+</tbody>
+</table></div>
+    </article>
+
+    <footer>Dokumentasi Peminjaman Asset v1.0 · 26 September 2026 · Disusun dari source lokal API (Lumen) &amp; MOBILE (Flutter). Contoh ID dan nama pada payload adalah data sintetis.</footer>
+  </main>
+</div>
+<button class="to-top" id="to-top" type="button" aria-label="Kembali ke atas">↑</button>
+
+<script>
+(function(){
+  var search=document.getElementById('nav-search');
+  var navs=document.querySelectorAll('.nav');
+  search.addEventListener('input',function(){
+    var q=search.value.trim().toLowerCase();
+    navs.forEach(function(nav){
+      nav.querySelectorAll('.nav-group').forEach(function(g){
+        var any=false;
+        g.querySelectorAll('a').forEach(function(a){
+          var hit=!q||a.textContent.toLowerCase().indexOf(q)>-1;
+          a.hidden=!hit; if(hit) any=true;
+        });
+        g.hidden=!any;
+      });
+    });
+  });
+  var links={};
+  document.querySelectorAll('#nav a').forEach(function(a){links[a.dataset.sec]=a;});
+  var current=null;
+  if('IntersectionObserver' in window){
+    var io=new IntersectionObserver(function(entries){
+      entries.forEach(function(e){
+        if(e.isIntersecting){
+          if(current) current.classList.remove('active');
+          current=links[e.target.id];
+          if(current){current.classList.add('active');var nav=current.closest('.nav');var top=current.offsetTop-nav.offsetTop;if(top<nav.scrollTop||top>nav.scrollTop+nav.clientHeight-30){nav.scrollTop=top-nav.clientHeight/2;}}
+        }
+      });
+    },{rootMargin:'0px 0px -75% 0px'});
+    document.querySelectorAll('.doc h2[id]').forEach(function(h){io.observe(h);});
+  }
+  document.querySelectorAll('.mobile-toc a').forEach(function(a){
+    a.addEventListener('click',function(){a.closest('details').open=false;});
+  });
+  document.getElementById('to-top').addEventListener('click',function(){window.scrollTo({top:0});});
+})();
+</script>
+<script type="module">
+// Fallback renderer: hanya jalan bila viewer belum merender diagram (mis. file dibuka langsung).
+const blocks=[...document.querySelectorAll('pre.mermaid')].filter(function(el){return !el.hasAttribute('data-claude-mermaid-claimed');});
+if(blocks.length){
+  blocks.forEach(function(el){el.setAttribute('data-claude-mermaid-claimed','1');el.dataset.src=el.textContent;});
+  const {default:mermaid}=await import("https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs");
+  const media=window.matchMedia('(prefers-color-scheme: dark)');
+  const render=async function(){
+    const css=getComputedStyle(document.documentElement);
+    const v=function(n){return css.getPropertyValue(n).trim();};
+    mermaid.initialize({startOnLoad:false,securityLevel:'strict',theme:'base',fontFamily:'inherit',
+      themeVariables:{background:v('--surface'),primaryColor:v('--accent-soft'),primaryTextColor:v('--ink'),
+        primaryBorderColor:v('--accent'),lineColor:v('--muted'),secondaryColor:v('--surface-2'),tertiaryColor:v('--surface'),
+        textColor:v('--ink'),mainBkg:v('--accent-soft'),nodeBorder:v('--accent'),clusterBkg:v('--surface-2'),
+        noteBkgColor:v('--surface-2'),noteTextColor:v('--ink'),noteBorderColor:v('--line'),
+        actorBkg:v('--accent-soft'),actorBorder:v('--accent'),actorTextColor:v('--ink'),actorLineColor:v('--muted'),
+        signalColor:v('--ink-2'),signalTextColor:v('--ink'),labelBoxBkgColor:v('--surface-2'),labelTextColor:v('--ink'),
+        edgeLabelBackground:v('--surface'),attributeBackgroundColorOdd:v('--surface'),attributeBackgroundColorEven:v('--surface-2')}});
+    blocks.forEach(function(el){el.removeAttribute('data-processed');el.textContent=el.dataset.src;});
+    try{await mermaid.run({nodes:blocks});}catch(e){console.error(e);}
+  };
+  render();
+  if(media.addEventListener) media.addEventListener('change',render);
+}
+</script>
+<script>
+// Kembali ke index lokal bila dibuka dari komputer, ke index artifact bila dibuka dari claude.ai.
+(function(){var h=location.hostname;var art=location.protocol!=='file:'&&/claude/i.test(h);
+if(art){document.querySelectorAll('a.back').forEach(function(a){a.href='https://claude.ai/artifact/X39UeaJRpBKwqFjswGNqip';a.target='_blank';a.rel='noopener';});
+document.querySelectorAll('.dl').forEach(function(d){d.hidden=true;});}})();
+</script>

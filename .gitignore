@@ -1,0 +1,17 @@
+# Skrip SQL migrasi/pembersihan (internal, jangan dipublikasikan)
+*.sql
+
+# Catatan kerja / draf analisis
+_catatan-*.md
+alur-onboarding-asset-karyawan.md
+
+# File sistem & editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+
+# Cadangan dan sementara
+*.bak
+*.tmp
+*.zip

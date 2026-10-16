@@ -1,0 +1,493 @@
+<title>Dokumentasi Asset Karyawan</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap">
+<style>
+:root{
+  --ground:#F3F5F9; --surface:#FFFFFF; --surface-2:#EAEEF5; --ink:#162033; --ink-2:#3A4559; --muted:#657089;
+  --line:#D9DFEA; --accent:#1F5AA6; --accent-soft:#E3ECF8; --accent-ink:#163F75;
+  --bad:#C22F2F; --bad-bg:#FDE1E1; --wait:#B45F00; --wait-bg:#FFE9C7; --done:#157A41; --done-bg:#D9F2E3;
+  --shadow:0 1px 2px rgba(22,32,51,.06),0 8px 24px rgba(22,32,51,.06);
+  --font:"Plus Jakarta Sans",ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  color-scheme:dark;
+  --ground:#0E1420; --surface:#151D2C; --surface-2:#1C2638; --ink:#E7ECF5; --ink-2:#C3CBDA; --muted:#8E99AF;
+  --line:#28334A; --accent:#7FAEF0; --accent-soft:#1B2A45; --accent-ink:#B8D2F7;
+  --bad:#FF8A8A; --bad-bg:#3D1C1F; --wait:#FFB861; --wait-bg:#3A2A12; --done:#6FD69C; --done-bg:#15321F;
+  --shadow:0 1px 2px rgba(0,0,0,.3),0 8px 24px rgba(0,0,0,.25);
+}}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --ground:#0E1420; --surface:#151D2C; --surface-2:#1C2638; --ink:#E7ECF5; --ink-2:#C3CBDA; --muted:#8E99AF;
+  --line:#28334A; --accent:#7FAEF0; --accent-soft:#1B2A45; --accent-ink:#B8D2F7;
+  --bad:#FF8A8A; --bad-bg:#3D1C1F; --wait:#FFB861; --wait-bg:#3A2A12; --done:#6FD69C; --done-bg:#15321F;
+  --shadow:0 1px 2px rgba(0,0,0,.3),0 8px 24px rgba(0,0,0,.25);
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{background:var(--ground);color:var(--ink);font-family:var(--font);font-size:15px;line-height:1.6;padding-inline:16px}
+a{color:var(--accent)}
+code{font-family:var(--mono);font-size:.86em;background:var(--surface-2);padding:1px 5px;border-radius:5px}
+a:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:6px}
+.wrap{max-width:1120px;margin:0 auto;padding-block:36px 72px;display:grid;gap:40px}
+
+/* Header */
+.head{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:28px;align-items:end;padding-bottom:28px;border-bottom:1px solid var(--line)}
+@media (max-width:760px){.head{grid-template-columns:minmax(0,1fr)}}
+.eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--accent);margin:0 0 8px}
+h1{font-size:clamp(30px,5vw,44px);line-height:1.1;letter-spacing:-.02em;margin:0 0 12px;font-weight:800;text-wrap:balance}
+.lede{margin:0;max-width:64ch;color:var(--ink-2);font-size:16px}
+.stats{display:grid;grid-template-columns:repeat(3,auto);gap:4px 22px;font-family:var(--mono);font-size:12px;color:var(--muted);background:var(--surface);border:1px dashed var(--muted);border-radius:12px;padding:14px 18px;box-shadow:var(--shadow);justify-self:start}
+.stats b{display:block;font-family:var(--font);font-size:26px;font-weight:800;color:var(--ink);font-variant-numeric:tabular-nums;line-height:1.1}
+
+/* Toolbar */
+.toolbar{display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between}
+.search{flex:1 1 280px;max-width:420px;padding:10px 14px;border:1px solid var(--line);border-radius:10px;background:var(--surface);color:var(--ink);font:inherit;font-size:14px}
+.hint{font-size:13px;color:var(--muted);margin:0}
+.mode{display:inline-flex;align-items:center;gap:4px;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:4px}
+.mode-label{font-family:var(--mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);padding:0 8px 0 6px}
+.mode button{font:inherit;font-size:13px;font-weight:600;color:var(--ink-2);background:none;border:0;border-radius:7px;padding:6px 12px;cursor:pointer}
+.mode button:hover{background:var(--surface-2)}
+.mode button[aria-pressed="true"]{background:var(--accent);color:var(--surface)}
+.mode button:disabled{opacity:.45;cursor:not-allowed}
+.mode button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.status{display:flex;align-items:center;gap:8px;margin:-26px 0 0;font-size:13px;color:var(--muted)}
+.status .dot{width:8px;height:8px;border-radius:50%;background:var(--wait);flex:none}
+.status.is-online .dot{background:var(--done)}
+
+/* Stage */
+.stage{display:grid;gap:14px}
+.stage-head{display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 14px}
+.stage-head h2{margin:0;font-size:20px;letter-spacing:-.01em}
+.stage-head p{margin:0;color:var(--muted);font-size:14px}
+.stage-arrow{font-family:var(--mono);font-size:12px;color:var(--accent-ink);background:var(--accent-soft);padding:2px 8px;border-radius:6px}
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:16px}
+@media (max-width:420px){.cards{grid-template-columns:minmax(0,1fr)}}
+
+/* Card as asset tag */
+.card{position:relative;display:flex;flex-direction:column;gap:12px;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:18px 18px 16px;color:inherit;text-decoration:none;transition:border-color .15s,transform .15s,box-shadow .15s}
+.card:hover{border-color:var(--accent);box-shadow:var(--shadow);transform:translateY(-2px)}
+@media (prefers-reduced-motion:reduce){.card{transition:none}.card:hover{transform:none}}
+.card::before{content:"";position:absolute;right:18px;top:-7px;width:12px;height:12px;border-radius:50%;background:var(--ground);border:1px solid var(--line)}
+.tagline{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.code{font-family:var(--mono);font-size:12px;font-weight:600;color:var(--surface);background:var(--accent);padding:3px 8px;border-radius:6px}
+.ver{font-family:var(--mono);font-size:11.5px;color:var(--muted)}
+.card h3{margin:0;font-size:18px;line-height:1.25;text-wrap:balance}
+.card p{margin:0;font-size:14px;color:var(--ink-2)}
+.flow{font-family:var(--mono);font-size:11.5px;color:var(--muted);background:var(--surface-2);border-radius:8px;padding:8px 10px;overflow-wrap:anywhere}
+.meta{display:flex;flex-wrap:wrap;gap:6px}
+.meta span{font-family:var(--mono);font-size:11.5px;padding:2px 8px;border-radius:999px;background:var(--accent-soft);color:var(--accent-ink);font-variant-numeric:tabular-nums}
+.risk{display:grid;grid-template-columns:auto minmax(0,1fr);gap:8px;align-items:start;font-size:13px;color:var(--ink-2);border-top:1px dashed var(--line);padding-top:10px;margin-top:auto}
+.sev{font-family:var(--mono);font-size:10.5px;font-weight:600;padding:2px 7px;border-radius:5px}
+.sev-h{background:var(--bad-bg);color:var(--bad)}
+.sev-m{background:var(--wait-bg);color:var(--wait)}
+.open{font-size:13.5px;font-weight:700;color:var(--accent)}
+.empty{color:var(--muted);font-size:14px;margin:0}
+
+/* Panels */
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:22px;display:grid;gap:14px}
+.panel h2{margin:0;font-size:20px}
+.panel > p{margin:0;color:var(--ink-2);font-size:14px;max-width:78ch}
+.table-wrap{overflow-x:auto}
+table{border-collapse:collapse;width:100%;min-width:560px;font-size:14px}
+th,td{padding:10px 12px;border-bottom:1px solid var(--line);text-align:center}
+th{font-size:12.5px;color:var(--muted);font-weight:700;background:var(--surface-2)}
+th:first-child,td:first-child{text-align:left}
+td:first-child{font-weight:600}
+tr:last-child td{border-bottom:0}
+.y,.n{display:inline-flex;align-items:center;justify-content:center;min-width:64px;padding:3px 8px;border-radius:999px;font-family:var(--mono);font-size:12px;font-weight:600}
+.y{background:var(--done-bg);color:var(--done)}
+.n{background:var(--bad-bg);color:var(--bad)}
+.note{font-size:13px;color:var(--muted);margin:0}
+.groups{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;list-style:none;margin:0;padding:0}
+.groups li{border:1px solid var(--line);border-radius:10px;padding:10px 12px;font-size:13.5px;color:var(--ink-2)}
+.groups b{display:block;font-family:var(--mono);font-size:11.5px;color:var(--accent);font-weight:600}
+footer{color:var(--muted);font-size:13px;border-top:1px solid var(--line);padding-top:18px}
+.dl-table a{font-weight:600}
+</style>
+
+<div class="wrap">
+  <header class="head">
+    <div>
+      <p class="eyebrow">Asset Management · Dokumentasi Teknis &amp; Manual Book</p>
+      <h1>Dokumentasi Asset Karyawan</h1>
+      <p class="lede">Enam belas fitur dan satu dokumen infrastruktur penyimpanan foto yang mengatur perjalanan asset — di tangan karyawan (diterima, dipakai, dikembalikan), di ruangan (dialokasikan dan diterima PIC), dan di gudang (dirawat, diperbaiki, diklaim, dihapus). Setiap dokumen disusun dari source code <code>API</code> (Lumen) dan <code>MOBILE</code> (Flutter) dengan 48 bagian yang sama.</p>
+    </div>
+    <div class="stats" aria-label="Ringkasan">
+      <div><b>17</b>dokumen</div>
+      <div><b>200</b>endpoint</div>
+      <div><b>48</b>bagian/dok</div>
+    </div>
+  </header>
+
+  <div class="toolbar">
+    <input class="search" id="doc-search" type="search" placeholder="Cari fitur, kode, atau status… (mis. KRY06, checklist)" aria-label="Cari dokumen">
+    <div class="mode" role="group" aria-label="Sumber dokumen">
+      <span class="mode-label">Sumber</span>
+      <button type="button" id="mode-auto" data-mode="auto" aria-pressed="true">Otomatis</button>
+      <button type="button" id="mode-online" data-mode="online" aria-pressed="false">Online</button>
+      <button type="button" id="mode-offline" data-mode="offline" aria-pressed="false">Offline</button>
+    </div>
+  </div>
+  <p class="status" id="mode-status" aria-live="polite"><span class="dot"></span><span id="mode-text">Offline — dokumen dibuka dari file lokal di folder ini.</span></p>
+
+  <section class="stage" aria-labelledby="st-masuk">
+    <div class="stage-head">
+      <span class="stage-arrow">gudang → karyawan</span>
+      <h2 id="st-masuk">Asset masuk ke karyawan</h2>
+      <p>Penyerahan awal, tambahan, dan pinjaman.</p>
+    </div>
+    <div class="cards">
+      <a class="card" href="dokumentasi-asset-onboarding-karyawan.html" data-local="dokumentasi-asset-onboarding-karyawan.html" data-online="https://claude.ai/artifact/RzAWjNdYdWxqRvhYySrxdq" data-search="onboarding on boarding kry01 karyawan baru draft proses dikonfirmasi ganti asset">
+        <div class="tagline"><span class="code">KRY01</span><span class="ver">v1.2</span></div>
+        <h3>Onboarding Asset</h3>
+        <p>Admin menyerahkan asset gudang kepada karyawan baru; karyawan memeriksa kondisi fisik tiap asset.</p>
+        <div class="flow">draft / proses → dikonfirmasi</div>
+        <div class="meta"><span>11 endpoint</span><span>tanpa approval</span></div>
+        <div class="risk"><span class="sev sev-m">RISK</span><span>Penggantian asset gagal bila deskripsi asset kosong.</span></div>
+        <span class="open">Buka dokumen →</span>
+      </a>
+      <a class="card" href="dokumentasi-asset-request-penambahan-karyawan.html" data-local="dokumentasi-asset-request-penambahan-karyawan.html" data-online="https://claude.ai/artifact/4HSwVW1YM2BGAmTFmjKrVs" data-search="request penambahan pengajuan kry-03-1 asset tambahan alokasi tolak dikonfirmasi all-or-nothing">
+        <div class="tagline"><span class="code">KRY-03-1</span><span class="ver">v1.3</span></div>
+        <h3>Request &amp; Penambahan Asset</h3>
+        <p>Asset tambahan untuk karyawan aktif — diajukan karyawan (Pengajuan) atau langsung oleh admin (Penambahan). Serah terima all-or-nothing.</p>
+        <div class="flow">draft / proses → dikonfirmasi · ditolak</div>
+        <div class="meta"><span>17 endpoint</span><span>2 jalur</span></div>
+        <div class="risk"><span class="sev sev-h">TINGGI</span><span>Laporan rusak saat konfirmasi membuat transaksi &amp; asset macet.</span></div>
+        <span class="open">Buka dokumen →</span>
+      </a>
+      <a class="card" href="dokumentasi-asset-peminjaman-karyawan.html" data-local="dokumentasi-asset-peminjaman-karyawan.html" data-online="https://claude.ai/artifact/JV4AEk58cSvwbXcRno7fF1" data-search="peminjaman pengembalian pinjam kry05 dipinjam aktif terlambat jatuh tempo">
+        <div class="tagline"><span class="code">KRY05</span><span class="ver">v1.3</span></div>
+        <h3>Peminjaman Asset</h3>
+        <p>Karyawan meminjam asset gudang untuk periode tertentu, lalu mengembalikannya dan admin menilai kondisinya.</p>
+        <div class="flow">pengajuan → dikonfirmasi → aktif → selesai</div>
+        <div class="meta"><span>15 endpoint</span><span>+ pengembalian</span></div>
+        <div class="risk"><span class="sev sev-h">TINGGI</span><span>Asset terkunci bila peminjaman disetujui tapi tidak pernah diterima.</span></div>
+        <span class="open">Buka dokumen →</span>
+      </a>
+    </div>
+  </section>
+
+  <section class="stage" aria-labelledby="st-pakai">
+    <div class="stage-head">
+      <span class="stage-arrow">tetap di karyawan</span>
+      <h2 id="st-pakai">Asset selama dipakai</h2>
+      <p>Perbaikan, peningkatan, dan pemeliharaan berkala tanpa memindahkan kepemilikan secara permanen.</p>
+    </div>
+    <div class="cards">
+      <a class="card" href="dokumentasi-asset-kerusakan-karyawan.html" data-local="dokumentasi-asset-kerusakan-karyawan.html" data-online="https://claude.ai/artifact/41QvPgr7mFSge5gi7SQCjQ" data-search="kerusakan rusak kry06 unit utama kelengkapan pengganti checklist menunggu pengambilan">
+        <div class="tagline"><span class="code">KRY06</span><span class="ver">v1.4</span></div>
+        <h3>Laporan Kerusakan Asset</h3>
+        <p>Lapor kerusakan per komponen; unit pengganti sekategori dicek karyawan lewat checklist sampai dinyatakan normal.</p>
+        <div class="flow">pengajuan → menunggu_pengambilan → (menunggu_review_checklist) → selesai</div>
+        <div class="meta"><span>13 endpoint</span><span>15 test</span></div>
+        <div class="risk"><span class="sev sev-m">SEDANG</span><span>Unit pengganti tertahan <code>proses</code> di gudang sampai laporan diselesaikan admin.</span></div>
+        <span class="open">Buka dokumen →</span>
+      </a>
+      <a class="card" href="dokumentasi-asset-upgrade-karyawan.html" data-local="dokumentasi-asset-upgrade-karyawan.html" data-online="https://claude.ai/artifact/K1Wo3GuU9sn3VjMtFjsNPz" data-search="upgrade kry03 komponen spesifikasi dalam service dalam_perbaikan teknisi kirim ulang">
+        <div class="tagline"><span class="code">KRY03-2</span><span class="ver">v1.2</span></div>
+        <h3>Upgrade Asset</h3>
+        <p>Spesifikasi komponen ditingkatkan: asset diambil sementara, diupgrade teknisi, lalu kembali ke karyawan yang sama.</p>
+        <div class="flow">pengajuan → menunggu_pengambilan → dalam_service → menunggu_pengembalian → menunggu_review → selesai</div>
+        <div class="meta"><span>15 endpoint</span><span>5 test</span><span>2 jalur</span></div>
+        <div class="risk"><span class="sev sev-m">SEDANG</span><span>Status asset tidak mencerminkan posisi fisik selama service; tidak ada pembatalan.</span></div>
+        <span class="open">Buka dokumen →</span>
+      </a>
+      <a class="card" href="dokumentasi-asset-pemeliharaan-karyawan.html" data-local="dokumentasi-asset-pemeliharaan-karyawan.html" data-online="https://claude.ai/artifact/JVsQrBXAggymxCDz1tT2St" data-search="pemeliharaan pml01 preventive maintenance pm jatuh tempo pic pendamping vendor hadir langsung diserahkan interval watchlist">
+        <div class="tagline"><span class="code">PML01</span><span class="ver">v1.1</span></div>
+        <h3>Pemeliharaan Terjadwal</h3>
+        <p>Asset diservis berkala sesuai interval: jadwal disepakati karyawan, PM didampingi PIC atau lewat Admin/HR, hasil lima tingkat menentukan tindak lanjut.</p>
+        <div class="flow">konfirmasi_jadwal → penjadwalan → pelaksanaan → menunggu_review → selesai</div>
+        <div class="meta"><span>16 endpoint</span><span>15 test</span><span>2 mekanisme</span></div>
+        <div class="risk"><span class="sev sev-h">TINGGI</span><span>Skema dari SQL manual — wajib dijalankan sebelum fitur dipakai.</span></div>
+        <span class="open">Buka dokumen →</span>
+      </a>
+    </div>
+  </section>
+
+  <section class="stage" aria-labelledby="st-keluar">
+    <div class="stage-head">
+      <span class="stage-arrow">karyawan → gudang</span>
+      <h2 id="st-keluar">Asset keluar dari karyawan</h2>
+      <p>Pengembalian sebagian atau penarikan seluruh asset.</p>
+    </div>
+    <div class="cards">
+      <a class="card" href="dokumentasi-asset-retur-karyawan.html" data-local="dokumentasi-asset-retur-karyawan.html" data-online="https://claude.ai/artifact/22ALBb1va2HSoVNsP8NNih" data-search="retur kry04 tukar unit tidak digunakan rusak pengganti pengajuan disetujui">
+        <div class="tagline"><span class="code">KRY04</span><span class="ver">v1.6</span></div>
+        <h3>Retur Asset</h3>
+        <p>Karyawan mengembalikan asset (rusak, tidak digunakan, tukar unit); admin memutuskan per asset dan dapat memberi pengganti.</p>
+        <div class="flow">pengajuan → disetujui → selesai · ditolak</div>
+        <div class="meta"><span>9 endpoint</span><span>menu "Pengembalian"</span></div>
+        <div class="risk"><span class="sev sev-m">SEDANG</span><span>Tidak ada batal/kedaluwarsa setelah disetujui; unit pengganti tertahan.</span></div>
+        <span class="open">Buka dokumen →</span>
+      </a>
+      <a class="card" href="dokumentasi-asset-offboarding-karyawan.html" data-local="dokumentasi-asset-offboarding-karyawan.html" data-online="https://claude.ai/artifact/XttebPezKBzVWngbzMyvZ5" data-search="offboarding off boarding kry02 resign penarikan seluruh asset draft pengajuan dikonfirmasi">
+        <div class="tagline"><span class="code">KRY02</span><span class="ver">v1.4</span></div>
+        <h3>Off Boarding Asset</h3>
+        <p>Admin menarik seluruh asset karyawan; asset pinjaman otomatis dibuatkan pengembalian sebagai transaksi child.</p>
+        <div class="flow">draft → pengajuan → dikonfirmasi → selesai</div>
+        <div class="meta"><span>11 endpoint</span><span>12 test</span></div>
+        <div class="risk"><span class="sev sev-h">TINGGI</span><span>Karyawan yang sudah nonaktif tidak bisa konfirmasi — off boarding macet.</span></div>
+        <span class="open">Buka dokumen →</span>
+      </a>
+    </div>
+  </section>
+
+  <section class="stage" aria-labelledby="st-gudang">
+    <div class="stage-head">
+      <span class="stage-arrow">gudang · pemeliharaan lanjutan</span>
+      <h2 id="st-gudang">Asset di gudang: rawat, perbaiki, klaim, hapus</h2>
+      <p>Pemeliharaan asset gudang sampai disposal, beserta master PIC.</p>
+    </div>
+    <div class="cards">
+      <a class="card" href="dokumentasi-asset-pemeliharaan-gudang.html" data-local="dokumentasi-asset-pemeliharaan-gudang.html" data-online="https://claude.ai/artifact/8sUsWedPNGp2WmsMtz2o6p" data-search="pemeliharaan gudang pml01 pm jatuh tempo h-14 pic pendamping checklist komponen hasil terberat">
+        <div class="tagline"><span class="code">PML01</span><span class="ver">v1.2</span></div>
+        <h3>Pemeliharaan Gudang</h3>
+        <p>Asset cadangan di gudang diservis berkala: PM dijadwalkan admin, PIC Pendamping mengisi checklist komponen, hasil terberat menentukan tindak lanjut.</p>
+        <div class="flow">penjadwalan → menunggu_review → selesai · dibatalkan</div>
+        <div class="meta"><span>13 endpoint</span><span>8 test API</span></div>
+        <div class="risk"><span class="sev sev-h">TINGGI</span><span>Skema dari SQL manual — wajib dijalankan sebelum fitur dipakai.</span></div>
+        <span class="open">Buka dokumen →</span>
+      </a>
+      <a class="card" href="dokumentasi-asset-perbaikan.html" data-local="dokumentasi-asset-perbaikan.html" data-online="https://claude.ai/artifact/6QBg6YAHq1NUM6fBAiXSB4" data-search="perbaikan pml02 service pic service vendor progres hasil unit baru">
+        <div class="tagline"><span class="code">PML02</span><span class="ver">v1.1</span></div>
+        <h3>Perbaikan Asset</h3>
+        <p>Aset gudang rusak diperbaiki vendor atau tim internal; PIC Service menerima, mengirim, memantau progres, lalu mengisi hasil per aset.</p>
+        <div class="flow">menunggu_serah_terima → dalam_service → menunggu_pengembalian → menunggu_review → selesai</div>
+        <div class="meta"><span>19 endpoint</span><span>6 test API</span></div>
+        <div class="risk"><span class="sev sev-m">SEDANG</span><span>Tidak ada pembatalan; PML01/PML03 belum membuat perbaikan otomatis.</span></div>
+        <span class="open">Buka dokumen →</span>
+      </a>
+      <a class="card" href="dokumentasi-asset-garansi.html" data-local="dokumentasi-asset-garansi.html" data-online="https://claude.ai/artifact/SkHMiba5cKfYo3n4P78sAU" data-search="klaim garansi pml03 warranty pic claim vendor nomor referensi ditolak">
+        <div class="tagline"><span class="code">PML03</span><span class="ver">v1.1</span></div>
+        <h3>Klaim Garansi</h3>
+        <p>Aset gudang rusak yang masih bergaransi diklaim ke vendor; klaim ditolak diarahkan ke Perbaikan atau Disposal.</p>
+        <div class="flow">menunggu_serah_terima → proses_klaim → menunggu_pengembalian → menunggu_review → selesai</div>
+        <div class="meta"><span>17 endpoint</span><span>5 test API</span></div>
+        <div class="risk"><span class="sev sev-m">SEDANG</span><span>Dokumen bisnis menyebut ruangan/karyawan; implementasi hanya gudang.</span></div>
+        <span class="open">Buka dokumen →</span>
+      </a>
+      <a class="card" href="dokumentasi-asset-disposal.html" data-local="dokumentasi-asset-disposal.html" data-online="https://claude.ai/artifact/2gFoBwzrsYeytv5ZmDo8fT" data-search="disposal pml04 penghapusan lelang jual donasi pemusnahan bukti disposed arsip">
+        <div class="tagline"><span class="code">PML04</span><span class="ver">v1.1</span></div>
+        <h3>Disposal Asset</h3>
+        <p>Admin menghapus aset gudang rusak dari daftar aktif: keputusan, pelaksanaan per metode dengan bukti wajib, lalu penyelesaian.</p>
+        <div class="flow">menunggu_disposal → siap diselesaikan → disposed</div>
+        <div class="meta"><span>6 endpoint</span><span>20 test</span></div>
+        <div class="risk"><span class="sev sev-m">SEDANG</span><span>Disposal tidak dibuat otomatis dari PML01/02/03; tidak ada pembatalan.</span></div>
+        <span class="open">Buka dokumen →</span>
+      </a>
+      <a class="card" href="dokumentasi-asset-pendamping-pic.html" data-local="dokumentasi-asset-pendamping-pic.html" data-online="https://claude.ai/artifact/4kjHNZDxgZwPnEk164EfCY" data-search="pendamping pic master tugas pic dashboard ringkasan nonaktif">
+        <div class="tagline"><span class="code">PIC</span><span class="ver">v1.2</span></div>
+        <h3>Pendamping &amp; Tugas PIC</h3>
+        <p>Satu master pendamping dipakai sebagai PIC di PM gudang, klaim garansi, dan perbaikan; karyawan PIC punya satu dashboard tugas.</p>
+        <div class="flow">daftar → tunjuk PIC → kerjakan → nonaktifkan</div>
+        <div class="meta"><span>5 endpoint</span><span>5 test mobile</span></div>
+        <div class="risk"><span class="sev sev-l">RENDAH</span><span>Pesan penolakan nonaktif hanya menyebut pemeliharaan gudang.</span></div>
+        <span class="open">Buka dokumen →</span>
+      </a>
+    </div>
+  </section>
+
+  <section class="stage" aria-labelledby="st-ruangan">
+    <div class="stage-head">
+      <span class="stage-arrow">gudang → ruangan</span>
+      <h2 id="st-ruangan">Asset masuk ke ruangan</h2>
+      <p>Admin/HR mengalokasikan aset gudang ke ruangan; PIC Ruangan menerima dan memeriksanya.</p>
+    </div>
+    <div class="cards">
+      <a class="card" href="dokumentasi-asset-onboarding-ruangan.html" data-local="dokumentasi-asset-onboarding-ruangan.html" data-online="https://claude.ai/artifact/PvgQQTG8wy22voxKaAyomx" data-search="onboarding ruangan alk-rgn01 alokasi pic ruangan serah terima checklist pengganti ronde admin hr">
+        <div class="tagline"><span class="code">ALK-RGN01</span><span class="ver">v1.0</span></div>
+        <h3>Onboarding Ruangan</h3>
+        <p>Aset gudang dialokasikan ke ruangan; PIC menilai tiap aset, aset rusak diganti per ronde, lalu Admin/HR mengonfirmasi.</p>
+        <div class="flow">menunggu_serah_terima → menunggu_review → (pengganti, ronde + 1) → selesai</div>
+        <div class="meta"><span>10 endpoint</span><span>17 test API</span><span>18 test mobile</span></div>
+        <div class="risk"><span class="sev sev-h">TINGGI</span><span>Skema bergantung pada SQL manual; belum ada pembatalan alokasi.</span></div>
+        <span class="open">Buka dokumen →</span>
+      </a>
+      <a class="card" href="dokumentasi-asset-penambahan-ruangan.html" data-local="dokumentasi-asset-penambahan-ruangan.html" data-online="https://claude.ai/artifact/Q13Gc2WguNBMrqv2EgGpZ8" data-search="penambahan asset ruangan aktif alk-rgn04 request pengajuan pic jalur a jalur b setujui tolak serah terima pengganti ronde admin hr">
+        <div class="tagline"><span class="code">ALK-RGN04</span><span class="ver">v1.0</span></div>
+        <h3>Penambahan Asset Ruangan</h3>
+        <p>Ruangan aktif ditambah aset lewat pengajuan PIC (disetujui atau ditolak Admin/HR) atau inisiasi langsung Admin/HR; serah terima dan penggantian aset rusak sama dengan onboarding ruangan.</p>
+        <div class="flow">menunggu_persetujuan → menunggu_serah_terima → menunggu_review → selesai</div>
+        <div class="meta"><span>14 endpoint</span><span>12 test API</span><span>11 test mobile</span></div>
+        <div class="risk"><span class="sev sev-h">TINGGI</span><span>Kolom status_approval harus enum di database; belum ada pembatalan oleh Admin.</span></div>
+        <span class="open">Buka dokumen →</span>
+      </a>
+    </div>
+  </section>
+
+  <section class="stage" aria-labelledby="st-ruangan-keluar">
+    <div class="stage-head">
+      <span class="stage-arrow">ruangan → gudang</span>
+      <h2 id="st-ruangan-keluar">Asset keluar dari ruangan</h2>
+      <p>PIC Ruangan mengajukan retur; Admin/HR memutuskan per asset dan menerimanya ke gudang.</p>
+    </div>
+    <div class="cards">
+      <a class="card" href="dokumentasi-asset-retur-ruangan.html" data-local="dokumentasi-asset-retur-ruangan.html" data-online="https://claude.ai/artifact/Xn76iWZKQjWToT53cf6UbJ" data-search="retur asset ruangan alk-rgn06 pic ruangan pengajuan keputusan per asset pengganti tukar unit rusak tidak digunakan terima asset gudang admin hr">
+        <div class="tagline"><span class="code">ALK-RGN06</span><span class="ver">v1.0</span></div>
+        <h3>Retur Asset Ruangan</h3>
+        <p>PIC Ruangan mengajukan retur asset ruangannya; Admin/HR memutuskan per asset (+ pengganti), lalu menerima asset dan memilih gudang tujuan tiap asset. Alur sama dengan retur karyawan.</p>
+        <div class="flow">pengajuan → dikonfirmasi → diterima (atau ditolak)</div>
+        <div class="meta"><span>9 endpoint</span><span>16 test API</span><span>25 test mobile</span></div>
+        <div class="risk"><span class="sev sev-m">SEDANG</span><span>Skrip unique no_trx per company belum dikonfirmasi dijalankan; belum ada jalur batal/edit.</span></div>
+        <span class="open">Buka dokumen →</span>
+      </a>
+    </div>
+  </section>
+
+  <section class="stage" aria-labelledby="st-infra">
+    <div class="stage-head">
+      <span class="stage-arrow">infrastruktur · penyimpanan file</span>
+      <h2 id="st-infra">Penyimpanan foto dan bukti</h2>
+      <p>Cara API menyimpan dan menyajikan foto asset.</p>
+    </div>
+    <div class="cards">
+      <a class="card" href="dokumentasi-minio-object-storage.html" data-local="dokumentasi-minio-object-storage.html" data-online="https://claude.ai/artifact/GkvRQUWNM5YPvct2JoFVtg" data-search="minio object storage s3 bucket presigned url foto bukti upload key env konfigurasi">
+        <div class="tagline"><span class="code">API</span><span class="ver">v1.0</span></div>
+        <h3>MinIO Object Storage</h3>
+        <p>Foto garansi, perbaikan, dan disposal disimpan di bucket MinIO privat dibaca lewat presigned URL sementara; fitur baru memakai satu pintu ObjectStorageManager.</p>
+        <div class="flow">validasi gambar → upload key acak → simpan key → presigned URL</div>
+        <div class="meta"><span>5 endpoint upload</span><span>21 test</span><span>siap untuk fitur baru</span></div>
+        <div class="risk"><span class="sev sev-m">SEDANG</span><span>Koneksi MinIO nyata belum diverifikasi; object yatim belum dibersihkan otomatis.</span></div>
+        <span class="open">Buka dokumen →</span>
+      </a>
+    </div>
+  </section>
+
+  <p class="empty" id="no-result" hidden>Tidak ada dokumen yang cocok. Coba kode fitur (mis. KRY04) atau nama status.</p>
+
+  <section class="panel" aria-labelledby="matrix-title">
+    <h2 id="matrix-title">Pengecekan lintas fitur</h2>
+    <p>Saat transaksi baru dibuat untuk asset yang dipegang karyawan, apakah sistem menolak asset yang sedang diproses di fitur lain? Hasil penelusuran source yang tercatat di dokumen Retur, Off Boarding, Kerusakan, Upgrade, dan Pemeliharaan (diverifikasi ulang terhadap kode 12 Okt 2026).</p>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>Saat membuat…</th><th>Retur aktif</th><th>Off Boarding aktif</th><th>Kerusakan aktif</th><th>Upgrade aktif</th><th>Pemeliharaan aktif</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Retur (KRY04)</td><td><span class="y">dicek</span></td><td><span class="y">dicek</span></td><td><span class="y">dicek</span></td><td><span class="y">dicek</span></td><td><span class="y">dicek</span></td></tr>
+          <tr><td>Off Boarding (KRY02)</td><td><span class="y">dicek</span></td><td><span class="y">dicek</span></td><td><span class="y">dicek</span></td><td><span class="y">dicek</span></td><td><span class="y">dicek</span></td></tr>
+          <tr><td>Kerusakan (KRY06)</td><td><span class="y">dicek</span></td><td><span class="y">dicek</span></td><td><span class="y">dicek</span></td><td><span class="y">dicek</span></td><td><span class="y">dicek</span></td></tr>
+          <tr><td>Upgrade (KRY03)</td><td><span class="y">dicek</span></td><td><span class="y">dicek</span></td><td><span class="y">dicek</span></td><td><span class="y">dicek</span></td><td><span class="y">dicek</span></td></tr>
+          <tr><td>Pemeliharaan (PML01)</td><td><span class="y">dicek</span></td><td><span class="y">dicek</span></td><td><span class="y">dicek</span></td><td><span class="y">dicek</span></td><td><span class="y">dicek</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="note">Off Boarding juga menolak pengembalian pinjaman yang masih berjalan; Retur hanya menolak asset berstatus <code>dipinjam</code>. Seluruh sel kini "dicek": Retur menambah pengecekan Kerusakan dan Upgrade (RISK-001 dokumen Kerusakan/Upgrade dan RISK-003 dokumen Retur ditutup).</p>
+  </section>
+
+  <section class="panel" aria-labelledby="structure-title">
+    <h2 id="structure-title">Isi setiap dokumen</h2>
+    <p>Semua dokumen memakai 48 bagian yang sama, dikelompokkan di navigasi samping.</p>
+    <ul class="groups">
+      <li><b>§1–15</b>Gambaran, aturan bisnis, flow, status</li>
+      <li><b>§16–19</b>Database, relasi, data dictionary, index</li>
+      <li><b>§20–24</b>Backend &amp; kontrak API</li>
+      <li><b>§25–30</b>Mobile &amp; mapping UI → JSON → DB</li>
+      <li><b>§31–35</b>Validasi, error, audit, notifikasi, security</li>
+      <li><b>§36–37</b>Manual book &amp; kondisi tombol</li>
+      <li><b>§38–41</b>Testing, temuan, edge case, risiko</li>
+      <li><b>§42–48</b>Referensi developer &amp; changelog</li>
+    </ul>
+  </section>
+
+  <section class="stage" id="unduh" aria-labelledby="st-unduh">
+    <div class="stage-head">
+      <span class="stage-arrow">unduh</span>
+      <h2 id="st-unduh">Unduh dokumen</h2>
+      <p>Setiap dokumen tersedia sebagai HTML (tampilan lengkap, diagram Mermaid memerlukan internet) dan Markdown (teks mentah).</p>
+    </div>
+    <table class="dl-table"><thead><tr><th>Dokumen</th><th>HTML</th><th>Markdown</th></tr></thead><tbody>
+      <tr><td>Dokumentasi Teknis & Manual Book — Disposal Asset (PML04)</td><td><a href="dokumentasi-asset-disposal.html" download>HTML</a></td><td><a href="dokumentasi-asset-disposal.md" download>Markdown</a></td></tr>
+      <tr><td>Dokumentasi Teknis & Manual Book — Klaim Garansi Asset (PML03)</td><td><a href="dokumentasi-asset-garansi.html" download>HTML</a></td><td><a href="dokumentasi-asset-garansi.md" download>Markdown</a></td></tr>
+      <tr><td>Dokumentasi Teknis & Manual Book — Laporan Kerusakan Asset Karyawan</td><td><a href="dokumentasi-asset-kerusakan-karyawan.html" download>HTML</a></td><td><a href="dokumentasi-asset-kerusakan-karyawan.md" download>Markdown</a></td></tr>
+      <tr><td>Dokumentasi Teknis & Manual Book — Off Boarding Asset Karyawan</td><td><a href="dokumentasi-asset-offboarding-karyawan.html" download>HTML</a></td><td><a href="dokumentasi-asset-offboarding-karyawan.md" download>Markdown</a></td></tr>
+      <tr><td>Dokumentasi Teknis & Manual Book — Asset Onboarding Karyawan</td><td><a href="dokumentasi-asset-onboarding-karyawan.html" download>HTML</a></td><td><a href="dokumentasi-asset-onboarding-karyawan.md" download>Markdown</a></td></tr>
+      <tr><td>Dokumentasi Teknis & Manual Book — Alokasi Asset ke Ruangan / Onboarding Ruangan (ALK-RGN01)</td><td><a href="dokumentasi-asset-onboarding-ruangan.html" download>HTML</a></td><td><a href="dokumentasi-asset-onboarding-ruangan.md" download>Markdown</a></td></tr>
+      <tr><td>Dokumentasi Teknis & Manual Book — Pemeliharaan Terjadwal Asset Gudang</td><td><a href="dokumentasi-asset-pemeliharaan-gudang.html" download>HTML</a></td><td><a href="dokumentasi-asset-pemeliharaan-gudang.md" download>Markdown</a></td></tr>
+      <tr><td>Dokumentasi Teknis & Manual Book — Pemeliharaan Terjadwal Asset Karyawan</td><td><a href="dokumentasi-asset-pemeliharaan-karyawan.html" download>HTML</a></td><td><a href="dokumentasi-asset-pemeliharaan-karyawan.md" download>Markdown</a></td></tr>
+      <tr><td>Dokumentasi Teknis & Manual Book — Peminjaman Asset Karyawan</td><td><a href="dokumentasi-asset-peminjaman-karyawan.html" download>HTML</a></td><td><a href="dokumentasi-asset-peminjaman-karyawan.md" download>Markdown</a></td></tr>
+      <tr><td>Dokumentasi Teknis & Manual Book — Penambahan Asset ke Ruangan Aktif (ALK-RGN04)</td><td><a href="dokumentasi-asset-penambahan-ruangan.html" download>HTML</a></td><td><a href="dokumentasi-asset-penambahan-ruangan.md" download>Markdown</a></td></tr>
+      <tr><td>Dokumentasi Teknis & Manual Book — Master Pendamping & Tugas PIC</td><td><a href="dokumentasi-asset-pendamping-pic.html" download>HTML</a></td><td><a href="dokumentasi-asset-pendamping-pic.md" download>Markdown</a></td></tr>
+      <tr><td>Dokumentasi Teknis & Manual Book — Perbaikan Asset (PML02)</td><td><a href="dokumentasi-asset-perbaikan.html" download>HTML</a></td><td><a href="dokumentasi-asset-perbaikan.md" download>Markdown</a></td></tr>
+      <tr><td>Dokumentasi Teknis & Manual Book — Request / Penambahan Asset Karyawan</td><td><a href="dokumentasi-asset-request-penambahan-karyawan.html" download>HTML</a></td><td><a href="dokumentasi-asset-request-penambahan-karyawan.md" download>Markdown</a></td></tr>
+      <tr><td>Dokumentasi Teknis & Manual Book — Retur Asset Karyawan</td><td><a href="dokumentasi-asset-retur-karyawan.html" download>HTML</a></td><td><a href="dokumentasi-asset-retur-karyawan.md" download>Markdown</a></td></tr>
+      <tr><td>Dokumentasi Teknis & Manual Book — Retur Asset Ruangan (ALK-RGN06)</td><td><a href="dokumentasi-asset-retur-ruangan.html" download>HTML</a></td><td><a href="dokumentasi-asset-retur-ruangan.md" download>Markdown</a></td></tr>
+      <tr><td>Dokumentasi Teknis & Manual Book — Upgrade Asset Karyawan</td><td><a href="dokumentasi-asset-upgrade-karyawan.html" download>HTML</a></td><td><a href="dokumentasi-asset-upgrade-karyawan.md" download>Markdown</a></td></tr>
+      <tr><td>Dokumentasi Teknis — MinIO Object Storage (API)</td><td><a href="dokumentasi-minio-object-storage.html" download>HTML</a></td><td><a href="dokumentasi-minio-object-storage.md" download>Markdown</a></td></tr>
+    </tbody></table>
+  </section>
+
+  <footer>Dokumentasi Asset Karyawan · diperbarui 15 Oktober 2026 · disusun dari source lokal API (Lumen) &amp; MOBILE (Flutter).</footer>
+</div>
+
+<script>
+(function(){
+  var input=document.getElementById('doc-search');
+  var cards=Array.prototype.slice.call(document.querySelectorAll('.card'));
+  var stages=Array.prototype.slice.call(document.querySelectorAll('.stage'));
+  var empty=document.getElementById('no-result');
+  input.addEventListener('input',function(){
+    var q=input.value.trim().toLowerCase();
+    var total=0;
+    cards.forEach(function(card){
+      var hit=!q||(card.textContent+' '+card.dataset.search).toLowerCase().indexOf(q)>-1;
+      card.hidden=!hit; if(hit) total++;
+    });
+    stages.forEach(function(stage){
+      stage.hidden=!stage.querySelector('.card:not([hidden])');
+    });
+    empty.hidden=total>0;
+  });
+})();
+
+(function(){
+  var KEY='asset-docs-mode';
+  var host=location.hostname;
+  var localAvailable=location.protocol==='file:'||!/claude/i.test(host);
+  var cards=Array.prototype.slice.call(document.querySelectorAll('a.card'));
+  var buttons=Array.prototype.slice.call(document.querySelectorAll('.mode button'));
+  var status=document.getElementById('mode-status');
+  var text=document.getElementById('mode-text');
+  var choice='auto';
+  try{choice=localStorage.getItem(KEY)||'auto';}catch(e){}
+  if(!localAvailable){
+    document.getElementById('mode-offline').disabled=true;
+    document.getElementById('mode-offline').title='File lokal hanya tersedia saat halaman dibuka dari komputer.';
+    if(choice==='offline') choice='auto';
+  }
+  function effective(){
+    if(!localAvailable) return 'online';
+    if(choice==='auto') return navigator.onLine?'online':'offline';
+    return choice;
+  }
+  function apply(){
+    var mode=effective();
+    cards.forEach(function(a){
+      if(mode==='online'){a.href=a.dataset.online;a.target='_blank';a.rel='noopener';}
+      else{a.href=a.dataset.local;a.removeAttribute('target');a.removeAttribute('rel');}
+    });
+    buttons.forEach(function(b){b.setAttribute('aria-pressed',String(b.dataset.mode===choice));});
+    status.classList.toggle('is-online',mode==='online');
+    var why=choice==='auto'?(localAvailable?' (otomatis: '+(navigator.onLine?'terhubung ke internet':'tidak ada koneksi')+')':' (halaman ini dibuka dari claude.ai)'):'';
+    text.textContent=mode==='online'
+      ?'Online — dokumen dibuka dari artifact di claude.ai, tab baru'+why+'.'
+      :'Offline — dokumen dibuka dari file lokal di folder ini'+why+'.';
+  }
+  buttons.forEach(function(b){
+    b.addEventListener('click',function(){
+      if(b.disabled) return;
+      choice=b.dataset.mode;
+      try{localStorage.setItem(KEY,choice);}catch(e){}
+      apply();
+    });
+  });
+  window.addEventListener('online',apply);
+  window.addEventListener('offline',apply);
+  apply();
+})();
+</script>

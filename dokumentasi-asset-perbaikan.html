@@ -1,0 +1,1724 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Perbaikan Asset</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap">
+<style>
+:root{
+  --ground:#F3F5F9; --surface:#FFFFFF; --surface-2:#EAEEF5; --ink:#162033; --ink-2:#3A4559; --muted:#657089;
+  --line:#D9DFEA; --accent:#1F5AA6; --accent-soft:#E3ECF8; --accent-ink:#163F75;
+  --wait:#B45F00; --wait-bg:#FFE9C7; --draft:#0078A8; --draft-bg:#D6F1FA;
+  --bad:#C22F2F; --bad-bg:#FDE1E1; --done:#157A41; --done-bg:#D9F2E3; --neutral:#4E5A70; --neutral-bg:#E6EAF1;
+  --code-bg:#0F1A2C; --code-ink:#DCE6F5; --code-muted:#8FA3C2;
+  --shadow:0 1px 2px rgba(22,32,51,.06),0 8px 24px rgba(22,32,51,.06);
+  --font:"Plus Jakarta Sans",ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  color-scheme:dark;
+  --ground:#0E1420; --surface:#151D2C; --surface-2:#1C2638; --ink:#E7ECF5; --ink-2:#C3CBDA; --muted:#8E99AF;
+  --line:#28334A; --accent:#7FAEF0; --accent-soft:#1B2A45; --accent-ink:#B8D2F7;
+  --wait:#FFB861; --wait-bg:#3A2A12; --draft:#6CD3F5; --draft-bg:#113442; --bad:#FF8A8A; --bad-bg:#3D1C1F;
+  --done:#6FD69C; --done-bg:#15321F; --neutral:#B7C1D3; --neutral-bg:#243047;
+  --code-bg:#0A101B; --code-ink:#DCE6F5; --code-muted:#7F93B3; --shadow:0 1px 2px rgba(0,0,0,.3),0 8px 24px rgba(0,0,0,.25);
+}}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --ground:#0E1420; --surface:#151D2C; --surface-2:#1C2638; --ink:#E7ECF5; --ink-2:#C3CBDA; --muted:#8E99AF;
+  --line:#28334A; --accent:#7FAEF0; --accent-soft:#1B2A45; --accent-ink:#B8D2F7;
+  --wait:#FFB861; --wait-bg:#3A2A12; --draft:#6CD3F5; --draft-bg:#113442; --bad:#FF8A8A; --bad-bg:#3D1C1F;
+  --done:#6FD69C; --done-bg:#15321F; --neutral:#B7C1D3; --neutral-bg:#243047;
+  --code-bg:#0A101B; --code-ink:#DCE6F5; --code-muted:#7F93B3; --shadow:0 1px 2px rgba(0,0,0,.3),0 8px 24px rgba(0,0,0,.25);
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth;scroll-padding-top:24px}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+body{background:var(--ground);color:var(--ink);font-family:var(--font);font-size:15px;line-height:1.65;padding-inline:16px}
+a{color:var(--accent)}
+a:focus-visible,button:focus-visible,input:focus-visible,summary:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:4px}
+
+.shell{max-width:1320px;margin:0 auto;display:grid;grid-template-columns:270px minmax(0,1fr);gap:40px;padding-block:28px 80px}
+@media (max-width:960px){.shell{grid-template-columns:minmax(0,1fr);gap:20px}}
+
+/* Navigasi */
+.sidebar{position:sticky;top:calc(env(safe-area-inset-top,0px) + 16px);align-self:start;max-height:calc(100vh - 32px);display:flex;flex-direction:column;gap:12px}
+@media (max-width:960px){.sidebar{display:none}}
+.back{font-size:13px;font-weight:600;text-decoration:none}
+.back-mobile{display:none;margin:0 0 8px}
+@media (max-width:960px){.back-mobile{display:block}}
+.brand{display:flex;align-items:center;gap:10px;font-weight:700;font-size:14px}
+.brand-mark{height:30px;padding-inline:8px;border-radius:8px;background:var(--accent);color:var(--surface);display:grid;place-items:center;font-family:var(--mono);font-size:12px;font-weight:600}
+.search{width:100%;padding:9px 12px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--ink);font:inherit;font-size:13.5px}
+.nav{overflow-y:auto;padding-right:6px;display:flex;flex-direction:column;gap:14px}
+.nav-group p{margin:0 0 4px;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:700}
+.nav a{display:flex;gap:10px;padding:4px 8px;border-radius:6px;text-decoration:none;color:var(--ink-2);font-size:13.5px;line-height:1.4}
+.nav a span{font-family:var(--mono);font-size:11.5px;color:var(--muted);padding-top:1px;min-width:18px}
+.nav a:hover{background:var(--surface-2)}
+.nav a.active{background:var(--accent-soft);color:var(--accent-ink);font-weight:600}
+.nav a.active span{color:var(--accent)}
+.mobile-toc{display:none;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px 14px}
+.mobile-toc summary{font-weight:700;cursor:pointer}
+.mobile-toc .nav{max-height:60vh;margin-top:10px}
+@media (max-width:960px){.mobile-toc{display:block}}
+
+main{min-width:0}
+
+/* Header bergaya label asset */
+.hero{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:28px;align-items:end;padding-block:8px 28px;border-bottom:1px solid var(--line)}
+@media (max-width:760px){.hero{grid-template-columns:minmax(0,1fr)}}
+.eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:.06em;color:var(--accent);text-transform:uppercase;margin:0 0 8px}
+.hero h1{font-size:clamp(30px,5vw,46px);line-height:1.08;letter-spacing:-.02em;margin:0 0 12px;font-weight:800;text-wrap:balance}
+.hero .lede{max-width:62ch;color:var(--ink-2);margin:0;font-size:16px}
+.hero .lede code{font-family:var(--mono);font-size:.86em;background:var(--surface-2);padding:1px 5px;border-radius:5px}
+.tag{background:var(--surface);border:1px dashed var(--muted);border-radius:12px;padding:14px 16px;min-width:250px;font-family:var(--mono);font-size:12px;box-shadow:var(--shadow);position:relative}
+@media (max-width:760px){.tag{min-width:0}}
+.tag::before{content:"";position:absolute;left:14px;top:-7px;width:12px;height:12px;border-radius:50%;background:var(--ground);border:1px dashed var(--muted)}
+.tag dl{display:grid;grid-template-columns:auto 1fr;gap:4px 14px;margin:0}
+.tag dt{color:var(--muted)}
+.tag dd{margin:0;color:var(--ink);font-weight:500}
+.barcode{height:26px;margin-top:10px;background:repeating-linear-gradient(90deg,var(--ink) 0 2px,transparent 2px 4px,var(--ink) 4px 5px,transparent 5px 8px,var(--ink) 8px 11px,transparent 11px 12px);opacity:.75;border-radius:2px}
+.tag .trx{margin-top:4px;text-align:center;letter-spacing:.2em;font-size:11px;color:var(--ink-2)}
+
+/* Panel ringkas */
+.overview{display:grid;gap:18px;padding-block:28px 8px}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:22px}
+.panel h3{margin:0 0 4px;font-size:18px}
+.panel .sub{margin:0 0 18px;color:var(--muted);font-size:14px}
+.panel code{font-family:var(--mono);font-size:.86em;background:var(--surface-2);padding:1px 5px;border-radius:5px;overflow-wrap:anywhere}
+.three{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
+@media (max-width:760px){.three{grid-template-columns:minmax(0,1fr)}}
+.fact{border-left:3px solid var(--accent);padding:2px 0 2px 14px}
+.fact b{display:block;font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.fact p{margin:4px 0 0;font-size:14.5px}
+
+/* Lifecycle */
+.flow{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;align-items:stretch}
+@media (max-width:760px){.flow{grid-template-columns:minmax(0,1fr)}}
+.step{border:1px solid var(--line);border-radius:12px;padding:14px;background:var(--surface);display:flex;flex-direction:column;gap:6px}
+.step .who{font-size:11.5px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.06em}
+.step p{margin:0;font-size:13.5px;color:var(--ink-2)}
+.step .db{font-family:var(--mono);font-size:11.5px;color:var(--muted);margin-top:auto;padding-top:8px;border-top:1px dashed var(--line)}
+.loop{margin-top:12px;display:flex;flex-wrap:wrap;gap:10px;align-items:center;padding:12px 14px;border-radius:12px;background:var(--bad-bg);color:var(--ink);font-size:13.5px}
+.loop strong{color:var(--bad)}
+
+.badge{display:inline-flex;align-items:center;gap:6px;padding:3px 10px;border-radius:999px;font-size:12.5px;font-weight:700;width:max-content}
+.badge::before{content:"";width:7px;height:7px;border-radius:50%;background:currentColor}
+.b-draft{background:var(--draft-bg);color:var(--draft)}
+.b-wait{background:var(--wait-bg);color:var(--wait)}
+.b-bad{background:var(--bad-bg);color:var(--bad)}
+.b-done{background:var(--done-bg);color:var(--done)}
+
+/* Peran */
+.roles{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+@media (max-width:900px){.roles{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:520px){.roles{grid-template-columns:minmax(0,1fr)}}
+.role{border:1px solid var(--line);border-radius:12px;padding:14px 16px;background:var(--surface);display:flex;flex-direction:column;gap:8px}
+.role h4{margin:0;font-size:14.5px}
+.role p{margin:0;font-size:13px;color:var(--muted)}
+.role .links{display:flex;flex-wrap:wrap;gap:6px;margin-top:auto}
+.role .links a{font-family:var(--mono);font-size:11.5px;text-decoration:none;padding:2px 8px;border-radius:6px;background:var(--accent-soft);color:var(--accent-ink)}
+.role .links a:hover{background:var(--accent);color:var(--surface)}
+
+.attention{list-style:none;margin:0;padding:0;display:grid;gap:10px}
+.attention li{display:grid;grid-template-columns:72px minmax(0,1fr);gap:12px;align-items:start;font-size:14px}
+.sev{font-family:var(--mono);font-size:11px;font-weight:600;padding:2px 8px;border-radius:6px;margin-top:2px;text-align:center}
+.sev-h{background:var(--bad-bg);color:var(--bad)}
+.sev-m{background:var(--wait-bg);color:var(--wait)}
+
+/* Konten dokumen */
+.doc{padding-top:8px}
+.group-divider{margin:64px 0 0;display:flex;align-items:center;gap:14px;color:var(--accent);font-size:12px;font-weight:800;letter-spacing:.12em;text-transform:uppercase}
+.group-divider::after{content:"";flex:1;height:2px;background:var(--accent);opacity:.25}
+.doc h2{font-size:clamp(22px,3vw,27px);line-height:1.2;letter-spacing:-.01em;margin:40px 0 14px;display:flex;align-items:baseline;gap:14px;text-wrap:balance}
+.sec-no{font-family:var(--mono);font-size:14px;color:var(--accent);font-weight:600;padding:3px 8px;border:1px solid var(--accent);border-radius:6px;flex:none;transform:translateY(-3px)}
+.doc h3{font-size:18px;margin:30px 0 10px;text-wrap:balance}
+.doc h4{font-size:15.5px;margin:22px 0 8px}
+.doc p,.doc li{max-width:78ch;color:var(--ink-2)}
+.doc strong{color:var(--ink)}
+.doc hr{display:none}
+.doc code{font-family:var(--mono);font-size:.86em;background:var(--surface-2);padding:1px 5px;border-radius:5px;color:var(--ink);overflow-wrap:anywhere}
+.doc .chip{font-weight:600;border-radius:999px;padding:1px 8px}
+.doc .chip-draft{background:var(--draft-bg);color:var(--draft)}
+.doc .chip-wait{background:var(--wait-bg);color:var(--wait)}
+.doc .chip-bad{background:var(--bad-bg);color:var(--bad)}
+.doc .chip-done{background:var(--done-bg);color:var(--done)}
+.doc .chip-neutral{background:var(--neutral-bg);color:var(--neutral)}
+
+.table-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:12px;background:var(--surface);margin:14px 0 20px}
+table{border-collapse:collapse;width:100%;font-size:13.5px;font-variant-numeric:tabular-nums}
+th{text-align:left;background:var(--surface-2);color:var(--ink);font-weight:700;font-size:12.5px;letter-spacing:.02em;padding:10px 12px;border-bottom:1px solid var(--line);white-space:nowrap}
+td{padding:9px 12px;border-bottom:1px solid var(--line);vertical-align:top;color:var(--ink-2);min-width:90px}
+tr:last-child td{border-bottom:0}
+tbody tr:hover td{background:var(--accent-soft)}
+
+.code{position:relative;margin:14px 0 20px}
+.code-lang{position:absolute;top:8px;right:12px;font-family:var(--mono);font-size:10.5px;color:var(--code-muted);letter-spacing:.08em;text-transform:uppercase}
+.doc .code pre{background:var(--code-bg);color:var(--code-ink);border-radius:12px;padding:18px;overflow-x:auto;margin:0;font-size:12.8px;line-height:1.6}
+.doc .code pre code{background:none;color:inherit;padding:0;font-size:inherit;overflow-wrap:normal}
+.diagram{overflow-x:auto;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:18px;margin:14px 0 20px}
+.diagram pre{margin:0}
+.diagram pre.mermaid{font-family:var(--mono);font-size:12px;color:var(--muted);white-space:pre;text-align:center}
+.diagram pre.mermaid[data-processed]{color:inherit;white-space:normal}
+.diagram svg{max-width:100%;height:auto}
+
+.callout{border-radius:12px;padding:12px 16px;margin:14px 0;border:1px solid var(--line);background:var(--surface)}
+.callout p{margin:4px 0}
+.callout-warn{background:var(--wait-bg);border-color:transparent}
+.doc .callout-warn p,.doc .callout-warn strong{color:var(--ink)}
+.callout-note{border-left:3px solid var(--accent)}
+
+.doc .task{list-style:none;padding-left:4px}
+.task::before{content:"";display:inline-block;width:14px;height:14px;border:1.5px solid var(--muted);border-radius:4px;margin-right:10px;vertical-align:-2px}
+.task.done::before{background:var(--done);border-color:var(--done);box-shadow:inset 0 0 0 2px var(--surface)}
+footer{margin-top:64px;padding-top:18px;border-top:1px solid var(--line);color:var(--muted);font-size:13px}
+.to-top{position:fixed;right:16px;bottom:calc(env(safe-area-inset-bottom,0px) + 16px);width:40px;height:40px;border-radius:50%;border:1px solid var(--line);background:var(--surface);color:var(--ink);box-shadow:var(--shadow);cursor:pointer;font-size:16px}
+.dl{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0 12px}.dl a{font-size:12px;font-weight:600;text-decoration:none;border:1px solid var(--line);border-radius:999px;padding:3px 10px;color:var(--ink);background:var(--surface)}.dl a:hover{border-color:var(--accent);color:var(--accent)}.dl[hidden]{display:none}
+</style>
+
+<div class="shell">
+  <aside class="sidebar" aria-label="Daftar isi">
+    <a class="back" href="index.html">← Semua dokumen</a>
+    <div class="dl" aria-label="Unduh dokumen"><a href="dokumentasi-asset-perbaikan.html" download>⬇ HTML</a><a href="dokumentasi-asset-perbaikan.md" download>⬇ Markdown</a></div>
+    <div class="brand"><span class="brand-mark">PML02</span>Perbaikan Asset</div>
+    <input class="search" id="nav-search" type="search" placeholder="Cari bagian… (mis. API, status)" aria-label="Cari bagian">
+    <nav class="nav" id="nav"><div class="nav-group"><p>Gambaran & Bisnis</p><a href="#s1" data-sec="s1"><span>01</span>Informasi Dokumen</a><a href="#s3" data-sec="s3"><span>03</span>Quick Overview</a><a href="#s4" data-sec="s4"><span>04</span>Ringkasan Fitur</a><a href="#s5" data-sec="s5"><span>05</span>Tujuan Fitur</a><a href="#s6" data-sec="s6"><span>06</span>Aktor</a><a href="#s7" data-sec="s7"><span>07</span>Hak Akses</a><a href="#s8" data-sec="s8"><span>08</span>Terminologi</a><a href="#s9" data-sec="s9"><span>09</span>Business Rules</a><a href="#s10" data-sec="s10"><span>10</span>Business Flow</a><a href="#s11" data-sec="s11"><span>11</span>Flow Berdasarkan Role</a><a href="#s12" data-sec="s12"><span>12</span>Flow Diagram</a><a href="#s13" data-sec="s13"><span>13</span>Sequence Diagram</a><a href="#s14" data-sec="s14"><span>14</span>Status Transaksi</a><a href="#s15" data-sec="s15"><span>15</span>State Transition</a></div><div class="nav-group"><p>Database</p><a href="#s16" data-sec="s16"><span>16</span>Struktur Database</a><a href="#s17" data-sec="s17"><span>17</span>Relasi Database</a><a href="#s18" data-sec="s18"><span>18</span>Data Dictionary</a><a href="#s19" data-sec="s19"><span>19</span>Database Index</a></div><div class="nav-group"><p>Backend & API</p><a href="#s20" data-sec="s20"><span>20</span>Backend Architecture</a><a href="#s21" data-sec="s21"><span>21</span>Backend Business Logic</a><a href="#s22" data-sec="s22"><span>22</span>Dampak terhadap asset_data</a><a href="#s23" data-sec="s23"><span>23</span>API Documentation</a><a href="#s24" data-sec="s24"><span>24</span>Detail Setiap API</a></div><div class="nav-group"><p>Mobile</p><a href="#s25" data-sec="s25"><span>25</span>Mobile Architecture</a><a href="#s26" data-sec="s26"><span>26</span>Mobile Screen</a><a href="#s27" data-sec="s27"><span>27</span>Mobile → API</a><a href="#s28" data-sec="s28"><span>28</span>API → Mobile</a><a href="#s29" data-sec="s29"><span>29</span>Mapping Mobile → API → Database</a><a href="#s30" data-sec="s30"><span>30</span>Mapping Database → API → Mobile</a></div><div class="nav-group"><p>Validasi, Error & Keamanan</p><a href="#s31" data-sec="s31"><span>31</span>Validation</a><a href="#s32" data-sec="s32"><span>32</span>Error Handling</a><a href="#s33" data-sec="s33"><span>33</span>Audit Trail</a><a href="#s34" data-sec="s34"><span>34</span>Notification</a><a href="#s35" data-sec="s35"><span>35</span>Security</a></div><div class="nav-group"><p>Manual Book</p><a href="#s36" data-sec="s36"><span>36</span>Manual Book User/Admin</a><a href="#s37" data-sec="s37"><span>37</span>Kondisi Button</a></div><div class="nav-group"><p>QA & Risiko</p><a href="#s38" data-sec="s38"><span>38</span>Testing Scenario</a><a href="#s39" data-sec="s39"><span>39</span>Temuan Ketidaksesuaian</a><a href="#s40" data-sec="s40"><span>40</span>Edge Case</a><a href="#s41" data-sec="s41"><span>41</span>Potential Bug / Technical Risk</a></div><div class="nav-group"><p>Referensi Developer</p><a href="#s42" data-sec="s42"><span>42</span>Dependency</a><a href="#s43" data-sec="s43"><span>43</span>Source Code Reference</a><a href="#s44" data-sec="s44"><span>44</span>Developer Notes</a><a href="#s45" data-sec="s45"><span>45</span>End-to-End Traceability</a><a href="#s46" data-sec="s46"><span>46</span>Ringkasan Database Impact</a><a href="#s47" data-sec="s47"><span>47</span>Checklist Implementasi</a><a href="#s48" data-sec="s48"><span>48</span>Changelog</a></div></nav>
+  </aside>
+
+  <main>
+    <p class="back-mobile"><a class="back" href="index.html">← Semua dokumen</a> <div class="dl" aria-label="Unduh dokumen"><a href="dokumentasi-asset-perbaikan.html" download>⬇ HTML</a><a href="dokumentasi-asset-perbaikan.md" download>⬇ Markdown</a></div></p>
+    <header class="hero">
+      <div>
+        <p class="eyebrow">Asset Management · Dokumentasi Teknis &amp; Manual Book</p>
+        <h1>Perbaikan Asset (PML02)</h1>
+        <p class="lede">Aset gudang yang rusak diperbaiki vendor atau tim internal. Admin menunjuk PIC Service; PIC menerima aset dengan checklist, mengirim ke tempat service, memantau progres, dan mengisi hasil. Admin menerima aset kembali lalu menentukan tindak lanjut per aset. Seluruh isi diturunkan dari source code <code>API</code> (Lumen) dan <code>MOBILE</code> (Flutter).</p>
+      </div>
+      <div class="tag" aria-label="Identitas dokumen">
+        <dl>
+          <dt>Kode</dt><dd>PML02</dd><dt>Modul</dt><dd>Pemeliharaan Aset</dd><dt>Versi</dt><dd>1.1 · 12 Okt 2026</dd><dt>Stack</dt><dd>Lumen 10 · Flutter</dd><dt>API</dt><dd>19 endpoint</dd>
+        </dl>
+        <div class="barcode" aria-hidden="true"></div>
+        <div class="trx">PML02-YYYYMMNNN</div>
+      </div>
+    </header>
+
+    <details class="mobile-toc">
+      <summary>Daftar isi</summary>
+      <nav class="nav"><div class="nav-group"><p>Gambaran & Bisnis</p><a href="#s1" data-sec="s1"><span>01</span>Informasi Dokumen</a><a href="#s3" data-sec="s3"><span>03</span>Quick Overview</a><a href="#s4" data-sec="s4"><span>04</span>Ringkasan Fitur</a><a href="#s5" data-sec="s5"><span>05</span>Tujuan Fitur</a><a href="#s6" data-sec="s6"><span>06</span>Aktor</a><a href="#s7" data-sec="s7"><span>07</span>Hak Akses</a><a href="#s8" data-sec="s8"><span>08</span>Terminologi</a><a href="#s9" data-sec="s9"><span>09</span>Business Rules</a><a href="#s10" data-sec="s10"><span>10</span>Business Flow</a><a href="#s11" data-sec="s11"><span>11</span>Flow Berdasarkan Role</a><a href="#s12" data-sec="s12"><span>12</span>Flow Diagram</a><a href="#s13" data-sec="s13"><span>13</span>Sequence Diagram</a><a href="#s14" data-sec="s14"><span>14</span>Status Transaksi</a><a href="#s15" data-sec="s15"><span>15</span>State Transition</a></div><div class="nav-group"><p>Database</p><a href="#s16" data-sec="s16"><span>16</span>Struktur Database</a><a href="#s17" data-sec="s17"><span>17</span>Relasi Database</a><a href="#s18" data-sec="s18"><span>18</span>Data Dictionary</a><a href="#s19" data-sec="s19"><span>19</span>Database Index</a></div><div class="nav-group"><p>Backend & API</p><a href="#s20" data-sec="s20"><span>20</span>Backend Architecture</a><a href="#s21" data-sec="s21"><span>21</span>Backend Business Logic</a><a href="#s22" data-sec="s22"><span>22</span>Dampak terhadap asset_data</a><a href="#s23" data-sec="s23"><span>23</span>API Documentation</a><a href="#s24" data-sec="s24"><span>24</span>Detail Setiap API</a></div><div class="nav-group"><p>Mobile</p><a href="#s25" data-sec="s25"><span>25</span>Mobile Architecture</a><a href="#s26" data-sec="s26"><span>26</span>Mobile Screen</a><a href="#s27" data-sec="s27"><span>27</span>Mobile → API</a><a href="#s28" data-sec="s28"><span>28</span>API → Mobile</a><a href="#s29" data-sec="s29"><span>29</span>Mapping Mobile → API → Database</a><a href="#s30" data-sec="s30"><span>30</span>Mapping Database → API → Mobile</a></div><div class="nav-group"><p>Validasi, Error & Keamanan</p><a href="#s31" data-sec="s31"><span>31</span>Validation</a><a href="#s32" data-sec="s32"><span>32</span>Error Handling</a><a href="#s33" data-sec="s33"><span>33</span>Audit Trail</a><a href="#s34" data-sec="s34"><span>34</span>Notification</a><a href="#s35" data-sec="s35"><span>35</span>Security</a></div><div class="nav-group"><p>Manual Book</p><a href="#s36" data-sec="s36"><span>36</span>Manual Book User/Admin</a><a href="#s37" data-sec="s37"><span>37</span>Kondisi Button</a></div><div class="nav-group"><p>QA & Risiko</p><a href="#s38" data-sec="s38"><span>38</span>Testing Scenario</a><a href="#s39" data-sec="s39"><span>39</span>Temuan Ketidaksesuaian</a><a href="#s40" data-sec="s40"><span>40</span>Edge Case</a><a href="#s41" data-sec="s41"><span>41</span>Potential Bug / Technical Risk</a></div><div class="nav-group"><p>Referensi Developer</p><a href="#s42" data-sec="s42"><span>42</span>Dependency</a><a href="#s43" data-sec="s43"><span>43</span>Source Code Reference</a><a href="#s44" data-sec="s44"><span>44</span>Developer Notes</a><a href="#s45" data-sec="s45"><span>45</span>End-to-End Traceability</a><a href="#s46" data-sec="s46"><span>46</span>Ringkasan Database Impact</a><a href="#s47" data-sec="s47"><span>47</span>Checklist Implementasi</a><a href="#s48" data-sec="s48"><span>48</span>Changelog</a></div></nav>
+    </details>
+
+    <section class="overview" aria-label="Ringkasan">
+      <div class="panel">
+        <h3>Ringkasan dalam 1 menit: perbaikan aset rusak</h3>
+        <p class="sub">Perpindahan fisik admin → PIC → tempat service → PIC → admin terdokumentasi dengan checklist.</p>
+        <div class="three">
+          <div class="fact"><b>Hanya gudang rusak</b><p>Aset <code>rusak</code> di gudang; status dikunci tiap tahap (<code>menunggu_serah_terima_service</code> → <code>dalam_perbaikan</code>).</p></div>
+          <div class="fact"><b>Bukti vendor</b><p>Bila service ke vendor: nomor referensi dan foto tanda terima wajib. Progres dapat dicatat berulang.</p></div>
+          <div class="fact"><b>Tiga hasil</b><p><code>diperbaiki</code> kembali tersedia; <code>diganti_unit_baru</code> menautkan unit baru; <code>tidak_bisa_diperbaiki</code> tetap rusak untuk disposal.</p></div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h3>Siklus perbaikan</h3>
+        <p class="sub">Fase (<code>fase_perbaikan</code>), pelaku, dan dampaknya ke asset.</p>
+        <div class="flow">
+          <div class="step"><span class="badge b-wait">Menunggu Serah Terima</span><span class="who">Admin: Buat</span><p>Pilih aset rusak, jadwal serah terima, PIC Service.</p><span class="db">asset → menunggu_serah_terima_service</span></div>
+          <div class="step"><span class="badge b-draft">Dalam Service</span><span class="who">PIC: Terima, Kirim, Progres</span><p>Checklist penerimaan, data pengiriman, catatan progres.</p><span class="db">asset → dalam_perbaikan</span></div>
+          <div class="step"><span class="badge b-draft">Menunggu Pengembalian</span><span class="who">PIC: Hasil</span><p>Hasil per aset dan jadwal serah terima balik.</p><span class="db">hasil_perbaikan</span></div>
+          <div class="step"><span class="badge b-draft">Menunggu Review</span><span class="who">Admin: Terima Kembali</span><p>Checklist kondisi saat menerima kembali.</p><span class="db">status_kesesuaian_kembali</span></div>
+          <div class="step"><span class="badge b-done">Selesai</span><span class="who">Admin: Review</span><p>Tindak lanjut per aset.</p><span class="db">tersedia / rusak · asset_log</span></div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h3>Mulai dari sini sesuai peran</h3>
+        <p class="sub">Lompat langsung ke bagian yang paling relevan.</p>
+        <div class="roles">
+          <div class="role"><h4>Business Analyst / PM</h4><p>Aturan bisnis, status, perbedaan dengan dokumen bisnis.</p><div class="links"><a href="#s3">§3</a><a href="#s9">§9 Rules</a><a href="#s14">§14 Status</a><a href="#s39">§39 INC</a></div></div>
+          <div class="role"><h4>Backend Developer</h4><p>Logika, dampak ke asset_data, kontrak API.</p><div class="links"><a href="#s21">§21 Logic</a><a href="#s22">§22 asset_data</a><a href="#s24">§24 API</a></div></div>
+          <div class="role"><h4>Mobile Developer</h4><p>Bloc, route, layar, objek aksi.</p><div class="links"><a href="#s25">§25</a><a href="#s26">§26 Screen</a><a href="#s29">§29 Mapping</a></div></div>
+          <div class="role"><h4>QA / Tester</h4><p>6 test API, 10 test mobile, skenario, edge case, risiko.</p><div class="links"><a href="#s38">§38 Test</a><a href="#s40">§40 Edge</a><a href="#s41">§41 Risk</a></div></div>
+          <div class="role"><h4>Technical Support</h4><p>Pesan error, audit trail, notifikasi.</p><div class="links"><a href="#s32">§32 Error</a><a href="#s33">§33 Audit</a><a href="#s34">§34 Notif</a></div></div>
+          <div class="role"><h4>User / Admin Asset</h4><p>Langkah operasional dan kondisi tombol.</p><div class="links"><a href="#s36">§36 Manual Book</a><a href="#s37">§37 Tombol</a></div></div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h3>Perlu perhatian</h3>
+        <p class="sub">Temuan terpenting. Detail di <a href="#s39">§39</a> dan <a href="#s41">§41</a>.</p>
+        <ul class="attention">
+          <li><span class="sev sev-h">TINGGI</span><span>SQL manual belum dijalankan; jalankan setelah SQL PML01 gudang dan PML03. <a href="#s41">RISK-001</a></span></li>
+          <li><span class="sev sev-m">SEDANG</span><span>PML01/PML03 baru mencatat nama tabel tindak lanjut; perbaikan tidak dibuat otomatis. <a href="#s39">INC-01</a></span></li>
+          <li><span class="sev sev-m">SEDANG</span><span>Tidak ada pembatalan perbaikan. <a href="#s39">INC-02</a></span></li>
+        </ul>
+      </div>
+    </section>
+
+    <article class="doc">
+<div class="group-divider" id="g1"><span>Gambaran &amp; Bisnis</span></div><h2 id="s1"><span class="sec-no">01</span>Informasi Dokumen</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Informasi</th>
+<th>Nilai</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Nama Fitur</td>
+<td>Perbaikan Asset (UI: <strong>"Perbaikan"</strong>; menu PIC: <strong>"Tugas PIC Service"</strong>)</td>
+</tr>
+<tr>
+<td>Kode Fitur</td>
+<td><strong>PML02</strong> (nomor transaksi <code>PML02-YYYYMMNNN</code>)</td>
+</tr>
+<tr>
+<td>Modul</td>
+<td>Asset Management — Pemeliharaan Aset</td>
+</tr>
+<tr>
+<td>Backend</td>
+<td>Laravel <strong>Lumen ^10.0</strong>, PHP ^8.1, JWT, Query Builder</td>
+</tr>
+<tr>
+<td>Database</td>
+<td><code>API/diagram-asset.dbml</code> (tanda <code>[NEW PML02]</code>) + SQL manual <code>Claude outputs/sql-pml02-perbaikan.sql</code>. ⚠️ SQL harus dijalankan manual (belum dijalankan saat dokumen ditulis)</td>
+</tr>
+<tr>
+<td>Mobile</td>
+<td>Flutter (<code>professional_flutter_3_35</code>), <code>flutter_bloc</code>, <code>dio</code>, <code>image_picker</code></td>
+</tr>
+<tr>
+<td>Web</td>
+<td>⚠️ Belum ditemukan: tidak ada source web di workspace</td>
+</tr>
+<tr>
+<td>Test otomatis</td>
+<td>API <code>tests/Asset/AssetPerbaikanTest.php</code> (6 test) · Mobile <code>test/asset/asset_perbaikan_test.dart</code> (10 test)</td>
+</tr>
+<tr>
+<td>Versi dokumen</td>
+<td>1.1 — 12 Oktober 2026</td>
+</tr>
+<tr>
+<td>Dokumen terkait</td>
+<td>Pemeliharaan Gudang (PML01), Klaim Garansi (PML03), Disposal (PML04), Master Pendamping &amp; Tugas PIC</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="s3"><span class="sec-no">03</span>Quick Overview</h2>
+<p>Aset gudang yang <strong>rusak</strong> diperbaiki oleh vendor atau tim internal. Admin membuat transaksi perbaikan (satu atau banyak aset), menunjuk <strong>PIC Service</strong> dari master pendamping, dan menetapkan jadwal serah terima. PIC menerima aset dengan checklist, mengirimnya ke tempat service (data vendor, bukti), memantau <strong>progres</strong>, lalu mengisi <strong>hasil service</strong> dan mengajukan jadwal serah terima balik. Admin menerima aset kembali dengan checklist kondisi, lalu menentukan <strong>tindak lanjut</strong> per aset.</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Aspek</th>
+<th>Ringkasan</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Aktor</td>
+<td>Admin Asset, PIC Service, Sistem</td>
+</tr>
+<tr>
+<td>Fase</td>
+<td><code>menunggu_serah_terima</code> → <code>dalam_service</code> → <code>menunggu_pengembalian</code> → <code>menunggu_review</code> → <code>selesai</code></td>
+</tr>
+<tr>
+<td>Status asset</td>
+<td><code>rusak</code> → <code>menunggu_serah_terima_service</code> → <code>dalam_perbaikan</code> (DALAM SERVICE) → <code>tersedia</code> / tetap <code>rusak</code></td>
+</tr>
+<tr>
+<td>Hasil service</td>
+<td><code>diperbaiki</code>, <code>diganti_unit_baru</code>, <code>tidak_bisa_diperbaiki</code></td>
+</tr>
+<tr>
+<td>Endpoint</td>
+<td>12 admin + 7 PIC</td>
+</tr>
+<tr>
+<td>Notifikasi</td>
+<td>10 event (<code>perbaikan.*</code>)</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="s4"><span class="sec-no">04</span>Ringkasan Fitur</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>No</th>
+<th>Fitur</th>
+<th>Aktor</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>Buat perbaikan dari aset gudang rusak (multi-aset)</td>
+<td>Admin</td>
+</tr>
+<tr>
+<td>2</td>
+<td>Ubah jadwal dan PIC sebelum aset diterima</td>
+<td>Admin</td>
+</tr>
+<tr>
+<td>3</td>
+<td>Terima aset dengan checklist kondisi dan kelengkapan</td>
+<td>PIC (admin cadangan)</td>
+</tr>
+<tr>
+<td>4</td>
+<td>Isi data pengiriman ke tempat service</td>
+<td>PIC (admin cadangan)</td>
+</tr>
+<tr>
+<td>5</td>
+<td>Catat progres service (berulang)</td>
+<td>PIC (admin cadangan)</td>
+</tr>
+<tr>
+<td>6</td>
+<td>Isi hasil service dan jadwal serah terima balik</td>
+<td>PIC (admin cadangan)</td>
+</tr>
+<tr>
+<td>7</td>
+<td>Atur ulang jadwal serah terima balik</td>
+<td>Admin</td>
+</tr>
+<tr>
+<td>8</td>
+<td>Terima aset kembali dengan checklist</td>
+<td>Admin</td>
+</tr>
+<tr>
+<td>9</td>
+<td>Review dan tindak lanjut per aset</td>
+<td>Admin</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="s5"><span class="sec-no">05</span>Tujuan Fitur</h2>
+<h3>5.1 Tujuan Bisnis (diturunkan dari kode)</h3>
+<ul>
+<li>Aset rusak punya jalur perbaikan yang tercatat dan bisa diaudit.</li>
+<li>Perpindahan fisik aset admin → PIC → tempat service → PIC → admin terdokumentasi dengan checklist.</li>
+<li>Hasil service menentukan nasib aset: kembali tersedia, diganti unit baru, atau disposal.</li>
+</ul>
+<h3>5.2 Tujuan Sistem</h3>
+<ul>
+<li>Mengunci aset sepanjang proses lewat <code>status_asset</code>.</li>
+<li>Memvalidasi data vendor, bukti, dan hasil sesuai jenis pelaksana dan hasil.</li>
+<li>Mencatat <code>asset_log</code> dan memberi notifikasi pada tiap perpindahan tanggung jawab.</li>
+</ul>
+<h2 id="s6"><span class="sec-no">06</span>Aktor</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Aktor</th>
+<th>Peran</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Admin Asset</td>
+<td>Membuat, mengubah, menetapkan jadwal balik, menerima aset kembali, mereview; cadangan PIC</td>
+</tr>
+<tr>
+<td>PIC Service</td>
+<td>Karyawan dari master pendamping aktif; menerima aset, mengirim ke service, progres, hasil</td>
+</tr>
+<tr>
+<td>Sistem</td>
+<td>Mengunci status aset, menautkan unit pengganti, menulis log dan notifikasi</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="s7"><span class="sec-no">07</span>Hak Akses</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Aksi</th>
+<th>Admin</th>
+<th>PIC Service</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Opsi, daftar semua, buat, ubah, jadwal balik, terima kembali, review</td>
+<td>✅</td>
+<td>❌</td>
+</tr>
+<tr>
+<td>Daftar dan detail</td>
+<td>✅ (semua)</td>
+<td>✅ (hanya yang ditugaskan)</td>
+</tr>
+<tr>
+<td>Terima, kirim, progres, hasil</td>
+<td>✅ (cadangan)</td>
+<td>✅ (hanya PIC transaksi)</td>
+</tr>
+<tr>
+<td>Opsi vendor</td>
+<td>✅ (opsi lengkap)</td>
+<td>✅ (hanya vendor)</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="s8"><span class="sec-no">08</span>Terminologi</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Istilah</th>
+<th>Arti</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>PIC Service</td>
+<td>Pendamping yang ditunjuk admin untuk satu perbaikan</td>
+</tr>
+<tr>
+<td>DALAM SERVICE</td>
+<td>Status aset <code>dalam_perbaikan</code> setelah PIC menerima aset</td>
+</tr>
+<tr>
+<td>Pelaksana</td>
+<td><code>vendor</code> (eksternal) atau <code>internal</code> (tim sendiri)</td>
+</tr>
+<tr>
+<td>Progres</td>
+<td>Catatan perkembangan service; dapat mengubah estimasi selesai</td>
+</tr>
+<tr>
+<td>Unit baru</td>
+<td>Aset gudang <code>tersedia</code> yang menggantikan unit lama (<code>id_asset_data_baru</code>)</td>
+</tr>
+<tr>
+<td>Tindak lanjut</td>
+<td>Keputusan admin per aset: <code>simpan_gudang</code> atau <code>disposal</code></td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="s9"><span class="sec-no">09</span>Business Rules</h2>
+<h3>BR-001 — Aset yang boleh diperbaiki</h3>
+<p>Hanya <code>pemegang_asset = gudang</code> dan <code>status_asset = rusak</code>; tidak boleh masih dalam onboarding aktif. Pelanggaran: <em>"Hanya asset rusak di gudang yang dapat diperbaiki."</em></p>
+<h3>BR-002 — PIC Service</h3>
+<p>Dipilih dari pendamping aktif. Dapat berubah hanya selama <code>menunggu_serah_terima</code>.</p>
+<h3>BR-003 — Penerimaan aset</h3>
+<p>Checklist <code>status_kesesuaian_item</code> dan <code>status_kelengkapan_aset</code> (<code>ya</code>/<code>tidak</code>) untuk <strong>semua</strong> aset. Bila ada <code>tidak</code>, keterangan wajib. Aset menjadi <code>dalam_perbaikan</code>.</p>
+<h3>BR-004 — Pengiriman ke tempat service</h3>
+<p>Per aset wajib: pelaksana, tanggal mulai, estimasi selesai (tidak sebelum mulai), lokasi. Bila <strong>vendor</strong>: nomor referensi dan foto tanda terima wajib. Boleh diperbarui berulang selama <code>dalam_service</code>.</p>
+<h3>BR-005 — Progres</h3>
+<p>Hanya setelah data pengiriman seluruh aset terisi. Minimal satu aset; keterangan wajib; estimasi baru (opsional) tidak boleh sebelum tanggal mulai dan memperbarui estimasi item.</p>
+<h3>BR-006 — Hasil service</h3>
+<p>Seluruh aset wajib diisi. <code>diperbaiki</code>/<code>diganti_unit_baru</code>: komponen dan kondisi akhir wajib. <code>tidak_bisa_diperbaiki</code>: keterangan wajib. PIC sekaligus mengajukan jadwal serah terima balik (tidak boleh sebelum hari ini). Fase → <code>menunggu_pengembalian</code>.</p>
+<h3>BR-007 — Terima kembali</h3>
+<p>Admin mengisi checklist kesesuaian kondisi dengan hasil service; <code>tidak</code> memerlukan keterangan. Fase → <code>menunggu_review</code>.</p>
+<h3>BR-008 — Review per aset</h3>
+<ul>
+<li><code>diperbaiki</code>: aset <code>tersedia</code> di gudang tujuan (default gudang asal; admin boleh pilih gudang lain), <code>kondisi_awal = normal</code>, <code>ket_rusak</code>/<code>status_rusak</code> dikosongkan. Tindak lanjut <code>simpan_gudang</code>.</li>
+<li><code>diganti_unit_baru</code>: admin memilih unit baru (gudang, <code>tersedia</code>, belum dipakai perbaikan/klaim lain). Unit lama tetap <code>rusak</code>, tindak lanjut <code>disposal</code> (<code>asset_trx_disposal</code>).</li>
+<li><code>tidak_bisa_diperbaiki</code>: aset tetap <code>rusak</code>, tindak lanjut <code>disposal</code>.</li>
+</ul>
+<h3>BR-009 — Penomoran</h3>
+<p><code>id</code> = <code>id_company</code> + <code>YYYYMM</code> + 3 digit; <code>no_trx</code> = <code>PML02-YYYYMMNNN</code>. Batas 999 per bulan per perusahaan.</p>
+<h3>BR-010 — Skema harus sudah diterapkan</h3>
+<p><code>skemaSiap()</code> menjaga dashboard tetap berjalan sebelum SQL diterapkan.</p>
+<h2 id="s10"><span class="sec-no">10</span>Business Flow</h2>
+<ol>
+<li>Admin memilih aset gudang rusak, mengisi jadwal serah terima dan PIC Service → <code>menunggu_serah_terima</code>, aset <code>menunggu_serah_terima_service</code>.</li>
+<li>PIC menerima aset dengan checklist → <code>dalam_service</code>, aset <code>dalam_perbaikan</code>.</li>
+<li>PIC mengisi data pengiriman ke tempat service, lalu mencatat progres sesuai perkembangan.</li>
+<li>PIC mengisi hasil per aset dan jadwal serah terima balik → <code>menunggu_pengembalian</code>.</li>
+<li>Admin menerima aset kembali dengan checklist → <code>menunggu_review</code>.</li>
+<li>Admin mereview dan menentukan tindak lanjut → <code>selesai</code>.</li>
+</ol>
+<h2 id="s11"><span class="sec-no">11</span>Flow Berdasarkan Role</h2>
+<h3>11.1 Admin Asset</h3>
+<p>Buat → (ubah) → (cadangan terima/kirim/hasil) → atur jadwal balik → terima kembali → review.</p>
+<h3>11.2 PIC Service</h3>
+<p>Terima notifikasi → terima aset → kirim ke service → progres → hasil.</p>
+<h3>11.3 System</h3>
+<p>Kunci status aset per tahap, validasi, tautkan unit pengganti, log, notifikasi.</p>
+<h2 id="s12"><span class="sec-no">12</span>Flow Diagram</h2>
+<div class="diagram"><pre class="mermaid">flowchart TD
+    A[Aset gudang rusak] --&gt; B[Admin buat perbaikan + PIC]
+    B --&gt; C[menunggu_serah_terima&lt;br/&gt;asset menunggu_serah_terima_service]
+    C --&gt; D[PIC terima + checklist]
+    D --&gt; E[dalam_service&lt;br/&gt;asset dalam_perbaikan]
+    E --&gt; F[Kirim ke tempat service]
+    F --&gt; G[Progres berulang]
+    G --&gt; H[Hasil per aset + jadwal balik]
+    H --&gt; I[menunggu_pengembalian]
+    I --&gt; J[Admin terima kembali + checklist]
+    J --&gt; K[menunggu_review]
+    K --&gt; L{Hasil per aset}
+    L -- diperbaiki --&gt; M[tersedia di gudang]
+    L -- diganti unit baru --&gt; N[unit lama rusak, tindak lanjut disposal]
+    L -- tidak bisa diperbaiki --&gt; N
+    M --&gt; S[selesai]
+    N --&gt; S
+</pre></div>
+<h2 id="s13"><span class="sec-no">13</span>Sequence Diagram</h2>
+<div class="diagram"><pre class="mermaid">sequenceDiagram
+    actor Admin
+    actor PIC
+    participant API
+    participant DB
+    Admin-&gt;&gt;API: POST perbaikan
+    API-&gt;&gt;DB: header+item, asset menunggu_serah_terima_service
+    API--&gt;&gt;PIC: perbaikan.ditugaskan
+    PIC-&gt;&gt;API: POST karyawan/perbaikan/{id}/terima
+    API-&gt;&gt;DB: asset dalam_perbaikan, fase dalam_service
+    API--&gt;&gt;Admin: perbaikan.diterima
+    PIC-&gt;&gt;API: POST .../kirim
+    API--&gt;&gt;Admin: perbaikan.masuk_service
+    PIC-&gt;&gt;API: POST .../progres (berulang)
+    PIC-&gt;&gt;API: POST .../hasil
+    API--&gt;&gt;Admin: perbaikan.hasil
+    Admin-&gt;&gt;API: POST perbaikan/{id}/terima-kembali
+    API--&gt;&gt;PIC: perbaikan.diterima_kembali
+    Admin-&gt;&gt;API: POST perbaikan/{id}/review
+    API-&gt;&gt;DB: tindak lanjut per aset, fase selesai
+    API--&gt;&gt;PIC: perbaikan.selesai
+</pre></div>
+<h2 id="s14"><span class="sec-no">14</span>Status Transaksi</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th><code>fase_perbaikan</code></th>
+<th>Label</th>
+<th>Tab</th>
+<th><code>status</code></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>menunggu_serah_terima</code></td>
+<td>Menunggu Serah Terima</td>
+<td>jadwal</td>
+<td>proses</td>
+</tr>
+<tr>
+<td><code>dalam_service</code></td>
+<td>Dalam Service</td>
+<td>proses</td>
+<td>proses</td>
+</tr>
+<tr>
+<td><code>menunggu_pengembalian</code></td>
+<td>Menunggu Pengembalian</td>
+<td>proses</td>
+<td>proses</td>
+</tr>
+<tr>
+<td><code>menunggu_review</code></td>
+<td>Menunggu Review</td>
+<td>proses</td>
+<td>proses</td>
+</tr>
+<tr>
+<td><code>selesai</code></td>
+<td>Selesai</td>
+<td>selesai</td>
+<td>selesai</td>
+</tr>
+</tbody>
+</table></div>
+<p>Status per item (<code>status_perbaikan</code>): <code>proses</code> → <code>selesai</code> saat review.</p>
+<h2 id="s15"><span class="sec-no">15</span>State Transition</h2>
+<div class="diagram"><pre class="mermaid">stateDiagram-v2
+    [*] --&gt; menunggu_serah_terima: Admin buat
+    menunggu_serah_terima --&gt; menunggu_serah_terima: ubah jadwal / PIC
+    menunggu_serah_terima --&gt; dalam_service: terima aset
+    dalam_service --&gt; dalam_service: kirim / progres
+    dalam_service --&gt; menunggu_pengembalian: hasil
+    menunggu_pengembalian --&gt; menunggu_pengembalian: atur jadwal balik
+    menunggu_pengembalian --&gt; menunggu_review: terima kembali
+    menunggu_review --&gt; selesai: review
+    selesai --&gt; [*]
+</pre></div>
+<div class="group-divider" id="g2"><span>Database</span></div><h2 id="s16"><span class="sec-no">16</span>Struktur Database</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Tabel</th>
+<th>Fungsi</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>asset_trx_perbaikan</code></td>
+<td>Header transaksi</td>
+</tr>
+<tr>
+<td><code>asset_trx_perbaikan_item</code></td>
+<td>Satu baris per aset (penerimaan, service, hasil, kembali, tindak lanjut)</td>
+</tr>
+<tr>
+<td><code>asset_trx_perbaikan_progres</code></td>
+<td>Log progres service per item</td>
+</tr>
+<tr>
+<td><code>asset_pendamping_m</code></td>
+<td>Master PIC Service</td>
+</tr>
+<tr>
+<td><code>asset_data</code></td>
+<td>Status dan kondisi aset</td>
+</tr>
+<tr>
+<td><code>asset_log</code></td>
+<td>Jejak (<code>perbaikan_gudang</code>, <code>perbaikan_karyawan</code> dicadangkan)</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="s17"><span class="sec-no">17</span>Relasi Database</h2>
+<div class="diagram"><pre class="mermaid">erDiagram
+    asset_trx_perbaikan ||--o{ asset_trx_perbaikan_item : memiliki
+    asset_trx_perbaikan_item ||--o{ asset_trx_perbaikan_progres : mencatat
+    asset_trx_perbaikan }o--|| asset_pendamping_m : &quot;PIC Service&quot;
+    asset_trx_perbaikan_item }o--|| asset_data : &quot;asset lama&quot;
+    asset_trx_perbaikan_item }o--o| asset_data : &quot;unit baru&quot;
+    asset_trx_perbaikan_item }o--o| asset_vendor_m : &quot;vendor&quot;
+    asset_trx_perbaikan_item }o--o| asset_lokasi_m : &quot;gudang asal/tujuan&quot;
+</pre></div>
+<h2 id="s18"><span class="sec-no">18</span>Data Dictionary</h2>
+<h3>18.1 asset_trx_perbaikan</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Kolom</th>
+<th>Tipe</th>
+<th>Keterangan</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>id_asset_trx_perbaikan</code></td>
+<td>varchar(50) PK</td>
+<td><code>id_company</code>+<code>YYYYMM</code>+3 digit</td>
+</tr>
+<tr>
+<td><code>no_trx</code></td>
+<td>varchar(50)</td>
+<td><code>PML02-YYYYMMNNN</code></td>
+</tr>
+<tr>
+<td><code>fase_perbaikan</code></td>
+<td>enum</td>
+<td>5 fase (lihat §14)</td>
+</tr>
+<tr>
+<td><code>id_asset_pendamping_m</code></td>
+<td>varchar(50) FK</td>
+<td>PIC Service</td>
+</tr>
+<tr>
+<td><code>id_pic_pendamping</code>, <code>nama_pic_pendamping</code>, <code>nik_pic_pendamping</code></td>
+<td>varchar</td>
+<td>Snapshot PIC</td>
+</tr>
+<tr>
+<td><code>tgl_serah_terima</code>, <code>jam_serah_terima</code>, <code>keterangan_serah_terima</code></td>
+<td>date, time, varchar</td>
+<td>Jadwal admin → PIC</td>
+</tr>
+<tr>
+<td><code>tgl_terima</code>, <code>user_terima</code></td>
+<td>timestamp, varchar</td>
+<td>PIC menerima aset</td>
+</tr>
+<tr>
+<td><code>tgl_pengembalian_perbaikan</code>, <code>jam_pengembalian</code></td>
+<td>date, time null</td>
+<td>Jadwal balik PIC → admin</td>
+</tr>
+<tr>
+<td><code>user_ajukan_pengembalian</code></td>
+<td>varchar</td>
+<td>Pengaju jadwal balik</td>
+</tr>
+<tr>
+<td><code>tgl_terima_kembali</code>, <code>user_terima_kembali</code></td>
+<td>timestamp, varchar</td>
+<td>Admin menerima kembali</td>
+</tr>
+<tr>
+<td><code>tgl_review</code>, <code>user_review</code>, <code>keterangan_review</code></td>
+<td>timestamp, varchar, text</td>
+<td>Review</td>
+</tr>
+<tr>
+<td><code>status</code></td>
+<td>enum</td>
+<td>proses/selesai</td>
+</tr>
+<tr>
+<td><code>id_company</code>, <code>tgl_input</code>, <code>user_input</code>, <code>tgl_update</code>, <code>user_update</code></td>
+<td></td>
+<td>Audit</td>
+</tr>
+</tbody>
+</table></div>
+<h3>18.2 asset_trx_perbaikan_item</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Kelompok</th>
+<th>Kolom</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Identitas</td>
+<td><code>id_asset_trx_perbaikan_item</code>, <code>id_asset_trx_perbaikan</code>, <code>id_asset_data</code>, snapshot <code>nama_asset</code>/<code>deskripsi_asset</code>/<code>kategori_asset</code>/<code>keterangan_rusak</code></td>
+</tr>
+<tr>
+<td>Asal</td>
+<td><code>pemegang_asset_asal</code>, <code>id_pemegang_asset_asal</code> (tidak dipakai, selalu gudang), <code>id_asset_lokasi_m_asal</code></td>
+</tr>
+<tr>
+<td>Penerimaan</td>
+<td><code>status_kesesuaian_item</code>, <code>status_kelengkapan_aset</code>, <code>keterangan_perbaikan_pendamping</code></td>
+</tr>
+<tr>
+<td>Pengiriman</td>
+<td><code>jenis_pelaksana</code>, <code>id_asset_vendor_m</code>, <code>nama_vendor</code>, <code>keterangan_vendor</code>, <code>tgl_mulai_perbaikan</code>, <code>tgl_estimasi_selesai_perbaikan</code>, <code>lokasi_perbaikan</code>, <code>nomor_referensi</code>, <code>foto_tanda_terima</code></td>
+</tr>
+<tr>
+<td>Hasil</td>
+<td><code>hasil_perbaikan</code>, <code>komponen_diperbaiki</code>, <code>komponen_watchlist</code>, <code>kondisi_akhir</code>, <code>keterangan_hasil</code></td>
+</tr>
+<tr>
+<td>Kembali</td>
+<td><code>status_kesesuaian_kembali</code>, <code>ket_kesesuaian_kembali</code></td>
+</tr>
+<tr>
+<td>Tindak lanjut</td>
+<td><code>tindak_lanjut_akhir</code>, <code>id_asset_lokasi_m_tujuan</code>, <code>tgl_pengiriman_kembali</code>, <code>id_asset_data_baru</code>, <code>id_trx_tindak_lanjut</code>, <code>nama_tabel_tindak_lanjut</code>, <code>status_perbaikan</code></td>
+</tr>
+</tbody>
+</table></div>
+<h3>18.3 asset_trx_perbaikan_progres</h3>
+<p><code>id_asset_trx_perbaikan_progres</code> (PK), <code>id_asset_trx_perbaikan_item</code> (FK), <code>keterangan_progres</code>, <code>tgl_estimasi_selesai_baru</code>, <code>id_company</code>, <code>tgl_input</code>, <code>user_input</code>.</p>
+<h2 id="s19"><span class="sec-no">19</span>Database Index</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Index</th>
+<th>Kolom</th>
+<th>Fungsi</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>atp_company_fase_idx</code></td>
+<td><code>id_company, fase_perbaikan, tgl_input, id</code></td>
+<td>Daftar per tab</td>
+</tr>
+<tr>
+<td><code>atp_company_pic_fase_idx</code></td>
+<td><code>id_company, id_pic_pendamping, fase_perbaikan, tgl_input</code></td>
+<td>Tugas PIC</td>
+</tr>
+<tr>
+<td><code>atpi_trx_asset_uq</code></td>
+<td><code>id_trx, id_asset_data</code></td>
+<td>Unik per transaksi</td>
+</tr>
+<tr>
+<td><code>atpi_company_asset_status_idx</code></td>
+<td><code>id_company, id_asset_data, status_perbaikan</code></td>
+<td>Cek proses aktif</td>
+</tr>
+<tr>
+<td><code>atpp_item_tgl_idx</code></td>
+<td><code>id_item, tgl_input</code></td>
+<td>Riwayat progres</td>
+</tr>
+</tbody>
+</table></div>
+<div class="group-divider" id="g3"><span>Backend &amp; API</span></div><h2 id="s20"><span class="sec-no">20</span>Backend Architecture</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Lapisan</th>
+<th>File</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Route</td>
+<td><code>RouteAsset.php</code> (<code>perbaikan/*</code>, <code>karyawan/perbaikan/*</code>)</td>
+</tr>
+<tr>
+<td>Controller admin</td>
+<td><code>Asset/Admin/AssetAdminPerbaikan_c.php</code></td>
+</tr>
+<tr>
+<td>Controller PIC</td>
+<td><code>Asset/Karyawan/AssetKaryawanPerbaikan_c.php</code></td>
+</tr>
+<tr>
+<td>Model</td>
+<td><code>Models/Asset/AssetPerbaikan_m.php</code></td>
+</tr>
+<tr>
+<td>Aturan validasi bersama</td>
+<td><code>Asset_c</code> (<code>PERBAIKAN_*_RULES</code>, helper <code>perbaikanAssetsPayload</code> untuk foto)</td>
+</tr>
+<tr>
+<td>Notifikasi</td>
+<td><code>Support/Asset/AssetNotification.php</code></td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="s21"><span class="sec-no">21</span>Backend Business Logic</h2>
+<h3>21.1 Buat — <code>store</code></h3>
+<p>Kunci aset (<code>lockForUpdate</code>), validasi BR-001, PIC, jadwal; nomor urut; insert header dan item (snapshot, gudang asal); aset → <code>menunggu_serah_terima_service</code> + log.</p>
+<h3>21.2 Ubah — <code>ubah</code></h3>
+<p>Hanya <code>menunggu_serah_terima</code>; mengembalikan <code>pic_berubah</code>.</p>
+<h3>21.3 Terima — <code>terima</code></h3>
+<p>Aktor PIC atau admin (<code>lockForActor</code>); checklist per aset; aset → <code>dalam_perbaikan</code>; fase <code>dalam_service</code>.</p>
+<h3>21.4 Kirim — <code>kirim</code></h3>
+<p>Boleh berulang; <code>baru = true</code> bila ada item yang pertama kali diisi (menentukan event <code>masuk_service</code> vs <code>progres</code>).</p>
+<h3>21.5 Progres — <code>progres</code></h3>
+<p>Memasukkan baris progres dan memperbarui estimasi item bila ada estimasi baru.</p>
+<h3>21.6 Hasil — <code>hasil</code></h3>
+<p>Validasi per hasil (BR-006); mengajukan jadwal balik; fase <code>menunggu_pengembalian</code>.</p>
+<h3>21.7 Jadwal balik / terima kembali</h3>
+<p>Admin: <code>jadwalKembali</code> (ubah jadwal), <code>terimaKembali</code> (checklist, fase <code>menunggu_review</code>).</p>
+<h3>21.8 Review — <code>review</code></h3>
+<p>Per item sesuai BR-008; unit baru divalidasi (<code>assertUnitBaru</code>: gudang, <code>tersedia</code>, tidak dipakai perbaikan/klaim lain); gudang tujuan divalidasi (<code>assertGudang</code>); item <code>status_perbaikan = selesai</code>; fase <code>selesai</code>.</p>
+<h3>21.9 Query baca</h3>
+<p><code>getPage</code>, <code>getDetail</code> (dengan objek <code>aksi</code> per peran), <code>getAdminOptions</code>, <code>getVendorOptions</code>, <code>getPendingForPic/Admin</code>, <code>countByTabForPic</code>, <code>countPendingForAdmin</code>, <code>hasActivePic</code>.</p>
+<h2 id="s22"><span class="sec-no">22</span>Dampak terhadap asset_data</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Kejadian</th>
+<th><code>status_asset</code></th>
+<th>Kolom lain</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Perbaikan dibuat</td>
+<td><code>rusak</code> → <code>menunggu_serah_terima_service</code></td>
+<td>—</td>
+</tr>
+<tr>
+<td>PIC menerima</td>
+<td>→ <code>dalam_perbaikan</code></td>
+<td>—</td>
+</tr>
+<tr>
+<td>Review <code>diperbaiki</code></td>
+<td>→ <code>tersedia</code></td>
+<td><code>id_asset_lokasi_m</code> = gudang tujuan, <code>kondisi_awal=normal</code>, <code>ket_rusak</code>/<code>status_rusak</code> kosong</td>
+</tr>
+<tr>
+<td>Review <code>diganti_unit_baru</code> / <code>tidak_bisa_diperbaiki</code></td>
+<td>→ <code>rusak</code></td>
+<td>Tidak berubah; tindak lanjut disposal</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="s23"><span class="sec-no">23</span>API Documentation</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Kode</th>
+<th>Method</th>
+<th>Path</th>
+<th>Aktor</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>API-001</td>
+<td>GET</td>
+<td><code>asset/perbaikan/options</code></td>
+<td>Admin</td>
+</tr>
+<tr>
+<td>API-002</td>
+<td>GET</td>
+<td><code>asset/perbaikan</code></td>
+<td>Admin</td>
+</tr>
+<tr>
+<td>API-003</td>
+<td>POST</td>
+<td><code>asset/perbaikan</code></td>
+<td>Admin</td>
+</tr>
+<tr>
+<td>API-004</td>
+<td>PUT</td>
+<td><code>asset/perbaikan/{id}</code></td>
+<td>Admin</td>
+</tr>
+<tr>
+<td>API-005</td>
+<td>POST</td>
+<td><code>asset/perbaikan/{id}/terima</code></td>
+<td>Admin (cadangan)</td>
+</tr>
+<tr>
+<td>API-006</td>
+<td>POST</td>
+<td><code>asset/perbaikan/{id}/kirim</code></td>
+<td>Admin (cadangan)</td>
+</tr>
+<tr>
+<td>API-007</td>
+<td>POST</td>
+<td><code>asset/perbaikan/{id}/progres</code></td>
+<td>Admin (cadangan)</td>
+</tr>
+<tr>
+<td>API-008</td>
+<td>POST</td>
+<td><code>asset/perbaikan/{id}/hasil</code></td>
+<td>Admin (cadangan)</td>
+</tr>
+<tr>
+<td>API-009</td>
+<td>POST</td>
+<td><code>asset/perbaikan/{id}/jadwal-kembali</code></td>
+<td>Admin</td>
+</tr>
+<tr>
+<td>API-010</td>
+<td>POST</td>
+<td><code>asset/perbaikan/{id}/terima-kembali</code></td>
+<td>Admin</td>
+</tr>
+<tr>
+<td>API-011</td>
+<td>POST</td>
+<td><code>asset/perbaikan/{id}/review</code></td>
+<td>Admin</td>
+</tr>
+<tr>
+<td>API-012</td>
+<td>GET</td>
+<td><code>asset/perbaikan/{id}</code></td>
+<td>Admin</td>
+</tr>
+<tr>
+<td>API-013</td>
+<td>GET</td>
+<td><code>asset/karyawan/perbaikan/options</code></td>
+<td>PIC</td>
+</tr>
+<tr>
+<td>API-014</td>
+<td>GET</td>
+<td><code>asset/karyawan/perbaikan</code></td>
+<td>PIC</td>
+</tr>
+<tr>
+<td>API-015</td>
+<td>POST</td>
+<td><code>asset/karyawan/perbaikan/{id}/terima</code></td>
+<td>PIC</td>
+</tr>
+<tr>
+<td>API-016</td>
+<td>POST</td>
+<td><code>asset/karyawan/perbaikan/{id}/kirim</code></td>
+<td>PIC</td>
+</tr>
+<tr>
+<td>API-017</td>
+<td>POST</td>
+<td><code>asset/karyawan/perbaikan/{id}/progres</code></td>
+<td>PIC</td>
+</tr>
+<tr>
+<td>API-018</td>
+<td>POST</td>
+<td><code>asset/karyawan/perbaikan/{id}/hasil</code></td>
+<td>PIC</td>
+</tr>
+<tr>
+<td>API-019</td>
+<td>GET</td>
+<td><code>asset/karyawan/perbaikan/{id}</code></td>
+<td>PIC</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="s24"><span class="sec-no">24</span>Detail Setiap API</h2>
+<h3>API-001/013 — Opsi</h3>
+<p>Admin: <code>{vendor, pendamping, asset (gudang rusak), asset_baru (gudang tersedia), gudang, hasil, pelaksana}</code>. PIC: hanya vendor.</p>
+<h3>API-002/014 — Daftar</h3>
+<p>Query <code>tab</code> (<code>jadwal|proses|selesai</code>), <code>limit</code> (1–50), <code>offset</code>. Respons <code>{filters, records[], pagination}</code>; record memuat <code>fase_perbaikan</code>, jadwal, <code>peran</code>, <code>jumlah_asset</code>, ringkasan aset, PIC.</p>
+<h3>API-003 — Buat</h3>
+<pre><code class="language-json">{
+  &quot;asset_ids&quot;: [&quot;AC-1&quot;, &quot;AC-2&quot;],
+  &quot;tgl_jadwal&quot;: &quot;2026-10-12&quot;,
+  &quot;jam_jadwal&quot;: &quot;09:00&quot;,
+  &quot;id_asset_pendamping_m&quot;: &quot;PDM-1&quot;,
+  &quot;keterangan_serah_terima&quot;: &quot;Bawa kelengkapan&quot;
+}
+</code></pre>
+<h3>API-004 — Ubah</h3>
+<p>Body sama tanpa <code>asset_ids</code>.</p>
+<h3>API-005/015 — Terima</h3>
+<pre><code class="language-json">{&quot;assets&quot;: [{&quot;id_asset_data&quot;: &quot;AC-1&quot;, &quot;status_kesesuaian_item&quot;: &quot;ya&quot;, &quot;status_kelengkapan_aset&quot;: &quot;tidak&quot;, &quot;keterangan&quot;: &quot;Kabel daya tidak ada&quot;}]}
+</code></pre>
+<h3>API-006/016 — Kirim</h3>
+<pre><code class="language-json">{&quot;assets&quot;: [{
+  &quot;id_asset_data&quot;: &quot;AC-1&quot;, &quot;jenis_pelaksana&quot;: &quot;vendor&quot;, &quot;id_asset_vendor_m&quot;: &quot;VND-1&quot;,
+  &quot;keterangan_vendor&quot;: &quot;0812-0000&quot;, &quot;tgl_mulai_perbaikan&quot;: &quot;2026-10-13&quot;,
+  &quot;tgl_estimasi_selesai_perbaikan&quot;: &quot;2026-10-20&quot;, &quot;lokasi_perbaikan&quot;: &quot;Bengkel Vendor&quot;,
+  &quot;nomor_referensi&quot;: &quot;SRV-001&quot;, &quot;foto_tanda_terima&quot;: &quot;&lt;base64 atau file multipart&gt;&quot;
+}]}
+</code></pre>
+<p>Foto disimpan di object storage dengan key <code>&lt;company&gt;/asset/perbaikan/&lt;id_karyawan&gt;/&lt;hex&gt;.&lt;ext&gt;</code>; kolom menyimpan key; kosong = foto lama dipertahankan.</p>
+<h3>API-007/017 — Progres</h3>
+<pre><code class="language-json">{&quot;assets&quot;: [{&quot;id_asset_data&quot;: &quot;AC-1&quot;, &quot;keterangan_progres&quot;: &quot;Menunggu sparepart&quot;, &quot;tgl_estimasi_selesai_baru&quot;: &quot;2026-10-25&quot;}]}
+</code></pre>
+<h3>API-008/018 — Hasil</h3>
+<pre><code class="language-json">{
+  &quot;tgl_pengembalian&quot;: &quot;2026-10-26&quot;, &quot;jam_pengembalian&quot;: &quot;13:00&quot;,
+  &quot;assets&quot;: [{&quot;id_asset_data&quot;: &quot;AC-1&quot;, &quot;hasil_perbaikan&quot;: &quot;diperbaiki&quot;,
+    &quot;komponen_diperbaiki&quot;: &quot;Roller&quot;, &quot;komponen_watchlist&quot;: &quot;&quot;, &quot;kondisi_akhir&quot;: &quot;Normal&quot;,
+    &quot;keterangan_hasil&quot;: &quot;&quot;}]
+}
+</code></pre>
+<h3>API-009 — Jadwal balik</h3>
+<p><code>{tgl_pengembalian, jam_pengembalian}</code>.</p>
+<h3>API-010 — Terima kembali</h3>
+<p><code>{assets: [{id_asset_data, status_kesesuaian_kembali: ya|tidak, ket_kesesuaian_kembali}]}</code>.</p>
+<h3>API-011 — Review</h3>
+<pre><code class="language-json">{&quot;keterangan_review&quot;: &quot;Selesai&quot;,
+ &quot;items&quot;: [{&quot;id_asset_data&quot;: &quot;AC-2&quot;, &quot;id_asset_data_baru&quot;: &quot;AC-NEW&quot;, &quot;id_asset_lokasi_m_tujuan&quot;: &quot;&quot;}]}
+</code></pre>
+<p>Aset <code>diperbaiki</code> memakai <code>id_asset_lokasi_m_tujuan</code> (kosong = gudang asal); aset <code>diganti_unit_baru</code> wajib <code>id_asset_data_baru</code>.</p>
+<h3>API-012/019 — Detail</h3>
+<p>Header, PIC, <code>serah_terima</code>, <code>pengembalian</code>, <code>review</code>, <code>assets[]</code> (penerimaan, service, progres, hasil, kembali, tindak lanjut), dan <code>aksi</code> (ubah, terima, kirim, progres, hasil, jadwal_kembali, terima_kembali, review).</p>
+<div class="group-divider" id="g4"><span>Mobile</span></div><h2 id="s25"><span class="sec-no">25</span>Mobile Architecture</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Lapisan</th>
+<th>File</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Model</td>
+<td><code>lib/Repository/Model/Asset/mAssetPerbaikan.dart</code></td>
+</tr>
+<tr>
+<td>API client</td>
+<td><code>lib/Repository/Service/assetPerbaikanApi.dart</code> (<code>admin: true/false</code>)</td>
+</tr>
+<tr>
+<td>Bloc</td>
+<td><code>lib/Bloc/Asset/AssetPerbaikanBloc.dart</code></td>
+</tr>
+<tr>
+<td>UI</td>
+<td><code>lib/UI/Modul/Asset/Pemeliharaan/Perbaikan/*</code> (termasuk <code>AssetPerbaikanProsesWidgets</code>; pratinjau foto layar penuh memakai <code>Pemeliharaan/AssetFotoPreview.dart</code>)</td>
+</tr>
+<tr>
+<td>Teks</td>
+<td>grup <code>perbaikan</code> di <code>assets/{id,en}/asset.json</code> (134 kunci)</td>
+</tr>
+<tr>
+<td>Navigasi</td>
+<td><code>NavigatorBloc</code>, <code>router.dart</code></td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="s26"><span class="sec-no">26</span>Mobile Screen</h2>
+<h3>26.1 Daftar</h3>
+<p><code>HalamanAssetPerbaikan</code> (admin dan PIC): tab Serah Terima/Proses/Selesai, kartu <code>AssetPerbaikanRecordCard</code>.</p>
+<h3>26.2 Buat Perbaikan (admin)</h3>
+<p><code>HalamanBuatPerbaikan</code>: pilih aset gudang rusak (multi), lalu sheet jadwal + PIC.</p>
+<h3>26.3 Detail</h3>
+<p><code>HalamanDetailAssetPerbaikan</code>: hero, stepper proses, timeline per aset (<code>AssetPerbaikanAssetTimeline</code>), tombol sesuai <code>aksi</code>.</p>
+<h3>26.4 Sheet aksi</h3>
+<p><code>AssetPerbaikanActionSheets</code>: terima, kirim (vendor terdaftar/manual, foto kamera/galeri), progres, hasil, terima kembali, review.</p>
+<h3>26.5 Entry point</h3>
+<p>Admin: menu <strong>Perbaikan</strong> dan kartu "perlu diproses" beranda. PIC: kartu Tugas PIC.</p>
+<h2 id="s27"><span class="sec-no">27</span>Mobile → API</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Aksi UI</th>
+<th>Method</th>
+<th>Endpoint</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Daftar/detail/opsi</td>
+<td>GET</td>
+<td><code>…/perbaikan</code>, <code>/{id}</code>, <code>/options</code></td>
+</tr>
+<tr>
+<td>Buat/ubah</td>
+<td>POST/PUT</td>
+<td><code>…/perbaikan</code>, <code>/{id}</code></td>
+</tr>
+<tr>
+<td>Terima/kirim/progres/hasil</td>
+<td>POST</td>
+<td><code>…/{id}/{aksi}</code></td>
+</tr>
+<tr>
+<td>Jadwal balik/terima kembali/review</td>
+<td>POST</td>
+<td><code>…/{id}/jadwal-kembali</code>, <code>/terima-kembali</code>, <code>/review</code></td>
+</tr>
+</tbody>
+</table></div>
+<p>Prefix <code>asset/perbaikan</code> (admin) atau <code>asset/karyawan/perbaikan</code> (PIC).</p>
+<h2 id="s28"><span class="sec-no">28</span>API → Mobile</h2>
+<p>Dipetakan ke <code>AssetPerbaikanRecord/Page/Options</code>; objek <code>aksi</code> menentukan tombol. 422 tampil sebagai snackbar warning, kegagalan lain sebagai error; sukses menutup halaman dengan pesan.</p>
+<h2 id="s29"><span class="sec-no">29</span>Mapping Mobile → API → Database</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Field UI</th>
+<th>Field API</th>
+<th>Kolom DB</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Jadwal serah terima</td>
+<td><code>tgl_jadwal</code>/<code>jam_jadwal</code></td>
+<td><code>tgl_serah_terima</code>/<code>jam_serah_terima</code></td>
+</tr>
+<tr>
+<td>PIC Service</td>
+<td><code>id_asset_pendamping_m</code></td>
+<td><code>id_asset_pendamping_m</code> + snapshot</td>
+</tr>
+<tr>
+<td>Checklist terima</td>
+<td><code>status_kesesuaian_item</code>, <code>status_kelengkapan_aset</code></td>
+<td>kolom sama di item</td>
+</tr>
+<tr>
+<td>Foto tanda terima</td>
+<td><code>foto_tanda_terima</code></td>
+<td><code>foto_tanda_terima</code> (path)</td>
+</tr>
+<tr>
+<td>Progres</td>
+<td><code>keterangan_progres</code></td>
+<td><code>asset_trx_perbaikan_progres</code></td>
+</tr>
+<tr>
+<td>Jadwal balik</td>
+<td><code>tgl_pengembalian</code>/<code>jam_pengembalian</code></td>
+<td><code>tgl_pengembalian_perbaikan</code>/<code>jam_pengembalian</code></td>
+</tr>
+<tr>
+<td>Unit baru</td>
+<td><code>id_asset_data_baru</code></td>
+<td><code>id_asset_data_baru</code></td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="s30"><span class="sec-no">30</span>Mapping Database → API → Mobile</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Kolom DB</th>
+<th>Field API</th>
+<th>Tampil di</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>fase_perbaikan</code></td>
+<td><code>fase_perbaikan</code>, <code>status_label</code></td>
+<td>Badge, stepper</td>
+</tr>
+<tr>
+<td><code>hasil_perbaikan</code></td>
+<td><code>assets[].hasil.status</code></td>
+<td>Timeline tahap hasil</td>
+</tr>
+<tr>
+<td><code>foto_tanda_terima</code></td>
+<td><code>foto_tanda_terima_url</code></td>
+<td>Timeline tahap service</td>
+</tr>
+<tr>
+<td><code>tindak_lanjut_akhir</code></td>
+<td><code>assets[].tindak_lanjut.jenis</code></td>
+<td>Timeline tindak lanjut</td>
+</tr>
+</tbody>
+</table></div>
+<div class="group-divider" id="g5"><span>Validasi, Error &amp; Keamanan</span></div><h2 id="s31"><span class="sec-no">31</span>Validation</h2>
+<h3>31.1 Mobile</h3>
+<p>Form sheet memvalidasi wajib-isi (tanggal, jam, PIC, lokasi, vendor, nomor referensi, foto bila vendor, estimasi ≥ mulai, hasil, komponen, kondisi akhir).</p>
+<h3>31.2 Backend</h3>
+<p>Aturan Laravel di <code>Asset_c</code>/controller (format <code>Y-m-d</code>, <code>H:i</code>, <code>in:</code> untuk enum) ditambah aturan bisnis di model (§9).</p>
+<h3>31.3 Database</h3>
+<p>Enum fase/status/hasil/pelaksana/tindak lanjut; FK PIC, vendor, lokasi, aset; unik <code>(trx, asset)</code>.</p>
+<h2 id="s32"><span class="sec-no">32</span>Error Handling</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Kondisi</th>
+<th>Kode</th>
+<th>Contoh pesan</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Validasi request</td>
+<td>422</td>
+<td>"Tanggal serah terima wajib diisi."</td>
+</tr>
+<tr>
+<td>Aturan bisnis</td>
+<td>422 <code>BUSINESS_RULE_VIOLATION</code></td>
+<td>"Nomor referensi wajib diisi jika service ke vendor."</td>
+</tr>
+<tr>
+<td>Bukan admin</td>
+<td>403</td>
+<td>"Pengguna tidak memiliki akses admin asset."</td>
+</tr>
+<tr>
+<td>Tidak ditemukan</td>
+<td>404</td>
+<td>"Perbaikan tidak ditemukan."</td>
+</tr>
+<tr>
+<td>Sistem</td>
+<td>500 <code>SYSTEM_ERROR</code></td>
+<td>Pesan umum</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="s33"><span class="sec-no">33</span>Audit Trail</h2>
+<p><code>user_terima</code>, <code>user_ajukan_pengembalian</code>, <code>user_terima_kembali</code>, <code>user_review</code> beserta timestamp; <code>user_input</code>/<code>user_update</code> per baris; <code>asset_log</code> (<code>perbaikan_gudang</code>) saat dibuat dan saat review.</p>
+<h2 id="s34"><span class="sec-no">34</span>Notification</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Event</th>
+<th>Penerima</th>
+<th>Rute mobile</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>perbaikan.ditugaskan</code></td>
+<td>PIC</td>
+<td><code>asset_detail_perbaikan</code></td>
+</tr>
+<tr>
+<td><code>perbaikan.diubah</code></td>
+<td>PIC</td>
+<td>idem</td>
+</tr>
+<tr>
+<td><code>perbaikan.diterima</code></td>
+<td>Admin</td>
+<td><code>asset_admin_detail_perbaikan</code></td>
+</tr>
+<tr>
+<td><code>perbaikan.diterima_admin</code></td>
+<td>PIC</td>
+<td><code>asset_detail_perbaikan</code></td>
+</tr>
+<tr>
+<td><code>perbaikan.masuk_service</code></td>
+<td>Admin</td>
+<td><code>asset_admin_detail_perbaikan</code></td>
+</tr>
+<tr>
+<td><code>perbaikan.progres</code></td>
+<td>Admin</td>
+<td>idem</td>
+</tr>
+<tr>
+<td><code>perbaikan.hasil</code></td>
+<td>Admin</td>
+<td>idem</td>
+</tr>
+<tr>
+<td><code>perbaikan.jadwal_kembali</code></td>
+<td>PIC</td>
+<td><code>asset_detail_perbaikan</code></td>
+</tr>
+<tr>
+<td><code>perbaikan.diterima_kembali</code></td>
+<td>PIC</td>
+<td>idem</td>
+</tr>
+<tr>
+<td><code>perbaikan.selesai</code></td>
+<td>PIC</td>
+<td>idem</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="s35"><span class="sec-no">35</span>Security</h2>
+<p>JWT; admin diperiksa per request; PIC dibatasi ke <code>id_pic_pendamping</code> miliknya dan harus karyawan aktif; foto diunggah ke bucket MinIO privat lewat <code>Asset_c::uploadAssetImage</code> (<code>AssetImageStorage</code>): hanya JPEG/PNG/WebP valid, maks 5 MB dan 25 megapiksel; key memuat <code>id_company</code> dan <code>id_karyawan</code> dari JWT; URL foto berupa presigned URL berumur singkat (lihat <code>dokumentasi-minio-object-storage.md</code>); semua query memfilter <code>id_company</code>; transaksi + <code>lockForUpdate</code>.</p>
+<div class="group-divider" id="g6"><span>Manual Book</span></div><h2 id="s36"><span class="sec-no">36</span>Manual Book User/Admin</h2>
+<h3>A. Admin — Membuat perbaikan</h3>
+<p>Perbaikan → tombol <strong>+</strong> → pilih aset rusak → isi jadwal serah terima dan PIC → simpan.</p>
+<h3>B. PIC — Menerima aset</h3>
+<p>Tugas PIC → transaksi → <strong>Terima Aset</strong> → isi checklist kondisi dan kelengkapan.</p>
+<h3>C. PIC — Service</h3>
+<p><strong>Isi Data Pengiriman</strong> (pelaksana, tanggal, lokasi; vendor wajib nomor referensi dan foto) → <strong>Update Progres</strong> bila ada perkembangan → <strong>Isi Hasil Service</strong> dan jadwal serah terima balik.</p>
+<h3>D. Admin — Menerima kembali dan review</h3>
+<p><strong>Terima Aset Kembali</strong> (checklist) → <strong>Review &amp; Tindak Lanjut</strong>: pilih gudang tujuan (aset diperbaiki) atau unit baru (aset diganti).</p>
+<h2 id="s37"><span class="sec-no">37</span>Kondisi Button</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Tombol</th>
+<th>Syarat</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Ubah</td>
+<td>admin, <code>menunggu_serah_terima</code></td>
+</tr>
+<tr>
+<td>Terima Aset</td>
+<td><code>menunggu_serah_terima</code></td>
+</tr>
+<tr>
+<td>Isi Data Pengiriman / Update Progres / Isi Hasil</td>
+<td><code>dalam_service</code> (progres dan hasil setelah semua aset dikirim)</td>
+</tr>
+<tr>
+<td>Atur Jadwal Pengembalian, Terima Aset Kembali</td>
+<td>admin, <code>menunggu_pengembalian</code></td>
+</tr>
+<tr>
+<td>Review &amp; Tindak Lanjut</td>
+<td>admin, <code>menunggu_review</code></td>
+</tr>
+</tbody>
+</table></div>
+<div class="group-divider" id="g7"><span>QA &amp; Risiko</span></div><h2 id="s38"><span class="sec-no">38</span>Testing Scenario</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>No</th>
+<th>Skenario</th>
+<th>Hasil</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>T-01</td>
+<td>Buat dengan aset non-gudang/tidak rusak</td>
+<td>Ditolak</td>
+</tr>
+<tr>
+<td>T-02</td>
+<td>Buat valid</td>
+<td><code>PML02-…</code>, aset <code>menunggu_serah_terima_service</code></td>
+</tr>
+<tr>
+<td>T-03</td>
+<td>Terima dengan checklist <code>tidak</code> tanpa keterangan</td>
+<td>Ditolak</td>
+</tr>
+<tr>
+<td>T-04</td>
+<td>Kirim vendor tanpa nomor/foto</td>
+<td>Ditolak</td>
+</tr>
+<tr>
+<td>T-05</td>
+<td>Hasil sebelum semua aset dikirim</td>
+<td>Ditolak</td>
+</tr>
+<tr>
+<td>T-06</td>
+<td>Review <code>diperbaiki</code></td>
+<td>Aset <code>tersedia</code> di gudang tujuan</td>
+</tr>
+<tr>
+<td>T-07</td>
+<td>Review <code>diganti_unit_baru</code> tanpa/dengan unit tidak valid</td>
+<td>Ditolak</td>
+</tr>
+<tr>
+<td>T-08</td>
+<td>PIC lain mengakses transaksi</td>
+<td>Tidak ditemukan</td>
+</tr>
+<tr>
+<td>T-09</td>
+<td>Alur penuh via route admin dan PIC</td>
+<td>Fase berurutan, notifikasi terkirim</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="s39"><span class="sec-no">39</span>Temuan Ketidaksesuaian</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>ID</th>
+<th>Temuan</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>INC-01</td>
+<td>PML01 (hasil 4) dan PML03 (ditolak) baru mencatat nama tabel tindak lanjut; <strong>tidak membuat perbaikan otomatis</strong></td>
+</tr>
+<tr>
+<td>INC-02</td>
+<td>Tidak ada pembatalan perbaikan</td>
+</tr>
+<tr>
+<td>INC-03</td>
+<td>Kolom <code>pemegang_asset_asal</code>/<code>id_pemegang_asset_asal</code> tidak dipakai (scope gudang saja); <code>kembali_lokasi_asal</code> ada di enum tetapi tidak dipakai</td>
+</tr>
+<tr>
+<td>INC-04</td>
+<td>Tidak ada pencatatan biaya perbaikan</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="s40"><span class="sec-no">40</span>Edge Case</h2>
+<ul>
+<li>PIC menghapus/mengganti data pengiriman setelah progres: diperbolehkan selama <code>dalam_service</code>.</li>
+<li>Dua unit lama memakai unit baru yang sama: ditolak (<code>penggantiDipakai</code>).</li>
+<li>Unit baru sudah dipakai perbaikan atau klaim garansi lain: ditolak.</li>
+<li>Aset berubah status di luar alur: ditolak "Status asset sudah berubah…".</li>
+</ul>
+<h2 id="s41"><span class="sec-no">41</span>Potential Bug / Technical Risk</h2>
+<h3>RISK-001 — Skema dari SQL manual (TINGGI)</h3>
+<p>SQL belum dijalankan; jalankan setelah SQL PML01 gudang dan PML03 karena blok enum menulis ulang seluruh daftar.</p>
+<h3>RISK-002 — Tidak ada pembatalan (SEDANG)</h3>
+<p>Perbaikan yang tertahan mengunci aset.</p>
+<h3>RISK-003 — Foto lama di disk lokal (RENDAH)</h3>
+<p>Foto baru disimpan di object storage. Foto lama di <code>UPLOAD_DIR</code> tetap terbaca lewat fallback URL lokal. Object lama tidak dihapus saat foto diganti; object baru yang yatim dibersihkan otomatis bila transaksi gagal.</p>
+<h3>RISK-004 — Notifikasi di luar transaksi (RENDAH)</h3>
+<h3>RISK-005 — Kapasitas penomoran 999/bulan (RENDAH)</h3>
+<div class="group-divider" id="g8"><span>Referensi Developer</span></div><h2 id="s42"><span class="sec-no">42</span>Dependency</h2>
+<p><code>Asset_m/Asset_c</code>, <code>AssetPendamping_m</code>, <code>AssetPemeliharaanKaryawan_m</code> (vendor, format tanggal), <code>AssetImageStorage</code>, <code>AssetNotification</code>, tabel <code>asset_vendor_m</code>, <code>asset_lokasi_m</code>, <code>asset_data</code>.</p>
+<h2 id="s43"><span class="sec-no">43</span>Source Code Reference</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Area</th>
+<th>Lokasi</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Model</td>
+<td><code>API/app/Models/Asset/AssetPerbaikan_m.php</code></td>
+</tr>
+<tr>
+<td>Controller</td>
+<td><code>API/app/Http/Controllers/Asset/Admin/AssetAdminPerbaikan_c.php</code>, <code>Karyawan/AssetKaryawanPerbaikan_c.php</code></td>
+</tr>
+<tr>
+<td>SQL</td>
+<td><code>Claude outputs/sql-pml02-perbaikan.sql</code></td>
+</tr>
+<tr>
+<td>Test API</td>
+<td><code>API/tests/Asset/AssetPerbaikanTest.php</code></td>
+</tr>
+<tr>
+<td>Mobile UI</td>
+<td><code>MOBILE/lib/UI/Modul/Asset/Pemeliharaan/Perbaikan/</code></td>
+</tr>
+<tr>
+<td>Test mobile</td>
+<td><code>MOBILE/test/asset/asset_perbaikan_test.dart</code></td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="s44"><span class="sec-no">44</span>Developer Notes</h2>
+<ul>
+<li>Pola dasar sama dengan PML01 gudang dan PML03 (<code>lockHeader</code>, <code>lockAssets($status)</code>, <code>updateItem</code>, <code>headerResult</code>).</li>
+<li><code>lockForActor</code> memungkinkan satu method melayani PIC dan admin cadangan.</li>
+<li>Aksi <code>kirim</code> idempotent-update; <code>progres</code> menambah baris.</li>
+<li>Jangan mengubah urutan enum <code>status_asset</code>; nilai baru ditambah di akhir.</li>
+</ul>
+<h2 id="s45"><span class="sec-no">45</span>End-to-End Traceability</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Kebutuhan</th>
+<th>Rule</th>
+<th>API</th>
+<th>Mobile</th>
+<th>DB</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Kunci aset</td>
+<td>BR-001/003</td>
+<td>API-003/005</td>
+<td>Buat, Terima</td>
+<td><code>asset_data.status_asset</code></td>
+</tr>
+<tr>
+<td>Bukti vendor</td>
+<td>BR-004</td>
+<td>API-006</td>
+<td>Sheet kirim</td>
+<td><code>nomor_referensi</code>, <code>foto_tanda_terima</code></td>
+</tr>
+<tr>
+<td>Progres</td>
+<td>BR-005</td>
+<td>API-007</td>
+<td>Sheet progres</td>
+<td><code>asset_trx_perbaikan_progres</code></td>
+</tr>
+<tr>
+<td>Unit pengganti</td>
+<td>BR-008</td>
+<td>API-011</td>
+<td>Sheet review</td>
+<td><code>id_asset_data_baru</code></td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="s46"><span class="sec-no">46</span>Ringkasan Database Impact</h2>
+<p>Tabel baru: <code>asset_trx_perbaikan</code>, <code>_item</code>, <code>_progres</code> (struktur lama di-drop bila kosong). <code>asset_data.status_asset</code> +<code>menunggu_serah_terima_service</code>; <code>asset_log.jenis_log</code> +<code>perbaikan_gudang</code>, <code>perbaikan_karyawan</code>.</p>
+<h2 id="s47"><span class="sec-no">47</span>Checklist Implementasi</h2>
+<h3>Database</h3>
+<ul>
+<li class="task done">DBML diperbarui</li>
+<li class="task done">SQL manual + guard + rollback</li>
+<li class="task">SQL dijalankan di setiap environment</li>
+</ul>
+<h3>Backend</h3>
+<ul>
+<li class="task done">Model, controller admin dan PIC, route, notifikasi</li>
+<li class="task done">Test otomatis</li>
+</ul>
+<h3>Mobile</h3>
+<ul>
+<li class="task done">Daftar, buat, detail, sheet aksi</li>
+<li class="task done">Teks id/en, test otomatis</li>
+</ul>
+<h3>Documentation</h3>
+<ul>
+<li class="task done">Dokumen ini</li>
+</ul>
+<h2 id="s48"><span class="sec-no">48</span>Changelog</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Versi</th>
+<th>Tanggal</th>
+<th>Perubahan</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1.0</td>
+<td>8 Okt 2026</td>
+<td>Dokumen awal PML02</td>
+</tr>
+<tr>
+<td>1.1</td>
+<td>12 Okt 2026</td>
+<td>Sinkronisasi dengan kode: foto tanda terima kini disimpan di object storage MinIO (RISK-003 diturunkan ke RENDAH); path UI/model mobile mengikuti struktur folder baru; <code>AssetPerbaikanProsesWidgets</code> dan <code>AssetFotoPreview</code> dicatat</td>
+</tr>
+</tbody>
+</table></div>
+    </article>
+
+    <footer>Dokumentasi Perbaikan Asset v1.0 · 8 Oktober 2026 · Disusun dari source lokal API (Lumen) &amp; MOBILE (Flutter). Contoh ID dan nama pada payload adalah data sintetis.</footer>
+  </main>
+</div>
+<button class="to-top" id="to-top" type="button" aria-label="Kembali ke atas">↑</button>
+
+<script>
+(function(){
+  var search=document.getElementById('nav-search');
+  var navs=document.querySelectorAll('.nav');
+  search.addEventListener('input',function(){
+    var q=search.value.trim().toLowerCase();
+    navs.forEach(function(nav){
+      nav.querySelectorAll('.nav-group').forEach(function(g){
+        var any=false;
+        g.querySelectorAll('a').forEach(function(a){
+          var hit=!q||a.textContent.toLowerCase().indexOf(q)>-1;
+          a.hidden=!hit; if(hit) any=true;
+        });
+        g.hidden=!any;
+      });
+    });
+  });
+  var links={};
+  document.querySelectorAll('#nav a').forEach(function(a){links[a.dataset.sec]=a;});
+  var current=null;
+  if('IntersectionObserver' in window){
+    var io=new IntersectionObserver(function(entries){
+      entries.forEach(function(e){
+        if(e.isIntersecting){
+          if(current) current.classList.remove('active');
+          current=links[e.target.id];
+          if(current){current.classList.add('active');var nav=current.closest('.nav');var top=current.offsetTop-nav.offsetTop;if(top<nav.scrollTop||top>nav.scrollTop+nav.clientHeight-30){nav.scrollTop=top-nav.clientHeight/2;}}
+        }
+      });
+    },{rootMargin:'0px 0px -75% 0px'});
+    document.querySelectorAll('.doc h2[id]').forEach(function(h){io.observe(h);});
+  }
+  document.querySelectorAll('.mobile-toc a').forEach(function(a){
+    a.addEventListener('click',function(){a.closest('details').open=false;});
+  });
+  document.getElementById('to-top').addEventListener('click',function(){window.scrollTo({top:0});});
+})();
+</script>
+<script type="module">
+// Fallback renderer: hanya jalan bila viewer belum merender diagram (mis. file dibuka langsung).
+const blocks=[...document.querySelectorAll('pre.mermaid')].filter(function(el){return !el.hasAttribute('data-claude-mermaid-claimed');});
+if(blocks.length){
+  blocks.forEach(function(el){el.setAttribute('data-claude-mermaid-claimed','1');el.dataset.src=el.textContent;});
+  const {default:mermaid}=await import("https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs");
+  const media=window.matchMedia('(prefers-color-scheme: dark)');
+  const render=async function(){
+    const css=getComputedStyle(document.documentElement);
+    const v=function(n){return css.getPropertyValue(n).trim();};
+    mermaid.initialize({startOnLoad:false,securityLevel:'strict',theme:'base',fontFamily:'inherit',
+      themeVariables:{background:v('--surface'),primaryColor:v('--accent-soft'),primaryTextColor:v('--ink'),
+        primaryBorderColor:v('--accent'),lineColor:v('--muted'),secondaryColor:v('--surface-2'),tertiaryColor:v('--surface'),
+        textColor:v('--ink'),mainBkg:v('--accent-soft'),nodeBorder:v('--accent'),clusterBkg:v('--surface-2'),
+        noteBkgColor:v('--surface-2'),noteTextColor:v('--ink'),noteBorderColor:v('--line'),
+        actorBkg:v('--accent-soft'),actorBorder:v('--accent'),actorTextColor:v('--ink'),actorLineColor:v('--muted'),
+        signalColor:v('--ink-2'),signalTextColor:v('--ink'),labelBoxBkgColor:v('--surface-2'),labelTextColor:v('--ink'),
+        edgeLabelBackground:v('--surface'),attributeBackgroundColorOdd:v('--surface'),attributeBackgroundColorEven:v('--surface-2')}});
+    blocks.forEach(function(el){el.removeAttribute('data-processed');el.textContent=el.dataset.src;});
+    try{await mermaid.run({nodes:blocks});}catch(e){console.error(e);}
+  };
+  render();
+  if(media.addEventListener) media.addEventListener('change',render);
+}
+</script>
+<script>
+// Kembali ke index lokal bila dibuka dari komputer, ke index artifact bila dibuka dari claude.ai.
+(function(){var h=location.hostname;var art=location.protocol!=='file:'&&/claude/i.test(h);
+if(art){document.querySelectorAll('a.back').forEach(function(a){a.href='https://claude.ai/artifact/X39UeaJRpBKwqFjswGNqip';a.target='_blank';a.rel='noopener';});
+document.querySelectorAll('.dl').forEach(function(d){d.hidden=true;});}})();
+</script>

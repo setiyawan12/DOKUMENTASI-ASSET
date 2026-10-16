@@ -1,0 +1,4108 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Request &amp; Penambahan Asset</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap">
+<style>
+:root{
+  --ground:#F3F5F9; --surface:#FFFFFF; --surface-2:#EAEEF5; --ink:#162033; --ink-2:#3A4559; --muted:#657089;
+  --line:#D9DFEA; --accent:#1F5AA6; --accent-soft:#E3ECF8; --accent-ink:#163F75;
+  --wait:#B45F00; --wait-bg:#FFE9C7; --draft:#0078A8; --draft-bg:#D6F1FA;
+  --bad:#C22F2F; --bad-bg:#FDE1E1; --done:#157A41; --done-bg:#D9F2E3; --neutral:#4E5A70; --neutral-bg:#E6EAF1;
+  --code-bg:#0F1A2C; --code-ink:#DCE6F5; --code-muted:#8FA3C2;
+  --shadow:0 1px 2px rgba(22,32,51,.06),0 8px 24px rgba(22,32,51,.06);
+  --font:"Plus Jakarta Sans",ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  color-scheme:dark;
+  --ground:#0E1420; --surface:#151D2C; --surface-2:#1C2638; --ink:#E7ECF5; --ink-2:#C3CBDA; --muted:#8E99AF;
+  --line:#28334A; --accent:#7FAEF0; --accent-soft:#1B2A45; --accent-ink:#B8D2F7;
+  --wait:#FFB861; --wait-bg:#3A2A12; --draft:#6CD3F5; --draft-bg:#113442; --bad:#FF8A8A; --bad-bg:#3D1C1F;
+  --done:#6FD69C; --done-bg:#15321F; --neutral:#B7C1D3; --neutral-bg:#243047;
+  --code-bg:#0A101B; --code-ink:#DCE6F5; --code-muted:#7F93B3; --shadow:0 1px 2px rgba(0,0,0,.3),0 8px 24px rgba(0,0,0,.25);
+}}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --ground:#0E1420; --surface:#151D2C; --surface-2:#1C2638; --ink:#E7ECF5; --ink-2:#C3CBDA; --muted:#8E99AF;
+  --line:#28334A; --accent:#7FAEF0; --accent-soft:#1B2A45; --accent-ink:#B8D2F7;
+  --wait:#FFB861; --wait-bg:#3A2A12; --draft:#6CD3F5; --draft-bg:#113442; --bad:#FF8A8A; --bad-bg:#3D1C1F;
+  --done:#6FD69C; --done-bg:#15321F; --neutral:#B7C1D3; --neutral-bg:#243047;
+  --code-bg:#0A101B; --code-ink:#DCE6F5; --code-muted:#7F93B3; --shadow:0 1px 2px rgba(0,0,0,.3),0 8px 24px rgba(0,0,0,.25);
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth;scroll-padding-top:24px}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+body{background:var(--ground);color:var(--ink);font-family:var(--font);font-size:15px;line-height:1.65;padding-inline:16px}
+a{color:var(--accent)}
+a:focus-visible,button:focus-visible,input:focus-visible,summary:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:4px}
+
+.shell{max-width:1320px;margin:0 auto;display:grid;grid-template-columns:270px minmax(0,1fr);gap:40px;padding-block:28px 80px}
+@media (max-width:960px){.shell{grid-template-columns:minmax(0,1fr);gap:20px}}
+
+/* Navigasi */
+.sidebar{position:sticky;top:calc(env(safe-area-inset-top,0px) + 16px);align-self:start;max-height:calc(100vh - 32px);display:flex;flex-direction:column;gap:12px}
+@media (max-width:960px){.sidebar{display:none}}
+.back{font-size:13px;font-weight:600;text-decoration:none}
+.back-mobile{display:none;margin:0 0 8px}
+@media (max-width:960px){.back-mobile{display:block}}
+.brand{display:flex;align-items:center;gap:10px;font-weight:700;font-size:14px}
+.brand-mark{height:30px;padding-inline:8px;border-radius:8px;background:var(--accent);color:var(--surface);display:grid;place-items:center;font-family:var(--mono);font-size:12px;font-weight:600}
+.search{width:100%;padding:9px 12px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--ink);font:inherit;font-size:13.5px}
+.nav{overflow-y:auto;padding-right:6px;display:flex;flex-direction:column;gap:14px}
+.nav-group p{margin:0 0 4px;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:700}
+.nav a{display:flex;gap:10px;padding:4px 8px;border-radius:6px;text-decoration:none;color:var(--ink-2);font-size:13.5px;line-height:1.4}
+.nav a span{font-family:var(--mono);font-size:11.5px;color:var(--muted);padding-top:1px;min-width:18px}
+.nav a:hover{background:var(--surface-2)}
+.nav a.active{background:var(--accent-soft);color:var(--accent-ink);font-weight:600}
+.nav a.active span{color:var(--accent)}
+.mobile-toc{display:none;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px 14px}
+.mobile-toc summary{font-weight:700;cursor:pointer}
+.mobile-toc .nav{max-height:60vh;margin-top:10px}
+@media (max-width:960px){.mobile-toc{display:block}}
+
+main{min-width:0}
+
+/* Header bergaya label asset */
+.hero{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:28px;align-items:end;padding-block:8px 28px;border-bottom:1px solid var(--line)}
+@media (max-width:760px){.hero{grid-template-columns:minmax(0,1fr)}}
+.eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:.06em;color:var(--accent);text-transform:uppercase;margin:0 0 8px}
+.hero h1{font-size:clamp(30px,5vw,46px);line-height:1.08;letter-spacing:-.02em;margin:0 0 12px;font-weight:800;text-wrap:balance}
+.hero .lede{max-width:62ch;color:var(--ink-2);margin:0;font-size:16px}
+.hero .lede code{font-family:var(--mono);font-size:.86em;background:var(--surface-2);padding:1px 5px;border-radius:5px}
+.tag{background:var(--surface);border:1px dashed var(--muted);border-radius:12px;padding:14px 16px;min-width:250px;font-family:var(--mono);font-size:12px;box-shadow:var(--shadow);position:relative}
+@media (max-width:760px){.tag{min-width:0}}
+.tag::before{content:"";position:absolute;left:14px;top:-7px;width:12px;height:12px;border-radius:50%;background:var(--ground);border:1px dashed var(--muted)}
+.tag dl{display:grid;grid-template-columns:auto 1fr;gap:4px 14px;margin:0}
+.tag dt{color:var(--muted)}
+.tag dd{margin:0;color:var(--ink);font-weight:500}
+.barcode{height:26px;margin-top:10px;background:repeating-linear-gradient(90deg,var(--ink) 0 2px,transparent 2px 4px,var(--ink) 4px 5px,transparent 5px 8px,var(--ink) 8px 11px,transparent 11px 12px);opacity:.75;border-radius:2px}
+.tag .trx{margin-top:4px;text-align:center;letter-spacing:.2em;font-size:11px;color:var(--ink-2)}
+
+/* Panel ringkas */
+.overview{display:grid;gap:18px;padding-block:28px 8px}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:22px}
+.panel h3{margin:0 0 4px;font-size:18px}
+.panel .sub{margin:0 0 18px;color:var(--muted);font-size:14px}
+.panel code{font-family:var(--mono);font-size:.86em;background:var(--surface-2);padding:1px 5px;border-radius:5px;overflow-wrap:anywhere}
+.three{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
+@media (max-width:760px){.three{grid-template-columns:minmax(0,1fr)}}
+.fact{border-left:3px solid var(--accent);padding:2px 0 2px 14px}
+.fact b{display:block;font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.fact p{margin:4px 0 0;font-size:14.5px}
+
+/* Lifecycle */
+.flow{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;align-items:stretch}
+@media (max-width:760px){.flow{grid-template-columns:minmax(0,1fr)}}
+.step{border:1px solid var(--line);border-radius:12px;padding:14px;background:var(--surface);display:flex;flex-direction:column;gap:6px}
+.step .who{font-size:11.5px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.06em}
+.step p{margin:0;font-size:13.5px;color:var(--ink-2)}
+.step .db{font-family:var(--mono);font-size:11.5px;color:var(--muted);margin-top:auto;padding-top:8px;border-top:1px dashed var(--line)}
+.loop{margin-top:12px;display:flex;flex-wrap:wrap;gap:10px;align-items:center;padding:12px 14px;border-radius:12px;background:var(--bad-bg);color:var(--ink);font-size:13.5px}
+.loop strong{color:var(--bad)}
+
+.badge{display:inline-flex;align-items:center;gap:6px;padding:3px 10px;border-radius:999px;font-size:12.5px;font-weight:700;width:max-content}
+.badge::before{content:"";width:7px;height:7px;border-radius:50%;background:currentColor}
+.b-draft{background:var(--draft-bg);color:var(--draft)}
+.b-wait{background:var(--wait-bg);color:var(--wait)}
+.b-bad{background:var(--bad-bg);color:var(--bad)}
+.b-done{background:var(--done-bg);color:var(--done)}
+
+/* Peran */
+.roles{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+@media (max-width:900px){.roles{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:520px){.roles{grid-template-columns:minmax(0,1fr)}}
+.role{border:1px solid var(--line);border-radius:12px;padding:14px 16px;background:var(--surface);display:flex;flex-direction:column;gap:8px}
+.role h4{margin:0;font-size:14.5px}
+.role p{margin:0;font-size:13px;color:var(--muted)}
+.role .links{display:flex;flex-wrap:wrap;gap:6px;margin-top:auto}
+.role .links a{font-family:var(--mono);font-size:11.5px;text-decoration:none;padding:2px 8px;border-radius:6px;background:var(--accent-soft);color:var(--accent-ink)}
+.role .links a:hover{background:var(--accent);color:var(--surface)}
+
+.attention{list-style:none;margin:0;padding:0;display:grid;gap:10px}
+.attention li{display:grid;grid-template-columns:72px minmax(0,1fr);gap:12px;align-items:start;font-size:14px}
+.sev{font-family:var(--mono);font-size:11px;font-weight:600;padding:2px 8px;border-radius:6px;margin-top:2px;text-align:center}
+.sev-h{background:var(--bad-bg);color:var(--bad)}
+.sev-m{background:var(--wait-bg);color:var(--wait)}
+.sev-ok{background:var(--done-bg);color:var(--done)}
+
+/* Konten dokumen */
+.doc{padding-top:8px}
+.group-divider{margin:64px 0 0;display:flex;align-items:center;gap:14px;color:var(--accent);font-size:12px;font-weight:800;letter-spacing:.12em;text-transform:uppercase}
+.group-divider::after{content:"";flex:1;height:2px;background:var(--accent);opacity:.25}
+.doc h2{font-size:clamp(22px,3vw,27px);line-height:1.2;letter-spacing:-.01em;margin:40px 0 14px;display:flex;align-items:baseline;gap:14px;text-wrap:balance}
+.sec-no{font-family:var(--mono);font-size:14px;color:var(--accent);font-weight:600;padding:3px 8px;border:1px solid var(--accent);border-radius:6px;flex:none;transform:translateY(-3px)}
+.doc h3{font-size:18px;margin:30px 0 10px;text-wrap:balance}
+.doc h4{font-size:15.5px;margin:22px 0 8px}
+.doc p,.doc li{max-width:78ch;color:var(--ink-2)}
+.doc strong{color:var(--ink)}
+.doc hr{display:none}
+.doc code{font-family:var(--mono);font-size:.86em;background:var(--surface-2);padding:1px 5px;border-radius:5px;color:var(--ink);overflow-wrap:anywhere}
+.doc .chip{font-weight:600;border-radius:999px;padding:1px 8px}
+.doc .chip-draft{background:var(--draft-bg);color:var(--draft)}
+.doc .chip-wait{background:var(--wait-bg);color:var(--wait)}
+.doc .chip-bad{background:var(--bad-bg);color:var(--bad)}
+.doc .chip-done{background:var(--done-bg);color:var(--done)}
+.doc .chip-neutral{background:var(--neutral-bg);color:var(--neutral)}
+
+.table-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:12px;background:var(--surface);margin:14px 0 20px}
+table{border-collapse:collapse;width:100%;font-size:13.5px;font-variant-numeric:tabular-nums}
+th{text-align:left;background:var(--surface-2);color:var(--ink);font-weight:700;font-size:12.5px;letter-spacing:.02em;padding:10px 12px;border-bottom:1px solid var(--line);white-space:nowrap}
+td{padding:9px 12px;border-bottom:1px solid var(--line);vertical-align:top;color:var(--ink-2);min-width:90px}
+tr:last-child td{border-bottom:0}
+tbody tr:hover td{background:var(--accent-soft)}
+
+.code{position:relative;margin:14px 0 20px}
+.code-lang{position:absolute;top:8px;right:12px;font-family:var(--mono);font-size:10.5px;color:var(--code-muted);letter-spacing:.08em;text-transform:uppercase}
+.doc .code pre{background:var(--code-bg);color:var(--code-ink);border-radius:12px;padding:18px;overflow-x:auto;margin:0;font-size:12.8px;line-height:1.6}
+.doc .code pre code{background:none;color:inherit;padding:0;font-size:inherit;overflow-wrap:normal}
+.diagram{overflow-x:auto;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:18px;margin:14px 0 20px}
+.diagram pre{margin:0}
+.diagram pre.mermaid{font-family:var(--mono);font-size:12px;color:var(--muted);white-space:pre;text-align:center}
+.diagram pre.mermaid[data-processed]{color:inherit;white-space:normal}
+.diagram svg{max-width:100%;height:auto}
+
+.callout{border-radius:12px;padding:12px 16px;margin:14px 0;border:1px solid var(--line);background:var(--surface)}
+.callout p{margin:4px 0}
+.callout-warn{background:var(--wait-bg);border-color:transparent}
+.doc .callout-warn p,.doc .callout-warn strong{color:var(--ink)}
+.callout-note{border-left:3px solid var(--accent)}
+
+.doc .task{list-style:none;padding-left:4px}
+.task::before{content:"";display:inline-block;width:14px;height:14px;border:1.5px solid var(--muted);border-radius:4px;margin-right:10px;vertical-align:-2px}
+.task.done::before{background:var(--done);border-color:var(--done);box-shadow:inset 0 0 0 2px var(--surface)}
+footer{margin-top:64px;padding-top:18px;border-top:1px solid var(--line);color:var(--muted);font-size:13px}
+.to-top{position:fixed;right:16px;bottom:calc(env(safe-area-inset-bottom,0px) + 16px);width:40px;height:40px;border-radius:50%;border:1px solid var(--line);background:var(--surface);color:var(--ink);box-shadow:var(--shadow);cursor:pointer;font-size:16px}
+.dl{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0 12px}.dl a{font-size:12px;font-weight:600;text-decoration:none;border:1px solid var(--line);border-radius:999px;padding:3px 10px;color:var(--ink);background:var(--surface)}.dl a:hover{border-color:var(--accent);color:var(--accent)}.dl[hidden]{display:none}
+</style>
+
+<div class="shell">
+  <aside class="sidebar" aria-label="Daftar isi">
+    <a class="back" href="index.html">← Semua dokumen</a>
+    <div class="dl" aria-label="Unduh dokumen"><a href="dokumentasi-asset-request-penambahan-karyawan.html" download>⬇ HTML</a><a href="dokumentasi-asset-request-penambahan-karyawan.md" download>⬇ Markdown</a></div>
+    <div class="brand"><span class="brand-mark">KRY-03-1</span>Request Asset</div>
+    <input class="search" id="nav-search" type="search" placeholder="Cari bagian… (mis. API, status)" aria-label="Cari bagian">
+    <nav class="nav" id="nav"><div class="nav-group"><p>Gambaran & Bisnis</p><a href="#s1" data-sec="s1"><span>01</span>Informasi Dokumen</a><a href="#s3" data-sec="s3"><span>03</span>Quick Overview</a><a href="#s4" data-sec="s4"><span>04</span>Ringkasan Fitur</a><a href="#s5" data-sec="s5"><span>05</span>Tujuan Fitur</a><a href="#s6" data-sec="s6"><span>06</span>Aktor</a><a href="#s7" data-sec="s7"><span>07</span>Hak Akses</a><a href="#s8" data-sec="s8"><span>08</span>Terminologi</a><a href="#s9" data-sec="s9"><span>09</span>Business Rules</a><a href="#s10" data-sec="s10"><span>10</span>Business Flow</a><a href="#s11" data-sec="s11"><span>11</span>Flow Berdasarkan Role</a><a href="#s12" data-sec="s12"><span>12</span>Flow Diagram</a><a href="#s13" data-sec="s13"><span>13</span>Sequence Diagram</a><a href="#s14" data-sec="s14"><span>14</span>Status Transaksi</a><a href="#s15" data-sec="s15"><span>15</span>State Transition</a></div><div class="nav-group"><p>Database</p><a href="#s16" data-sec="s16"><span>16</span>Struktur Database</a><a href="#s17" data-sec="s17"><span>17</span>Relasi Database</a><a href="#s18" data-sec="s18"><span>18</span>Data Dictionary</a><a href="#s19" data-sec="s19"><span>19</span>Database Index</a></div><div class="nav-group"><p>Backend & API</p><a href="#s20" data-sec="s20"><span>20</span>Backend Architecture</a><a href="#s21" data-sec="s21"><span>21</span>Backend Business Logic</a><a href="#s22" data-sec="s22"><span>22</span>Dampak terhadap asset_data</a><a href="#s23" data-sec="s23"><span>23</span>API Documentation</a><a href="#s24" data-sec="s24"><span>24</span>Detail Setiap API</a></div><div class="nav-group"><p>Mobile</p><a href="#s25" data-sec="s25"><span>25</span>Mobile Architecture</a><a href="#s26" data-sec="s26"><span>26</span>Mobile Screen</a><a href="#s27" data-sec="s27"><span>27</span>Mobile → API</a><a href="#s28" data-sec="s28"><span>28</span>API → Mobile</a><a href="#s29" data-sec="s29"><span>29</span>Mapping Mobile → API → Database</a><a href="#s30" data-sec="s30"><span>30</span>Mapping Database → API → Mobile</a></div><div class="nav-group"><p>Validasi, Error & Keamanan</p><a href="#s31" data-sec="s31"><span>31</span>Validation</a><a href="#s32" data-sec="s32"><span>32</span>Error Handling</a><a href="#s33" data-sec="s33"><span>33</span>Audit Trail</a><a href="#s34" data-sec="s34"><span>34</span>Notification</a><a href="#s35" data-sec="s35"><span>35</span>Security</a></div><div class="nav-group"><p>Manual Book</p><a href="#s36" data-sec="s36"><span>36</span>Manual Book User/Admin</a><a href="#s37" data-sec="s37"><span>37</span>Kondisi Button</a></div><div class="nav-group"><p>QA & Risiko</p><a href="#s38" data-sec="s38"><span>38</span>Testing Scenario</a><a href="#s39" data-sec="s39"><span>39</span>Temuan Ketidaksesuaian</a><a href="#s40" data-sec="s40"><span>40</span>Edge Case</a><a href="#s41" data-sec="s41"><span>41</span>Potential Bug / Technical Risk</a></div><div class="nav-group"><p>Referensi Developer</p><a href="#s42" data-sec="s42"><span>42</span>Dependency</a><a href="#s43" data-sec="s43"><span>43</span>Source Code Reference</a><a href="#s44" data-sec="s44"><span>44</span>Developer Notes</a><a href="#s45" data-sec="s45"><span>45</span>End-to-End Traceability</a><a href="#s46" data-sec="s46"><span>46</span>Ringkasan Database Impact</a><a href="#s47" data-sec="s47"><span>47</span>Checklist Implementasi</a><a href="#s48" data-sec="s48"><span>48</span>Changelog</a></div></nav>
+  </aside>
+
+  <main>
+    <p class="back-mobile"><a class="back" href="index.html">← Semua dokumen</a> <div class="dl" aria-label="Unduh dokumen"><a href="dokumentasi-asset-request-penambahan-karyawan.html" download>⬇ HTML</a><a href="dokumentasi-asset-request-penambahan-karyawan.md" download>⬇ Markdown</a></div></p>
+    <header class="hero">
+      <div>
+        <p class="eyebrow">Asset Management · Dokumentasi Teknis &amp; Manual Book</p>
+        <h1>Request &amp; Penambahan Asset Karyawan</h1>
+        <p class="lede">Pemberian asset tambahan kepada karyawan lewat dua jalur: <strong>Penambahan</strong> yang dimulai Admin, dan <strong>Pengajuan</strong> yang dimulai Karyawan lalu disetujui Admin. Seluruh isi diturunkan dari source code <code>API</code> (Lumen) dan <code>MOBILE</code> (Flutter).</p>
+      </div>
+      <div class="tag" aria-label="Identitas dokumen">
+        <dl>
+          <dt>Kode</dt><dd>KRY-03-1</dd>
+          <dt>Modul</dt><dd>Asset Management</dd>
+          <dt>Versi</dt><dd>1.3 · 12 Okt 2026</dd>
+          <dt>Stack</dt><dd>Lumen 10 · Flutter</dd>
+          <dt>API</dt><dd>17 endpoint</dd>
+        </dl>
+        <div class="barcode" aria-hidden="true"></div>
+        <div class="trx">KRY-03-1-YYYYMMNNN</div>
+      </div>
+    </header>
+
+    <details class="mobile-toc">
+      <summary>Daftar isi</summary>
+      <nav class="nav"><div class="nav-group"><p>Gambaran & Bisnis</p><a href="#s1" data-sec="s1"><span>01</span>Informasi Dokumen</a><a href="#s3" data-sec="s3"><span>03</span>Quick Overview</a><a href="#s4" data-sec="s4"><span>04</span>Ringkasan Fitur</a><a href="#s5" data-sec="s5"><span>05</span>Tujuan Fitur</a><a href="#s6" data-sec="s6"><span>06</span>Aktor</a><a href="#s7" data-sec="s7"><span>07</span>Hak Akses</a><a href="#s8" data-sec="s8"><span>08</span>Terminologi</a><a href="#s9" data-sec="s9"><span>09</span>Business Rules</a><a href="#s10" data-sec="s10"><span>10</span>Business Flow</a><a href="#s11" data-sec="s11"><span>11</span>Flow Berdasarkan Role</a><a href="#s12" data-sec="s12"><span>12</span>Flow Diagram</a><a href="#s13" data-sec="s13"><span>13</span>Sequence Diagram</a><a href="#s14" data-sec="s14"><span>14</span>Status Transaksi</a><a href="#s15" data-sec="s15"><span>15</span>State Transition</a></div><div class="nav-group"><p>Database</p><a href="#s16" data-sec="s16"><span>16</span>Struktur Database</a><a href="#s17" data-sec="s17"><span>17</span>Relasi Database</a><a href="#s18" data-sec="s18"><span>18</span>Data Dictionary</a><a href="#s19" data-sec="s19"><span>19</span>Database Index</a></div><div class="nav-group"><p>Backend & API</p><a href="#s20" data-sec="s20"><span>20</span>Backend Architecture</a><a href="#s21" data-sec="s21"><span>21</span>Backend Business Logic</a><a href="#s22" data-sec="s22"><span>22</span>Dampak terhadap asset_data</a><a href="#s23" data-sec="s23"><span>23</span>API Documentation</a><a href="#s24" data-sec="s24"><span>24</span>Detail Setiap API</a></div><div class="nav-group"><p>Mobile</p><a href="#s25" data-sec="s25"><span>25</span>Mobile Architecture</a><a href="#s26" data-sec="s26"><span>26</span>Mobile Screen</a><a href="#s27" data-sec="s27"><span>27</span>Mobile → API</a><a href="#s28" data-sec="s28"><span>28</span>API → Mobile</a><a href="#s29" data-sec="s29"><span>29</span>Mapping Mobile → API → Database</a><a href="#s30" data-sec="s30"><span>30</span>Mapping Database → API → Mobile</a></div><div class="nav-group"><p>Validasi, Error & Keamanan</p><a href="#s31" data-sec="s31"><span>31</span>Validation</a><a href="#s32" data-sec="s32"><span>32</span>Error Handling</a><a href="#s33" data-sec="s33"><span>33</span>Audit Trail</a><a href="#s34" data-sec="s34"><span>34</span>Notification</a><a href="#s35" data-sec="s35"><span>35</span>Security</a></div><div class="nav-group"><p>Manual Book</p><a href="#s36" data-sec="s36"><span>36</span>Manual Book User/Admin</a><a href="#s37" data-sec="s37"><span>37</span>Kondisi Button</a></div><div class="nav-group"><p>QA & Risiko</p><a href="#s38" data-sec="s38"><span>38</span>Testing Scenario</a><a href="#s39" data-sec="s39"><span>39</span>Temuan Ketidaksesuaian</a><a href="#s40" data-sec="s40"><span>40</span>Edge Case</a><a href="#s41" data-sec="s41"><span>41</span>Potential Bug / Technical Risk</a></div><div class="nav-group"><p>Referensi Developer</p><a href="#s42" data-sec="s42"><span>42</span>Dependency</a><a href="#s43" data-sec="s43"><span>43</span>Source Code Reference</a><a href="#s44" data-sec="s44"><span>44</span>Developer Notes</a><a href="#s45" data-sec="s45"><span>45</span>End-to-End Traceability</a><a href="#s46" data-sec="s46"><span>46</span>Ringkasan Database Impact</a><a href="#s47" data-sec="s47"><span>47</span>Checklist Implementasi</a><a href="#s48" data-sec="s48"><span>48</span>Changelog</a></div></nav>
+    </details>
+
+    <section class="overview" aria-label="Ringkasan">
+      <div class="panel">
+        <h3>Ringkasan dalam 1 menit</h3>
+        <p class="sub">Satu tabel, dua pintu masuk, satu pintu keluar.</p>
+        <div class="three">
+          <div class="fact"><b>Dua jalur</b><p>Kolom <code>sumber_pengajuan</code> membedakan <strong>Penambahan</strong> (<code>admin</code>) dan <strong>Pengajuan</strong> (<code>karyawan</code>) di tabel <code>asset_trx_request_karyawan</code>.</p></div>
+          <div class="fact"><b>Approval</b><p>Hanya Pengajuan yang punya keputusan Admin: <strong>Tolak</strong> dengan alasan, atau <strong>Setujui</strong> dengan mengalokasikan asset sekategori + jadwal serah terima.</p></div>
+          <div class="fact"><b>Serah terima</b><p><strong>All-or-nothing</strong>: asset baru berpindah ke karyawan jika <em>semua</em> item dinyatakan Normal. Berbeda dengan Onboarding yang parsial.</p></div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h3>Jalur Penambahan (Admin → Karyawan)</h3>
+        <p class="sub">Admin langsung memberikan asset; karyawan hanya mengonfirmasi.</p>
+        <div class="flow">
+          <div class="step"><span class="badge b-draft">Draft</span><span class="who">Admin · opsional</span><p>Tersimpan tanpa mengunci asset; dapat diubah dan dikirim lewat Ubah Draft (belum bisa dihapus).</p><span class="db">asset tidak dikunci</span></div>
+          <div class="step"><span class="badge b-wait">Menunggu Diterima</span><span class="who">Admin: Submit ke Karyawan</span><p>Karyawan, asset (boleh multi kategori), jadwal serah terima.</p><span class="db">asset_data → proses</span></div>
+          <div class="step"><span class="badge b-wait">Konfirmasi</span><span class="who">Karyawan</span><p>Setiap asset dinilai Normal atau Rusak.</p><span class="db">item → normal / rusak</span></div>
+          <div class="step"><span class="badge b-done">Selesai</span><span class="who">Otomatis</span><p>Semua Normal: asset diserahkan dan dicatat.</p><span class="db">terpakai · pemegang karyawan · asset_log</span></div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h3>Jalur Pengajuan (Karyawan → Admin → Karyawan)</h3>
+        <p class="sub">Karyawan meminta jenis asset; Admin memutuskan dan memilih unit fisiknya.</p>
+        <div class="flow">
+          <div class="step"><span class="badge b-wait">Menunggu Konfirmasi</span><span class="who">Karyawan: Submit ke Admin</span><p>Jenis asset (kategori non-parent), alasan, urgensi.</p><span class="db">header saja, tanpa item</span></div>
+          <div class="step"><span class="badge b-draft">Draft Alokasi</span><span class="who">Admin · opsional</span><p>Asset sekategori dipilih, bisa diubah ulang sebelum dikirim.</p><span class="db">item tersimpan · asset belum dikunci</span></div>
+          <div class="step"><span class="badge b-wait">Menunggu Konfirmasi</span><span class="who">Admin: Submit ke PIC</span><p>Pengajuan disetujui, karyawan mendapat notifikasi.</p><span class="db">tgl_approval terisi · asset → proses</span></div>
+          <div class="step"><span class="badge b-done">Selesai</span><span class="who">Karyawan konfirmasi</span><p>Sama seperti jalur Penambahan.</p><span class="db">status_approval = dikonfirmasi</span></div>
+        </div>
+        <div class="loop"><span class="badge b-bad">Ditolak</span><span>Admin dapat <strong>menolak</strong> selama pengajuan belum disetujui (termasuk saat Draft Alokasi). Alasan wajib dan tampil di aplikasi karyawan.</span></div>
+        <div class="loop"><span class="badge b-bad">Butuh Proses</span><span>Jika karyawan menandai satu asset <strong>rusak</strong>, transaksi berhenti: tidak ada asset diserahkan dan <strong>belum ada fitur tindak lanjut</strong> di aplikasi.</span></div>
+      </div>
+
+      <div class="panel">
+        <h3>Mulai dari sini sesuai peran</h3>
+        <p class="sub">Lompat langsung ke bagian yang paling relevan.</p>
+        <div class="roles">
+          <div class="role"><h4>Business Analyst / PM</h4><p>Dua jalur, aturan bisnis, dan status per sudut pandang.</p><div class="links"><a href="#s3">§3</a><a href="#s9">§9 Rules</a><a href="#s10">§10 Flow</a><a href="#s14">§14 Status</a></div></div>
+          <div class="role"><h4>Backend Developer</h4><p>Logika transaksi, dampak asset, dan kontrak API.</p><div class="links"><a href="#s21">§21 Logic</a><a href="#s22">§22 asset_data</a><a href="#s24">§24 API</a></div></div>
+          <div class="role"><h4>Mobile Developer</h4><p>Bloc, route, screen, dan mapping field.</p><div class="links"><a href="#s25">§25</a><a href="#s26">§26 Screen</a><a href="#s29">§29 Mapping</a></div></div>
+          <div class="role"><h4>QA / Tester</h4><p>38 skenario uji, edge case, dan risiko.</p><div class="links"><a href="#s38">§38 Test</a><a href="#s40">§40 Edge</a><a href="#s41">§41 Risk</a></div></div>
+          <div class="role"><h4>Technical Support</h4><p>Pesan error, audit trail, dan notifikasi.</p><div class="links"><a href="#s32">§32 Error</a><a href="#s33">§33 Audit</a><a href="#s34">§34 Notif</a></div></div>
+          <div class="role"><h4>User / Admin Asset</h4><p>Langkah pemakaian untuk admin dan karyawan.</p><div class="links"><a href="#s36">§36 Manual Book</a><a href="#s37">§37 Tombol</a></div></div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h3>Perlu perhatian</h3>
+        <p class="sub">Temuan terpenting dari analisis source. Detail lengkap di <a href="#s39">§39</a> dan <a href="#s41">§41</a>.</p>
+        <ul class="attention">
+          <li><span class="sev sev-h">TINGGI</span><span>Laporan <strong>rusak</strong> membuat transaksi dan <strong>semua asset</strong>-nya macet di status <code>proses</code>; tidak ada endpoint lanjutan. <a href="#s41">RISK-001</a></span></li>
+          <li><span class="sev sev-ok">SELESAI</span><span>Asset yang pernah diserahkan lewat penambahan kini <strong>bisa ditambahkan lagi</strong> setelah kembali ke gudang (diperbaiki v1.1). <a href="#s41">RISK-002</a></span></li>
+          <li><span class="sev sev-m">RENDAH</span><span><strong>Draft</strong> Penambahan dan Pengajuan kini bisa diubah dan dikirim, tetapi belum bisa dihapus. <a href="#s41">RISK-003</a></span></li>
+          <li><span class="sev sev-m">SEDANG</span><span>Detail admin <strong>tidak menampilkan</strong> asset mana yang dilaporkan rusak. <a href="#s39">INC-02</a></span></li>
+          <li><span class="sev sev-m">SEDANG</span><span><code>no_trx</code> ditandai UNIQUE global tetapi formatnya tanpa kode company. <a href="#s41">RISK-004</a></span></li>
+        </ul>
+      </div>
+    </section>
+
+    <article class="doc">
+<div class="group-divider" id="g1"><span>Gambaran & Bisnis</span></div><h2 id="s1"><span class="sec-no">01</span>Informasi Dokumen</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Informasi</th>
+<th>Nilai</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Nama Fitur</td>
+<td>Request / Penambahan Asset Karyawan (UI: <strong>"Penambahan Asset"</strong> dan <strong>"Pengajuan Asset"</strong>)</td>
+</tr>
+<tr>
+<td>Kode Fitur</td>
+<td><strong>KRY-03-1</strong> (prefix nomor transaksi <code>KRY-03-1-YYYYMMNNN</code>, dipakai kedua alur)</td>
+</tr>
+<tr>
+<td>Modul</td>
+<td>Asset Management</td>
+</tr>
+<tr>
+<td>Backend</td>
+<td>Laravel <strong>Lumen ^10.0</strong>, PHP ^8.1, JWT <code>tymon/jwt-auth ^2.3</code>, Query Builder (<code>DB::table</code>)</td>
+</tr>
+<tr>
+<td>Database</td>
+<td>Struktur mengacu <code>API/diagram-asset.dbml</code> + migrations. ⚠️ Asumsi: MySQL/MariaDB</td>
+</tr>
+<tr>
+<td>Mobile</td>
+<td>Flutter (package <code>professional_flutter_3_35</code>), <code>flutter_bloc</code>, <code>dio</code></td>
+</tr>
+<tr>
+<td>Web</td>
+<td>⚠️ Belum ditemukan: tidak ada source web di workspace</td>
+</tr>
+<tr>
+<td>Versi Dokumen</td>
+<td>1.3</td>
+</tr>
+<tr>
+<td>Tanggal Dokumentasi</td>
+<td>2026-09-26</td>
+</tr>
+<tr>
+<td>Dokumen terkait</td>
+<td><code>dokumentasi-asset-onboarding-karyawan.md</code> (fitur serupa, banyak helper bersama)</td>
+</tr>
+</tbody>
+</table></div>
+<hr />
+<h2 id="s3"><span class="sec-no">03</span>Quick Overview</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Item</th>
+<th>Informasi</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Feature</td>
+<td>Request / Penambahan Asset Karyawan</td>
+</tr>
+<tr>
+<td>Module</td>
+<td>Asset Management</td>
+</tr>
+<tr>
+<td>Actor</td>
+<td>Admin Asset, Karyawan, System</td>
+</tr>
+<tr>
+<td>Main Transaction</td>
+<td><code>asset_trx_request_karyawan</code></td>
+</tr>
+<tr>
+<td>Detail Transaction</td>
+<td><code>asset_trx_request_karyawan_item</code></td>
+</tr>
+<tr>
+<td>Pembeda alur</td>
+<td>Kolom <code>sumber_pengajuan</code>: <code>admin</code> = <strong>Penambahan</strong> (inisiatif admin), <code>karyawan</code> = <strong>Pengajuan</strong> (permintaan karyawan)</td>
+</tr>
+<tr>
+<td>Asset Master</td>
+<td><code>asset_data</code></td>
+</tr>
+<tr>
+<td>Log</td>
+<td><code>asset_log</code> (<code>jenis_log = request_karyawan</code>)</td>
+</tr>
+<tr>
+<td>Initial Status</td>
+<td><code class="chip chip-draft">draft</code> atau <code class="chip chip-wait">proses</code></td>
+</tr>
+<tr>
+<td>Final Status</td>
+<td><code class="chip chip-done">dikonfirmasi</code> (UI: "Selesai") atau <code class="chip chip-bad">ditolak</code> (hanya Pengajuan)</td>
+</tr>
+<tr>
+<td>Approval</td>
+<td>Hanya pada <strong>Pengajuan</strong>: Admin <strong>Tolak</strong> atau <strong>Setujui (alokasi asset)</strong></td>
+</tr>
+<tr>
+<td>API</td>
+<td>10 endpoint admin + 7 endpoint karyawan</td>
+</tr>
+<tr>
+<td>Mobile Screen</td>
+<td>Admin: Penambahan Asset (list, tambah, detail), Pengajuan Asset (list, detail, setujui). Karyawan: Pengajuan Asset (list, tambah, detail), Konfirmasi Penambahan/Pengajuan Asset, banner Asset Saya</td>
+</tr>
+</tbody>
+</table></div>
+<p>Satu tabel, dua pintu masuk, satu pintu keluar:</p>
+<div class="code"><span class="code-lang">Alur</span><pre><code class="language-text">PENAMBAHAN (sumber_pengajuan = admin)            PENGAJUAN (sumber_pengajuan = karyawan)
+Admin: pilih karyawan + asset + jadwal            Karyawan: pilih jenis asset + alasan + urgensi
+        │ Submit ke Karyawan                              │ Submit ke Admin
+        │ asset_data → proses                             ▼
+        │                                         Admin: Tolak ──► status ditolak (selesai)
+        │                                                 │ Setujui → alokasi asset + jadwal
+        │                                                 │ Submit ke PIC → asset_data → proses
+        ▼                                                 ▼
+        └──────────────► Karyawan: Konfirmasi Asset (Normal / Rusak per item) ◄──┘
+                                          │
+              ┌── semua Normal ───────────┴───────── ada Rusak ──┐
+              ▼                                                  ▼
+  status dikonfirmasi (&quot;Selesai&quot;)                     status tetap proses (&quot;Butuh Proses&quot;)
+  semua asset → terpakai, pemegang karyawan           TIDAK ada asset diserahkan
+  + asset_log                                         ⚠️ tidak ada mekanisme lanjutan (RISK-001)
+</code></pre></div>
+<hr />
+<h2 id="s4"><span class="sec-no">04</span>Ringkasan Fitur</h2>
+<p>Fitur ini mencatat <strong>pemberian asset tambahan kepada karyawan yang sudah bekerja</strong> (berbeda dari Onboarding yang untuk penyerahan awal). Ada dua jalur yang disimpan di tabel yang sama:</p>
+<ul>
+<li><strong>Penambahan Asset (admin)</strong> — Admin Asset langsung memilih karyawan, asset dari gudang (boleh lintas kategori), dan jadwal serah terima, lalu mengirim ke karyawan.</li>
+<li><strong>Pengajuan Asset (karyawan)</strong> — Karyawan mengajukan <strong>jenis asset</strong> (kategori) beserta alasan dan urgensi. Admin meninjau: <strong>menolak</strong> dengan alasan, atau <strong>menyetujui</strong> dengan mengalokasikan asset fisik dari kategori yang sama dan menentukan jadwal serah terima. Alokasi dapat disimpan sebagai draft terlebih dulu.</li>
+</ul>
+<p>Kedua jalur berakhir di <strong>konfirmasi karyawan</strong>: tiap asset dinilai Normal atau Rusak. Berbeda dengan Onboarding, serah terima di fitur ini bersifat <strong>all-or-nothing</strong>: asset baru berpindah ke karyawan jika <strong>semua</strong> item Normal. Jika ada item Rusak, transaksi berhenti di status "Butuh Proses" dan <strong>tidak ada endpoint lanjutan</strong> di source.</p>
+<hr />
+<h2 id="s5"><span class="sec-no">05</span>Tujuan Fitur</h2>
+<h3>5.1 Tujuan Bisnis (diturunkan dari kode)</h3>
+<ul>
+<li>Karyawan dapat meminta asset tambahan secara tercatat dengan alasan dan tingkat urgensi (Normal / Secepatnya / Mendesak).</li>
+<li>Admin dapat menyetujui atau menolak permintaan dengan alasan yang tersimpan.</li>
+<li>Admin dapat memberikan asset tambahan tanpa menunggu permintaan.</li>
+<li>Penyerahan asset dijadwalkan (tanggal &amp; jam) dan diverifikasi fisik oleh karyawan.</li>
+<li>Setiap perpindahan asset ke karyawan tercatat di <code>asset_log</code>.</li>
+</ul>
+<h3>5.2 Tujuan Sistem</h3>
+<ul>
+<li>Menyimpan pengajuan/penambahan dengan nomor <code>KRY-03-1-...</code>.</li>
+<li>Mengalokasikan asset fisik yang tersedia di gudang, sesuai kategori pengajuan.</li>
+<li>Mengunci asset (<code>status_asset = proses</code>) setelah dikirim ke karyawan.</li>
+<li>Memindahkan pemegang asset ke karyawan setelah konfirmasi normal.</li>
+<li>Mengirim notifikasi inbox + push ke pihak terkait.</li>
+</ul>
+<hr />
+<h2 id="s6"><span class="sec-no">06</span>Aktor</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Aktor</th>
+<th>Role (di sistem)</th>
+<th>Fungsi</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Admin Asset</td>
+<td>Terdaftar di <code>asset_admin</code> + karyawan aktif (<code>data_karyawan.status</code> ∈ '1'–'4')</td>
+<td>Membuat penambahan; meninjau, menolak, dan mengalokasikan pengajuan</td>
+</tr>
+<tr>
+<td>Karyawan</td>
+<td>User login (JWT)</td>
+<td>Membuat pengajuan; mengonfirmasi asset yang diterima</td>
+</tr>
+<tr>
+<td>System</td>
+<td>Backend + FCM</td>
+<td>Validasi, lock, penomoran, update <code>asset_data</code>, <code>asset_log</code>, notifikasi</td>
+</tr>
+</tbody>
+</table></div>
+<aside class="callout callout-note">
+<p>Admin Asset berperan sebagai <strong>approver</strong> untuk Pengajuan. Tidak ada approver lain.</p>
+</aside>
+<hr />
+<h2 id="s7"><span class="sec-no">07</span>Hak Akses</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Action</th>
+<th style="text-align: center;">Admin Asset</th>
+<th style="text-align: center;">Karyawan</th>
+<th>Keterangan</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Melihat daftar Penambahan (semua)</td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: center;">❌</td>
+<td><code>/asset/penambahan-karyawan</code></td>
+</tr>
+<tr>
+<td>Melihat daftar Pengajuan (semua, kecuali draft)</td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: center;">❌</td>
+<td><code>/asset/pengajuan-karyawan</code></td>
+</tr>
+<tr>
+<td>Melihat pengajuan milik sendiri</td>
+<td style="text-align: center;">–</td>
+<td style="text-align: center;">✅</td>
+<td><code>/asset/karyawan/pengajuan</code></td>
+</tr>
+<tr>
+<td>Membuat Penambahan (draft/kirim)</td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: center;">❌</td>
+<td></td>
+</tr>
+<tr>
+<td>Membuat Pengajuan (draft/kirim)</td>
+<td style="text-align: center;">–</td>
+<td style="text-align: center;">✅</td>
+<td></td>
+</tr>
+<tr>
+<td>Edit draft (simpan ulang / kirim)</td>
+<td style="text-align: center;">✅ (Penambahan)</td>
+<td style="text-align: center;">✅ (Pengajuan)</td>
+<td><code>PUT /asset/penambahan-karyawan/{id}</code>, <code>PUT /asset/karyawan/pengajuan/{id}</code>; hapus draft: ⚠️ belum ada (RISK-003)</td>
+</tr>
+<tr>
+<td>Tolak pengajuan</td>
+<td style="text-align: center;">✅ (status Pengajuan)</td>
+<td style="text-align: center;">❌</td>
+<td>Wajib alasan</td>
+</tr>
+<tr>
+<td>Setujui / alokasi asset</td>
+<td style="text-align: center;">✅ (status Pengajuan / Draft Alokasi)</td>
+<td style="text-align: center;">❌</td>
+<td>Asset harus kategori sama</td>
+</tr>
+<tr>
+<td>Konfirmasi asset (Normal/Rusak)</td>
+<td style="text-align: center;">❌</td>
+<td style="text-align: center;">✅ (transaksi miliknya)</td>
+<td></td>
+</tr>
+<tr>
+<td>Menindaklanjuti asset rusak</td>
+<td style="text-align: center;">❌</td>
+<td style="text-align: center;">❌</td>
+<td>⚠️ Belum ditemukan (RISK-001)</td>
+</tr>
+</tbody>
+</table></div>
+<hr />
+<h2 id="s8"><span class="sec-no">08</span>Terminologi</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Istilah</th>
+<th>Arti di sistem</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Penambahan</td>
+<td>Transaksi <code>sumber_pengajuan = admin</code></td>
+</tr>
+<tr>
+<td>Pengajuan</td>
+<td>Transaksi <code>sumber_pengajuan = karyawan</code></td>
+</tr>
+<tr>
+<td>Jenis asset</td>
+<td>Kategori (<code>asset_kategori_m</code>) yang diajukan karyawan; hanya kategori <strong>bukan parent</strong></td>
+</tr>
+<tr>
+<td>Urgensi</td>
+<td><code class="chip chip-done">normal</code>, <code>secepatnya</code>, <code>mendesak</code> (Pengajuan)</td>
+</tr>
+<tr>
+<td>Alokasi</td>
+<td>Admin memilih asset fisik untuk pengajuan</td>
+</tr>
+<tr>
+<td>Draft Alokasi</td>
+<td>Alokasi tersimpan (<code>is_draft=true</code>): item ada, <code>tgl_approval</code> masih NULL</td>
+</tr>
+<tr>
+<td>Submit ke PIC</td>
+<td>Tombol kirim alokasi → pengajuan disetujui</td>
+</tr>
+<tr>
+<td><code>tgl_approval</code></td>
+<td>Pengajuan: diisi saat admin menyetujui, <strong>ditimpa</strong> saat karyawan konfirmasi. Penambahan: diisi saat karyawan konfirmasi</td>
+</tr>
+<tr>
+<td>Pending item</td>
+<td>Item <code>status_item = belum_dicek</code></td>
+</tr>
+<tr>
+<td>Butuh Proses</td>
+<td>Label karyawan untuk transaksi yang memiliki item rusak</td>
+</tr>
+</tbody>
+</table></div>
+<hr />
+<h2 id="s9"><span class="sec-no">09</span>Business Rules</h2>
+<h3>BR-001 — Endpoint admin hanya untuk Admin Asset</h3>
+<p><code>Asset_c::accessError</code> (asset_admin + karyawan aktif) → 401/403; model memanggil <code>findAssetAdmin</code> → 422 "Pengguna tidak terdaftar sebagai admin asset."</p>
+<h3>BR-002 — Penambahan: karyawan wajib dipilih &amp; aktif</h3>
+<p>Validasi <code>id_karyawan</code> required; <code>findActiveKaryawan</code> → "Karyawan tidak ditemukan atau tidak aktif."</p>
+<h3>BR-003 — Minimal satu asset, tanpa duplikat</h3>
+<p><code>asset_ids</code> array min 1, distinct → "Minimal satu asset wajib dipilih." / "Asset yang sama tidak boleh dipilih lebih dari sekali."</p>
+<h3>BR-004 — Asset harus tersedia di gudang</h3>
+<p><code>requestLockedAssets</code>: <code>status_asset = tersedia</code> AND <code>pemegang_asset = gudang</code> (FOR UPDATE) → "Satu atau beberapa asset tidak tersedia untuk penambahan." / "Satu atau beberapa asset tidak tersedia." (alokasi).</p>
+<h3>BR-005 — Asset tidak boleh aktif di onboarding atau penambahan lain</h3>
+<p><code>hasActiveOnboardingAsset</code> → "…sedang diproses pada onboarding." <code>hasActiveRequestAsset</code> (header <strong><code class="chip chip-wait">proses</code> saja</strong>, sumber admin atau pengajuan yang sudah disetujui) → "…sedang diproses pada penambahan lain." Transaksi <code class="chip chip-done">dikonfirmasi</code> (selesai) <strong>tidak lagi</strong> mengunci asset. Asset yang masih dipegang karyawan tetap tidak bisa dipilih karena syarat <code>status_asset = tersedia</code> + <code>pemegang_asset = gudang</code>, sehingga asset hasil Retur/Offboarding bisa ditambahkan lagi (RISK-002, sudah diperbaiki v1.1).</p>
+<h3>BR-006 — Jadwal serah terima wajib saat dikirim</h3>
+<p>Penambahan &amp; alokasi: <code>tgl_serah_terima</code> (Y-m-d) dan <code>jam_serah_terima</code> (H:i) required bila <code>is_draft=false</code>. Draft boleh kosong (disimpan <code>0000-00-00</code> / <code>00:00:00</code>). Backend <strong>tidak</strong> memvalidasi tanggal ≥ hari ini (mobile membatasi <code>firstDate = hari ini</code>).</p>
+<h3>BR-007 — Pengajuan: jenis asset wajib &amp; bukan kategori parent</h3>
+<p><code>id_asset_kategori_m</code> required; kategori harus ada dan <code>flag_parent != 1</code> → "Jenis asset tidak ditemukan atau tidak dapat diajukan."</p>
+<h3>BR-008 — Pengajuan: alasan &amp; urgensi wajib saat dikirim</h3>
+<p><code>keterangan</code> required dan <code>urgensi</code> ∈ {normal, secepatnya, mendesak} bila bukan draft → "Alasan pengajuan wajib diisi." / "Urgensi wajib dipilih." / "Urgensi pengajuan tidak valid."</p>
+<h3>BR-009 — Tolak/alokasi hanya saat pengajuan belum disetujui</h3>
+<p>Syarat: <code>sumber_pengajuan = karyawan</code>, <code>status_approval = proses</code>, <code>tgl_approval IS NULL</code> → "Pengajuan asset sudah tidak menunggu persetujuan." / "…sudah tidak dapat dialokasikan."</p>
+<h3>BR-010 — Alasan penolakan wajib (maks 255)</h3>
+<p>→ "Alasan penolakan wajib diisi."</p>
+<h3>BR-011 — Asset alokasi harus sesuai jenis yang diajukan</h3>
+<p>Semua <code>asset_data.id_asset_kategori_m</code> = kategori pengajuan → "Asset harus sesuai dengan jenis yang diajukan." Options alokasi juga hanya menampilkan asset kategori tersebut.</p>
+<h3>BR-012 — Alokasi dapat disimpan sebagai draft dan diulang</h3>
+<p>Setiap alokasi menghapus item lama lalu menulis item baru. Draft <strong>tidak</strong> mengunci asset dan <strong>tidak</strong> mengisi <code>tgl_approval</code>.</p>
+<h3>BR-013 — Karyawan hanya melihat &amp; mengonfirmasi transaksi miliknya yang sudah dikirim</h3>
+<p>Detail/konfirmasi memfilter <code>id_karyawan = ctx.id_karyawan</code>, bukan draft, dan untuk pengajuan harus sudah disetujui → "Pengajuan asset belum disubmit oleh admin."</p>
+<h3>BR-014 — Semua item pending wajib dinilai; rusak wajib alasan</h3>
+<p>→ "Seluruh asset penambahan wajib dicek." / "Alasan kerusakan wajib diisi." / "Tidak ada asset penambahan yang perlu dicek."</p>
+<h3>BR-015 — Serah terima all-or-nothing</h3>
+<p>Asset baru diserahkan (<code class="chip chip-done">terpakai</code>, pemegang karyawan, <code>asset_log</code>) <strong>hanya jika seluruh item Normal</strong>. Jika ada Rusak, status tetap <code class="chip chip-wait">proses</code> dan <strong>tidak ada asset</strong> yang berubah.</p>
+<h3>BR-016 — Tidak ada tindak lanjut asset rusak</h3>
+<p>⚠️ Belum ditemukan: endpoint ganti/tarik/batal untuk transaksi request. Lihat RISK-001.</p>
+<h3>BR-017 — Penomoran</h3>
+<p>ID header &amp; item: <code>id_company + YYYYMM + 3 digit</code> (maks 999/bulan/company, dipakai bersama Penambahan &amp; Pengajuan). <code>no_trx = KRY-03-1-YYYYMMNNN</code>.</p>
+<hr />
+<h2 id="s10"><span class="sec-no">10</span>Business Flow</h2>
+<h3>10.1 Penambahan (Admin → Karyawan)</h3>
+<div class="code"><span class="code-lang">Alur</span><pre><code class="language-text">Admin: Asset Karyawan → Penambahan → (+)
+  → Pilih Karyawan → Tambah Asset (boleh multi kategori) → Jadwal Serah Terima (tgl + jam) → Catatan Tambahan
+  → Simpan Draft  : status draft, asset TIDAK dikunci; dibuka lagi lewat Ubah Draft lalu disimpan/dikirim (PUT)
+  → Submit ke Karyawan : status proses, asset_data → proses, notif ke karyawan
+Karyawan: Asset Saya → banner &quot;Penambahan Asset&quot; → Konfirmasi Penambahan Asset
+  → Normal/Rusak tiap asset → Konfirmasi Asset
+  → semua Normal : status dikonfirmasi, asset → terpakai/karyawan, asset_log, notif admin
+  → ada Rusak    : status proses (tgl_approval terisi), tidak ada perubahan asset, notif admin &quot;Laporan Asset Rusak&quot;
+</code></pre></div>
+<h3>10.2 Pengajuan (Karyawan → Admin → Karyawan)</h3>
+<div class="code"><span class="code-lang">Alur</span><pre><code class="language-text">Karyawan: Asset Saya → Pengajuan → (+)
+  → Jenis Asset → Alasan → Urgensi → Simpan Draft / Submit ke Admin
+  → Submit : status proses, tgl_approval NULL, tanpa item, notif ke semua admin
+Admin: Asset Karyawan → Pengajuan (tab Pengajuan) → Detail
+  → Tolak  : isi alasan → status ditolak, item dihapus, notif karyawan
+  → Setujui: pilih asset (kategori sama) + jadwal + catatan
+       → Simpan Draft : &quot;Draft Alokasi&quot; (item tersimpan, asset belum dikunci)
+       → Submit ke PIC: tgl_approval terisi, asset_data → proses, notif karyawan &quot;Disetujui&quot;
+Karyawan: Pengajuan (tab Dikonfirmasi, &quot;Menunggu Konfirmasi&quot;) → Konfirmasi Pengajuan Asset
+  → sama seperti konfirmasi Penambahan
+</code></pre></div>
+<hr />
+<h2 id="s11"><span class="sec-no">11</span>Flow Berdasarkan Role</h2>
+<h3>11.1 Admin Asset</h3>
+<ol>
+<li>Buka <strong>Asset Karyawan</strong> → aksi <strong>Penambahan</strong> atau <strong>Pengajuan</strong> (juga panel "Pengajuan Asset Perlu Diproses" berisi maks. 3 pengajuan tertua, tombol "Tinjau Pengajuan" / "Lanjutkan Alokasi").</li>
+<li><strong>Penambahan</strong>: tab Pending / Dikonfirmasi / Selesai; tombol + untuk membuat; tap kartu → detail (read-only).</li>
+<li><strong>Pengajuan</strong>: tab Pengajuan / Proses / Dikonfirmasi / Selesai; tap kartu → <strong>Konfirmasi Pengajuan Asset</strong> (detail) → <strong>Tolak</strong> atau <strong>Setujui</strong> → form <strong>Setujui Pengajuan Asset</strong> → Simpan Draft / Submit ke PIC.</li>
+</ol>
+<h3>11.2 Karyawan</h3>
+<ol>
+<li><strong>Asset Saya</strong> → menu <strong>Pengajuan</strong> → daftar pengajuan (tab Pengajuan / Dikonfirmasi / Ditolak / Selesai) → + untuk membuat.</li>
+<li>Pengajuan yang sudah dialokasikan &amp; menunggu dicek dibuka langsung ke <strong>Konfirmasi Pengajuan Asset</strong>.</li>
+<li>Penambahan dari admin muncul sebagai banner <strong>Penambahan Asset</strong> di Asset Saya (hanya yang pertama) dan via notifikasi.</li>
+</ol>
+<h3>11.3 Approver</h3>
+<p>Peran approver dijalankan Admin Asset pada Pengajuan (§11.1 langkah 3).</p>
+<h3>11.4 System</h3>
+<p>Lock <code>master_company</code>, generate ID/nomor, validasi asset &amp; kategori, reservasi asset saat dikirim, penentuan status/label/tab, serah terima + <code>asset_log</code> saat semua normal, notifikasi setelah commit.</p>
+<hr />
+<h2 id="s12"><span class="sec-no">12</span>Flow Diagram</h2>
+<div class="diagram"><pre class="mermaid">flowchart TD
+    subgraph P[Penambahan - Admin]
+        A1[Admin isi form penambahan] --&gt; A2{Aksi}
+        A2 --&gt;|Simpan Draft| A3[status draft - bisa diubah lalu dikirim (PUT)]
+        A2 --&gt;|Submit ke Karyawan| A4[status proses, asset proses, notif karyawan]
+    end
+    subgraph Q[Pengajuan - Karyawan]
+        B1[Karyawan isi jenis, alasan, urgensi] --&gt; B2{Aksi}
+        B2 --&gt;|Simpan Draft| B3[status draft - bisa diubah lalu dikirim (PUT)]
+        B2 --&gt;|Submit ke Admin| B4[status proses, tanpa item, notif admin]
+        B4 --&gt; B5{Keputusan admin}
+        B5 --&gt;|Tolak + alasan| B6[status ditolak, notif karyawan]
+        B5 --&gt;|Setujui| B7[Alokasi asset kategori sama + jadwal]
+        B7 --&gt;|Simpan Draft| B8[Draft Alokasi]
+        B8 --&gt; B5
+        B7 --&gt;|Submit ke PIC| B9[tgl_approval terisi, asset proses, notif karyawan]
+    end
+    A4 --&gt; C1[Karyawan: Konfirmasi Asset]
+    B9 --&gt; C1
+    C1 --&gt; C2{Semua item Normal?}
+    C2 --&gt;|Ya| C3[status dikonfirmasi - Selesai, asset terpakai, asset_log, notif admin]
+    C2 --&gt;|Tidak| C4[status proses - Butuh Proses, asset tetap proses, notif admin]
+    C4 --&gt; C5[Tidak ada tindak lanjut di sistem]
+</pre></div>
+<hr />
+<h2 id="s13"><span class="sec-no">13</span>Sequence Diagram</h2>
+<h3>13.1 Pengajuan karyawan sampai disetujui</h3>
+<div class="diagram"><pre class="mermaid">sequenceDiagram
+    actor K as Karyawan
+    actor A as Admin
+    participant M as Mobile
+    participant CK as AssetKaryawanPengajuan_c
+    participant CA as AssetAdminPenambahan_c
+    participant R as AssetRequestKaryawan_m
+    participant DB
+    participant N as AssetNotification
+
+    K-&gt;&gt;M: Isi jenis asset, alasan, urgensi, Submit ke Admin
+    M-&gt;&gt;CK: POST /asset/karyawan/pengajuan
+    CK-&gt;&gt;R: storePengajuanKaryawan()
+    R-&gt;&gt;DB: lock company, cek karyawan &amp; kategori
+    R-&gt;&gt;DB: INSERT header (sumber karyawan, proses)
+    CK-&gt;&gt;N: pengajuan.diajukan (semua admin)
+    A-&gt;&gt;M: Buka detail, Setujui, pilih asset + jadwal
+    M-&gt;&gt;CA: GET /asset/pengajuan-karyawan/{id}/options
+    M-&gt;&gt;CA: POST /asset/pengajuan-karyawan/{id}/alokasi (is_draft false)
+    CA-&gt;&gt;R: alokasikanPengajuanAdmin()
+    R-&gt;&gt;DB: validasi asset tersedia, kategori sama, tidak aktif
+    R-&gt;&gt;DB: DELETE item lama, INSERT item baru
+    R-&gt;&gt;DB: UPDATE header jadwal, user_approval, tgl_approval
+    R-&gt;&gt;DB: UPDATE asset_data status proses
+    CA-&gt;&gt;N: pengajuan.disetujui (karyawan)
+    CA--&gt;&gt;M: 200 SUCCESS
+</pre></div>
+<h3>13.2 Konfirmasi karyawan (kedua alur)</h3>
+<div class="diagram"><pre class="mermaid">sequenceDiagram
+    actor K as Karyawan
+    participant M as Konfirmasi Penambahan/Pengajuan
+    participant C as AssetKaryawanPengajuan_c
+    participant R as AssetRequestKaryawan_m
+    participant DB
+    participant N as AssetNotification
+
+    K-&gt;&gt;M: Nilai Normal/Rusak tiap asset, Konfirmasi Asset
+    M-&gt;&gt;C: POST /asset/karyawan/penambahan/{id}/konfirmasi
+    C-&gt;&gt;R: konfirmasiKaryawan()
+    R-&gt;&gt;DB: lock company, header milik karyawan FOR UPDATE
+    R-&gt;&gt;DB: UPDATE item status_item, ket_rusak
+    R-&gt;&gt;DB: UPDATE header status, user_approval, tgl_approval
+    alt semua item normal
+        R-&gt;&gt;DB: UPDATE asset_data terpakai, pemegang karyawan
+        R-&gt;&gt;DB: INSERT asset_log request_karyawan
+        C-&gt;&gt;N: penambahan.dikonfirmasi (admin)
+    else ada item rusak
+        C-&gt;&gt;N: penambahan.rusak (admin)
+    end
+    C--&gt;&gt;M: 200 UPDATED
+</pre></div>
+<hr />
+<h2 id="s14"><span class="sec-no">14</span>Status Transaksi</h2>
+<p>Field <code>asset_trx_request_karyawan.status_approval</code> (enum <code>status_request_karyawan</code>: <code class="chip chip-draft">draft</code>, <code class="chip chip-wait">proses</code>, <code class="chip chip-bad">ditolak</code>, <code class="chip chip-done">dikonfirmasi</code>; default <code class="chip chip-wait">proses</code>). Label &amp; tab <strong>dihitung</strong> dari status + <code>tgl_approval</code> + item, dan berbeda per sudut pandang.</p>
+<h3>14.1 Penambahan — tampilan Admin (<code>requestStatusMetadata</code>)</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Kondisi</th>
+<th>Label</th>
+<th>Tab</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code class="chip chip-draft">draft</code></td>
+<td>Draft</td>
+<td>pending</td>
+</tr>
+<tr>
+<td><code class="chip chip-wait">proses</code>, <code>tgl_approval</code> NULL</td>
+<td>Menunggu Diterima</td>
+<td>pending</td>
+</tr>
+<tr>
+<td><code class="chip chip-wait">proses</code>, <code>tgl_approval</code> terisi (karyawan melaporkan rusak)</td>
+<td>Dikonfirmasi</td>
+<td>dikonfirmasi</td>
+</tr>
+<tr>
+<td><code class="chip chip-done">dikonfirmasi</code></td>
+<td>Selesai</td>
+<td>selesai</td>
+</tr>
+<tr>
+<td><code class="chip chip-bad">ditolak</code></td>
+<td>Ditolak</td>
+<td>selesai (tidak terjadi pada Penambahan)</td>
+</tr>
+</tbody>
+</table></div>
+<h3>14.2 Pengajuan — tampilan Admin (<code>pengajuanAdminStatusMetadata</code>, draft tidak ditampilkan)</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Kondisi</th>
+<th>Label</th>
+<th>Tab</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code class="chip chip-wait">proses</code>, belum disetujui, tanpa item</td>
+<td>Menunggu Diterima</td>
+<td>pengajuan</td>
+</tr>
+<tr>
+<td><code class="chip chip-wait">proses</code>, belum disetujui, ada item</td>
+<td>Draft Alokasi</td>
+<td>pengajuan</td>
+</tr>
+<tr>
+<td><code class="chip chip-wait">proses</code>, disetujui, ada item <code class="chip chip-wait">belum_dicek</code></td>
+<td>Menunggu Konfirmasi</td>
+<td>proses</td>
+</tr>
+<tr>
+<td><code class="chip chip-wait">proses</code>, disetujui, tanpa item pending (ada rusak)</td>
+<td>Dikonfirmasi</td>
+<td>dikonfirmasi</td>
+</tr>
+<tr>
+<td><code class="chip chip-bad">ditolak</code></td>
+<td>Ditolak</td>
+<td>selesai</td>
+</tr>
+<tr>
+<td><code class="chip chip-done">dikonfirmasi</code></td>
+<td>Selesai</td>
+<td>selesai</td>
+</tr>
+</tbody>
+</table></div>
+<h3>14.3 Pengajuan — tampilan Karyawan (<code>pengajuanStatusMetadata</code>)</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Kondisi</th>
+<th>Label</th>
+<th>Tab</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code class="chip chip-draft">draft</code></td>
+<td>Draft</td>
+<td>pengajuan</td>
+</tr>
+<tr>
+<td><code class="chip chip-wait">proses</code>, belum disetujui</td>
+<td>Menunggu Konfirmasi</td>
+<td>pengajuan</td>
+</tr>
+<tr>
+<td><code class="chip chip-wait">proses</code>, disetujui, ada item rusak</td>
+<td>Butuh Proses</td>
+<td>dikonfirmasi</td>
+</tr>
+<tr>
+<td><code class="chip chip-wait">proses</code>, disetujui, ada item pending</td>
+<td>Menunggu Konfirmasi</td>
+<td>dikonfirmasi</td>
+</tr>
+<tr>
+<td><code class="chip chip-wait">proses</code>, disetujui, lainnya</td>
+<td>Dikonfirmasi Admin</td>
+<td>dikonfirmasi</td>
+</tr>
+<tr>
+<td><code class="chip chip-bad">ditolak</code></td>
+<td>Ditolak</td>
+<td>ditolak</td>
+</tr>
+<tr>
+<td><code class="chip chip-done">dikonfirmasi</code></td>
+<td>Selesai</td>
+<td>selesai</td>
+</tr>
+</tbody>
+</table></div>
+<p>Status item (<code>status_item</code>): <code class="chip chip-wait">belum_dicek</code> → <code class="chip chip-done">normal</code> / <code class="chip chip-bad">rusak</code>.
+Migrasi <code>2026_09_17_000008</code>: nilai lama 0=draft, 1=proses, 2=ditolak, 3=dikonfirmasi.</p>
+<hr />
+<h2 id="s15"><span class="sec-no">15</span>State Transition</h2>
+<div class="diagram"><pre class="mermaid">stateDiagram-v2
+    [*] --&gt; draft: Simpan Draft (Admin / Karyawan)
+    [*] --&gt; proses: Submit (Admin / Karyawan)
+    state proses {
+        MenungguAdmin --&gt; DraftAlokasi: Alokasi draft (Admin)
+        DraftAlokasi --&gt; DraftAlokasi: Alokasi draft ulang (Admin)
+        MenungguAdmin --&gt; MenungguKaryawan: Submit ke PIC (Admin)
+        DraftAlokasi --&gt; MenungguKaryawan: Submit ke PIC (Admin)
+        MenungguKaryawan --&gt; ButuhProses: Konfirmasi ada rusak (Karyawan)
+    }
+    proses --&gt; ditolak: Tolak (Admin, hanya pengajuan belum disetujui)
+    proses --&gt; dikonfirmasi: Konfirmasi semua normal (Karyawan)
+    ditolak --&gt; [*]
+    dikonfirmasi --&gt; [*]
+</pre></div>
+<aside class="callout callout-note">
+<p>Pada Penambahan, transaksi langsung berada di tahap <code>MenungguKaryawan</code> setelah Submit ke Karyawan. Keadaan <code>ButuhProses</code> tidak memiliki transisi keluar; <code class="chip chip-draft">draft</code> dapat disimpan ulang atau dikirim lewat Edit Draft (PUT).</p>
+</aside>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Status Awal</th>
+<th>Action</th>
+<th>Status Akhir</th>
+<th>Actor</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>–</td>
+<td>Simpan Draft</td>
+<td>draft</td>
+<td>Admin / Karyawan</td>
+</tr>
+<tr>
+<td>–</td>
+<td>Submit ke Karyawan (penambahan)</td>
+<td>proses (menunggu karyawan)</td>
+<td>Admin</td>
+</tr>
+<tr>
+<td>–</td>
+<td>Submit ke Admin (pengajuan)</td>
+<td>proses (menunggu admin)</td>
+<td>Karyawan</td>
+</tr>
+<tr>
+<td>draft</td>
+<td>Edit Draft: simpan ulang (<code>is_draft=true</code>)</td>
+<td>draft</td>
+<td>Admin (penambahan) / Karyawan (pengajuan)</td>
+</tr>
+<tr>
+<td>draft</td>
+<td>Edit Draft: kirim (<code>is_draft=false</code>)</td>
+<td>proses (menunggu karyawan / menunggu admin)</td>
+<td>Admin (penambahan) / Karyawan (pengajuan)</td>
+</tr>
+<tr>
+<td>proses (menunggu admin)</td>
+<td>Tolak</td>
+<td>ditolak</td>
+<td>Admin</td>
+</tr>
+<tr>
+<td>proses (menunggu admin / draft alokasi)</td>
+<td>Alokasi <code>is_draft=true</code></td>
+<td>proses (Draft Alokasi)</td>
+<td>Admin</td>
+</tr>
+<tr>
+<td>proses (menunggu admin / draft alokasi)</td>
+<td>Alokasi <code>is_draft=false</code></td>
+<td>proses (menunggu karyawan)</td>
+<td>Admin</td>
+</tr>
+<tr>
+<td>proses (menunggu karyawan)</td>
+<td>Konfirmasi semua normal</td>
+<td>dikonfirmasi</td>
+<td>Karyawan</td>
+</tr>
+<tr>
+<td>proses (menunggu karyawan)</td>
+<td>Konfirmasi ada rusak</td>
+<td>proses (Butuh Proses)</td>
+<td>Karyawan</td>
+</tr>
+<tr>
+<td>Butuh Proses</td>
+<td>–</td>
+<td>⚠️ tidak ada transisi</td>
+<td>–</td>
+</tr>
+</tbody>
+</table></div>
+<p>Status <code>asset_data.status_asset</code>:
+| Dari | Ke | Trigger |
+|---|---|---|
+| tersedia (gudang) | proses | Submit penambahan; Submit alokasi (bukan draft) |
+| proses (gudang) | terpakai (karyawan) | Konfirmasi dengan <strong>semua</strong> item normal |
+| proses | proses (tetap) | Konfirmasi dengan item rusak — <strong>tidak berubah</strong> |</p>
+<hr />
+<div class="group-divider" id="g16"><span>Database</span></div><h2 id="s16"><span class="sec-no">16</span>Struktur Database</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Table</th>
+<th>Type</th>
+<th>Fungsi</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>asset_trx_request_karyawan</code></td>
+<td>Transaction Header</td>
+<td>Penambahan &amp; Pengajuan</td>
+</tr>
+<tr>
+<td><code>asset_trx_request_karyawan_item</code></td>
+<td>Transaction Detail</td>
+<td>Asset yang dialokasikan</td>
+</tr>
+<tr>
+<td><code>asset_data</code></td>
+<td>Master</td>
+<td>Status &amp; pemegang asset</td>
+</tr>
+<tr>
+<td><code>asset_kategori_m</code></td>
+<td>Master</td>
+<td>Jenis asset (pengajuan) &amp; snapshot kategori</td>
+</tr>
+<tr>
+<td><code>data_karyawan</code>, <code>master_cabang</code>, <code>master_departemen</code></td>
+<td>Master HR</td>
+<td>Karyawan aktif, cabang, divisi</td>
+</tr>
+<tr>
+<td><code>asset_admin</code></td>
+<td>Master akses</td>
+<td>Admin asset</td>
+</tr>
+<tr>
+<td><code>master_company</code></td>
+<td>Master</td>
+<td>Lock transaksi</td>
+</tr>
+<tr>
+<td><code>asset_log</code></td>
+<td>Log</td>
+<td>Histori serah terima (<code>request_karyawan</code>)</td>
+</tr>
+<tr>
+<td><code>notif_data</code>, <code>users</code></td>
+<td>Notifikasi</td>
+<td>Inbox &amp; token FCM</td>
+</tr>
+</tbody>
+</table></div>
+<aside class="callout callout-warn">
+<p>⚠️ Belum ditemukan: migration <code>CREATE TABLE</code> untuk tabel request; struktur mengacu DBML + migrations <code>2026_09_16_000003</code>, <code>2026_09_17_000004</code>, <code>2026_09_17_000008</code>.</p>
+</aside>
+<hr />
+<h2 id="s17"><span class="sec-no">17</span>Relasi Database</h2>
+<div class="diagram"><pre class="mermaid">erDiagram
+    ASSET_TRX_REQUEST_KARYAWAN ||--o{ ASSET_TRX_REQUEST_KARYAWAN_ITEM : &quot;id_asset_trx_request&quot;
+    ASSET_DATA ||--o{ ASSET_TRX_REQUEST_KARYAWAN_ITEM : &quot;id_asset_data&quot;
+    ASSET_KATEGORI_M ||--o{ ASSET_TRX_REQUEST_KARYAWAN : &quot;id_asset_kategori_m (logis)&quot;
+    ASSET_KATEGORI_M ||--o{ ASSET_DATA : &quot;id_asset_kategori_m&quot;
+    DATA_KARYAWAN ||--o{ ASSET_TRX_REQUEST_KARYAWAN : &quot;id_karyawan (logis)&quot;
+    ASSET_DATA ||--o{ ASSET_LOG : &quot;id_asset_data&quot;
+    ASSET_TRX_REQUEST_KARYAWAN ||--o{ ASSET_LOG : &quot;id_transaksi (logis)&quot;
+
+    ASSET_TRX_REQUEST_KARYAWAN {
+        varchar id_asset_trx_request_karyawan PK
+        varchar no_trx
+        enum sumber_pengajuan
+        varchar id_asset_kategori_m
+        varchar urgensi
+        varchar id_karyawan
+        date tgl_serah_terima
+        enum status_approval
+        timestamp tgl_approval
+        varchar id_company
+    }
+    ASSET_TRX_REQUEST_KARYAWAN_ITEM {
+        varchar id_asset_trx_request_item PK
+        varchar id_asset_trx_request FK
+        varchar id_asset_data FK
+        enum status_item
+        varchar ket_rusak
+    }
+    ASSET_DATA {
+        varchar id_asset_data PK
+        varchar id_asset_kategori_m FK
+        enum status_asset
+        enum pemegang_asset
+        varchar id_pemegang_asset
+    }
+    ASSET_LOG {
+        varchar id_asset_log PK
+        varchar id_asset_data FK
+        enum jenis_log
+        varchar id_transaksi
+    }
+</pre></div>
+<p>Relasi logis (tanpa <code>ref</code> DBML): <code>id_karyawan</code> → <code>data_karyawan</code>, <code>id_asset_kategori_m</code> (header) → <code>asset_kategori_m</code>, <code>asset_log.id_transaksi</code> → header. Semua JOIN mencocokkan <code>id_company</code>. Kolom item <code>parent_id</code> ada di DBML tetapi selalu <code>''</code> (tidak ada penggantian).</p>
+<hr />
+<h2 id="s18"><span class="sec-no">18</span>Data Dictionary</h2>
+<h3>18.1 asset_trx_request_karyawan</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th style="text-align: center;">Null</th>
+<th>Default</th>
+<th>Key</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>id_asset_trx_request_karyawan</td>
+<td>varchar(50)</td>
+<td style="text-align: center;">No</td>
+<td>–</td>
+<td>PK</td>
+<td><code>id_company + YYYYMM + 3 digit</code></td>
+</tr>
+<tr>
+<td>no_trx</td>
+<td>varchar(50)</td>
+<td style="text-align: center;">No</td>
+<td>''</td>
+<td>UNIQUE (DBML)</td>
+<td><code>KRY-03-1-YYYYMMNNN</code></td>
+</tr>
+<tr>
+<td>sumber_pengajuan</td>
+<td>enum(admin, karyawan)</td>
+<td style="text-align: center;">No</td>
+<td>admin</td>
+<td>IDX</td>
+<td><code>admin</code> = Penambahan, <code>karyawan</code> = Pengajuan</td>
+</tr>
+<tr>
+<td>id_asset_kategori_m</td>
+<td>varchar(50)</td>
+<td style="text-align: center;">No</td>
+<td>''</td>
+<td>–</td>
+<td>Pengajuan: jenis diajukan. Penambahan: kategori bila semua asset satu kategori, selain itu <code>''</code></td>
+</tr>
+<tr>
+<td>nama_kategori</td>
+<td>varchar(255)</td>
+<td style="text-align: center;">No</td>
+<td>''</td>
+<td>–</td>
+<td>Snapshot; Penambahan multi kategori = <code>Multi Kategori</code></td>
+</tr>
+<tr>
+<td>keterangan</td>
+<td>text</td>
+<td style="text-align: center;">Yes</td>
+<td>–</td>
+<td>–</td>
+<td>Pengajuan: alasan karyawan. Penambahan: selalu <code>''</code> dari mobile</td>
+</tr>
+<tr>
+<td>urgensi</td>
+<td>varchar(50)</td>
+<td style="text-align: center;">Yes</td>
+<td>–</td>
+<td>–</td>
+<td><code class="chip chip-done">normal</code>/<code>secepatnya</code>/<code>mendesak</code> (Pengajuan); <code>''</code> untuk Penambahan dari mobile</td>
+</tr>
+<tr>
+<td>ket_tolak</td>
+<td>varchar(255)</td>
+<td style="text-align: center;">No</td>
+<td>''</td>
+<td>–</td>
+<td>Alasan penolakan admin</td>
+</tr>
+<tr>
+<td>id_karyawan, nik_karyawan, nama_karyawan</td>
+<td>varchar</td>
+<td style="text-align: center;">–</td>
+<td>''</td>
+<td>IDX</td>
+<td>Karyawan penerima/pemohon (snapshot)</td>
+</tr>
+<tr>
+<td>tgl_pengajuan</td>
+<td>date</td>
+<td style="text-align: center;">No</td>
+<td>CURRENT_TIMESTAMP</td>
+<td>–</td>
+<td>Tanggal dibuat</td>
+</tr>
+<tr>
+<td>tgl_serah_terima</td>
+<td>date</td>
+<td style="text-align: center;">No</td>
+<td>0000-00-00</td>
+<td>–</td>
+<td>Jadwal serah terima</td>
+</tr>
+<tr>
+<td>jam_serah_terima</td>
+<td>time</td>
+<td style="text-align: center;">No</td>
+<td>00:00:00</td>
+<td>–</td>
+<td>Jam serah terima (disimpan H:i:s)</td>
+</tr>
+<tr>
+<td>keterangan_serah_terima</td>
+<td>varchar(255)</td>
+<td style="text-align: center;">–</td>
+<td>''</td>
+<td>–</td>
+<td>"Catatan Tambahan" pada form admin</td>
+</tr>
+<tr>
+<td>status_approval</td>
+<td>enum(draft, proses, ditolak, dikonfirmasi)</td>
+<td style="text-align: center;">No</td>
+<td>proses</td>
+<td>IDX</td>
+<td>Status</td>
+</tr>
+<tr>
+<td>user_approval</td>
+<td>varchar(255)</td>
+<td style="text-align: center;">No</td>
+<td>''</td>
+<td>–</td>
+<td>Admin penyetuju/penolak, lalu <strong>ditimpa</strong> karyawan saat konfirmasi</td>
+</tr>
+<tr>
+<td>tgl_approval</td>
+<td>timestamp</td>
+<td style="text-align: center;">Yes</td>
+<td>NULL</td>
+<td>IDX</td>
+<td>Lihat §8</td>
+</tr>
+<tr>
+<td>id_company</td>
+<td>varchar(50)</td>
+<td style="text-align: center;">No</td>
+<td>''</td>
+<td>IDX</td>
+<td>Company</td>
+</tr>
+<tr>
+<td>tgl_input, user_input</td>
+<td>–</td>
+<td style="text-align: center;">–</td>
+<td>–</td>
+<td>IDX</td>
+<td>Pembuat (<code>nik - nama</code>)</td>
+</tr>
+<tr>
+<td>tgl_update, user_update</td>
+<td>–</td>
+<td style="text-align: center;">Yes</td>
+<td>NULL</td>
+<td>–</td>
+<td>Pengubah terakhir</td>
+</tr>
+</tbody>
+</table></div>
+<h3>18.2 asset_trx_request_karyawan_item</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th style="text-align: center;">Null</th>
+<th>Default</th>
+<th>Key</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>id_asset_trx_request_item</td>
+<td>varchar(50)</td>
+<td style="text-align: center;">No</td>
+<td>–</td>
+<td>PK</td>
+<td><code>id_company + YYYYMM + 3 digit</code></td>
+</tr>
+<tr>
+<td>parent_id</td>
+<td>varchar(50)</td>
+<td style="text-align: center;">Yes</td>
+<td>–</td>
+<td>–</td>
+<td>Selalu <code>''</code></td>
+</tr>
+<tr>
+<td>id_asset_trx_request</td>
+<td>varchar(50)</td>
+<td style="text-align: center;">–</td>
+<td>–</td>
+<td>FK, IDX</td>
+<td>→ header</td>
+</tr>
+<tr>
+<td>id_asset_data</td>
+<td>varchar(50)</td>
+<td style="text-align: center;">–</td>
+<td>–</td>
+<td>FK</td>
+<td>→ asset_data</td>
+</tr>
+<tr>
+<td>nama_asset, deskripsi_asset, kategori_asset</td>
+<td>varchar(255)</td>
+<td style="text-align: center;">–</td>
+<td>''</td>
+<td>–</td>
+<td>Snapshot asset (API: <code>nama_asset</code>, <code>deskripsi</code>, <code>kategori_asset</code>)</td>
+</tr>
+<tr>
+<td>status_item</td>
+<td>enum(normal, rusak, belum_dicek)</td>
+<td style="text-align: center;">–</td>
+<td>–</td>
+<td>IDX</td>
+<td>Awal <code class="chip chip-wait">belum_dicek</code></td>
+</tr>
+<tr>
+<td>ket_rusak</td>
+<td>varchar(255)</td>
+<td style="text-align: center;">–</td>
+<td>''</td>
+<td>–</td>
+<td>Alasan rusak dari karyawan</td>
+</tr>
+<tr>
+<td>id_company, tgl_input, user_input</td>
+<td>–</td>
+<td style="text-align: center;">–</td>
+<td>–</td>
+<td>IDX</td>
+<td>–</td>
+</tr>
+</tbody>
+</table></div>
+<h3>18.3 asset_data (field yang dipakai)</h3>
+<p><code>id_asset_data</code>, <code>id_asset_kategori_m</code> (validasi kategori alokasi), <code>nama_asset</code>, <code>deskripsi</code>, <code>kode_asset</code>, <code>merek</code>, <code>status_asset</code> (tersedia → proses → terpakai), <code>pemegang_asset</code> (gudang → karyawan), <code>id_pemegang_asset</code>, <code>kondisi_awal</code> (disalin ke log), <code>tgl_update</code>, <code>user_update</code>.</p>
+<h3>18.4 asset_log (diisi saat semua normal)</h3>
+<p><code>jenis_log = request_karyawan</code>, <code>id_transaksi</code> = ID header, <code>nama_tabel_transaksi = asset_trx_request_karyawan</code>, <code>kondisi_awal</code> = <code>asset_data.kondisi_awal</code>, <code>kondisi_akhir = normal</code>, <code>posisi_awal</code> = pemegang sebelumnya (<code>gudang</code>), <code>posisi_akhir = pemegang_asset = karyawan</code>, <code>id_pemegang</code>, <code>nama_pemegang</code>, <code>user_input</code> = karyawan.</p>
+<hr />
+<h2 id="s19"><span class="sec-no">19</span>Database Index</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Index</th>
+<th>Table</th>
+<th>Columns</th>
+<th>Tujuan</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>atrk_company_source_employee_idx</code></td>
+<td>header</td>
+<td>(id_company, sumber_pengajuan, id_karyawan)</td>
+<td>Filter per sumber &amp; karyawan</td>
+</tr>
+<tr>
+<td><code>atrk_admin_list_idx</code></td>
+<td>header</td>
+<td>(id_company, sumber_pengajuan, status_approval, tgl_approval, tgl_input, id_asset_trx_request_karyawan)</td>
+<td>List admin per tab + urutan</td>
+</tr>
+<tr>
+<td><code>atrk_employee_list_idx</code></td>
+<td>header</td>
+<td>(id_company, sumber_pengajuan, id_karyawan, status_approval, tgl_approval, tgl_input, id_asset_trx_request_karyawan)</td>
+<td>List pengajuan karyawan</td>
+</tr>
+<tr>
+<td><code>atrki_request_status_idx</code></td>
+<td>item</td>
+<td>(id_asset_trx_request, id_company, status_item)</td>
+<td>COUNT item / pending / rusak per header</td>
+</tr>
+<tr>
+<td>UNIQUE <code>no_trx</code></td>
+<td>header</td>
+<td>(no_trx)</td>
+<td>DBML — ⚠️ belum diverifikasi ada di DB fisik</td>
+</tr>
+</tbody>
+</table></div>
+<p>Pencarian <code>hasActiveRequestAsset</code> berdasarkan <code>atrki.id_asset_data</code> tidak diawali kolom index yang ada (potensi lambat, ⚠️ belum diukur).</p>
+<hr />
+<div class="group-divider" id="g20"><span>Backend & API</span></div><h2 id="s20"><span class="sec-no">20</span>Backend Architecture</h2>
+<div class="code"><span class="code-lang">Alur</span><pre><code class="language-text">routes/modules/asset/RouteAsset.php (prefix /asset, middleware jwt.api + jwt.ctx)
+   ↓
+AssetAdminPenambahan_c / AssetKaryawanPengajuan_c  (validateRequest inline, accessError)
+   ↓
+AssetRequestKaryawan_m  ← extends Asset_m (lock, sequence, findActiveKaryawan, findAssetAdmin, hasActiveOnboardingAsset)
+   ↓                    ← memakai AssetAdmin_m::getOnboardingOptions untuk opsi penambahan/alokasi
+DB (Query Builder, DB::transaction retry 3)
+   ↓
+ApiResponse + AssetNotification (setelah commit)
+</code></pre></div>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Layer</th>
+<th>File/Class</th>
+<th>Function</th>
+<th>Tanggung Jawab</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Route</td>
+<td><code>RouteAsset.php</code></td>
+<td>17 route</td>
+<td>Endpoint</td>
+</tr>
+<tr>
+<td>Controller</td>
+<td><code>AssetAdminPenambahan_c</code></td>
+<td>penambahanOptions, getPenambahanKaryawan, storePenambahanKaryawan, getDetailPenambahanKaryawan, getPengajuanKaryawan, getDetailPengajuanKaryawan, pengajuanKaryawanOptions, tolakPengajuanKaryawan, alokasikanPengajuanKaryawan</td>
+<td>Admin</td>
+</tr>
+<tr>
+<td>Controller</td>
+<td><code>AssetKaryawanPengajuan_c</code></td>
+<td>getPengajuanOptionsSaya, getPengajuanSaya, storePengajuanSaya, getDetailPengajuanSaya, getDetailPenambahanSaya, konfirmasiPenambahanSaya</td>
+<td>Karyawan</td>
+</tr>
+<tr>
+<td>Model</td>
+<td><code>AssetRequestKaryawan_m</code></td>
+<td>getOptions, getPengajuanOptions, getRequests/Page, getPengajuanAdmin/Page, getPengajuanKaryawan/Page, getDetail, getDetailPengajuanAdmin, getDetailPengajuanKaryawan, getPengajuanAdminOptions, store, storePengajuanKaryawan, tolakPengajuanAdmin, alokasikanPengajuanAdmin, konfirmasiKaryawan, getPendingForEmployee, getPendingForAdmin, countPendingForAdmin</td>
+<td>Logic</td>
+</tr>
+<tr>
+<td>Model</td>
+<td><code>Asset_m</code></td>
+<td>lockCompany, nextSequence, ensureSequenceCapacity, findActiveKaryawan, findAssetAdmin, hasActiveOnboardingAsset</td>
+<td>Helper bersama</td>
+</tr>
+<tr>
+<td>Enum</td>
+<td><code>RequestKaryawanStatus</code></td>
+<td>–</td>
+<td>Ada, tetapi model memakai konstanta string sendiri</td>
+</tr>
+<tr>
+<td>Support</td>
+<td><code>AssetNotification</code></td>
+<td>send</td>
+<td>Notifikasi</td>
+</tr>
+</tbody>
+</table></div>
+<hr />
+<h2 id="s21"><span class="sec-no">21</span>Backend Business Logic</h2>
+<p>Semua aksi tulis: <code>DB::transaction(fn, 3)</code> + <code>lockCompany()</code>.</p>
+<h3>21.1 Penambahan — <code>store</code></h3>
+<ol>
+<li>Validasi request → cek admin.</li>
+<li>Lock; <code>requestLockedAssets</code> (tersedia + gudang, FOR UPDATE), jumlah harus sama.</li>
+<li><code>hasActiveOnboardingAsset</code>, <code>hasActiveRequestAsset</code>.</li>
+<li><code>findActiveKaryawan</code>, <code>findAssetAdmin</code>.</li>
+<li>Jadwal wajib bila bukan draft.</li>
+<li>Generate ID + <code>no_trx = KRY-03-1-YYYYMMNNN</code>.</li>
+<li>Tentukan kategori: satu kategori → id &amp; nama; banyak → <code>''</code> &amp; "Multi Kategori".</li>
+<li>INSERT header (<code>sumber_pengajuan = admin</code>, draft/proses, <code>tgl_approval</code> NULL).</li>
+<li>INSERT item (<code class="chip chip-wait">belum_dicek</code>, snapshot).</li>
+<li><strong>Hanya jika bukan draft</strong>: UPDATE <code>asset_data.status_asset = proses</code>.</li>
+<li>Notifikasi <code>penambahan.dikirim</code> (bukan draft). Response 201.</li>
+</ol>
+<h3>21.2 Pengajuan — <code>storePengajuanKaryawan</code></h3>
+<p>Lock → karyawan aktif → kategori ada &amp; bukan parent (FOR UPDATE) → alasan &amp; urgensi wajib bila bukan draft → generate ID/no_trx → INSERT header (<code>sumber = karyawan</code>, tanpa item, jadwal kosong) → notifikasi <code>pengajuan.diajukan</code> (bukan draft). Response 201.</p>
+<h3>21.3 Tolak — <code>tolakPengajuanAdmin</code></h3>
+<p>Lock → admin → header (sumber karyawan, FOR UPDATE) harus <code class="chip chip-wait">proses</code> &amp; <code>tgl_approval</code> NULL → alasan wajib → <strong>DELETE item</strong> (draft alokasi) → UPDATE header <code>ket_tolak</code>, <code>status_approval = ditolak</code>, <code>user_approval</code>, <code>tgl_approval = now</code> → notifikasi <code>pengajuan.ditolak</code>.</p>
+<h3>21.4 Alokasi — <code>alokasikanPengajuanAdmin</code></h3>
+<p>Lock → admin → header syarat sama dengan tolak → asset tersedia + kategori = kategori pengajuan → tidak aktif di onboarding/penambahan lain (kecuali transaksi ini) → jadwal wajib bila bukan draft → DELETE item lama → INSERT item baru → UPDATE header jadwal, <code>ket_tolak = ''</code>, <code>user_approval</code>/<code>tgl_approval</code> (hanya bila bukan draft) → bila bukan draft UPDATE <code>asset_data = proses</code> → notifikasi <code>pengajuan.disetujui</code> (bukan draft). Response 200 <code>SUCCESS</code> (kirim) / <code>UPDATED</code> (draft).</p>
+<h3>21.5 Konfirmasi — <code>konfirmasiKaryawan</code></h3>
+<ol>
+<li>Lock; header milik karyawan (FOR UPDATE), status <code class="chip chip-wait">proses</code>; pengajuan harus sudah disetujui.</li>
+<li>Karyawan aktif; item dikunci; pending = <code class="chip chip-wait">belum_dicek</code>.</li>
+<li>Validasi lengkap &amp; alasan rusak.</li>
+<li>UPDATE item.</li>
+<li><code>semuaNormal</code> atas <strong>seluruh</strong> item → <code class="chip chip-done">dikonfirmasi</code>, selain itu tetap <code class="chip chip-wait">proses</code>.</li>
+<li>UPDATE header <code>status_approval</code>, <code>user_approval</code>, <code>tgl_approval = now</code>.</li>
+<li><strong>Jika semua normal</strong>: UPDATE <code>asset_data</code> terpakai/karyawan/id_pemegang_asset + INSERT <code>asset_log</code> per asset.</li>
+<li><strong>Jika ada rusak</strong>: tidak ada perubahan <code>asset_data</code> (tetap <code class="chip chip-wait">proses</code>).</li>
+<li>Notifikasi <code>penambahan.dikonfirmasi</code> / <code>penambahan.rusak</code>.</li>
+</ol>
+<h3>21.6 Query baca</h3>
+<ul>
+<li>Options penambahan: <code>AssetAdmin_m::getOnboardingOptions(excludeEmployeesWithOnboarding: false)</code> → semua karyawan aktif, asset tersedia di gudang, pohon kategori.</li>
+<li>Options alokasi: sama, lalu asset difilter kategori pengajuan. Hanya bila pengajuan <code class="chip chip-wait">proses</code> &amp; belum disetujui (selain itu 404).</li>
+<li>Options pengajuan karyawan: semua kategori company + daftar urgensi.</li>
+<li>List: JOIN item, hitung <code>jumlah_asset</code>, <code>jumlah_pending</code>, <code>jumlah_rusak</code>; urut <code>tgl_input DESC</code>.</li>
+<li>Detail karyawan pengajuan: sebelum disetujui, jadwal dikosongkan, <code>jumlah_asset = 0</code>, <code>items = []</code>.</li>
+</ul>
+<hr />
+<h2 id="s22"><span class="sec-no">22</span>Dampak terhadap asset_data</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Sebelum</th>
+<th>Sesudah</th>
+<th>Trigger</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>status_asset</td>
+<td>tersedia</td>
+<td>proses</td>
+<td>Submit penambahan / submit alokasi</td>
+</tr>
+<tr>
+<td>status_asset</td>
+<td>proses</td>
+<td>terpakai</td>
+<td>Konfirmasi, <strong>semua</strong> item normal</td>
+</tr>
+<tr>
+<td>pemegang_asset</td>
+<td>gudang</td>
+<td>karyawan</td>
+<td>Konfirmasi, semua normal</td>
+</tr>
+<tr>
+<td>id_pemegang_asset</td>
+<td>''</td>
+<td>id_karyawan</td>
+<td>Konfirmasi, semua normal</td>
+</tr>
+<tr>
+<td>tgl_update / user_update</td>
+<td>–</td>
+<td>now / karyawan atau admin</td>
+<td>Setiap update di atas</td>
+</tr>
+<tr>
+<td>status_asset (item rusak / normal saat ada rusak)</td>
+<td>proses</td>
+<td><strong>proses (tidak berubah)</strong></td>
+<td>Konfirmasi ada rusak</td>
+</tr>
+<tr>
+<td>ket_rusak, kondisi_awal</td>
+<td>–</td>
+<td><strong>tidak diubah</strong></td>
+<td>–</td>
+</tr>
+</tbody>
+</table></div>
+<p>Draft penambahan dan draft alokasi <strong>tidak</strong> mengubah <code>asset_data</code>.</p>
+<hr />
+<h2 id="s23"><span class="sec-no">23</span>API Documentation</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>ID</th>
+<th>Method</th>
+<th>Endpoint</th>
+<th>Function</th>
+<th>Auth</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>API-001</td>
+<td>GET</td>
+<td><code>/asset/penambahan-karyawan/options</code></td>
+<td>Opsi karyawan, kategori, asset</td>
+<td>Admin</td>
+</tr>
+<tr>
+<td>API-002</td>
+<td>GET</td>
+<td><code>/asset/penambahan-karyawan</code></td>
+<td>List penambahan</td>
+<td>Admin</td>
+</tr>
+<tr>
+<td>API-003</td>
+<td>POST</td>
+<td><code>/asset/penambahan-karyawan</code></td>
+<td>Buat penambahan</td>
+<td>Admin</td>
+</tr>
+<tr>
+<td>API-004</td>
+<td>GET</td>
+<td><code>/asset/penambahan-karyawan/{id}</code></td>
+<td>Detail penambahan</td>
+<td>Admin</td>
+</tr>
+<tr>
+<td>API-005</td>
+<td>GET</td>
+<td><code>/asset/pengajuan-karyawan</code></td>
+<td>List pengajuan</td>
+<td>Admin</td>
+</tr>
+<tr>
+<td>API-006</td>
+<td>GET</td>
+<td><code>/asset/pengajuan-karyawan/{id}</code></td>
+<td>Detail pengajuan</td>
+<td>Admin</td>
+</tr>
+<tr>
+<td>API-007</td>
+<td>GET</td>
+<td><code>/asset/pengajuan-karyawan/{id}/options</code></td>
+<td>Opsi alokasi</td>
+<td>Admin</td>
+</tr>
+<tr>
+<td>API-008</td>
+<td>POST</td>
+<td><code>/asset/pengajuan-karyawan/{id}/tolak</code></td>
+<td>Tolak pengajuan</td>
+<td>Admin</td>
+</tr>
+<tr>
+<td>API-009</td>
+<td>POST</td>
+<td><code>/asset/pengajuan-karyawan/{id}/alokasi</code></td>
+<td>Alokasi / setujui</td>
+<td>Admin</td>
+</tr>
+<tr>
+<td>API-010</td>
+<td>GET</td>
+<td><code>/asset/karyawan/pengajuan/options</code></td>
+<td>Opsi jenis &amp; urgensi</td>
+<td>JWT</td>
+</tr>
+<tr>
+<td>API-011</td>
+<td>GET</td>
+<td><code>/asset/karyawan/pengajuan</code></td>
+<td>List pengajuan saya</td>
+<td>JWT</td>
+</tr>
+<tr>
+<td>API-012</td>
+<td>POST</td>
+<td><code>/asset/karyawan/pengajuan</code></td>
+<td>Buat pengajuan</td>
+<td>JWT</td>
+</tr>
+<tr>
+<td>API-013</td>
+<td>GET</td>
+<td><code>/asset/karyawan/pengajuan/{id}</code></td>
+<td>Detail pengajuan saya</td>
+<td>JWT, pemilik</td>
+</tr>
+<tr>
+<td>API-014</td>
+<td>GET</td>
+<td><code>/asset/karyawan/penambahan/{id}</code></td>
+<td>Detail untuk konfirmasi (kedua sumber)</td>
+<td>JWT, pemilik</td>
+</tr>
+<tr>
+<td>API-015</td>
+<td>POST</td>
+<td><code>/asset/karyawan/penambahan/{id}/konfirmasi</code></td>
+<td>Konfirmasi Normal/Rusak</td>
+<td>JWT, pemilik</td>
+</tr>
+<tr>
+<td>API-016</td>
+<td>PUT</td>
+<td><code>/asset/penambahan-karyawan/{id}</code></td>
+<td>Ubah / kirim draft penambahan</td>
+<td>Admin</td>
+</tr>
+<tr>
+<td>API-017</td>
+<td>PUT</td>
+<td><code>/asset/karyawan/pengajuan/{id}</code></td>
+<td>Ubah / kirim draft pengajuan saya</td>
+<td>JWT, pemilik</td>
+</tr>
+</tbody>
+</table></div>
+<p>Endpoint terkait: <code>GET /asset/karyawan/onboarding</code> (Asset Saya, bagian <code>penambahan[]</code>) dan <code>GET /asset/summary</code> (<code>pengajuan_perlu_proses</code>, <code>pengajuan_pending</code>).
+Endpoint hapus draft, batal, dan tindak lanjut rusak: ⚠️ Belum ditemukan. Edit draft tersedia lewat <code>PUT</code> (API-016, API-017).</p>
+<p>Format response sama dengan modul asset lain: <code>{ "code", "message", "data" }</code>; error validasi <code>{ "code": "VALIDATION_ERROR", "message", "errors" }</code>. HTTP: 200/201, 401, 403, 404, 422, 500.</p>
+<hr />
+<h2 id="s24"><span class="sec-no">24</span>Detail Setiap API</h2>
+<p>Header umum: <code>Authorization: Bearer &lt;token&gt;</code>, <code>Content-Type: application/json</code>, <code>Accept: application/json</code>, <code>locale</code>, <code>versi-app</code>.</p>
+<h3>API-001 — Opsi Penambahan</h3>
+<div class="code"><span class="code-lang">HTTP</span><pre><code class="language-http">GET /asset/penambahan-karyawan/options
+</code></pre></div>
+<p>Response <code>data</code>: <code>{ "karyawan": [{id_karyawan, nik, nama_karyawan}], "kategori_asset": [{id_asset_kategori_m, parent_id, flag_parent, nama_kategori}], "assets": [{id_asset_data, kode_asset, nama_asset, id_asset_kategori_m, kategori_asset, merek, deskripsi, kondisi_awal}] }</code>. Message: "Opsi penambahan asset berhasil ditemukan." Semua karyawan aktif ditampilkan (tidak dikecualikan seperti onboarding).</p>
+<h3>API-002 — List Penambahan</h3>
+<div class="code"><span class="code-lang">HTTP</span><pre><code class="language-http">GET /asset/penambahan-karyawan?tab=pending&amp;limit=20&amp;offset=0
+</code></pre></div>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Param</th>
+<th>Rule</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>tab</td>
+<td><code>pending</code> | <code class="chip chip-done">dikonfirmasi</code> | <code>selesai</code> ("Filter penambahan asset tidak valid.")</td>
+</tr>
+<tr>
+<td>limit</td>
+<td>1–50 ("Limit maksimal adalah 50 data.")</td>
+</tr>
+<tr>
+<td>offset</td>
+<td>≥ 0</td>
+</tr>
+</tbody>
+</table></div>
+<p>Tab: <code>pending</code> = draft atau proses belum dikonfirmasi karyawan; <code class="chip chip-done">dikonfirmasi</code> = proses &amp; <code>tgl_approval</code> terisi; <code>selesai</code> = ditolak/dikonfirmasi.</p>
+<div class="code"><span class="code-lang">JSON</span><pre><code class="language-json">{
+  &quot;code&quot;: &quot;SUCCESS&quot;,
+  &quot;message&quot;: &quot;Data penambahan asset karyawan berhasil ditemukan.&quot;,
+  &quot;data&quot;: {
+    &quot;filters&quot;: [
+      {&quot;value&quot;: &quot;pending&quot;, &quot;label&quot;: &quot;Pending&quot;},
+      {&quot;value&quot;: &quot;dikonfirmasi&quot;, &quot;label&quot;: &quot;Dikonfirmasi&quot;},
+      {&quot;value&quot;: &quot;selesai&quot;, &quot;label&quot;: &quot;Selesai&quot;}
+    ],
+    &quot;requests&quot;: [
+      {
+        &quot;id&quot;: &quot;CMP001202609004&quot;,
+        &quot;no_trx&quot;: &quot;KRY-03-1-202609004&quot;,
+        &quot;id_asset_kategori_m&quot;: &quot;CMP001202601002&quot;,
+        &quot;nama_kategori&quot;: &quot;Laptop&quot;,
+        &quot;keterangan&quot;: &quot;&quot;,
+        &quot;urgensi&quot;: &quot;&quot;,
+        &quot;ket_tolak&quot;: &quot;&quot;,
+        &quot;id_karyawan&quot;: &quot;KRY0002&quot;,
+        &quot;nik_karyawan&quot;: &quot;EMP-002&quot;,
+        &quot;nama_karyawan&quot;: &quot;Sari Contoh&quot;,
+        &quot;tgl_pengajuan&quot;: &quot;2026-09-26&quot;,
+        &quot;tgl_serah_terima&quot;: &quot;2026-09-29&quot;,
+        &quot;jam_serah_terima&quot;: &quot;09:00:00&quot;,
+        &quot;keterangan_serah_terima&quot;: &quot;Ambil di ruang IT&quot;,
+        &quot;status_approval&quot;: &quot;proses&quot;,
+        &quot;status_label&quot;: &quot;Menunggu Diterima&quot;,
+        &quot;tab&quot;: &quot;pending&quot;,
+        &quot;jumlah_asset&quot;: 1,
+        &quot;jumlah_pending&quot;: 1,
+        &quot;jumlah_rusak&quot;: 0,
+        &quot;tgl_approval&quot;: &quot;&quot;
+      }
+    ],
+    &quot;pagination&quot;: {&quot;limit&quot;: 20, &quot;offset&quot;: 0, &quot;next_offset&quot;: 1, &quot;has_more&quot;: false}
+  }
+}
+</code></pre></div>
+<p>Tanpa parameter → <code>data</code> berupa array.</p>
+<h3>API-003 — Buat Penambahan</h3>
+<div class="code"><span class="code-lang">HTTP</span><pre><code class="language-http">POST /asset/penambahan-karyawan
+</code></pre></div>
+<div class="code"><span class="code-lang">JSON</span><pre><code class="language-json">{
+  &quot;id_karyawan&quot;: &quot;KRY0002&quot;,
+  &quot;asset_ids&quot;: [&quot;CMP00120260100005&quot;],
+  &quot;tgl_serah_terima&quot;: &quot;2026-09-29&quot;,
+  &quot;jam_serah_terima&quot;: &quot;09:00&quot;,
+  &quot;keterangan_serah_terima&quot;: &quot;Ambil di ruang IT&quot;,
+  &quot;keterangan&quot;: &quot;&quot;,
+  &quot;urgensi&quot;: &quot;&quot;,
+  &quot;is_draft&quot;: false
+}
+</code></pre></div>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Rule</th>
+<th>Message</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>id_karyawan</td>
+<td>required|string|max:150</td>
+<td>Karyawan wajib dipilih.</td>
+</tr>
+<tr>
+<td>asset_ids</td>
+<td>required|array|min:1</td>
+<td>Minimal satu asset wajib dipilih.</td>
+</tr>
+<tr>
+<td>asset_ids.*</td>
+<td>required|string|max:50|distinct</td>
+<td>Asset yang sama tidak boleh dipilih lebih dari sekali.</td>
+</tr>
+<tr>
+<td>tgl_serah_terima</td>
+<td>required (kirim) / nullable (draft), date_format Y-m-d</td>
+<td>Tanggal serah terima wajib diisi. / Format tanggal serah terima harus YYYY-MM-DD.</td>
+</tr>
+<tr>
+<td>jam_serah_terima</td>
+<td>required (kirim) / nullable (draft), date_format H:i</td>
+<td>Jam serah terima wajib diisi. / Format jam serah terima harus HH:MM.</td>
+</tr>
+<tr>
+<td>keterangan_serah_terima</td>
+<td>nullable|string|max:255</td>
+<td>–</td>
+</tr>
+<tr>
+<td>keterangan</td>
+<td>nullable|string</td>
+<td>–</td>
+</tr>
+<tr>
+<td>urgensi</td>
+<td>nullable|string|max:50</td>
+<td>–</td>
+</tr>
+<tr>
+<td>is_draft</td>
+<td>required|boolean</td>
+<td>Status draft wajib dikirim.</td>
+</tr>
+</tbody>
+</table></div>
+<p>Database impact:</p>
+<div class="code"><span class="code-lang">Alur</span><pre><code class="language-text">INSERT asset_trx_request_karyawan (sumber_pengajuan = admin)
+INSERT asset_trx_request_karyawan_item
+UPDATE asset_data (status_asset = proses)   -- hanya bila bukan draft
+INSERT notif_data                            -- hanya bila bukan draft
+</code></pre></div>
+<div class="code"><span class="code-lang">JSON</span><pre><code class="language-json">{ &quot;code&quot;: &quot;CREATED&quot;, &quot;message&quot;: &quot;Penambahan asset berhasil dikirim ke karyawan.&quot;,
+  &quot;data&quot;: { &quot;id&quot;: &quot;CMP001202609004&quot;, &quot;no_trx&quot;: &quot;KRY-03-1-202609004&quot;,
+            &quot;status_approval&quot;: &quot;proses&quot;, &quot;status_label&quot;: &quot;Menunggu Diterima&quot;, &quot;tab&quot;: &quot;pending&quot; } }
+</code></pre></div>
+<p>Draft: "Draft penambahan asset berhasil disimpan." Error 422: "Satu atau beberapa asset tidak tersedia untuk penambahan.", "…sedang diproses pada onboarding.", "…sedang diproses pada penambahan lain.", "Karyawan tidak ditemukan atau tidak aktif.", "Pengguna tidak terdaftar sebagai admin asset.", "Nomor transaksi untuk periode ini sudah mencapai batas." 500: "Terjadi kesalahan saat menyimpan penambahan asset."</p>
+<h3>API-004 — Detail Penambahan (Admin)</h3>
+<div class="code"><span class="code-lang">HTTP</span><pre><code class="language-http">GET /asset/penambahan-karyawan/{id}
+</code></pre></div>
+<div class="code"><span class="code-lang">JSON</span><pre><code class="language-json">{
+  &quot;code&quot;: &quot;SUCCESS&quot;,
+  &quot;message&quot;: &quot;Detail penambahan asset berhasil ditemukan.&quot;,
+  &quot;data&quot;: {
+    &quot;id&quot;: &quot;CMP001202609004&quot;,
+    &quot;no_trx&quot;: &quot;KRY-03-1-202609004&quot;,
+    &quot;id_asset_kategori_m&quot;: &quot;CMP001202601002&quot;,
+    &quot;nama_kategori&quot;: &quot;Laptop&quot;,
+    &quot;keterangan&quot;: &quot;&quot;,
+    &quot;urgensi&quot;: &quot;&quot;,
+    &quot;ket_tolak&quot;: &quot;&quot;,
+    &quot;tgl_pengajuan&quot;: &quot;2026-09-26&quot;,
+    &quot;tgl_serah_terima&quot;: &quot;2026-09-29&quot;,
+    &quot;jam_serah_terima&quot;: &quot;09:00:00&quot;,
+    &quot;keterangan_serah_terima&quot;: &quot;Ambil di ruang IT&quot;,
+    &quot;status_approval&quot;: &quot;proses&quot;,
+    &quot;tgl_approval&quot;: &quot;&quot;,
+    &quot;status_label&quot;: &quot;Menunggu Diterima&quot;,
+    &quot;tab&quot;: &quot;pending&quot;,
+    &quot;jumlah_asset&quot;: 1,
+    &quot;karyawan&quot;: { &quot;nik&quot;: &quot;EMP-002&quot;, &quot;nama_karyawan&quot;: &quot;Sari Contoh&quot;, &quot;cabang&quot;: &quot;Kantor Pusat&quot;, &quot;divisi&quot;: &quot;Finance&quot; },
+    &quot;items&quot;: [
+      {
+        &quot;id_item&quot;: &quot;CMP001202609010&quot;,
+        &quot;parent_id&quot;: &quot;&quot;,
+        &quot;id_asset_data&quot;: &quot;CMP00120260100005&quot;,
+        &quot;kode_asset&quot;: &quot;LPT-0005&quot;,
+        &quot;nama_asset&quot;: &quot;Laptop 14 inch&quot;,
+        &quot;deskripsi&quot;: &quot;Charger, tas&quot;,
+        &quot;kategori_asset&quot;: &quot;Laptop&quot;,
+        &quot;merek&quot;: &quot;MerekX&quot;,
+        &quot;status_item&quot;: &quot;belum_dicek&quot;,
+        &quot;ket_rusak&quot;: &quot;&quot;,
+        &quot;perlu_dicek&quot;: true,
+        &quot;diganti&quot;: false
+      }
+    ]
+  }
+}
+</code></pre></div>
+<p>404: "Penambahan asset tidak ditemukan." (hanya sumber admin).</p>
+<h3>API-005 — List Pengajuan (Admin)</h3>
+<div class="code"><span class="code-lang">HTTP</span><pre><code class="language-http">GET /asset/pengajuan-karyawan?tab=pengajuan&amp;limit=20&amp;offset=0
+</code></pre></div>
+<p><code>tab</code>: <code>pengajuan</code> (belum disetujui, termasuk Draft Alokasi), <code class="chip chip-wait">proses</code> (disetujui, ada item pending), <code class="chip chip-done">dikonfirmasi</code> (disetujui, tanpa item pending — kasus rusak), <code>selesai</code> (ditolak/dikonfirmasi). Draft karyawan tidak pernah tampil. Struktur <code>data</code> sama dengan API-002 dengan <code>filters</code> Pengajuan/Proses/Dikonfirmasi/Selesai. Message: "Data pengajuan asset karyawan berhasil ditemukan."</p>
+<h3>API-006 — Detail Pengajuan (Admin)</h3>
+<div class="code"><span class="code-lang">HTTP</span><pre><code class="language-http">GET /asset/pengajuan-karyawan/{id}
+</code></pre></div>
+<p>Struktur sama dengan API-004 (<code>keterangan</code> = alasan, <code>urgensi</code> terisi), label/tab dari §14.2. 404 "Pengajuan asset tidak ditemukan." bila tidak ada atau masih draft.</p>
+<h3>API-007 — Opsi Alokasi</h3>
+<div class="code"><span class="code-lang">HTTP</span><pre><code class="language-http">GET /asset/pengajuan-karyawan/{id}/options
+</code></pre></div>
+<p>Sama dengan API-001, tetapi <code>assets</code> hanya kategori pengajuan. 404 "Opsi pengajuan asset tidak ditemukan." bila pengajuan bukan <code class="chip chip-wait">proses</code> atau sudah disetujui. Message: "Opsi persetujuan pengajuan asset berhasil ditemukan."</p>
+<h3>API-008 — Tolak Pengajuan</h3>
+<div class="code"><span class="code-lang">HTTP</span><pre><code class="language-http">POST /asset/pengajuan-karyawan/{id}/tolak
+</code></pre></div>
+<div class="code"><span class="code-lang">JSON</span><pre><code class="language-json">{ &quot;ket_tolak&quot;: &quot;Stok laptop belum tersedia bulan ini&quot; }
+</code></pre></div>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Rule</th>
+<th>Message</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>ket_tolak</td>
+<td>required|string|max:255</td>
+<td>Alasan penolakan wajib diisi.</td>
+</tr>
+</tbody>
+</table></div>
+<p>Database impact: <code>DELETE item</code> (bila ada draft alokasi), <code>UPDATE header</code> (ditolak, ket_tolak, user_approval, tgl_approval), <code>INSERT notif_data</code>.</p>
+<div class="code"><span class="code-lang">JSON</span><pre><code class="language-json">{ &quot;code&quot;: &quot;UPDATED&quot;, &quot;message&quot;: &quot;Pengajuan asset berhasil ditolak.&quot;,
+  &quot;data&quot;: { &quot;id&quot;: &quot;CMP001202609005&quot;, &quot;no_trx&quot;: &quot;KRY-03-1-202609005&quot;,
+            &quot;status_approval&quot;: &quot;ditolak&quot;, &quot;status_label&quot;: &quot;Ditolak&quot;, &quot;tab&quot;: &quot;selesai&quot; } }
+</code></pre></div>
+<p>422: "Pengajuan asset tidak ditemukan.", "Pengajuan asset sudah tidak menunggu persetujuan." 500: "Terjadi kesalahan saat menolak pengajuan asset."</p>
+<h3>API-009 — Alokasi / Setujui Pengajuan</h3>
+<div class="code"><span class="code-lang">HTTP</span><pre><code class="language-http">POST /asset/pengajuan-karyawan/{id}/alokasi
+</code></pre></div>
+<div class="code"><span class="code-lang">JSON</span><pre><code class="language-json">{
+  &quot;asset_ids&quot;: [&quot;CMP00120260100007&quot;],
+  &quot;tgl_serah_terima&quot;: &quot;2026-09-30&quot;,
+  &quot;jam_serah_terima&quot;: &quot;10:00&quot;,
+  &quot;keterangan_serah_terima&quot;: &quot;Serah terima di ruang IT lantai 2&quot;,
+  &quot;is_draft&quot;: false
+}
+</code></pre></div>
+<p>Validasi sama dengan API-003 untuk <code>asset_ids</code>, jadwal, <code>keterangan_serah_terima</code>, <code>is_draft</code> (message: "Data persetujuan pengajuan belum lengkap.").</p>
+<p>Database impact:</p>
+<div class="code"><span class="code-lang">Alur</span><pre><code class="language-text">DELETE asset_trx_request_karyawan_item (item lama)
+INSERT asset_trx_request_karyawan_item
+UPDATE asset_trx_request_karyawan (jadwal, ket_tolak='', user_approval/tgl_approval bila kirim)
+UPDATE asset_data (status_asset = proses)   -- bila bukan draft
+INSERT notif_data                            -- bila bukan draft
+</code></pre></div>
+<div class="code"><span class="code-lang">JSON</span><pre><code class="language-json">{ &quot;code&quot;: &quot;SUCCESS&quot;, &quot;message&quot;: &quot;Pengajuan asset berhasil disetujui.&quot;,
+  &quot;data&quot;: { &quot;id&quot;: &quot;CMP001202609005&quot;, &quot;no_trx&quot;: &quot;KRY-03-1-202609005&quot;, &quot;status_approval&quot;: &quot;proses&quot;,
+            &quot;status_label&quot;: &quot;Menunggu Konfirmasi&quot;, &quot;tab&quot;: &quot;proses&quot;, &quot;jumlah_asset&quot;: 1 } }
+</code></pre></div>
+<p>Draft: code <code>UPDATED</code>, "Draft alokasi pengajuan asset berhasil disimpan.", label "Draft Alokasi", tab <code>pengajuan</code>.
+422: "Pengajuan asset sudah tidak dapat dialokasikan.", "Satu atau beberapa asset tidak tersedia.", "Asset harus sesuai dengan jenis yang diajukan.", "…sedang diproses pada onboarding.", "…sedang diproses pada penambahan lain.", "Tanggal/Jam serah terima wajib diisi." 500: "Terjadi kesalahan saat menyetujui pengajuan asset."</p>
+<h3>API-010 — Opsi Pengajuan (Karyawan)</h3>
+<div class="code"><span class="code-lang">HTTP</span><pre><code class="language-http">GET /asset/karyawan/pengajuan/options
+</code></pre></div>
+<div class="code"><span class="code-lang">JSON</span><pre><code class="language-json">{
+  &quot;code&quot;: &quot;SUCCESS&quot;,
+  &quot;message&quot;: &quot;Opsi pengajuan asset berhasil ditemukan.&quot;,
+  &quot;data&quot;: {
+    &quot;kategori_asset&quot;: [
+      {&quot;id_asset_kategori_m&quot;: &quot;CMP001202601001&quot;, &quot;parent_id&quot;: &quot;&quot;, &quot;flag_parent&quot;: 1, &quot;nama_kategori&quot;: &quot;Elektronik&quot;},
+      {&quot;id_asset_kategori_m&quot;: &quot;CMP001202601002&quot;, &quot;parent_id&quot;: &quot;CMP001202601001&quot;, &quot;flag_parent&quot;: 0, &quot;nama_kategori&quot;: &quot;Laptop&quot;}
+    ],
+    &quot;urgensi&quot;: [
+      {&quot;value&quot;: &quot;normal&quot;, &quot;label&quot;: &quot;Normal&quot;},
+      {&quot;value&quot;: &quot;secepatnya&quot;, &quot;label&quot;: &quot;Secepatnya&quot;},
+      {&quot;value&quot;: &quot;mendesak&quot;, &quot;label&quot;: &quot;Mendesak&quot;}
+    ]
+  }
+}
+</code></pre></div>
+<h3>API-011 — List Pengajuan Saya</h3>
+<div class="code"><span class="code-lang">HTTP</span><pre><code class="language-http">GET /asset/karyawan/pengajuan?tab=pengajuan&amp;limit=20&amp;offset=0
+</code></pre></div>
+<p><code>tab</code>: <code>pengajuan</code> (draft + menunggu admin), <code class="chip chip-done">dikonfirmasi</code> (disetujui, belum selesai), <code class="chip chip-bad">ditolak</code>, <code>selesai</code>. Sebelum disetujui: jadwal dikosongkan dan <code>jumlah_asset = 0</code>. Filters: Pengajuan/Dikonfirmasi/Ditolak/Selesai.</p>
+<h3>API-012 — Buat Pengajuan</h3>
+<div class="code"><span class="code-lang">HTTP</span><pre><code class="language-http">POST /asset/karyawan/pengajuan
+</code></pre></div>
+<div class="code"><span class="code-lang">JSON</span><pre><code class="language-json">{ &quot;id_asset_kategori_m&quot;: &quot;CMP001202601002&quot;, &quot;keterangan&quot;: &quot;Laptop lama sering mati, butuh untuk presentasi klien&quot;,
+  &quot;urgensi&quot;: &quot;secepatnya&quot;, &quot;is_draft&quot;: false }
+</code></pre></div>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Rule</th>
+<th>Message</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>id_asset_kategori_m</td>
+<td>required|string|max:50</td>
+<td>Jenis asset wajib dipilih.</td>
+</tr>
+<tr>
+<td>keterangan</td>
+<td>required (kirim) / nullable (draft)</td>
+<td>Alasan pengajuan wajib diisi.</td>
+</tr>
+<tr>
+<td>urgensi</td>
+<td>required (kirim) / nullable (draft), max:50, in:normal,secepatnya,mendesak</td>
+<td>Urgensi wajib dipilih. / Urgensi pengajuan tidak valid.</td>
+</tr>
+<tr>
+<td>is_draft</td>
+<td>required|boolean</td>
+<td>Status draft wajib dikirim.</td>
+</tr>
+</tbody>
+</table></div>
+<p>Database impact: <code>INSERT asset_trx_request_karyawan</code> (sumber karyawan, tanpa item); <code>INSERT notif_data</code> (bukan draft).</p>
+<div class="code"><span class="code-lang">JSON</span><pre><code class="language-json">{ &quot;code&quot;: &quot;CREATED&quot;, &quot;message&quot;: &quot;Pengajuan asset berhasil dikirim ke admin.&quot;,
+  &quot;data&quot;: { &quot;id&quot;: &quot;CMP001202609005&quot;, &quot;no_trx&quot;: &quot;KRY-03-1-202609005&quot;,
+            &quot;status_approval&quot;: &quot;proses&quot;, &quot;status_label&quot;: &quot;Menunggu Konfirmasi&quot;, &quot;tab&quot;: &quot;pengajuan&quot; } }
+</code></pre></div>
+<p>422: "Karyawan tidak ditemukan atau tidak aktif.", "Jenis asset tidak ditemukan atau tidak dapat diajukan." 500: "Terjadi kesalahan saat menyimpan pengajuan asset."</p>
+<h3>API-013 — Detail Pengajuan Saya</h3>
+<div class="code"><span class="code-lang">HTTP</span><pre><code class="language-http">GET /asset/karyawan/pengajuan/{id}
+</code></pre></div>
+<p>Struktur seperti API-004 + <code>isu_rusak</code>; sebelum disetujui <code>items = []</code>, jadwal kosong. 404 "Pengajuan asset tidak ditemukan."</p>
+<h3>API-014 — Detail untuk Konfirmasi</h3>
+<div class="code"><span class="code-lang">HTTP</span><pre><code class="language-http">GET /asset/karyawan/penambahan/{id}
+</code></pre></div>
+<p>Berlaku untuk kedua sumber: transaksi milik karyawan, bukan draft; pengajuan harus sudah disetujui. Struktur seperti API-004. 404 "Penambahan asset tidak ditemukan."</p>
+<h3>API-015 — Konfirmasi Asset</h3>
+<div class="code"><span class="code-lang">HTTP</span><pre><code class="language-http">POST /asset/karyawan/penambahan/{id}/konfirmasi
+</code></pre></div>
+<div class="code"><span class="code-lang">JSON</span><pre><code class="language-json">{ &quot;items&quot;: [ { &quot;id_item&quot;: &quot;CMP001202609010&quot;, &quot;status_item&quot;: &quot;normal&quot; } ] }
+</code></pre></div>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Rule</th>
+<th>Message</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>items</td>
+<td>required|array|min:1</td>
+<td>Kondisi asset wajib diisi.</td>
+</tr>
+<tr>
+<td>items.*.id_item</td>
+<td>required|string|max:50|distinct</td>
+<td>Asset yang sama tidak boleh dikirim lebih dari sekali.</td>
+</tr>
+<tr>
+<td>items.*.status_item</td>
+<td>required|in:normal,rusak</td>
+<td>Kondisi setiap asset wajib dipilih. / Kondisi asset harus normal atau rusak.</td>
+</tr>
+<tr>
+<td>items.*.ket_rusak</td>
+<td>nullable|max:255|required_if rusak</td>
+<td>Alasan kerusakan wajib diisi.</td>
+</tr>
+</tbody>
+</table></div>
+<p>Database impact:</p>
+<div class="code"><span class="code-lang">Alur</span><pre><code class="language-text">UPDATE asset_trx_request_karyawan_item (status_item, ket_rusak)
+UPDATE asset_trx_request_karyawan (status_approval, user_approval, tgl_approval)
+UPDATE asset_data (terpakai, pemegang karyawan)   -- hanya jika semua normal
+INSERT asset_log (request_karyawan)                -- hanya jika semua normal
+INSERT notif_data (semua admin)
+</code></pre></div>
+<div class="code"><span class="code-lang">JSON</span><pre><code class="language-json">{ &quot;code&quot;: &quot;UPDATED&quot;, &quot;message&quot;: &quot;Penambahan asset berhasil dikonfirmasi.&quot;,
+  &quot;data&quot;: { &quot;id&quot;: &quot;CMP001202609004&quot;, &quot;no_trx&quot;: &quot;KRY-03-1-202609004&quot;,
+            &quot;status_approval&quot;: &quot;dikonfirmasi&quot;, &quot;status_label&quot;: &quot;Selesai&quot;, &quot;tab&quot;: &quot;selesai&quot; } }
+</code></pre></div>
+<p>Ada rusak: "Laporan kerusakan penambahan asset berhasil dikirim.", <code>status_approval: proses</code>, label "Isu Rusak", tab <code class="chip chip-done">dikonfirmasi</code>.
+422: "Penambahan asset tidak ditemukan.", "Penambahan asset sudah tidak menunggu konfirmasi.", "Pengajuan asset belum disubmit oleh admin.", "Karyawan tidak ditemukan atau tidak aktif.", "Tidak ada asset penambahan yang perlu dicek.", "Seluruh asset penambahan wajib dicek.", "Alasan kerusakan wajib diisi.", "Satu atau beberapa asset penambahan tidak ditemukan." 500: "Terjadi kesalahan saat mengonfirmasi penambahan asset."</p>
+<hr />
+<div class="group-divider" id="g25"><span>Mobile</span></div><h3>API-016 — Ubah / Kirim Draft Penambahan</h3>
+<div class="code"><span class="code-lang">HTTP</span><pre><code class="language-http">PUT /asset/penambahan-karyawan/{id}
+</code></pre></div>
+<p>Body dan validasi sama dengan API-003 (<code>id_karyawan</code>, <code>asset_ids[]</code>, jadwal serah terima, <code>is_draft</code>). Hanya untuk penambahan sumber <strong>admin</strong> berstatus <code>draft</code>; selain itu 422 "Hanya draft penambahan langsung yang dapat diperbarui.". <code>id</code>, <code>no_trx</code>, dan tanggal pengajuan dipertahankan; item lama dihapus lalu ditulis ulang. Dengan <code>is_draft=false</code> status menjadi <code>proses</code>, asset dikunci (<code>asset_data.status_asset = proses</code>), dan notifikasi <code>penambahan.dikirim</code> dikirim.</p>
+<p>Response: code <code>UPDATED</code>, "Draft penambahan asset berhasil disimpan." (draft) atau "Penambahan asset berhasil dikirim ke karyawan.".</p>
+<h3>API-017 — Ubah / Kirim Draft Pengajuan Saya</h3>
+<div class="code"><span class="code-lang">HTTP</span><pre><code class="language-http">PUT /asset/karyawan/pengajuan/{id}
+</code></pre></div>
+<p>Body dan validasi sama dengan API-012 (<code>id_asset_kategori_m</code>, <code>keterangan</code>, <code>urgensi</code>, <code>is_draft</code>). Hanya untuk pengajuan milik pemanggil yang masih <code>draft</code>, belum disetujui (<code>tgl_approval</code> kosong), dan belum punya item; selain itu 422 "Pengajuan asset sudah tidak dapat diubah karena bukan draft." dan 404 "Pengajuan asset tidak ditemukan." bila bukan miliknya. Dengan <code>is_draft=false</code> status menjadi <code>proses</code>, <code>tgl_pengajuan</code> diisi hari ini, dan notifikasi <code>pengajuan.diajukan</code> dikirim.</p>
+<p>Response: code <code>UPDATED</code>, "Draft pengajuan asset berhasil disimpan." atau "Pengajuan asset berhasil dikirim ke admin.".</p>
+<h2 id="s25"><span class="sec-no">25</span>Mobile Architecture</h2>
+<div class="code"><span class="code-lang">Alur</span><pre><code class="language-text">Page → Bloc → Api Service → ApiClient (Dio + Bearer JWT) → Backend
+</code></pre></div>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Layer</th>
+<th>File</th>
+<th>Function</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Api</td>
+<td><code>Repository/Service/assetRequestKaryawanApi.dart</code></td>
+<td>Penambahan admin: getOptions, getRequests, store, getDetail</td>
+</tr>
+<tr>
+<td>Api</td>
+<td><code>Repository/Service/assetPengajuanAdminApi.dart</code></td>
+<td>Pengajuan admin: getRequests, getDetail, getOptions, reject, allocate</td>
+</tr>
+<tr>
+<td>Api</td>
+<td><code>Repository/Service/assetPengajuanKaryawanApi.dart</code></td>
+<td>Pengajuan karyawan: getOptions, getRequests, store, getDetail</td>
+</tr>
+<tr>
+<td>Api</td>
+<td><code>Repository/Service/assetSayaApi.dart</code></td>
+<td>getPenambahanDetail, konfirmasiPenambahan</td>
+</tr>
+<tr>
+<td>Model</td>
+<td><code>Repository/Model/Asset/mAssetRequestKaryawan.dart</code></td>
+<td>AssetRequestApproval, AssetRequestKaryawanRecord/Item/Employee/Page, AssetRequestKaryawanRequest, AssetKonfirmasiPenambahanRequest</td>
+</tr>
+<tr>
+<td>Model</td>
+<td><code>Repository/Model/Asset/mAssetPengajuanKaryawan.dart</code></td>
+<td>Options (kategori, urgensi), AssetPengajuanKaryawanRequest</td>
+</tr>
+<tr>
+<td>Model</td>
+<td><code>Repository/Model/Asset/mAssetPengajuanAdmin.dart</code></td>
+<td>TolakRequest, AlokasiRequest</td>
+</tr>
+<tr>
+<td>Bloc</td>
+<td><code>AssetRequestKaryawanBloc</code></td>
+<td>List/paging, options, detail, submit penambahan</td>
+</tr>
+<tr>
+<td>Bloc</td>
+<td><code>AssetPengajuanAdminBloc</code></td>
+<td>List/paging, detail, options, reject, allocate</td>
+</tr>
+<tr>
+<td>Bloc</td>
+<td><code>AssetPengajuanKaryawanBloc</code></td>
+<td>List/paging, options, detail, submit pengajuan</td>
+</tr>
+<tr>
+<td>Bloc</td>
+<td><code>AssetKonfirmasiPenambahanBloc</code></td>
+<td>Load detail, submit konfirmasi</td>
+</tr>
+<tr>
+<td>UI</td>
+<td><code>UI/Modul/Asset/AssetAdmin/AssetAdminKaryawan/Penambahan/*</code></td>
+<td>List, form, detail penambahan</td>
+</tr>
+<tr>
+<td>UI</td>
+<td><code>UI/Modul/Asset/AssetAdmin/AssetAdminKaryawan/Pengajuan/*</code></td>
+<td>List, detail, form setujui</td>
+</tr>
+<tr>
+<td>UI</td>
+<td><code>UI/Modul/Asset/AssetSaya/Pengajuan/*</code></td>
+<td>List, form, detail pengajuan karyawan</td>
+</tr>
+<tr>
+<td>UI</td>
+<td><code>UI/Modul/Asset/AssetSaya/Onboarding/HalamanKonfirmasiPenambahanAsset.dart</code></td>
+<td>Konfirmasi (parameter <code>isPengajuan</code>)</td>
+</tr>
+</tbody>
+</table></div>
+<p>Routes:
+| Route | Page | Event awal |
+|---|---|---|
+| <code>/asset_admin_penambahan_karyawan</code> | List Penambahan | LoadAssetRequestKaryawanList (tab pending) |
+| <code>/asset_admin_add_penambahan_karyawan</code> | Form Penambahan | LoadAssetRequestKaryawanOptions |
+| <code>/asset_admin_detail_penambahan_karyawan</code> | Detail Penambahan | LoadAssetRequestKaryawanDetail(id) |
+| <code>/asset_admin_pengajuan_karyawan</code> | List Pengajuan admin | LoadAssetPengajuanAdminList (tab pengajuan) |
+| <code>/asset_admin_detail_pengajuan_karyawan</code> | Detail Pengajuan admin (title "Konfirmasi Pengajuan Asset") | LoadAssetPengajuanAdminDetail(id) |
+| <code>/asset_admin_setujui_pengajuan_karyawan</code> | Form Setujui | LoadAssetPengajuanAdminOptions(id), argumen record |
+| <code>/asset_pengajuan</code> | List Pengajuan karyawan | LoadAssetPengajuanKaryawanList |
+| <code>/asset_tambah_pengajuan</code> | Form Pengajuan | LoadAssetPengajuanKaryawanOptions |
+| <code>/asset_detail_pengajuan</code> | Detail Pengajuan karyawan | LoadAssetPengajuanKaryawanDetail(id) |
+| <code>/asset_konfirmasi_pengajuan</code> | Konfirmasi (isPengajuan: true) | LoadAssetKonfirmasiPenambahan(id) |
+| <code>/asset_konfirmasi_penambahan</code> | Konfirmasi Penambahan | LoadAssetKonfirmasiPenambahan(id) |</p>
+<hr />
+<h2 id="s26"><span class="sec-no">26</span>Mobile Screen</h2>
+<h3>26.1 Penambahan Asset (Admin) — list</h3>
+<p>Tab Pending / Dikonfirmasi / Selesai; kartu: no transaksi, "Tanggal Penambahan", badge status, <code>nik - nama</code>, "{jumlah} Asset", "Jadwal Serah Terima" (bila ada). Tombol + ("Tambah penambahan asset"). Tap → detail.</p>
+<h3>26.2 Tambah Penambahan Asset (Admin)</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Field UI</th>
+<th>Widget</th>
+<th style="text-align: center;">Required</th>
+<th>Source</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Pilih Karyawan *</td>
+<td>Field read-only → bottom sheet</td>
+<td style="text-align: center;">Ya (draft &amp; kirim)</td>
+<td><code>options.karyawan</code></td>
+</tr>
+<tr>
+<td>Penambahan Asset → "Tambah Asset"</td>
+<td>Bottom sheet pohon kategori → asset</td>
+<td style="text-align: center;">Ya, min 1</td>
+<td><code>options.kategori_asset</code>, <code>options.assets</code></td>
+</tr>
+<tr>
+<td>Jadwal Serah Terima</td>
+<td>Date picker (mulai hari ini)</td>
+<td style="text-align: center;">Ya saat kirim</td>
+<td>Input</td>
+</tr>
+<tr>
+<td>Jam Serah Terima</td>
+<td>Time picker (default 08:00)</td>
+<td style="text-align: center;">Ya saat kirim</td>
+<td>Input</td>
+</tr>
+<tr>
+<td>Catatan Tambahan</td>
+<td>Text field</td>
+<td style="text-align: center;">Tidak</td>
+<td>→ <code>keterangan_serah_terima</code></td>
+</tr>
+<tr>
+<td>Tombol</td>
+<td>Simpan Draft / Submit ke Karyawan</td>
+<td style="text-align: center;">–</td>
+<td>–</td>
+</tr>
+</tbody>
+</table></div>
+<h3>26.3 Detail Penambahan Asset (Admin)</h3>
+<p>Tanggal Penambahan, badge status, Nomor Pengajuan; Data Karyawan (nama, NIK, Cabang, Divisi); Jadwal Serah Terima (tanggal, jam, catatan); daftar asset. <strong>Tidak ada tombol aksi</strong> dan <strong>kondisi item (Normal/Rusak) tidak ditampilkan</strong>.</p>
+<p><strong>Alur status</strong>: <code>AssetAlurStepper.pengajuan</code> (Pengajuan → Alokasi → Konfirmasi → Selesai; berpindah dari Alokasi ke Konfirmasi setelah admin mengalokasikan asset; disembunyikan bila ditolak). File: <code>Shared/Widgets/AssetAlurWidgets.dart</code>.</p>
+<h3>26.4 Pengajuan Asset (Admin) — list</h3>
+<p>Tab Pengajuan / Proses / Dikonfirmasi / Selesai; kartu menampilkan tanggal, status, karyawan, Urgensi, jadwal (bila ada).</p>
+<h3>26.5 Konfirmasi Pengajuan Asset (Admin, detail)</h3>
+<p>Tanggal Pengajuan &amp; status; Data Karyawan; Pengajuan Asset (Jenis Asset, Alasan, Urgensi); Alasan Penolakan (bila ditolak); Jadwal Serah Terima (bila ada); daftar asset (bila dialokasikan). Tombol <strong>Tolak</strong> (bottom sheet "Alasan Penolakan" wajib → Kirim) dan <strong>Setujui</strong>, tampil jika status <code class="chip chip-wait">proses</code> dan tab <code>pengajuan</code> (termasuk Draft Alokasi).</p>
+<p>Stepper alur status sama seperti §26.3 (<code>AssetAlurStepper.pengajuan</code>).</p>
+<h3>26.6 Setujui Pengajuan Asset (Admin)</h3>
+<p>Ringkasan Jenis Asset, alasan, Urgensi; "Penambahan Asset" + "Tambah Asset" (hanya asset kategori pengajuan, draft alokasi terisi otomatis); Jadwal Serah Terima &amp; Jam (wajib saat kirim); Catatan Tambahan; tombol <strong>Simpan Draft</strong> / <strong>Submit ke PIC</strong>.</p>
+<h3>26.7 Pengajuan Asset (Karyawan) — list</h3>
+<p>Tab Pengajuan / Dikonfirmasi / Ditolak / Selesai; kartu: tanggal, status (Draft, Menunggu Konfirmasi, Dikonfirmasi Admin, Butuh Proses, Ditolak, Selesai), alasan, Urgensi. Tap: bila disetujui &amp; ada item pending → Konfirmasi Pengajuan Asset, selain itu → Detail.</p>
+<h3>26.8 Tambah Pengajuan Asset (Karyawan)</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Field UI</th>
+<th>Widget</th>
+<th style="text-align: center;">Required</th>
+<th>Source</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Jenis Asset</td>
+<td>Bottom sheet "Pilih Kategori Asset" (cari, hanya non-parent)</td>
+<td style="text-align: center;">Ya</td>
+<td><code>kategori_asset</code></td>
+</tr>
+<tr>
+<td>Alasan</td>
+<td>Text field multiline</td>
+<td style="text-align: center;">Ya saat kirim</td>
+<td>Input</td>
+</tr>
+<tr>
+<td>Urgensi</td>
+<td>Bottom sheet (Normal/Secepatnya/Mendesak)</td>
+<td style="text-align: center;">Ya saat kirim</td>
+<td><code>urgensi</code></td>
+</tr>
+<tr>
+<td>Tombol</td>
+<td>Simpan Draft / Submit ke Admin</td>
+<td style="text-align: center;">–</td>
+<td>–</td>
+</tr>
+</tbody>
+</table></div>
+<h3>26.9 Detail Pengajuan Asset (Karyawan)</h3>
+<p>Nomor Pengajuan, data karyawan, Jenis Asset, Alasan, Urgensi, Alasan Penolakan (bila ditolak), Jadwal, asset beserta kondisi Normal/Rusak dan Report Kerusakan.</p>
+<p>Stepper alur status sama seperti §26.3 (<code>AssetAlurStepper.pengajuan</code>).</p>
+<h3>26.10 Konfirmasi Penambahan / Pengajuan Asset (Karyawan)</h3>
+<p>Info transaksi (Tanggal &amp; Kode Penambahan / Nomor Pengajuan), Data Karyawan, Jadwal Serah Terima, (Pengajuan: Jenis Asset, Alasan, Urgensi), "Penting! Periksa kondisi asset…", per asset Kelengkapan + tombol <strong>Normal/Rusak</strong> + "Report Kerusakan <em>" (maks 255), pernyataan tanggung jawab, tombol </em><em>Konfirmasi Asset</em>*.</p>
+<h3>26.11 Asset Saya</h3>
+<p>Menu <strong>Pengajuan</strong>; banner <strong>Penambahan Asset</strong> untuk transaksi pertama yang menunggu dicek.</p>
+<hr />
+<h2 id="s27"><span class="sec-no">27</span>Mobile → API</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>UI Field</th>
+<th>Mobile Variable</th>
+<th>JSON Field</th>
+<th>Type</th>
+<th style="text-align: center;">Required</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Pilih Karyawan (penambahan)</td>
+<td><code>_selectedEmployee.idKaryawan</code></td>
+<td><code>id_karyawan</code></td>
+<td>string</td>
+<td style="text-align: center;">Ya</td>
+</tr>
+<tr>
+<td>Tambah Asset (penambahan/alokasi)</td>
+<td><code>_selectedAssets[].idAssetData</code></td>
+<td><code>asset_ids[]</code></td>
+<td>array</td>
+<td style="text-align: center;">Ya</td>
+</tr>
+<tr>
+<td>Jadwal Serah Terima</td>
+<td><code>tanggalPeminjamanApi(_handoverDate)</code></td>
+<td><code>tgl_serah_terima</code></td>
+<td>Y-m-d</td>
+<td style="text-align: center;">Ya saat kirim</td>
+</tr>
+<tr>
+<td>Jam Serah Terima</td>
+<td><code>_timeValue(_handoverTime)</code></td>
+<td><code>jam_serah_terima</code></td>
+<td>H:i</td>
+<td style="text-align: center;">Ya saat kirim</td>
+</tr>
+<tr>
+<td>Catatan Tambahan (penambahan/alokasi)</td>
+<td><code>_notesController.text.trim()</code></td>
+<td><code>keterangan_serah_terima</code></td>
+<td>string</td>
+<td style="text-align: center;">Tidak</td>
+</tr>
+<tr>
+<td>(tidak ada field)</td>
+<td>konstanta <code>''</code></td>
+<td><code>keterangan</code>, <code>urgensi</code> (penambahan)</td>
+<td>string</td>
+<td style="text-align: center;">–</td>
+</tr>
+<tr>
+<td>Simpan Draft / Submit</td>
+<td><code>isDraft</code></td>
+<td><code>is_draft</code></td>
+<td>bool</td>
+<td style="text-align: center;">Ya</td>
+</tr>
+<tr>
+<td>Jenis Asset (pengajuan)</td>
+<td><code>_selectedCategoryId</code></td>
+<td><code>id_asset_kategori_m</code></td>
+<td>string</td>
+<td style="text-align: center;">Ya</td>
+</tr>
+<tr>
+<td>Alasan (pengajuan)</td>
+<td><code>_reasonController.text.trim()</code></td>
+<td><code>keterangan</code></td>
+<td>string</td>
+<td style="text-align: center;">Ya saat kirim</td>
+</tr>
+<tr>
+<td>Urgensi (pengajuan)</td>
+<td><code>_selectedUrgency</code></td>
+<td><code>urgensi</code></td>
+<td>string</td>
+<td style="text-align: center;">Ya saat kirim</td>
+</tr>
+<tr>
+<td>Alasan Penolakan</td>
+<td><code>AssetPengajuanAdminTolakRequest.keterangan</code> (trim)</td>
+<td><code>ket_tolak</code></td>
+<td>string</td>
+<td style="text-align: center;">Ya</td>
+</tr>
+<tr>
+<td>Normal / Rusak</td>
+<td><code>statusByItem[idItem]</code></td>
+<td><code>items[].status_item</code></td>
+<td>string</td>
+<td style="text-align: center;">Ya</td>
+</tr>
+<tr>
+<td>Report Kerusakan</td>
+<td><code>ketRusakByItem[idItem]</code></td>
+<td><code>items[].ket_rusak</code></td>
+<td>string</td>
+<td style="text-align: center;">Ya bila rusak</td>
+</tr>
+</tbody>
+</table></div>
+<hr />
+<h2 id="s28"><span class="sec-no">28</span>API → Mobile</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>API JSON</th>
+<th>Mobile Model</th>
+<th>UI</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>requests[]</code> / array</td>
+<td><code>AssetRequestKaryawanPage.records</code></td>
+<td>Kartu list</td>
+</tr>
+<tr>
+<td><code>id</code>, <code>no_trx</code></td>
+<td><code>id</code>, <code>noTrx</code></td>
+<td>Navigasi, "Nomor Pengajuan"/"Kode Penambahan"</td>
+</tr>
+<tr>
+<td><code>nama_kategori</code>, <code>id_asset_kategori_m</code></td>
+<td><code>namaKategori</code>, <code>idAssetKategori</code></td>
+<td>"Jenis Asset"</td>
+</tr>
+<tr>
+<td><code>keterangan</code></td>
+<td><code>keterangan</code></td>
+<td>"Alasan"</td>
+</tr>
+<tr>
+<td><code>urgensi</code></td>
+<td><code>urgensi</code> → <code>labelUrgensiAsset</code></td>
+<td>"Urgensi"</td>
+</tr>
+<tr>
+<td><code>ket_tolak</code></td>
+<td><code>ketTolak</code></td>
+<td>"Alasan Penolakan"</td>
+</tr>
+<tr>
+<td><code>tgl_pengajuan</code></td>
+<td><code>tanggalPengajuan</code></td>
+<td>"Tanggal Pengajuan/Penambahan"</td>
+</tr>
+<tr>
+<td><code>tgl_serah_terima</code>, <code>jam_serah_terima</code>, <code>keterangan_serah_terima</code></td>
+<td><code>tanggalSerahTerima</code>, <code>jamSerahTerima</code>, <code>keteranganSerahTerima</code> (<code>hasSchedule</code> mengabaikan <code>0000-00-00</code>/<code>00:00:00</code>)</td>
+<td>"Jadwal Serah Terima"</td>
+</tr>
+<tr>
+<td><code>status_approval</code></td>
+<td><code>statusApproval</code> (<code>parseAssetRequestApproval</code>)</td>
+<td>Badge, kondisi tombol</td>
+</tr>
+<tr>
+<td><code>status_label</code>, <code>tab</code></td>
+<td><code>statusLabel</code>, <code>tab</code></td>
+<td>Badge (dipetakan ulang di mobile)</td>
+</tr>
+<tr>
+<td><code>jumlah_asset</code>, <code>jumlah_pending</code>, <code>jumlah_rusak</code></td>
+<td>idem</td>
+<td>"{jumlah} Asset", kondisi konfirmasi, "Butuh Proses"</td>
+</tr>
+<tr>
+<td><code>tgl_approval</code></td>
+<td><code>tanggalApproval</code></td>
+<td>Syarat konfirmasi pengajuan</td>
+</tr>
+<tr>
+<td><code>isu_rusak</code></td>
+<td><code>isuRusak</code> (atau dihitung dari item)</td>
+<td>"Butuh Proses"</td>
+</tr>
+<tr>
+<td><code>karyawan.*</code> / <code>nik_karyawan</code>, <code>nama_karyawan</code></td>
+<td><code>employee</code></td>
+<td>Data Karyawan</td>
+</tr>
+<tr>
+<td><code>items[]</code></td>
+<td><code>AssetRequestKaryawanItem</code> (idItem, kodeAsset, namaAsset, kategoriAsset, merek, deskripsi, statusItem, ketRusak, perluDicek)</td>
+<td>Daftar asset, kondisi</td>
+</tr>
+<tr>
+<td><code>filters[]</code></td>
+<td><code>AssetListFilter</code></td>
+<td>Tab</td>
+</tr>
+<tr>
+<td><code>pagination</code></td>
+<td><code>nextOffset</code>, <code>hasMore</code></td>
+<td>Infinite scroll</td>
+</tr>
+</tbody>
+</table></div>
+<hr />
+<h2 id="s29"><span class="sec-no">29</span>Mapping Mobile → API → Database</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>UI</th>
+<th>Mobile Variable</th>
+<th>JSON</th>
+<th>Backend</th>
+<th>Table</th>
+<th>Column</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Pilih Karyawan</td>
+<td><code>idKaryawan</code></td>
+<td><code>id_karyawan</code></td>
+<td><code>$karyawan</code></td>
+<td>header</td>
+<td>id_karyawan, nik_karyawan, nama_karyawan</td>
+</tr>
+<tr>
+<td>Tambah Asset</td>
+<td><code>assetIds</code></td>
+<td><code>asset_ids[]</code></td>
+<td><code>$assets</code></td>
+<td>item</td>
+<td>id_asset_data (+ snapshot)</td>
+</tr>
+<tr>
+<td>Tambah Asset</td>
+<td><code>assetIds</code></td>
+<td><code>asset_ids[]</code></td>
+<td><code>$assetIds</code></td>
+<td>asset_data</td>
+<td>status_asset = proses (bila kirim)</td>
+</tr>
+<tr>
+<td>Tambah Asset (kategori)</td>
+<td>–</td>
+<td>–</td>
+<td><code>$categoryIds</code></td>
+<td>header</td>
+<td>id_asset_kategori_m, nama_kategori</td>
+</tr>
+<tr>
+<td>Jadwal Serah Terima</td>
+<td><code>tanggalSerahTerima</code></td>
+<td><code>tgl_serah_terima</code></td>
+<td><code>$tanggalSerahTerima</code></td>
+<td>header</td>
+<td>tgl_serah_terima</td>
+</tr>
+<tr>
+<td>Jam Serah Terima</td>
+<td><code>jamSerahTerima</code></td>
+<td><code>jam_serah_terima</code></td>
+<td><code>Carbon H:i → H:i:s</code></td>
+<td>header</td>
+<td>jam_serah_terima</td>
+</tr>
+<tr>
+<td>Catatan Tambahan</td>
+<td><code>keteranganSerahTerima</code></td>
+<td><code>keterangan_serah_terima</code></td>
+<td>trim</td>
+<td>header</td>
+<td>keterangan_serah_terima</td>
+</tr>
+<tr>
+<td>Jenis Asset</td>
+<td><code>idAssetKategori</code></td>
+<td><code>id_asset_kategori_m</code></td>
+<td><code>$category</code></td>
+<td>header</td>
+<td>id_asset_kategori_m, nama_kategori</td>
+</tr>
+<tr>
+<td>Alasan</td>
+<td><code>keterangan</code></td>
+<td><code>keterangan</code></td>
+<td>trim</td>
+<td>header</td>
+<td>keterangan</td>
+</tr>
+<tr>
+<td>Urgensi</td>
+<td><code>urgensi</code></td>
+<td><code>urgensi</code></td>
+<td>trim</td>
+<td>header</td>
+<td>urgensi</td>
+</tr>
+<tr>
+<td>Simpan Draft / Submit</td>
+<td><code>isDraft</code></td>
+<td><code>is_draft</code></td>
+<td><code>$statusApproval</code></td>
+<td>header</td>
+<td>status_approval</td>
+</tr>
+<tr>
+<td>Alasan Penolakan</td>
+<td><code>keterangan</code></td>
+<td><code>ket_tolak</code></td>
+<td><code>$reason</code></td>
+<td>header</td>
+<td>ket_tolak, status_approval = ditolak</td>
+</tr>
+<tr>
+<td>Normal / Rusak</td>
+<td><code>statusByItem</code></td>
+<td><code>items[].status_item</code></td>
+<td><code>$statusByItem</code></td>
+<td>item</td>
+<td>status_item</td>
+</tr>
+<tr>
+<td>Report Kerusakan</td>
+<td><code>ketRusakByItem</code></td>
+<td><code>items[].ket_rusak</code></td>
+<td><code>$ketRusakByItem</code></td>
+<td>item</td>
+<td>ket_rusak</td>
+</tr>
+<tr>
+<td>(JWT admin)</td>
+<td>–</td>
+<td>Authorization</td>
+<td><code>$actor</code></td>
+<td>header/item</td>
+<td>user_input, user_update, user_approval</td>
+</tr>
+<tr>
+<td>(JWT karyawan konfirmasi)</td>
+<td>–</td>
+<td>Authorization</td>
+<td><code>$karyawan</code></td>
+<td>header / asset_data / asset_log</td>
+<td>user_approval, tgl_approval / id_pemegang_asset / id_pemegang</td>
+</tr>
+</tbody>
+</table></div>
+<hr />
+<h2 id="s30"><span class="sec-no">30</span>Mapping Database → API → Mobile</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Table</th>
+<th>Column</th>
+<th>Backend</th>
+<th>API JSON</th>
+<th>Mobile</th>
+<th>UI</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>header</td>
+<td>no_trx</td>
+<td>requestQuery / getDetail</td>
+<td><code>no_trx</code></td>
+<td>noTrx</td>
+<td>Nomor Pengajuan / Kode Penambahan</td>
+</tr>
+<tr>
+<td>header</td>
+<td>nama_kategori</td>
+<td>〃</td>
+<td><code>nama_kategori</code></td>
+<td>namaKategori</td>
+<td>Jenis Asset</td>
+</tr>
+<tr>
+<td>header</td>
+<td>keterangan</td>
+<td>〃</td>
+<td><code>keterangan</code></td>
+<td>keterangan</td>
+<td>Alasan</td>
+</tr>
+<tr>
+<td>header</td>
+<td>urgensi</td>
+<td>〃</td>
+<td><code>urgensi</code></td>
+<td>urgensi</td>
+<td>Urgensi</td>
+</tr>
+<tr>
+<td>header</td>
+<td>ket_tolak</td>
+<td>〃</td>
+<td><code>ket_tolak</code></td>
+<td>ketTolak</td>
+<td>Alasan Penolakan</td>
+</tr>
+<tr>
+<td>header</td>
+<td>tgl_serah_terima, jam_serah_terima</td>
+<td>〃</td>
+<td>idem</td>
+<td>tanggalSerahTerima, jamSerahTerima</td>
+<td>Jadwal Serah Terima</td>
+</tr>
+<tr>
+<td>header</td>
+<td>status_approval + tgl_approval + item</td>
+<td>*StatusMetadata</td>
+<td><code>status_approval</code>, <code>status_label</code>, <code>tab</code></td>
+<td>statusApproval, statusLabel, tab</td>
+<td>Badge, tab, tombol</td>
+</tr>
+<tr>
+<td>item</td>
+<td>COUNT / SUM status</td>
+<td>requestQuery</td>
+<td><code>jumlah_asset</code>, <code>jumlah_pending</code>, <code>jumlah_rusak</code></td>
+<td>idem</td>
+<td>"{jumlah} Asset", Butuh Proses</td>
+</tr>
+<tr>
+<td>item</td>
+<td>nama_asset, kategori_asset, deskripsi_asset</td>
+<td>getDetail</td>
+<td><code>nama_asset</code>, <code>kategori_asset</code>, <code>deskripsi</code></td>
+<td>namaAsset, kategoriAsset, deskripsi</td>
+<td>Kartu asset, Kelengkapan</td>
+</tr>
+<tr>
+<td>item</td>
+<td>status_item, ket_rusak</td>
+<td>getDetail</td>
+<td><code>status_item</code>, <code>perlu_dicek</code>, <code>ket_rusak</code></td>
+<td>statusItem, perluDicek, ketRusak</td>
+<td>Normal/Rusak, Report Kerusakan</td>
+</tr>
+<tr>
+<td>asset_data</td>
+<td>kode_asset, merek</td>
+<td>LEFT JOIN</td>
+<td><code>kode_asset</code>, <code>merek</code></td>
+<td>kodeAsset, merek</td>
+<td>Subtitle asset</td>
+</tr>
+<tr>
+<td>data_karyawan → master</td>
+<td>cabang, departemen</td>
+<td>LEFT JOIN</td>
+<td><code>karyawan.cabang</code>, <code>karyawan.divisi</code></td>
+<td>employee.cabang/divisi</td>
+<td>Data Karyawan</td>
+</tr>
+</tbody>
+</table></div>
+<hr />
+<div class="group-divider" id="g31"><span>Validasi, Error & Keamanan</span></div><h2 id="s31"><span class="sec-no">31</span>Validation</h2>
+<h3>31.1 Mobile</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Lokasi</th>
+<th>Aturan</th>
+<th>Pesan</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Form Penambahan</td>
+<td>Karyawan wajib (draft &amp; kirim)</td>
+<td>"Karyawan wajib dipilih"</td>
+</tr>
+<tr>
+<td>Form Penambahan / Setujui</td>
+<td>Min 1 asset (draft &amp; kirim)</td>
+<td>"Tambahkan minimal satu asset."</td>
+</tr>
+<tr>
+<td>Form Penambahan / Setujui</td>
+<td>Tanggal &amp; jam wajib saat kirim; tanggal ≥ hari ini</td>
+<td>"Tanggal serah terima wajib dipilih." / "Jam serah terima wajib dipilih."</td>
+</tr>
+<tr>
+<td>Form Setujui</td>
+<td>Picker hanya asset kategori pengajuan</td>
+<td>–</td>
+</tr>
+<tr>
+<td>Form Pengajuan</td>
+<td>Jenis asset wajib; hanya kategori non-parent</td>
+<td>"Jenis asset wajib dipilih."</td>
+</tr>
+<tr>
+<td>Form Pengajuan</td>
+<td>Alasan &amp; urgensi wajib saat kirim</td>
+<td>"Alasan pengajuan wajib diisi." / "Urgensi wajib dipilih."</td>
+</tr>
+<tr>
+<td>Tolak</td>
+<td>Alasan wajib</td>
+<td>"Alasan penolakan wajib diisi."</td>
+</tr>
+<tr>
+<td>Konfirmasi</td>
+<td>Semua item pending dinilai; rusak wajib report (≤255)</td>
+<td>Tombol nonaktif sampai lengkap</td>
+</tr>
+<tr>
+<td>Semua submit</td>
+<td>Abaikan saat <code>submitting</code></td>
+<td>–</td>
+</tr>
+</tbody>
+</table></div>
+<h3>31.2 Backend</h3>
+<p>Lihat §9 dan §24.</p>
+<h3>31.3 Database</h3>
+<p>ENUM <code>sumber_pengajuan</code>, <code>status_approval</code>, <code>status_item</code>; UNIQUE <code>no_trx</code> (DBML); NOT NULL default untuk jadwal (<code>0000-00-00</code>, <code>00:00:00</code>).</p>
+<h3>31.4 Ringkasan per Field</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Mobile</th>
+<th>Backend</th>
+<th>Database</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>id_karyawan</td>
+<td>Wajib</td>
+<td>required, karyawan aktif</td>
+<td>varchar(150)</td>
+</tr>
+<tr>
+<td>asset_ids</td>
+<td>Min 1, picker exclude duplikat</td>
+<td>required, distinct, tersedia+gudang, tidak aktif, (alokasi) kategori sama</td>
+<td>item.id_asset_data</td>
+</tr>
+<tr>
+<td>tgl/jam_serah_terima</td>
+<td>Wajib saat kirim, tanggal ≥ hari ini</td>
+<td>required saat kirim, format</td>
+<td>date/time NOT NULL</td>
+</tr>
+<tr>
+<td>id_asset_kategori_m</td>
+<td>Wajib, non-parent</td>
+<td>required, ada, non-parent</td>
+<td>varchar(50)</td>
+</tr>
+<tr>
+<td>keterangan (pengajuan)</td>
+<td>Wajib saat kirim</td>
+<td>required saat kirim</td>
+<td>text</td>
+</tr>
+<tr>
+<td>urgensi</td>
+<td>Wajib saat kirim</td>
+<td>in:normal,secepatnya,mendesak (pengajuan)</td>
+<td>varchar(50)</td>
+</tr>
+<tr>
+<td>ket_tolak</td>
+<td>Wajib</td>
+<td>required, ≤255</td>
+<td>varchar(255)</td>
+</tr>
+<tr>
+<td>status_item / ket_rusak</td>
+<td>Wajib / wajib bila rusak</td>
+<td>in / required_if</td>
+<td>enum / varchar(255)</td>
+</tr>
+</tbody>
+</table></div>
+<hr />
+<h2 id="s32"><span class="sec-no">32</span>Error Handling</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Error</th>
+<th style="text-align: right;">HTTP</th>
+<th>Backend</th>
+<th>Mobile</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Field tidak valid</td>
+<td style="text-align: right;">422</td>
+<td>VALIDATION_ERROR + errors</td>
+<td>Error per field / snackbar warning</td>
+</tr>
+<tr>
+<td>Aturan bisnis (asset tidak tersedia, status tidak valid, kategori tidak sesuai, dll.)</td>
+<td style="text-align: right;">422</td>
+<td>BUSINESS_RULE_VIOLATION</td>
+<td>Snackbar error</td>
+</tr>
+<tr>
+<td>Detail / options tidak ditemukan</td>
+<td style="text-align: right;">404</td>
+<td>NOT_FOUND</td>
+<td>Halaman error + Coba Lagi</td>
+</tr>
+<tr>
+<td>Token tidak valid/expired</td>
+<td style="text-align: right;">401</td>
+<td>UNAUTHORIZED</td>
+<td>Refresh token &amp; retry otomatis</td>
+</tr>
+<tr>
+<td>Bukan admin</td>
+<td style="text-align: right;">403</td>
+<td>FORBIDDEN</td>
+<td>Pesan error</td>
+</tr>
+<tr>
+<td>Exception</td>
+<td style="text-align: right;">500</td>
+<td>SYSTEM_ERROR + Log::error</td>
+<td>Snackbar</td>
+</tr>
+<tr>
+<td>Timeout / koneksi</td>
+<td style="text-align: right;">–</td>
+<td>–</td>
+<td>"Tidak dapat terhubung ke server. Periksa koneksi Anda."</td>
+</tr>
+<tr>
+<td>Double submit</td>
+<td style="text-align: right;">–</td>
+<td>tanpa idempotency</td>
+<td>Bloc abaikan saat submitting</td>
+</tr>
+<tr>
+<td>Notifikasi gagal</td>
+<td style="text-align: right;">–</td>
+<td>di-log, transaksi tetap sukses</td>
+<td>–</td>
+</tr>
+</tbody>
+</table></div>
+<hr />
+<h2 id="s33"><span class="sec-no">33</span>Audit Trail</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Data</th>
+<th style="text-align: center;">Disimpan?</th>
+<th>Lokasi</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Pembuat &amp; waktu</td>
+<td style="text-align: center;">✅</td>
+<td><code>user_input</code>, <code>tgl_input</code> (admin atau karyawan)</td>
+</tr>
+<tr>
+<td>Pengubah terakhir</td>
+<td style="text-align: center;">✅</td>
+<td><code>user_update</code>, <code>tgl_update</code></td>
+</tr>
+<tr>
+<td>Penyetuju/penolak admin</td>
+<td style="text-align: center;">⚠️ sebagian</td>
+<td><code>user_approval</code>/<code>tgl_approval</code> — <strong>ditimpa</strong> karyawan saat konfirmasi</td>
+</tr>
+<tr>
+<td>Alasan penolakan</td>
+<td style="text-align: center;">✅</td>
+<td><code>ket_tolak</code></td>
+</tr>
+<tr>
+<td>Histori status</td>
+<td style="text-align: center;">❌</td>
+<td>⚠️ Belum ditemukan</td>
+</tr>
+<tr>
+<td>Draft alokasi sebelumnya</td>
+<td style="text-align: center;">❌</td>
+<td>Item dihapus &amp; ditulis ulang</td>
+</tr>
+<tr>
+<td>Asset log serah terima</td>
+<td style="text-align: center;">✅</td>
+<td><code>asset_log</code> (<code>request_karyawan</code>) hanya saat semua normal</td>
+</tr>
+<tr>
+<td>Laporan rusak</td>
+<td style="text-align: center;">⚠️</td>
+<td>Hanya <code>status_item</code>/<code>ket_rusak</code> di item; tanpa <code>asset_log</code>, tanpa perubahan <code>asset_data</code></td>
+</tr>
+<tr>
+<td>Error sistem</td>
+<td style="text-align: center;">✅</td>
+<td><code>Log::error</code></td>
+</tr>
+</tbody>
+</table></div>
+<hr />
+<h2 id="s34"><span class="sec-no">34</span>Notification</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Event</th>
+<th>Trigger</th>
+<th>Penerima</th>
+<th>Judul</th>
+<th>Pesan</th>
+<th>Rute mobile</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>pengajuan.diajukan</code></td>
+<td>Karyawan submit pengajuan</td>
+<td>Semua admin asset</td>
+<td>Pengajuan Asset Baru</td>
+<td>{nama} mengajukan asset {no_trx}.</td>
+<td><code>asset_admin_detail_pengajuan_karyawan</code></td>
+</tr>
+<tr>
+<td><code>pengajuan.ditolak</code></td>
+<td>Admin tolak</td>
+<td>Karyawan</td>
+<td>Pengajuan Asset Ditolak</td>
+<td>Pengajuan asset {no_trx} ditolak admin.</td>
+<td><code>asset_detail_pengajuan</code></td>
+</tr>
+<tr>
+<td><code>pengajuan.disetujui</code></td>
+<td>Admin submit alokasi</td>
+<td>Karyawan</td>
+<td>Pengajuan Asset Disetujui</td>
+<td>Pengajuan asset {no_trx} disetujui. Silakan cek dan konfirmasi asset.</td>
+<td><code>asset_konfirmasi_pengajuan</code></td>
+</tr>
+<tr>
+<td><code>penambahan.dikirim</code></td>
+<td>Admin submit penambahan</td>
+<td>Karyawan</td>
+<td>Penambahan Asset Baru</td>
+<td>Anda menerima penambahan asset {no_trx}.</td>
+<td><code>asset_konfirmasi_penambahan</code></td>
+</tr>
+<tr>
+<td><code>penambahan.dikonfirmasi</code></td>
+<td>Konfirmasi semua normal</td>
+<td>Semua admin</td>
+<td>Asset Dikonfirmasi Karyawan</td>
+<td>Asset {no_trx} telah dikonfirmasi oleh {nama}.</td>
+<td>Sesuai sumber: <code>asset_admin_detail_penambahan_karyawan</code> / <code>asset_admin_detail_pengajuan_karyawan</code></td>
+</tr>
+<tr>
+<td><code>penambahan.rusak</code></td>
+<td>Konfirmasi ada rusak</td>
+<td>Semua admin</td>
+<td>Laporan Asset Rusak</td>
+<td>{nama} melaporkan asset rusak pada {no_trx}.</td>
+<td>Sesuai sumber (sama seperti di atas)</td>
+</tr>
+</tbody>
+</table></div>
+<p>Mekanisme sama dengan modul asset lain: INSERT <code>notif_data</code> + push FCM, dipanggil setelah commit, kegagalan hanya di-log.</p>
+<hr />
+<h2 id="s35"><span class="sec-no">35</span>Security</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Aspek</th>
+<th>Implementasi</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Autentikasi</td>
+<td>Bearer JWT (<code>jwt.api</code>), context dari token (<code>jwt.ctx</code>)</td>
+</tr>
+<tr>
+<td>Isolasi company</td>
+<td>Semua query <code>WHERE id_company = ctx.id_company</code></td>
+</tr>
+<tr>
+<td>Otorisasi admin</td>
+<td><code>accessError</code> + <code>findAssetAdmin</code></td>
+</tr>
+<tr>
+<td>Kepemilikan karyawan</td>
+<td>Detail &amp; konfirmasi memfilter <code>id_karyawan = ctx.id_karyawan</code> dan <code>sumber_pengajuan</code></td>
+</tr>
+<tr>
+<td>Visibilitas</td>
+<td>Karyawan tidak melihat alokasi sebelum disetujui; admin tidak melihat draft karyawan</td>
+</tr>
+<tr>
+<td>Concurrency</td>
+<td><code>lockCompany</code> + <code>lockForUpdate</code></td>
+</tr>
+<tr>
+<td>Catatan</td>
+<td>Validasi request dijalankan sebelum cek admin pada store/tolak/alokasi (non-admin dapat menerima 422, bukan 403)</td>
+</tr>
+</tbody>
+</table></div>
+<hr />
+<div class="group-divider" id="g36"><span>Manual Book</span></div><h2 id="s36"><span class="sec-no">36</span>Manual Book User/Admin</h2>
+<aside class="callout callout-warn">
+<p>Label diambil dari <code>assets/id/asset.json</code>. ⚠️ Asumsi: halaman admin <strong>Asset Karyawan</strong> diakses dari menu <strong>Asset Management</strong>. Screenshot menyusul.</p>
+</aside>
+<h3>A. Admin — Penambahan Asset</h3>
+<ol>
+<li>Buka <strong>Asset Karyawan</strong> → aksi <strong>Penambahan</strong> → halaman <strong>Penambahan Asset</strong> (tab Pending, Dikonfirmasi, Selesai).</li>
+<li>Tekan <strong>+</strong> → <strong>Tambah Penambahan Asset</strong>.</li>
+<li><strong>Pilih Karyawan</strong>.</li>
+<li><strong>Tambah Asset</strong> → pilih kategori → pilih asset (boleh beberapa, boleh beda kategori).</li>
+<li>Isi <strong>Jadwal Serah Terima</strong> dan <strong>Jam Serah Terima</strong>, serta <strong>Catatan Tambahan</strong> bila perlu.</li>
+<li>Tekan <strong>Submit ke Karyawan</strong>. Asset langsung dikunci dan karyawan mendapat notifikasi.</li>
+</ol>
+<aside class="callout callout-note">
+<p><strong>Simpan Draft</strong> menyimpan penambahan tanpa mengunci asset. Buka detail draft lalu tekan tombol ubah draft untuk melanjutkan dan mengirim; draft belum dapat dihapus dari aplikasi (lihat §41 RISK-003).</p>
+</aside>
+<h3>B. Admin — Meninjau Pengajuan</h3>
+<ol>
+<li>Buka <strong>Asset Karyawan</strong> → aksi <strong>Pengajuan</strong> (atau panel <strong>Pengajuan Asset Perlu Diproses</strong> → <strong>Tinjau Pengajuan</strong>).</li>
+<li>Tab <strong>Pengajuan</strong> → pilih pengajuan → halaman <strong>Konfirmasi Pengajuan Asset</strong> (Jenis Asset, Alasan, Urgensi).</li>
+<li><strong>Menolak</strong>: tekan <strong>Tolak</strong> → isi <strong>Alasan Penolakan</strong> → <strong>Kirim</strong>.</li>
+<li><strong>Menyetujui</strong>: tekan <strong>Setujui</strong> → halaman <strong>Setujui Pengajuan Asset</strong> → <strong>Tambah Asset</strong> (hanya jenis yang diajukan) → isi jadwal → <strong>Submit ke PIC</strong>.
+   - <strong>Simpan Draft</strong> menyimpan pilihan sebagai <strong>Draft Alokasi</strong>; buka lagi dari tab Pengajuan (<strong>Lanjutkan Alokasi</strong>) untuk mengirim.</li>
+<li>Pengajuan berpindah ke tab <strong>Proses</strong> (menunggu karyawan), lalu <strong>Selesai</strong> setelah karyawan mengonfirmasi semua asset Normal.</li>
+</ol>
+<h3>C. Karyawan — Mengajukan Asset</h3>
+<ol>
+<li>Buka <strong>Asset Saya</strong> → menu <strong>Pengajuan</strong> → tekan <strong>+</strong>.</li>
+<li>Pilih <strong>Jenis Asset</strong>, isi <strong>Alasan</strong>, pilih <strong>Urgensi</strong> (Normal / Secepatnya / Mendesak).</li>
+<li>Tekan <strong>Submit ke Admin</strong>.</li>
+<li>Pantau status di tab <strong>Pengajuan</strong>, <strong>Dikonfirmasi</strong>, <strong>Ditolak</strong>, atau <strong>Selesai</strong>. Jika ditolak, alasan tampil di detail.</li>
+</ol>
+<h3>D. Karyawan — Menerima &amp; Mengonfirmasi Asset</h3>
+<ol>
+<li>Buka notifikasi <strong>Penambahan Asset Baru</strong> / <strong>Pengajuan Asset Disetujui</strong>, banner <strong>Penambahan Asset</strong> di Asset Saya, atau pengajuan berstatus <strong>Menunggu Konfirmasi</strong> di tab Dikonfirmasi.</li>
+<li>Periksa setiap asset secara fisik, pilih <strong>Normal</strong> atau <strong>Rusak</strong> (isi <strong>Report Kerusakan</strong> bila rusak).</li>
+<li>Tekan <strong>Konfirmasi Asset</strong>.
+   - Semua Normal → asset menjadi milik Anda, status <strong>Selesai</strong>.
+   - Ada Rusak → status <strong>Butuh Proses</strong>; hubungi Admin Asset karena tindak lanjut belum tersedia di aplikasi.</li>
+</ol>
+<hr />
+<h2 id="s37"><span class="sec-no">37</span>Kondisi Button</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Button</th>
+<th>Role</th>
+<th>Halaman</th>
+<th>Condition</th>
+<th>Action</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>+ Tambah penambahan asset</td>
+<td>Admin</td>
+<td>List Penambahan</td>
+<td>Selalu</td>
+<td>Form penambahan</td>
+</tr>
+<tr>
+<td>Simpan Draft</td>
+<td>Admin</td>
+<td>Form Penambahan</td>
+<td>Tidak submitting</td>
+<td>POST <code>is_draft=true</code></td>
+</tr>
+<tr>
+<td>Submit ke Karyawan</td>
+<td>Admin</td>
+<td>Form Penambahan</td>
+<td>Tidak submitting</td>
+<td>POST <code>is_draft=false</code></td>
+</tr>
+<tr>
+<td>(tidak ada aksi)</td>
+<td>Admin</td>
+<td>Detail Penambahan</td>
+<td>–</td>
+<td>Read-only</td>
+</tr>
+<tr>
+<td>Tolak</td>
+<td>Admin</td>
+<td>Detail Pengajuan</td>
+<td><code>status = proses</code> &amp; tab <code>pengajuan</code></td>
+<td>Bottom sheet alasan → POST tolak</td>
+</tr>
+<tr>
+<td>Setujui</td>
+<td>Admin</td>
+<td>Detail Pengajuan</td>
+<td>Sama dengan Tolak</td>
+<td>Form Setujui</td>
+</tr>
+<tr>
+<td>Simpan Draft</td>
+<td>Admin</td>
+<td>Form Setujui</td>
+<td>Tidak submitting</td>
+<td>POST alokasi <code>is_draft=true</code></td>
+</tr>
+<tr>
+<td>Submit ke PIC</td>
+<td>Admin</td>
+<td>Form Setujui</td>
+<td>Tidak submitting</td>
+<td>POST alokasi <code>is_draft=false</code></td>
+</tr>
+<tr>
+<td>+ Tambah Pengajuan Asset</td>
+<td>Karyawan</td>
+<td>List Pengajuan</td>
+<td>Selalu</td>
+<td>Form pengajuan</td>
+</tr>
+<tr>
+<td>Simpan Draft / Submit ke Admin</td>
+<td>Karyawan</td>
+<td>Form Pengajuan</td>
+<td>Tidak submitting</td>
+<td>POST pengajuan</td>
+</tr>
+<tr>
+<td>Tap kartu pengajuan</td>
+<td>Karyawan</td>
+<td>List Pengajuan</td>
+<td><code class="chip chip-wait">proses</code> &amp; <code>tgl_approval</code> &amp; <code>jumlah_pending &gt; 0</code> → Konfirmasi; selain itu → Detail</td>
+<td>Navigasi</td>
+</tr>
+<tr>
+<td>Normal / Rusak</td>
+<td>Karyawan</td>
+<td>Konfirmasi</td>
+<td>Item <code>perlu_dicek</code>, tidak submitting</td>
+<td>Set kondisi</td>
+</tr>
+<tr>
+<td>Konfirmasi Asset</td>
+<td>Karyawan</td>
+<td>Konfirmasi</td>
+<td><code>status = proses</code> &amp; ada item pending; aktif bila semua valid</td>
+<td>POST konfirmasi</td>
+</tr>
+</tbody>
+</table></div>
+<hr />
+<div class="group-divider" id="g38"><span>QA & Risiko</span></div><h2 id="s38"><span class="sec-no">38</span>Testing Scenario</h2>
+<h3>Happy Path</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>TC</th>
+<th>Scenario</th>
+<th>Precondition</th>
+<th>Steps</th>
+<th>Expected</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>TC-01</td>
+<td>Penambahan dikirim</td>
+<td>Admin, karyawan aktif, asset tersedia</td>
+<td>Isi form lengkap → Submit ke Karyawan</td>
+<td>201; <code>sumber=admin</code>, <code class="chip chip-wait">proses</code>; item <code class="chip chip-wait">belum_dicek</code>; asset <code class="chip chip-wait">proses</code>; notif karyawan</td>
+</tr>
+<tr>
+<td>TC-02</td>
+<td>Penambahan multi kategori</td>
+<td>2 asset beda kategori</td>
+<td>Submit</td>
+<td><code>nama_kategori = Multi Kategori</code>, <code>id_asset_kategori_m = ''</code></td>
+</tr>
+<tr>
+<td>TC-03</td>
+<td>Konfirmasi penambahan normal</td>
+<td>TC-01</td>
+<td>Karyawan Normal semua → Konfirmasi</td>
+<td><code class="chip chip-done">dikonfirmasi</code>; asset <code class="chip chip-done">terpakai</code>/karyawan; <code>asset_log request_karyawan</code>; notif admin</td>
+</tr>
+<tr>
+<td>TC-04</td>
+<td>Pengajuan dikirim</td>
+<td>Karyawan aktif</td>
+<td>Jenis + alasan + urgensi → Submit ke Admin</td>
+<td>201; <code>sumber=karyawan</code>; tanpa item; notif semua admin</td>
+</tr>
+<tr>
+<td>TC-05</td>
+<td>Tolak pengajuan</td>
+<td>TC-04</td>
+<td>Tolak + alasan</td>
+<td><code class="chip chip-bad">ditolak</code>; <code>ket_tolak</code>; notif karyawan; tab Ditolak (karyawan) / Selesai (admin)</td>
+</tr>
+<tr>
+<td>TC-06</td>
+<td>Draft alokasi</td>
+<td>TC-04</td>
+<td>Setujui → pilih asset → Simpan Draft</td>
+<td>Label "Draft Alokasi"; asset tetap <code class="chip chip-neutral">tersedia</code>; karyawan belum melihat asset</td>
+</tr>
+<tr>
+<td>TC-07</td>
+<td>Submit alokasi</td>
+<td>TC-04/06</td>
+<td>Submit ke PIC</td>
+<td><code>tgl_approval</code> terisi; asset <code class="chip chip-wait">proses</code>; notif "Disetujui"; admin tab Proses</td>
+</tr>
+<tr>
+<td>TC-08</td>
+<td>Konfirmasi pengajuan normal</td>
+<td>TC-07</td>
+<td>Karyawan Normal → Konfirmasi</td>
+<td><code class="chip chip-done">dikonfirmasi</code>; asset diserahkan</td>
+</tr>
+</tbody>
+</table></div>
+<h3>Validation</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>TC</th>
+<th>Scenario</th>
+<th>Expected</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>TC-09</td>
+<td>Penambahan tanpa karyawan</td>
+<td>Mobile "Karyawan wajib dipilih"; API 422</td>
+</tr>
+<tr>
+<td>TC-10</td>
+<td>Penambahan tanpa asset</td>
+<td>"Tambahkan minimal satu asset." / API 422</td>
+</tr>
+<tr>
+<td>TC-11</td>
+<td>Kirim tanpa jadwal</td>
+<td>"Tanggal/Jam serah terima wajib…"</td>
+</tr>
+<tr>
+<td>TC-12</td>
+<td>Format jam salah (<code>9.00</code>)</td>
+<td>422 "Format jam serah terima harus HH:MM."</td>
+</tr>
+<tr>
+<td>TC-13</td>
+<td>Pengajuan tanpa alasan/urgensi</td>
+<td>422</td>
+</tr>
+<tr>
+<td>TC-14</td>
+<td>Urgensi <code>tinggi</code> via API</td>
+<td>422 "Urgensi pengajuan tidak valid."</td>
+</tr>
+<tr>
+<td>TC-15</td>
+<td>Jenis asset = kategori parent (API)</td>
+<td>422 "Jenis asset tidak ditemukan atau tidak dapat diajukan."</td>
+</tr>
+<tr>
+<td>TC-16</td>
+<td>Tolak tanpa alasan</td>
+<td>422 "Alasan penolakan wajib diisi."</td>
+</tr>
+<tr>
+<td>TC-17</td>
+<td>Alokasi asset beda kategori (API)</td>
+<td>422 "Asset harus sesuai dengan jenis yang diajukan."</td>
+</tr>
+<tr>
+<td>TC-18</td>
+<td>Konfirmasi sebagian item</td>
+<td>422 "Seluruh asset penambahan wajib dicek."</td>
+</tr>
+<tr>
+<td>TC-19</td>
+<td>Rusak tanpa alasan</td>
+<td>422 "Alasan kerusakan wajib diisi."</td>
+</tr>
+</tbody>
+</table></div>
+<h3>Status</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>TC</th>
+<th>Scenario</th>
+<th>Expected</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>TC-20</td>
+<td>Tolak pengajuan yang sudah disetujui</td>
+<td>422 "…sudah tidak menunggu persetujuan."</td>
+</tr>
+<tr>
+<td>TC-21</td>
+<td>Alokasi ulang setelah disetujui</td>
+<td>422 "…sudah tidak dapat dialokasikan."</td>
+</tr>
+<tr>
+<td>TC-22</td>
+<td>Options alokasi setelah disetujui</td>
+<td>404</td>
+</tr>
+<tr>
+<td>TC-23</td>
+<td>Konfirmasi pengajuan belum disetujui (API)</td>
+<td>422 "Pengajuan asset belum disubmit oleh admin."</td>
+</tr>
+<tr>
+<td>TC-24</td>
+<td>Konfirmasi transaksi selesai</td>
+<td>422 "…sudah tidak menunggu konfirmasi."</td>
+</tr>
+<tr>
+<td>TC-25</td>
+<td>Konfirmasi ada rusak</td>
+<td><code class="chip chip-wait">proses</code>, karyawan "Butuh Proses", admin "Dikonfirmasi"; <strong>tidak ada asset berubah</strong></td>
+</tr>
+<tr>
+<td>TC-26</td>
+<td>Konfirmasi ulang setelah rusak</td>
+<td>422 "Tidak ada asset penambahan yang perlu dicek."</td>
+</tr>
+<tr>
+<td>TC-27</td>
+<td>Admin buka detail draft pengajuan karyawan</td>
+<td>404</td>
+</tr>
+</tbody>
+</table></div>
+<h3>Asset</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>TC</th>
+<th>Scenario</th>
+<th>Expected</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>TC-28</td>
+<td>Asset sedang di onboarding</td>
+<td>422 "…sedang diproses pada onboarding."</td>
+</tr>
+<tr>
+<td>TC-29</td>
+<td>Asset sedang di penambahan lain</td>
+<td>422 "…sedang diproses pada penambahan lain."</td>
+</tr>
+<tr>
+<td>TC-30</td>
+<td>Asset pernah diserahkan via penambahan (header <code class="chip chip-done">dikonfirmasi</code>), lalu diretur ke gudang</td>
+<td>201, penambahan baru tersimpan (diperbaiki v1.1; test <code>test_returned_asset_from_confirmed_addition_can_be_added_again</code>)</td>
+</tr>
+<tr>
+<td>TC-30a</td>
+<td>Asset kembali <code class="chip chip-neutral">tersedia</code> tetapi header penambahan lama masih <code class="chip chip-wait">proses</code></td>
+<td>422 "…sedang diproses pada penambahan lain."</td>
+</tr>
+<tr>
+<td>TC-31</td>
+<td>Asset di draft penambahan dipakai transaksi lain</td>
+<td>Diizinkan (draft tidak mengunci)</td>
+</tr>
+</tbody>
+</table></div>
+<h3>API / Security / Network</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>TC</th>
+<th>Scenario</th>
+<th>Expected</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>TC-32</td>
+<td>Tanpa token</td>
+<td>401</td>
+</tr>
+<tr>
+<td>TC-33</td>
+<td>Non-admin akses endpoint admin</td>
+<td>403 (atau 422 bila payload invalid)</td>
+</tr>
+<tr>
+<td>TC-34</td>
+<td>Karyawan buka pengajuan orang lain</td>
+<td>404</td>
+</tr>
+<tr>
+<td>TC-35</td>
+<td><code>limit=100</code></td>
+<td>422</td>
+</tr>
+<tr>
+<td>TC-36</td>
+<td>Double tap Submit</td>
+<td>Hanya satu request</td>
+</tr>
+<tr>
+<td>TC-37</td>
+<td>Timeout setelah commit, submit ulang penambahan</td>
+<td>422 asset tidak tersedia (sudah <code class="chip chip-wait">proses</code>)</td>
+</tr>
+<tr>
+<td>TC-38</td>
+<td>Notifikasi dibuka</td>
+<td>Rute sesuai §34</td>
+</tr>
+</tbody>
+</table></div>
+<hr />
+<h2 id="s39"><span class="sec-no">39</span>Temuan Ketidaksesuaian</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>ID</th>
+<th>Component</th>
+<th>Finding</th>
+<th>Impact</th>
+<th>Recommendation</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>INC-01</td>
+<td>Mobile ↔ DB</td>
+<td>Form Penambahan: "Catatan Tambahan" dikirim sebagai <code>keterangan_serah_terima</code>; <code>keterangan</code> dan <code>urgensi</code> selalu <code>''</code></td>
+<td>Kolom <code>keterangan</code>/<code>urgensi</code> tidak dipakai untuk Penambahan</td>
+<td>Dokumentasikan atau tambah field</td>
+</tr>
+<tr>
+<td>INC-02</td>
+<td>Mobile</td>
+<td>Detail Penambahan &amp; Pengajuan admin <strong>tidak menampilkan</strong> <code>status_item</code>/<code>ket_rusak</code></td>
+<td>Admin tidak tahu asset mana yang rusak</td>
+<td>Tampilkan kondisi item</td>
+</tr>
+<tr>
+<td>INC-03</td>
+<td>Backend vs Onboarding</td>
+<td>Request: all-or-nothing, tanpa penggantian, asset rusak tidak diubah jadi <code class="chip chip-bad">rusak</code>. Onboarding: parsial, ada penggantian, asset rusak → <code class="chip chip-bad">rusak</code></td>
+<td>Perilaku tidak konsisten antar fitur sejenis</td>
+<td>Samakan aturan bisnis</td>
+</tr>
+<tr>
+<td>INC-04</td>
+<td>Label</td>
+<td>Admin "Dikonfirmasi" (tab dikonfirmasi) berarti karyawan melaporkan rusak; karyawan melihat "Butuh Proses"; response konfirmasi memberi label "Isu Rusak"</td>
+<td>Tiga label berbeda untuk kondisi sama</td>
+<td>Seragamkan label</td>
+</tr>
+<tr>
+<td>INC-05</td>
+<td>API naming</td>
+<td>Konfirmasi Pengajuan memakai endpoint <code>/karyawan/penambahan/{id}/konfirmasi</code></td>
+<td>Membingungkan</td>
+<td>Dokumentasikan / alias</td>
+</tr>
+<tr>
+<td>INC-06</td>
+<td>Mobile</td>
+<td>Asset Saya hanya menampilkan banner penambahan <strong>pertama</strong> (<code>penambahans.first</code>)</td>
+<td>Penambahan kedua dari admin hanya bisa diakses via notifikasi</td>
+<td>Tampilkan semua</td>
+</tr>
+<tr>
+<td>INC-07</td>
+<td>DB/Backend</td>
+<td>Kolom item <code>parent_id</code> dan field API <code>diganti</code> selalu kosong/false</td>
+<td>Dead field</td>
+<td>Hapus atau implementasi penggantian</td>
+</tr>
+<tr>
+<td>INC-08</td>
+<td>Backend</td>
+<td>Enum <code>RequestKaryawanStatus</code> ada, tetapi model memakai konstanta sendiri (<code>STATUS_DISETUJUI = 'dikonfirmasi'</code>)</td>
+<td>Dua sumber kebenaran</td>
+<td>Pakai enum</td>
+</tr>
+<tr>
+<td>INC-09</td>
+<td>Label</td>
+<td>"Menunggu Konfirmasi" (karyawan) dipakai untuk menunggu admin <strong>dan</strong> menunggu karyawan mengecek</td>
+<td>Ambigu</td>
+<td>Bedakan label</td>
+</tr>
+<tr>
+<td>INC-10</td>
+<td>Kolom</td>
+<td><code>tgl_approval</code>/<code>user_approval</code> Pengajuan diisi admin lalu ditimpa karyawan</td>
+<td>Jejak penyetuju hilang</td>
+<td>Kolom terpisah</td>
+</tr>
+<tr>
+<td>INC-11</td>
+<td>Backend</td>
+<td>Validasi request dijalankan sebelum cek admin (store, tolak, alokasi)</td>
+<td>422 vs 403</td>
+<td>Pindahkan cek akses</td>
+</tr>
+</tbody>
+</table></div>
+<hr />
+<h2 id="s40"><span class="sec-no">40</span>Edge Case</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Edge Case</th>
+<th>Current Behavior</th>
+<th>Impact</th>
+<th>Recommendation</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Karyawan melaporkan rusak</td>
+<td>Status <code class="chip chip-wait">proses</code> permanen, asset <code class="chip chip-wait">proses</code> permanen</td>
+<td>Transaksi &amp; asset macet</td>
+<td>Endpoint ganti/tarik/batal</td>
+</tr>
+<tr>
+<td>Asset retur lalu ingin ditambahkan lagi</td>
+<td>Diterima (v1.1): hanya header <code class="chip chip-wait">proses</code> yang mengunci asset</td>
+<td>Asset bisa dipakai ulang lewat penambahan/pengajuan</td>
+<td>–</td>
+</tr>
+<tr>
+<td>Draft penambahan / pengajuan</td>
+<td>Dapat diedit dan dikirim (PUT); belum dapat dihapus</td>
+<td>Draft yang tidak terpakai menumpuk di tab Pending/Pengajuan</td>
+<td>Endpoint hapus draft</td>
+</tr>
+<tr>
+<td>Dua admin mengalokasikan asset sama</td>
+<td>Lock company; yang kedua 422</td>
+<td>Aman</td>
+<td>–</td>
+</tr>
+<tr>
+<td>Admin A menolak saat Admin B mengalokasikan</td>
+<td>Lock + cek <code>tgl_approval</code>; yang kedua 422</td>
+<td>Aman</td>
+<td>–</td>
+</tr>
+<tr>
+<td>Karyawan nonaktif sebelum konfirmasi</td>
+<td>422 "Karyawan tidak ditemukan atau tidak aktif."</td>
+<td>Asset tertahan <code class="chip chip-wait">proses</code></td>
+<td>Aksi batal admin</td>
+</tr>
+<tr>
+<td>Draft alokasi, asset diambil transaksi lain</td>
+<td>Submit alokasi gagal "tidak tersedia"</td>
+<td>Admin memilih ulang</td>
+<td>–</td>
+</tr>
+<tr>
+<td>Tanggal serah terima di masa lalu via API</td>
+<td>Diterima</td>
+<td>Data tidak valid</td>
+<td>Validasi backend</td>
+</tr>
+<tr>
+<td>Timeout tapi sudah commit</td>
+<td>Submit ulang penambahan ditolak (asset <code class="chip chip-wait">proses</code>); pengajuan karyawan bisa <strong>dobel</strong></td>
+<td>Pengajuan ganda</td>
+<td>Idempotency / refresh</td>
+</tr>
+<tr>
+<td>Banyak penambahan pending untuk satu karyawan</td>
+<td>Banner hanya satu</td>
+<td>Terlewat</td>
+<td>Lihat INC-06</td>
+</tr>
+</tbody>
+</table></div>
+<hr />
+<h2 id="s41"><span class="sec-no">41</span>Potential Bug / Technical Risk</h2>
+<h3>RISK-001 — Laporan rusak membuat transaksi &amp; asset macet (TINGGI)</h3>
+<p><strong>Lokasi:</strong> <code>AssetRequestKaryawan_m::konfirmasiKaryawan</code>; tidak ada route tindak lanjut.
+<strong>Masalah:</strong> Jika satu item rusak, status tetap <code class="chip chip-wait">proses</code>, tidak ada item pending, semua asset tetap <code>status_asset = proses</code> (termasuk yang normal), dan tidak ada endpoint ganti/tarik/batal. UI admin read-only dan tidak menampilkan item rusak.
+<strong>Impact:</strong> Transaksi tidak pernah selesai; asset tidak bisa dipakai transaksi apa pun (hanya status <code class="chip chip-neutral">tersedia</code> yang bisa dipilih).
+<strong>Current Handling:</strong> Notifikasi "Laporan Asset Rusak" ke admin saja.
+<strong>Recommendation:</strong> Implementasi alur seperti Onboarding (ganti asset rusak) atau aksi admin untuk melepas asset rusak ke gudang dan menyerahkan yang normal.</p>
+<h3>RISK-002 — Asset bekas penambahan terkunci selamanya (TINGGI) — ✅ DIPERBAIKI v1.1</h3>
+<p><strong>Status:</strong> Diperbaiki 2026-09-29. <code>hasActiveRequestAsset</code> kini hanya memfilter <code>status_approval = proses</code>. Regression test: <code>tests/Asset/AssetModelTest.php::test_returned_asset_from_confirmed_addition_can_be_added_again</code>.
+<strong>Lokasi (sebelum):</strong> <code>hasActiveRequestAsset</code> (<code>whereIn status_approval [proses, dikonfirmasi]</code>, tanpa filter status item).
+<strong>Masalah:</strong> Transaksi yang sudah <strong>selesai</strong> tetap dihitung aktif. Setelah asset dikembalikan ke gudang (Retur/Offboarding menyetel <code class="chip chip-neutral">tersedia</code> + <code>gudang</code>), asset muncul di pilihan tetapi <code>store</code>/<code>alokasi</code> menolak "…sedang diproses pada penambahan lain."
+<strong>Impact:</strong> Asset tidak bisa ditambahkan ulang via Penambahan/Pengajuan.
+<strong>Recommendation:</strong> Batasi ke <code>STATUS_PROSES</code> (dan item belum diserahkan).</p>
+<h3>RISK-003 — Draft tidak dapat dihapus (RENDAH)</h3>
+<p><strong>Lokasi:</strong> Route (ada <code>PUT</code> untuk edit/kirim draft, tetapi tidak ada <code>DELETE</code> untuk penambahan &amp; pengajuan karyawan).
+<strong>Masalah:</strong> Draft Penambahan (admin) dan draft Pengajuan (karyawan) kini dapat diedit dan dikirim, tetapi tidak dapat dihapus. Draft penambahan juga tidak mengunci asset.
+<strong>Recommendation:</strong> Tambah endpoint hapus draft (pola onboarding).</p>
+<h3>RISK-004 — <code>no_trx</code> UNIQUE global tanpa kode company</h3>
+<p><strong>Lokasi:</strong> DBML <code>no_trx [unique]</code>, format <code>KRY-03-1-YYYYMMNNN</code>.
+<strong>Masalah:</strong> Dua company pada bulan &amp; urutan sama menghasilkan <code>no_trx</code> identik.
+<strong>Impact:</strong> Jika unique index fisik ada, insert company kedua gagal (500). ⚠️ Asumsi: belum diverifikasi di DB.
+<strong>Recommendation:</strong> Unique <code>(id_company, no_trx)</code>.</p>
+<h3>RISK-005 — Tanggal nol <code>0000-00-00</code></h3>
+<p><strong>Lokasi:</strong> <code>store</code>, <code>storePengajuanKaryawan</code>, <code>alokasikanPengajuanAdmin</code>.
+<strong>Masalah:</strong> MySQL strict mode (<code>NO_ZERO_DATE</code>) menolak nilai ini. ⚠️ Asumsi: tergantung konfigurasi SQL mode.
+<strong>Recommendation:</strong> Kolom nullable.</p>
+<h3>RISK-006 — Jejak approval tertimpa</h3>
+<p><code>user_approval</code>/<code>tgl_approval</code> dari admin ditimpa karyawan saat konfirmasi (INC-10).</p>
+<h3>RISK-007 — Jadwal lampau diterima backend</h3>
+<p><code>parseJadwalValue</code> (validasi tanggal ≥ pengajuan) tersedia di <code>Asset_m</code> tetapi tidak dipakai fitur ini.</p>
+<h3>RISK-008 — Tidak ada pembatasan pengajuan ganda</h3>
+<p>Karyawan dapat membuat pengajuan jenis sama berulang kali.</p>
+<h3>RISK-009 — Kapasitas penomoran</h3>
+<p>3 digit per bulan per company, dipakai bersama Penambahan &amp; Pengajuan (header) dan semua item.</p>
+<h3>RISK-010 — Notifikasi di luar transaksi</h3>
+<p>Kegagalan notif hanya di-log.</p>
+<h3>RISK-011 — Tolak menghapus draft alokasi (hard delete)</h3>
+<p>Tidak ada jejak asset yang sempat dialokasikan.</p>
+<hr />
+<div class="group-divider" id="g42"><span>Referensi Developer</span></div><h2 id="s42"><span class="sec-no">42</span>Dependency</h2>
+<div class="code"><span class="code-lang">Alur</span><pre><code class="language-text">Master Company / Data Karyawan / Asset Admin
+      ↓
+Master Kategori ──► Pengajuan (jenis asset)
+      ↓
+Asset Data (tersedia @gudang)
+      ↓
+Request / Penambahan (header + item) ──► Notifikasi
+      ↓ konfirmasi semua normal
+Asset Data (terpakai, karyawan) ──► Asset Log (request_karyawan)
+
+Bergantung pada / dipakai oleh:
+  - Onboarding: hasActiveOnboardingAsset &amp; AssetAdmin_m::getOnboardingOptions (opsi karyawan/asset)
+  - Summary Admin: countPendingForAdmin / getPendingForAdmin
+  - Asset Saya: getPendingForEmployee (banner penambahan)
+  - Offboarding: menelusuri sumber asset dari request `dikonfirmasi` dengan item normal (jenis &quot;onboarding&quot;)
+  - Retur/Offboarding mengembalikan asset ke gudang → asset bisa ditambahkan lagi (RISK-002 diperbaiki v1.1)
+</code></pre></div>
+<hr />
+<h2 id="s43"><span class="sec-no">43</span>Source Code Reference</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>File</th>
+<th>Layer</th>
+<th>Function</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>API/routes/modules/asset/RouteAsset.php</code></td>
+<td>Route</td>
+<td>17 endpoint request/penambahan</td>
+</tr>
+<tr>
+<td><code>API/app/Http/Controllers/Asset/Admin/AssetAdminPenambahan_c.php</code></td>
+<td>Controller</td>
+<td>Penambahan &amp; pengajuan (admin)</td>
+</tr>
+<tr>
+<td><code>API/app/Http/Controllers/Asset/Karyawan/AssetKaryawanPengajuan_c.php</code></td>
+<td>Controller</td>
+<td>Pengajuan &amp; konfirmasi (karyawan)</td>
+</tr>
+<tr>
+<td><code>API/app/Models/Asset/AssetRequestKaryawan_m.php</code></td>
+<td>Model</td>
+<td>Seluruh logika</td>
+</tr>
+<tr>
+<td><code>API/app/Models/Asset/Asset_m.php</code></td>
+<td>Model</td>
+<td>Helper bersama</td>
+</tr>
+<tr>
+<td><code>API/app/Models/Asset/AssetAdmin_m.php</code></td>
+<td>Model</td>
+<td><code>getOnboardingOptions</code>, summary</td>
+</tr>
+<tr>
+<td><code>API/app/Models/Asset/AssetKaryawan_m.php</code></td>
+<td>Model</td>
+<td>Asset Saya (<code>penambahan[]</code>)</td>
+</tr>
+<tr>
+<td><code>API/app/Models/Asset/RequestKaryawanStatus.php</code></td>
+<td>Enum</td>
+<td>Status</td>
+</tr>
+<tr>
+<td><code>API/app/Support/Asset/AssetNotification.php</code></td>
+<td>Support</td>
+<td>Event <code>pengajuan.*</code>, <code>penambahan.*</code></td>
+</tr>
+<tr>
+<td><code>API/diagram-asset.dbml</code>; migrations <code>2026_09_16_000003</code>, <code>2026_09_17_000004</code>, <code>2026_09_17_000008</code></td>
+<td>DB</td>
+<td>Struktur, index, enum</td>
+</tr>
+<tr>
+<td><code>MOBILE/lib/Repository/Service/assetRequestKaryawanApi.dart</code>, <code>assetPengajuanAdminApi.dart</code>, <code>assetPengajuanKaryawanApi.dart</code>, <code>assetSayaApi.dart</code></td>
+<td>Api</td>
+<td>Endpoint</td>
+</tr>
+<tr>
+<td><code>MOBILE/lib/Repository/Model/Asset/mAssetRequestKaryawan.dart</code>, <code>mAssetPengajuanKaryawan.dart</code>, <code>mAssetPengajuanAdmin.dart</code></td>
+<td>Model</td>
+<td>–</td>
+</tr>
+<tr>
+<td><code>MOBILE/lib/Bloc/Asset/AssetRequestKaryawanBloc.dart</code>, <code>AssetPengajuanAdminBloc.dart</code>, <code>AssetPengajuanKaryawanBloc.dart</code>, <code>AssetKonfirmasiPenambahanBloc.dart</code></td>
+<td>Bloc</td>
+<td>–</td>
+</tr>
+<tr>
+<td><code>MOBILE/lib/UI/Modul/Asset/AssetAdmin/AssetAdminKaryawan/Penambahan/*</code>, <code>pengajuan/*</code></td>
+<td>UI admin</td>
+<td>–</td>
+</tr>
+<tr>
+<td><code>MOBILE/lib/UI/Modul/Asset/AssetSaya/Pengajuan/*</code>, <code>onboarding/HalamanKonfirmasiPenambahanAsset.dart</code>, <code>HalamanAssetSaya.dart</code></td>
+<td>UI karyawan</td>
+<td>–</td>
+</tr>
+<tr>
+<td><code>MOBILE/lib/Setting/router.dart</code>, <code>Bloc/NavigatorBloc.dart</code></td>
+<td>Navigasi</td>
+<td>–</td>
+</tr>
+<tr>
+<td><code>MOBILE/assets/id/asset.json</code>, <code>assets/en/asset.json</code></td>
+<td>i18n</td>
+<td>Label</td>
+</tr>
+</tbody>
+</table></div>
+<hr />
+<h2 id="s44"><span class="sec-no">44</span>Developer Notes</h2>
+<ul>
+<li><strong>Satu tabel dua alur</strong>: selalu filter <code>sumber_pengajuan</code>. <code>getDetail(..., sumber = null)</code> sengaja dipakai konfirmasi karyawan agar kedua sumber bisa dibuka.</li>
+<li><strong>Tahap pengajuan tanpa kolom tahap</strong>: dibedakan oleh <code>status_approval</code>, <code>tgl_approval</code> (NULL = belum disetujui), dan jumlah item (ada item + belum disetujui = Draft Alokasi).</li>
+<li><strong>Label dihitung di tiga fungsi berbeda</strong> (<code>requestStatusMetadata</code>, <code>pengajuanAdminStatusMetadata</code>, <code>pengajuanStatusMetadata</code>) dan dipetakan ulang di mobile — ubah bersamaan.</li>
+<li><strong>Karyawan tidak melihat alokasi sebelum disetujui</strong>: <code>mapPengajuanKaryawanRecords</code> &amp; <code>getDetailPengajuanKaryawan</code> mengosongkan jadwal/item.</li>
+<li><strong>Opsi asset memakai fungsi onboarding</strong> (<code>AssetAdmin_m::getOnboardingOptions</code> dengan <code>excludeEmployeesWithOnboarding: false</code>).</li>
+<li><strong>Reservasi hanya saat kirim</strong>; draft tidak mengunci asset (beda dengan onboarding).</li>
+<li><strong>Jam</strong> dikirim <code>H:i</code>, disimpan <code>H:i:s</code>; tanggal kosong disimpan <code>0000-00-00</code> dan diabaikan mobile lewat <code>hasSchedule</code>.</li>
+<li><strong><code>asset_log.jenis_log = request_karyawan</code></strong> — dipakai Offboarding untuk menelusuri asal asset.</li>
+<li><strong>Technical debt</strong>: RISK-001/003 (RISK-002 sudah diperbaiki), enum ganda, <code>parent_id</code>/<code>diganti</code> tidak terpakai.</li>
+</ul>
+<hr />
+<h2 id="s45"><span class="sec-no">45</span>End-to-End Traceability</h2>
+<h3>45.1 Pengajuan → jenis asset</h3>
+<div class="code"><span class="code-lang">Alur</span><pre><code class="language-text">Karyawan memilih &quot;Laptop&quot; di bottom sheet Pilih Kategori Asset
+  → _selectedCategoryId
+  → AssetPengajuanKaryawanRequest.idAssetKategori
+  → JSON &quot;id_asset_kategori_m&quot;
+  → AssetKaryawanPengajuan_c::storePengajuanSaya (required|max:50)
+  → AssetRequestKaryawan_m::storePengajuanKaryawan (kategori ada &amp; bukan parent)
+  → asset_trx_request_karyawan.id_asset_kategori_m + nama_kategori
+  → (admin) getPengajuanAdminOptions memfilter assets by kategori ini
+</code></pre></div>
+<h3>45.2 Alokasi → asset diterima karyawan</h3>
+<div class="code"><span class="code-lang">Alur</span><pre><code class="language-text">Admin memilih asset di Setujui Pengajuan Asset
+  → _selectedAssets[].idAssetData → AssetPengajuanAdminAlokasiRequest.assetIds
+  → JSON &quot;asset_ids&quot;
+  → alokasikanPengajuanAdmin: tersedia @gudang + kategori sama
+  → INSERT asset_trx_request_karyawan_item (belum_dicek)
+  → UPDATE asset_data.status_asset = proses
+Karyawan memilih Normal → statusByItem → JSON items[].status_item
+  → konfirmasiKaryawan: semua normal
+  → UPDATE asset_data: terpakai, pemegang_asset = karyawan, id_pemegang_asset = id_karyawan
+  → INSERT asset_log (request_karyawan)
+  → asset tampil di Asset Saya
+</code></pre></div>
+<h3>45.3 DB → UI</h3>
+<div class="code"><span class="code-lang">Alur</span><pre><code class="language-text">asset_trx_request_karyawan.ket_tolak
+  → getDetail → API &quot;ket_tolak&quot;
+  → AssetRequestKaryawanRecord.ketTolak
+  → UI &quot;Alasan Penolakan&quot; (detail admin &amp; karyawan)
+</code></pre></div>
+<hr />
+<h2 id="s46"><span class="sec-no">46</span>Ringkasan Database Impact</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Event</th>
+<th>INSERT</th>
+<th>UPDATE</th>
+<th>DELETE</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Buat Penambahan (draft)</td>
+<td>header, item</td>
+<td>–</td>
+<td>–</td>
+</tr>
+<tr>
+<td>Buat Penambahan (kirim)</td>
+<td>header, item, notif</td>
+<td>asset_data → proses</td>
+<td>–</td>
+</tr>
+<tr>
+<td>Buat Pengajuan</td>
+<td>header, notif (kirim)</td>
+<td>–</td>
+<td>–</td>
+</tr>
+<tr>
+<td>Tolak</td>
+<td>notif</td>
+<td>header (ditolak)</td>
+<td>item (draft alokasi)</td>
+</tr>
+<tr>
+<td>Alokasi draft</td>
+<td>item</td>
+<td>header (jadwal)</td>
+<td>item lama</td>
+</tr>
+<tr>
+<td>Alokasi kirim (approval)</td>
+<td>item, notif</td>
+<td>header (jadwal, approval), asset_data → proses</td>
+<td>item lama</td>
+</tr>
+<tr>
+<td>Konfirmasi semua normal</td>
+<td>asset_log, notif</td>
+<td>item, header (dikonfirmasi), asset_data → terpakai/karyawan</td>
+<td>–</td>
+</tr>
+<tr>
+<td>Konfirmasi ada rusak</td>
+<td>notif</td>
+<td>item, header (tetap proses)</td>
+<td>–</td>
+</tr>
+</tbody>
+</table></div>
+<hr />
+<h2 id="s47"><span class="sec-no">47</span>Checklist Implementasi</h2>
+<h3>Database</h3>
+<ul>
+<li class="task done">Header &amp; item</li>
+<li class="task done">Kolom <code>sumber_pengajuan</code> + index list</li>
+<li class="task done">Status enum</li>
+<li class="task done">Log serah terima</li>
+<li class="task">Migration CREATE TABLE baseline</li>
+<li class="task">Unique <code>no_trx</code> per company</li>
+<li class="task">Kolom tanggal nullable</li>
+</ul>
+<h3>Backend</h3>
+<ul>
+<li class="task done">Route, controller, validasi, transaksi, notifikasi</li>
+<li class="task done">Tolak &amp; alokasi (termasuk draft alokasi)</li>
+<li class="task done">Konfirmasi karyawan</li>
+<li class="task done">Edit / kirim draft (<code>PUT</code>); hapus draft belum ada</li>
+<li class="task">Tindak lanjut asset rusak</li>
+<li class="task done">Perbaikan <code>hasActiveRequestAsset</code> (v1.1)</li>
+<li class="task">Validasi tanggal serah terima ≥ hari ini</li>
+</ul>
+<h3>Mobile</h3>
+<ul>
+<li class="task done">List, form, detail Penambahan (admin)</li>
+<li class="task done">List, detail, tolak, setujui Pengajuan (admin)</li>
+<li class="task done">List, form, detail Pengajuan (karyawan)</li>
+<li class="task done">Konfirmasi Penambahan/Pengajuan</li>
+<li class="task done">Lanjutkan (ubah) draft</li>
+<li class="task">Tampilkan kondisi item di detail admin</li>
+<li class="task">Semua banner penambahan di Asset Saya</li>
+</ul>
+<h3>Documentation</h3>
+<ul>
+<li class="task done">Business Flow, DB, API, Mobile, Mapping, Manual Book, Testing</li>
+<li class="task">Screenshot</li>
+</ul>
+<hr />
+<h2 id="s48"><span class="sec-no">48</span>Changelog</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Version</th>
+<th>Date</th>
+<th>Changes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1.3</td>
+<td>2026-10-12</td>
+<td>Mobile: stepper alur status (<code>AssetAlurStepper.pengajuan</code>) di detail penambahan/pengajuan admin dan detail pengajuan karyawan (§26.3, 26.5, 26.9). Teks langkah di grup JSON <code>alur</code>. Tidak ada perubahan API.</td>
+</tr>
+<tr>
+<td>1.2</td>
+<td>2026-10-12</td>
+<td>Sinkronisasi dengan kode: <strong>edit/kirim draft</strong> kini tersedia — <code>PUT /asset/penambahan-karyawan/{id}</code> dan <code>PUT /asset/karyawan/pengajuan/{id}</code> (API-016, API-017); mobile membuka draft untuk diubah (Ubah Draft). RISK-003 diturunkan menjadi RENDAH (hapus draft belum ada); jumlah endpoint menjadi 10 admin + 7 karyawan (17). Path mobile mengikuti struktur folder baru</td>
+</tr>
+<tr>
+<td>1.0</td>
+<td>2026-09-26</td>
+<td>Initial documentation — disusun dari source lokal API (Lumen) &amp; MOBILE (Flutter)</td>
+</tr>
+<tr>
+<td>1.1</td>
+<td>2026-09-29</td>
+<td>RISK-002 diperbaiki: <code>hasActiveRequestAsset</code> hanya mengunci asset pada header <code class="chip chip-wait">proses</code>; asset hasil retur bisa ditambahkan lagi. Update BR-005, TC-30/30a, Edge Case, Dependency, Checklist</td>
+</tr>
+</tbody>
+</table></div>
+    </article>
+
+    <footer>Dokumentasi Request &amp; Penambahan Asset v1.0 · 26 September 2026 · Disusun dari source lokal API (Lumen) &amp; MOBILE (Flutter). Contoh ID dan nama pada payload adalah data sintetis.</footer>
+  </main>
+</div>
+<button class="to-top" id="to-top" type="button" aria-label="Kembali ke atas">↑</button>
+
+<script>
+(function(){
+  var search=document.getElementById('nav-search');
+  var navs=document.querySelectorAll('.nav');
+  search.addEventListener('input',function(){
+    var q=search.value.trim().toLowerCase();
+    navs.forEach(function(nav){
+      nav.querySelectorAll('.nav-group').forEach(function(g){
+        var any=false;
+        g.querySelectorAll('a').forEach(function(a){
+          var hit=!q||a.textContent.toLowerCase().indexOf(q)>-1;
+          a.hidden=!hit; if(hit) any=true;
+        });
+        g.hidden=!any;
+      });
+    });
+  });
+  var links={};
+  document.querySelectorAll('#nav a').forEach(function(a){links[a.dataset.sec]=a;});
+  var current=null;
+  if('IntersectionObserver' in window){
+    var io=new IntersectionObserver(function(entries){
+      entries.forEach(function(e){
+        if(e.isIntersecting){
+          if(current) current.classList.remove('active');
+          current=links[e.target.id];
+          if(current){current.classList.add('active');var nav=current.closest('.nav');var top=current.offsetTop-nav.offsetTop;if(top<nav.scrollTop||top>nav.scrollTop+nav.clientHeight-30){nav.scrollTop=top-nav.clientHeight/2;}}
+        }
+      });
+    },{rootMargin:'0px 0px -75% 0px'});
+    document.querySelectorAll('.doc h2[id]').forEach(function(h){io.observe(h);});
+  }
+  document.querySelectorAll('.mobile-toc a').forEach(function(a){
+    a.addEventListener('click',function(){a.closest('details').open=false;});
+  });
+  document.getElementById('to-top').addEventListener('click',function(){window.scrollTo({top:0});});
+})();
+</script>
+<script type="module">
+// Fallback renderer: hanya jalan bila viewer belum merender diagram (mis. file dibuka langsung).
+const blocks=[...document.querySelectorAll('pre.mermaid')].filter(function(el){return !el.hasAttribute('data-claude-mermaid-claimed');});
+if(blocks.length){
+  blocks.forEach(function(el){el.setAttribute('data-claude-mermaid-claimed','1');el.dataset.src=el.textContent;});
+  const {default:mermaid}=await import("https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs");
+  const media=window.matchMedia('(prefers-color-scheme: dark)');
+  const render=async function(){
+    const css=getComputedStyle(document.documentElement);
+    const v=function(n){return css.getPropertyValue(n).trim();};
+    mermaid.initialize({startOnLoad:false,securityLevel:'strict',theme:'base',fontFamily:'inherit',
+      themeVariables:{background:v('--surface'),primaryColor:v('--accent-soft'),primaryTextColor:v('--ink'),
+        primaryBorderColor:v('--accent'),lineColor:v('--muted'),secondaryColor:v('--surface-2'),tertiaryColor:v('--surface'),
+        textColor:v('--ink'),mainBkg:v('--accent-soft'),nodeBorder:v('--accent'),clusterBkg:v('--surface-2'),
+        noteBkgColor:v('--surface-2'),noteTextColor:v('--ink'),noteBorderColor:v('--line'),
+        actorBkg:v('--accent-soft'),actorBorder:v('--accent'),actorTextColor:v('--ink'),actorLineColor:v('--muted'),
+        signalColor:v('--ink-2'),signalTextColor:v('--ink'),labelBoxBkgColor:v('--surface-2'),labelTextColor:v('--ink'),
+        edgeLabelBackground:v('--surface'),attributeBackgroundColorOdd:v('--surface'),attributeBackgroundColorEven:v('--surface-2')}});
+    blocks.forEach(function(el){el.removeAttribute('data-processed');el.textContent=el.dataset.src;});
+    try{await mermaid.run({nodes:blocks});}catch(e){console.error(e);}
+  };
+  render();
+  if(media.addEventListener) media.addEventListener('change',render);
+}
+</script>
+<script>
+// Kembali ke index lokal bila dibuka dari komputer, ke index artifact bila dibuka dari claude.ai.
+(function(){var h=location.hostname;var art=location.protocol!=='file:'&&/claude/i.test(h);
+if(art){document.querySelectorAll('a.back').forEach(function(a){a.href='https://claude.ai/artifact/X39UeaJRpBKwqFjswGNqip';a.target='_blank';a.rel='noopener';});
+document.querySelectorAll('.dl').forEach(function(d){d.hidden=true;});}})();
+</script>

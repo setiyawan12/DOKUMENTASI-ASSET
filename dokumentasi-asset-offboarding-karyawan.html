@@ -1,0 +1,3253 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Off Boarding Asset Karyawan</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap">
+<style>
+:root{
+  --ground:#F3F5F9; --surface:#FFFFFF; --surface-2:#EAEEF5; --ink:#162033; --ink-2:#3A4559; --muted:#657089;
+  --line:#D9DFEA; --accent:#1F5AA6; --accent-soft:#E3ECF8; --accent-ink:#163F75;
+  --wait:#B45F00; --wait-bg:#FFE9C7; --draft:#0078A8; --draft-bg:#D6F1FA;
+  --bad:#C22F2F; --bad-bg:#FDE1E1; --done:#157A41; --done-bg:#D9F2E3; --neutral:#4E5A70; --neutral-bg:#E6EAF1;
+  --code-bg:#0F1A2C; --code-ink:#DCE6F5; --code-muted:#8FA3C2;
+  --shadow:0 1px 2px rgba(22,32,51,.06),0 8px 24px rgba(22,32,51,.06);
+  --font:"Plus Jakarta Sans",ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  color-scheme:dark;
+  --ground:#0E1420; --surface:#151D2C; --surface-2:#1C2638; --ink:#E7ECF5; --ink-2:#C3CBDA; --muted:#8E99AF;
+  --line:#28334A; --accent:#7FAEF0; --accent-soft:#1B2A45; --accent-ink:#B8D2F7;
+  --wait:#FFB861; --wait-bg:#3A2A12; --draft:#6CD3F5; --draft-bg:#113442; --bad:#FF8A8A; --bad-bg:#3D1C1F;
+  --done:#6FD69C; --done-bg:#15321F; --neutral:#B7C1D3; --neutral-bg:#243047;
+  --code-bg:#0A101B; --code-ink:#DCE6F5; --code-muted:#7F93B3; --shadow:0 1px 2px rgba(0,0,0,.3),0 8px 24px rgba(0,0,0,.25);
+}}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --ground:#0E1420; --surface:#151D2C; --surface-2:#1C2638; --ink:#E7ECF5; --ink-2:#C3CBDA; --muted:#8E99AF;
+  --line:#28334A; --accent:#7FAEF0; --accent-soft:#1B2A45; --accent-ink:#B8D2F7;
+  --wait:#FFB861; --wait-bg:#3A2A12; --draft:#6CD3F5; --draft-bg:#113442; --bad:#FF8A8A; --bad-bg:#3D1C1F;
+  --done:#6FD69C; --done-bg:#15321F; --neutral:#B7C1D3; --neutral-bg:#243047;
+  --code-bg:#0A101B; --code-ink:#DCE6F5; --code-muted:#7F93B3; --shadow:0 1px 2px rgba(0,0,0,.3),0 8px 24px rgba(0,0,0,.25);
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth;scroll-padding-top:24px}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+body{background:var(--ground);color:var(--ink);font-family:var(--font);font-size:15px;line-height:1.65;padding-inline:16px}
+a{color:var(--accent)}
+a:focus-visible,button:focus-visible,input:focus-visible,summary:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:4px}
+
+.shell{max-width:1320px;margin:0 auto;display:grid;grid-template-columns:270px minmax(0,1fr);gap:40px;padding-block:28px 80px}
+@media (max-width:960px){.shell{grid-template-columns:minmax(0,1fr);gap:20px}}
+
+/* Navigasi */
+.sidebar{position:sticky;top:calc(env(safe-area-inset-top,0px) + 16px);align-self:start;max-height:calc(100vh - 32px);display:flex;flex-direction:column;gap:12px}
+@media (max-width:960px){.sidebar{display:none}}
+.back{font-size:13px;font-weight:600;text-decoration:none}
+.back-mobile{display:none;margin:0 0 8px}
+@media (max-width:960px){.back-mobile{display:block}}
+.brand{display:flex;align-items:center;gap:10px;font-weight:700;font-size:14px}
+.brand-mark{height:30px;padding-inline:8px;border-radius:8px;background:var(--accent);color:var(--surface);display:grid;place-items:center;font-family:var(--mono);font-size:12px;font-weight:600}
+.search{width:100%;padding:9px 12px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--ink);font:inherit;font-size:13.5px}
+.nav{overflow-y:auto;padding-right:6px;display:flex;flex-direction:column;gap:14px}
+.nav-group p{margin:0 0 4px;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:700}
+.nav a{display:flex;gap:10px;padding:4px 8px;border-radius:6px;text-decoration:none;color:var(--ink-2);font-size:13.5px;line-height:1.4}
+.nav a span{font-family:var(--mono);font-size:11.5px;color:var(--muted);padding-top:1px;min-width:18px}
+.nav a:hover{background:var(--surface-2)}
+.nav a.active{background:var(--accent-soft);color:var(--accent-ink);font-weight:600}
+.nav a.active span{color:var(--accent)}
+.mobile-toc{display:none;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px 14px}
+.mobile-toc summary{font-weight:700;cursor:pointer}
+.mobile-toc .nav{max-height:60vh;margin-top:10px}
+@media (max-width:960px){.mobile-toc{display:block}}
+
+main{min-width:0}
+
+/* Header bergaya label asset */
+.hero{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:28px;align-items:end;padding-block:8px 28px;border-bottom:1px solid var(--line)}
+@media (max-width:760px){.hero{grid-template-columns:minmax(0,1fr)}}
+.eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:.06em;color:var(--accent);text-transform:uppercase;margin:0 0 8px}
+.hero h1{font-size:clamp(30px,5vw,46px);line-height:1.08;letter-spacing:-.02em;margin:0 0 12px;font-weight:800;text-wrap:balance}
+.hero .lede{max-width:62ch;color:var(--ink-2);margin:0;font-size:16px}
+.hero .lede code{font-family:var(--mono);font-size:.86em;background:var(--surface-2);padding:1px 5px;border-radius:5px}
+.tag{background:var(--surface);border:1px dashed var(--muted);border-radius:12px;padding:14px 16px;min-width:250px;font-family:var(--mono);font-size:12px;box-shadow:var(--shadow);position:relative}
+@media (max-width:760px){.tag{min-width:0}}
+.tag::before{content:"";position:absolute;left:14px;top:-7px;width:12px;height:12px;border-radius:50%;background:var(--ground);border:1px dashed var(--muted)}
+.tag dl{display:grid;grid-template-columns:auto 1fr;gap:4px 14px;margin:0}
+.tag dt{color:var(--muted)}
+.tag dd{margin:0;color:var(--ink);font-weight:500}
+.barcode{height:26px;margin-top:10px;background:repeating-linear-gradient(90deg,var(--ink) 0 2px,transparent 2px 4px,var(--ink) 4px 5px,transparent 5px 8px,var(--ink) 8px 11px,transparent 11px 12px);opacity:.75;border-radius:2px}
+.tag .trx{margin-top:4px;text-align:center;letter-spacing:.2em;font-size:11px;color:var(--ink-2)}
+
+/* Panel ringkas */
+.overview{display:grid;gap:18px;padding-block:28px 8px}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:22px}
+.panel h3{margin:0 0 4px;font-size:18px}
+.panel .sub{margin:0 0 18px;color:var(--muted);font-size:14px}
+.panel code{font-family:var(--mono);font-size:.86em;background:var(--surface-2);padding:1px 5px;border-radius:5px;overflow-wrap:anywhere}
+.three{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
+@media (max-width:760px){.three{grid-template-columns:minmax(0,1fr)}}
+.fact{border-left:3px solid var(--accent);padding:2px 0 2px 14px}
+.fact b{display:block;font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.fact p{margin:4px 0 0;font-size:14.5px}
+
+/* Lifecycle */
+.flow{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;align-items:stretch}
+@media (max-width:760px){.flow{grid-template-columns:minmax(0,1fr)}}
+.step{border:1px solid var(--line);border-radius:12px;padding:14px;background:var(--surface);display:flex;flex-direction:column;gap:6px}
+.step .who{font-size:11.5px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.06em}
+.step p{margin:0;font-size:13.5px;color:var(--ink-2)}
+.step .db{font-family:var(--mono);font-size:11.5px;color:var(--muted);margin-top:auto;padding-top:8px;border-top:1px dashed var(--line)}
+.loop{margin-top:12px;display:flex;flex-wrap:wrap;gap:10px;align-items:center;padding:12px 14px;border-radius:12px;background:var(--bad-bg);color:var(--ink);font-size:13.5px}
+.loop strong{color:var(--bad)}
+
+.badge{display:inline-flex;align-items:center;gap:6px;padding:3px 10px;border-radius:999px;font-size:12.5px;font-weight:700;width:max-content}
+.badge::before{content:"";width:7px;height:7px;border-radius:50%;background:currentColor}
+.b-draft{background:var(--draft-bg);color:var(--draft)}
+.b-wait{background:var(--wait-bg);color:var(--wait)}
+.b-bad{background:var(--bad-bg);color:var(--bad)}
+.b-done{background:var(--done-bg);color:var(--done)}
+
+/* Peran */
+.roles{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+@media (max-width:900px){.roles{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:520px){.roles{grid-template-columns:minmax(0,1fr)}}
+.role{border:1px solid var(--line);border-radius:12px;padding:14px 16px;background:var(--surface);display:flex;flex-direction:column;gap:8px}
+.role h4{margin:0;font-size:14.5px}
+.role p{margin:0;font-size:13px;color:var(--muted)}
+.role .links{display:flex;flex-wrap:wrap;gap:6px;margin-top:auto}
+.role .links a{font-family:var(--mono);font-size:11.5px;text-decoration:none;padding:2px 8px;border-radius:6px;background:var(--accent-soft);color:var(--accent-ink)}
+.role .links a:hover{background:var(--accent);color:var(--surface)}
+
+.attention{list-style:none;margin:0;padding:0;display:grid;gap:10px}
+.attention li{display:grid;grid-template-columns:72px minmax(0,1fr);gap:12px;align-items:start;font-size:14px}
+.sev{font-family:var(--mono);font-size:11px;font-weight:600;padding:2px 8px;border-radius:6px;margin-top:2px;text-align:center}
+.sev-h{background:var(--bad-bg);color:var(--bad)}
+.sev-m{background:var(--wait-bg);color:var(--wait)}
+.sev-ok{background:var(--done-bg);color:var(--done)}
+
+/* Konten dokumen */
+.doc{padding-top:8px}
+.group-divider{margin:64px 0 0;display:flex;align-items:center;gap:14px;color:var(--accent);font-size:12px;font-weight:800;letter-spacing:.12em;text-transform:uppercase}
+.group-divider::after{content:"";flex:1;height:2px;background:var(--accent);opacity:.25}
+.doc h2{font-size:clamp(22px,3vw,27px);line-height:1.2;letter-spacing:-.01em;margin:40px 0 14px;display:flex;align-items:baseline;gap:14px;text-wrap:balance}
+.sec-no{font-family:var(--mono);font-size:14px;color:var(--accent);font-weight:600;padding:3px 8px;border:1px solid var(--accent);border-radius:6px;flex:none;transform:translateY(-3px)}
+.doc h3{font-size:18px;margin:30px 0 10px;text-wrap:balance}
+.doc h4{font-size:15.5px;margin:22px 0 8px}
+.doc p,.doc li{max-width:78ch;color:var(--ink-2)}
+.doc strong{color:var(--ink)}
+.doc hr{display:none}
+.doc code{font-family:var(--mono);font-size:.86em;background:var(--surface-2);padding:1px 5px;border-radius:5px;color:var(--ink);overflow-wrap:anywhere}
+.doc .chip{font-weight:600;border-radius:999px;padding:1px 8px}
+.doc .chip-draft{background:var(--draft-bg);color:var(--draft)}
+.doc .chip-wait{background:var(--wait-bg);color:var(--wait)}
+.doc .chip-bad{background:var(--bad-bg);color:var(--bad)}
+.doc .chip-done{background:var(--done-bg);color:var(--done)}
+.doc .chip-neutral{background:var(--neutral-bg);color:var(--neutral)}
+
+.table-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:12px;background:var(--surface);margin:14px 0 20px}
+table{border-collapse:collapse;width:100%;font-size:13.5px;font-variant-numeric:tabular-nums}
+th{text-align:left;background:var(--surface-2);color:var(--ink);font-weight:700;font-size:12.5px;letter-spacing:.02em;padding:10px 12px;border-bottom:1px solid var(--line);white-space:nowrap}
+td{padding:9px 12px;border-bottom:1px solid var(--line);vertical-align:top;color:var(--ink-2);min-width:90px}
+tr:last-child td{border-bottom:0}
+tbody tr:hover td{background:var(--accent-soft)}
+
+.code{position:relative;margin:14px 0 20px}
+.code-lang{position:absolute;top:8px;right:12px;font-family:var(--mono);font-size:10.5px;color:var(--code-muted);letter-spacing:.08em;text-transform:uppercase}
+.doc .code pre{background:var(--code-bg);color:var(--code-ink);border-radius:12px;padding:18px;overflow-x:auto;margin:0;font-size:12.8px;line-height:1.6}
+.doc .code pre code{background:none;color:inherit;padding:0;font-size:inherit;overflow-wrap:normal}
+.diagram{overflow-x:auto;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:18px;margin:14px 0 20px}
+.diagram pre{margin:0}
+.diagram pre.mermaid{font-family:var(--mono);font-size:12px;color:var(--muted);white-space:pre;text-align:center}
+.diagram pre.mermaid[data-processed]{color:inherit;white-space:normal}
+.diagram svg{max-width:100%;height:auto}
+
+.callout{border-radius:12px;padding:12px 16px;margin:14px 0;border:1px solid var(--line);background:var(--surface)}
+.callout p{margin:4px 0}
+.callout-warn{background:var(--wait-bg);border-color:transparent}
+.doc .callout-warn p,.doc .callout-warn strong{color:var(--ink)}
+.callout-note{border-left:3px solid var(--accent)}
+
+.doc .task{list-style:none;padding-left:4px}
+.task::before{content:"";display:inline-block;width:14px;height:14px;border:1.5px solid var(--muted);border-radius:4px;margin-right:10px;vertical-align:-2px}
+.task.done::before{background:var(--done);border-color:var(--done);box-shadow:inset 0 0 0 2px var(--surface)}
+footer{margin-top:64px;padding-top:18px;border-top:1px solid var(--line);color:var(--muted);font-size:13px}
+.to-top{position:fixed;right:16px;bottom:calc(env(safe-area-inset-bottom,0px) + 16px);width:40px;height:40px;border-radius:50%;border:1px solid var(--line);background:var(--surface);color:var(--ink);box-shadow:var(--shadow);cursor:pointer;font-size:16px}
+.dl{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0 12px}.dl a{font-size:12px;font-weight:600;text-decoration:none;border:1px solid var(--line);border-radius:999px;padding:3px 10px;color:var(--ink);background:var(--surface)}.dl a:hover{border-color:var(--accent);color:var(--accent)}.dl[hidden]{display:none}
+</style>
+
+<div class="shell">
+  <aside class="sidebar" aria-label="Daftar isi">
+    <a class="back" href="index.html">← Semua dokumen</a>
+    <div class="dl" aria-label="Unduh dokumen"><a href="dokumentasi-asset-offboarding-karyawan.html" download>⬇ HTML</a><a href="dokumentasi-asset-offboarding-karyawan.md" download>⬇ Markdown</a></div>
+    <div class="brand"><span class="brand-mark">KRY02</span>Off Boarding Asset</div>
+    <input class="search" id="nav-search" type="search" placeholder="Cari bagian… (mis. API, status)" aria-label="Cari bagian">
+    <nav class="nav" id="nav"><div class="nav-group"><p>Gambaran & Bisnis</p><a href="#s1" data-sec="s1"><span>01</span>Informasi Dokumen</a><a href="#s3" data-sec="s3"><span>03</span>Quick Overview</a><a href="#s4" data-sec="s4"><span>04</span>Ringkasan Fitur</a><a href="#s5" data-sec="s5"><span>05</span>Tujuan Fitur</a><a href="#s6" data-sec="s6"><span>06</span>Aktor</a><a href="#s7" data-sec="s7"><span>07</span>Hak Akses</a><a href="#s8" data-sec="s8"><span>08</span>Terminologi</a><a href="#s9" data-sec="s9"><span>09</span>Business Rules</a><a href="#s10" data-sec="s10"><span>10</span>Business Flow</a><a href="#s11" data-sec="s11"><span>11</span>Flow Berdasarkan Role</a><a href="#s12" data-sec="s12"><span>12</span>Flow Diagram</a><a href="#s13" data-sec="s13"><span>13</span>Sequence Diagram</a><a href="#s14" data-sec="s14"><span>14</span>Status Transaksi</a><a href="#s15" data-sec="s15"><span>15</span>State Transition</a></div><div class="nav-group"><p>Database</p><a href="#s16" data-sec="s16"><span>16</span>Struktur Database</a><a href="#s17" data-sec="s17"><span>17</span>Relasi Database</a><a href="#s18" data-sec="s18"><span>18</span>Data Dictionary</a><a href="#s19" data-sec="s19"><span>19</span>Database Index</a></div><div class="nav-group"><p>Backend & API</p><a href="#s20" data-sec="s20"><span>20</span>Backend Architecture</a><a href="#s21" data-sec="s21"><span>21</span>Backend Business Logic</a><a href="#s22" data-sec="s22"><span>22</span>Dampak terhadap asset_data</a><a href="#s23" data-sec="s23"><span>23</span>API Documentation</a><a href="#s24" data-sec="s24"><span>24</span>Detail Setiap API</a></div><div class="nav-group"><p>Mobile</p><a href="#s25" data-sec="s25"><span>25</span>Mobile Architecture</a><a href="#s26" data-sec="s26"><span>26</span>Mobile Screen</a><a href="#s27" data-sec="s27"><span>27</span>Mobile → API</a><a href="#s28" data-sec="s28"><span>28</span>API → Mobile</a><a href="#s29" data-sec="s29"><span>29</span>Mapping Mobile → API → Database</a><a href="#s30" data-sec="s30"><span>30</span>Mapping Database → API → Mobile</a></div><div class="nav-group"><p>Validasi, Error & Keamanan</p><a href="#s31" data-sec="s31"><span>31</span>Validation</a><a href="#s32" data-sec="s32"><span>32</span>Error Handling</a><a href="#s33" data-sec="s33"><span>33</span>Audit Trail</a><a href="#s34" data-sec="s34"><span>34</span>Notification</a><a href="#s35" data-sec="s35"><span>35</span>Security</a></div><div class="nav-group"><p>Manual Book</p><a href="#s36" data-sec="s36"><span>36</span>Manual Book User/Admin</a><a href="#s37" data-sec="s37"><span>37</span>Kondisi Button</a></div><div class="nav-group"><p>QA & Risiko</p><a href="#s38" data-sec="s38"><span>38</span>Testing Scenario</a><a href="#s39" data-sec="s39"><span>39</span>Temuan Ketidaksesuaian</a><a href="#s40" data-sec="s40"><span>40</span>Edge Case</a><a href="#s41" data-sec="s41"><span>41</span>Potential Bug / Technical Risk</a></div><div class="nav-group"><p>Referensi Developer</p><a href="#s42" data-sec="s42"><span>42</span>Dependency</a><a href="#s43" data-sec="s43"><span>43</span>Source Code Reference</a><a href="#s44" data-sec="s44"><span>44</span>Developer Notes</a><a href="#s45" data-sec="s45"><span>45</span>End-to-End Traceability</a><a href="#s46" data-sec="s46"><span>46</span>Ringkasan Database Impact</a><a href="#s47" data-sec="s47"><span>47</span>Checklist Implementasi</a><a href="#s48" data-sec="s48"><span>48</span>Changelog</a></div></nav>
+  </aside>
+
+  <main>
+    <p class="back-mobile"><a class="back" href="index.html">← Semua dokumen</a> <div class="dl" aria-label="Unduh dokumen"><a href="dokumentasi-asset-offboarding-karyawan.html" download>⬇ HTML</a><a href="dokumentasi-asset-offboarding-karyawan.md" download>⬇ Markdown</a></div></p>
+    <header class="hero">
+      <div>
+        <p class="eyebrow">Asset Management · Dokumentasi Teknis &amp; Manual Book</p>
+        <h1>Off Boarding Asset Karyawan</h1>
+        <p class="lede">Admin menarik <strong>seluruh</strong> asset yang dipegang seorang karyawan, termasuk asset pinjaman, ke gudang. Karyawan mengonfirmasi kondisi tiap asset, lalu admin menerima penyerahan. Seluruh isi diturunkan dari source code <code>API</code> (Lumen) dan <code>MOBILE</code> (Flutter).</p>
+      </div>
+      <div class="tag" aria-label="Identitas dokumen">
+        <dl>
+          <dt>Kode</dt><dd>KRY02</dd>
+          <dt>Modul</dt><dd>Asset Management</dd>
+          <dt>Versi</dt><dd>1.4 · 12 Okt 2026</dd>
+          <dt>Stack</dt><dd>Lumen 10 · Flutter</dd>
+          <dt>API</dt><dd>11 endpoint</dd>
+        </dl>
+        <div class="barcode" aria-hidden="true"></div>
+        <div class="trx">KRY02-YYYYMMNNN</div>
+      </div>
+    </header>
+
+    <details class="mobile-toc">
+      <summary>Daftar isi</summary>
+      <nav class="nav"><div class="nav-group"><p>Gambaran & Bisnis</p><a href="#s1" data-sec="s1"><span>01</span>Informasi Dokumen</a><a href="#s3" data-sec="s3"><span>03</span>Quick Overview</a><a href="#s4" data-sec="s4"><span>04</span>Ringkasan Fitur</a><a href="#s5" data-sec="s5"><span>05</span>Tujuan Fitur</a><a href="#s6" data-sec="s6"><span>06</span>Aktor</a><a href="#s7" data-sec="s7"><span>07</span>Hak Akses</a><a href="#s8" data-sec="s8"><span>08</span>Terminologi</a><a href="#s9" data-sec="s9"><span>09</span>Business Rules</a><a href="#s10" data-sec="s10"><span>10</span>Business Flow</a><a href="#s11" data-sec="s11"><span>11</span>Flow Berdasarkan Role</a><a href="#s12" data-sec="s12"><span>12</span>Flow Diagram</a><a href="#s13" data-sec="s13"><span>13</span>Sequence Diagram</a><a href="#s14" data-sec="s14"><span>14</span>Status Transaksi</a><a href="#s15" data-sec="s15"><span>15</span>State Transition</a></div><div class="nav-group"><p>Database</p><a href="#s16" data-sec="s16"><span>16</span>Struktur Database</a><a href="#s17" data-sec="s17"><span>17</span>Relasi Database</a><a href="#s18" data-sec="s18"><span>18</span>Data Dictionary</a><a href="#s19" data-sec="s19"><span>19</span>Database Index</a></div><div class="nav-group"><p>Backend & API</p><a href="#s20" data-sec="s20"><span>20</span>Backend Architecture</a><a href="#s21" data-sec="s21"><span>21</span>Backend Business Logic</a><a href="#s22" data-sec="s22"><span>22</span>Dampak terhadap asset_data</a><a href="#s23" data-sec="s23"><span>23</span>API Documentation</a><a href="#s24" data-sec="s24"><span>24</span>Detail Setiap API</a></div><div class="nav-group"><p>Mobile</p><a href="#s25" data-sec="s25"><span>25</span>Mobile Architecture</a><a href="#s26" data-sec="s26"><span>26</span>Mobile Screen</a><a href="#s27" data-sec="s27"><span>27</span>Mobile → API</a><a href="#s28" data-sec="s28"><span>28</span>API → Mobile</a><a href="#s29" data-sec="s29"><span>29</span>Mapping Mobile → API → Database</a><a href="#s30" data-sec="s30"><span>30</span>Mapping Database → API → Mobile</a></div><div class="nav-group"><p>Validasi, Error & Keamanan</p><a href="#s31" data-sec="s31"><span>31</span>Validation</a><a href="#s32" data-sec="s32"><span>32</span>Error Handling</a><a href="#s33" data-sec="s33"><span>33</span>Audit Trail</a><a href="#s34" data-sec="s34"><span>34</span>Notification</a><a href="#s35" data-sec="s35"><span>35</span>Security</a></div><div class="nav-group"><p>Manual Book</p><a href="#s36" data-sec="s36"><span>36</span>Manual Book User/Admin</a><a href="#s37" data-sec="s37"><span>37</span>Kondisi Button</a></div><div class="nav-group"><p>QA & Risiko</p><a href="#s38" data-sec="s38"><span>38</span>Testing Scenario</a><a href="#s39" data-sec="s39"><span>39</span>Temuan Ketidaksesuaian</a><a href="#s40" data-sec="s40"><span>40</span>Edge Case</a><a href="#s41" data-sec="s41"><span>41</span>Potential Bug / Technical Risk</a></div><div class="nav-group"><p>Referensi Developer</p><a href="#s42" data-sec="s42"><span>42</span>Dependency</a><a href="#s43" data-sec="s43"><span>43</span>Source Code Reference</a><a href="#s44" data-sec="s44"><span>44</span>Developer Notes</a><a href="#s45" data-sec="s45"><span>45</span>End-to-End Traceability</a><a href="#s46" data-sec="s46"><span>46</span>Ringkasan Database Impact</a><a href="#s47" data-sec="s47"><span>47</span>Checklist Implementasi</a><a href="#s48" data-sec="s48"><span>48</span>Changelog</a></div></nav>
+    </details>
+
+    <section class="overview" aria-label="Ringkasan">
+      <div class="panel">
+        <h3>Ringkasan dalam 1 menit</h3>
+        <p class="sub">Berbeda dengan Retur, Off Boarding <strong>dimulai admin</strong> dan admin <strong>tidak memilih</strong> asset: semua asset yang dipegang karyawan otomatis ikut.</p>
+        <div class="three">
+          <div class="fact"><b>Siapa</b><p><strong>Admin Asset</strong> membuat, menjadwalkan, dan menerima. <strong>Karyawan</strong> mengisi kondisi Normal / Rusak tiap asset.</p></div>
+          <div class="fact"><b>Draft dulu boleh</b><p>Admin dapat <strong>Simpan Draft</strong> tanpa jadwal. Draft tidak terlihat karyawan, tetapi <strong>sudah mengunci</strong> asset dari flow lain.</p></div>
+          <div class="fact"><b>Asset pinjaman</b><p>Otomatis dibuatkan <strong>pengembalian pinjaman KRY05</strong> sebagai transaksi child yang ikut bergerak bersama off boarding.</p></div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h3>Siklus off boarding</h3>
+        <p class="sub">Status transaksi (<code>status_approval</code>) dan posisi asset di setiap langkah.</p>
+        <div class="flow">
+          <div class="step"><span class="badge b-draft">Draft</span><span class="who">Admin: Simpan Draft</span><p>Karyawan dipilih, jadwal opsional. Item asset sudah dibuat.</p><span class="db">asset tidak berubah · terkunci</span></div>
+          <div class="step"><span class="badge b-wait">Menunggu Diterima</span><span class="who">Admin: Submit ke Karyawan</span><p>Jadwal penyerahan wajib. Child pengembalian pinjaman dibuat.</p><span class="db">pengajuan · notif karyawan</span></div>
+          <div class="step"><span class="badge b-draft">Dikonfirmasi</span><span class="who">Karyawan: Konfirmasi Off Boarding</span><p>Kondisi Normal / Rusak (+ keterangan) untuk setiap asset.</p><span class="db">dikonfirmasi · notif admin</span></div>
+          <div class="step"><span class="badge b-done">Selesai</span><span class="who">Admin: Terima Penyerahan Asset</span><p>Semua asset kembali ke gudang, peminjaman aktif ikut selesai.</p><span class="db">tersedia / rusak @gudang · asset_log</span></div>
+        </div>
+        <div class="loop"><span class="badge b-wait">Ubah Jadwal</span><span>Admin dapat mengubah jadwal saat <strong>pengajuan</strong> atau <strong>dikonfirmasi</strong>; status kembali ke pengajuan dan karyawan harus konfirmasi ulang. Tidak ada status ditolak/batal.</span></div>
+      </div>
+
+      <div class="panel">
+        <h3>Mulai dari sini sesuai peran</h3>
+        <p class="sub">Lompat langsung ke bagian yang paling relevan.</p>
+        <div class="roles">
+          <div class="role"><h4>Business Analyst / PM</h4><p>Aturan bisnis, siklus, dan status.</p><div class="links"><a href="#s3">§3</a><a href="#s9">§9 Rules</a><a href="#s10">§10 Flow</a><a href="#s14">§14 Status</a></div></div>
+          <div class="role"><h4>Backend Developer</h4><p>Transaksi child, sumber asset, dan kontrak API.</p><div class="links"><a href="#s21">§21 Logic</a><a href="#s22">§22 asset_data</a><a href="#s24">§24 API</a></div></div>
+          <div class="role"><h4>Mobile Developer</h4><p>Bloc, route, screen, dan mapping field.</p><div class="links"><a href="#s25">§25</a><a href="#s26">§26 Screen</a><a href="#s29">§29 Mapping</a></div></div>
+          <div class="role"><h4>QA / Tester</h4><p>12 test otomatis, 24 skenario, edge case, risiko.</p><div class="links"><a href="#s38">§38 Test</a><a href="#s40">§40 Edge</a><a href="#s41">§41 Risk</a></div></div>
+          <div class="role"><h4>Technical Support</h4><p>Pesan error, audit trail, dan notifikasi.</p><div class="links"><a href="#s32">§32 Error</a><a href="#s33">§33 Audit</a><a href="#s34">§34 Notif</a></div></div>
+          <div class="role"><h4>User / Admin Asset</h4><p>Langkah membuat, mengonfirmasi, dan menerima.</p><div class="links"><a href="#s36">§36 Manual Book</a><a href="#s37">§37 Tombol</a></div></div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h3>Perlu perhatian</h3>
+        <p class="sub">Temuan terpenting dari analisis source. Detail lengkap di <a href="#s39">§39</a> dan <a href="#s41">§41</a>.</p>
+        <ul class="attention">
+          <li><span class="sev sev-h">TINGGI</span><span>Konfirmasi hanya bisa oleh karyawan <strong>aktif</strong>. Bila status karyawan dinonaktifkan lebih dulu, off boarding <strong>macet</strong> dan admin tidak punya jalan lain. <a href="#s41">RISK-001</a></span></li>
+          <li><span class="sev sev-m">SEDANG</span><span>Tidak ada <strong>pembatalan</strong> setelah submit, dan <strong>draft ikut mengunci</strong> asset dari flow lain. <a href="#s41">RISK-003/005</a></span></li>
+          <li><span class="sev sev-m">SEDANG</span><span>Kondisi asset <strong>sepenuhnya dari karyawan</strong>; admin tidak bisa mengoreksi saat menerima. <a href="#s41">RISK-004</a></span></li>
+          <li><span class="sev sev-ok">SELESAI</span><span>Response 500 saat simpan tidak lagi menyertakan pesan exception mentah (diperbaiki 12 Okt 2026). <a href="#s39">INC-01</a></span></li>
+        </ul>
+      </div>
+    </section>
+
+    <article class="doc">
+<div class="group-divider" id="g1"><span>Gambaran & Bisnis</span></div><h2 id="s1"><span class="sec-no">01</span>Informasi Dokumen</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Informasi</th>
+<th>Nilai</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Nama Fitur</td>
+<td>Off Boarding Asset Karyawan (UI: <strong>"Off Boarding Asset"</strong>; menu karyawan <strong>"Off Board"</strong>)</td>
+</tr>
+<tr>
+<td>Kode Fitur</td>
+<td><strong>KRY02</strong> (nomor transaksi <code>KRY02-YYYYMMNNN</code>)</td>
+</tr>
+<tr>
+<td>Modul</td>
+<td>Asset Management</td>
+</tr>
+<tr>
+<td>Backend</td>
+<td>Laravel <strong>Lumen ^10.0</strong>, PHP ^8.1, JWT, Query Builder</td>
+</tr>
+<tr>
+<td>Database</td>
+<td><code>API/diagram-asset.dbml</code> + migration <code>2026_09_22_000001_create_asset_offboarding_tables.php</code>. ⚠️ Asumsi: MySQL/MariaDB</td>
+</tr>
+<tr>
+<td>Mobile</td>
+<td>Flutter (<code>professional_flutter_3_35</code>), <code>flutter_bloc</code>, <code>dio</code></td>
+</tr>
+<tr>
+<td>Web</td>
+<td>⚠️ Belum ditemukan: tidak ada source web di workspace</td>
+</tr>
+<tr>
+<td>Test otomatis</td>
+<td><code>API/tests/Asset/AssetOffboardingModelTest.php</code>, <code>AssetOffboardingRouteTest.php</code>, <code>OffboardingStatusMigrationTest.php</code>, <code>OffboardingLegacyStatusMigrationTest.php</code></td>
+</tr>
+<tr>
+<td>Versi Dokumen</td>
+<td>1.4</td>
+</tr>
+<tr>
+<td>Tanggal Dokumentasi</td>
+<td>2026-10-12</td>
+</tr>
+<tr>
+<td>Dokumen terkait</td>
+<td>Onboarding (KRY01), Request/Penambahan, Retur (KRY04), Peminjaman (KRY05), Kerusakan (KRY06), Upgrade (KRY03)</td>
+</tr>
+</tbody>
+</table></div>
+<hr />
+<h2 id="s3"><span class="sec-no">03</span>Quick Overview</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Item</th>
+<th>Informasi</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Feature</td>
+<td>Off Boarding Asset Karyawan — penarikan <strong>seluruh</strong> asset yang dipegang karyawan ke gudang</td>
+</tr>
+<tr>
+<td>Module</td>
+<td>Asset Management</td>
+</tr>
+<tr>
+<td>Actor</td>
+<td>Admin Asset (pembuat &amp; penerima), Karyawan (konfirmasi kondisi), System</td>
+</tr>
+<tr>
+<td>Main Transaction</td>
+<td><code>asset_trx_offboarding_karyawan</code></td>
+</tr>
+<tr>
+<td>Detail Transaction</td>
+<td><code>asset_trx_offboarding_karyawan_item</code> (satu baris per asset yang dipegang)</td>
+</tr>
+<tr>
+<td>Relasi child</td>
+<td><code>asset_trx_offboarding_relasi</code> → transaksi <strong>pengembalian pinjaman</strong> (<code>asset_trx_peminjaman_karyawan</code>, <code>jenis_status = pengembalian</code>, KRY05)</td>
+</tr>
+<tr>
+<td>Asset Master</td>
+<td><code>asset_data</code></td>
+</tr>
+<tr>
+<td>Log</td>
+<td><code>asset_log</code>: <code>offboarding_karyawan</code> (asset tetap) dan <code>pengembalian_karyawan</code> (asset pinjaman)</td>
+</tr>
+<tr>
+<td>Status</td>
+<td><code>draft → pengajuan → dikonfirmasi → selesai</code> (enum <code>OffboardingStatus</code>)</td>
+</tr>
+<tr>
+<td>Inisiator</td>
+<td><strong>Admin</strong> (bukan karyawan)</td>
+</tr>
+<tr>
+<td>Konfirmasi kondisi</td>
+<td><strong>Karyawan</strong> mengisi Normal/Rusak per asset</td>
+</tr>
+<tr>
+<td>Penyelesaian</td>
+<td><strong>Admin</strong> menekan <strong>Terima Penyerahan Asset</strong></td>
+</tr>
+<tr>
+<td>API</td>
+<td>8 endpoint admin + 3 endpoint karyawan</td>
+</tr>
+<tr>
+<td>Mobile Screen</td>
+<td>Admin: Off Boarding Asset (list), Tambah Off Boarding Asset (form/draft), Detail. Karyawan: Off Boarding Asset (list), Detail + banner di Asset Saya</td>
+</tr>
+</tbody>
+</table></div>
+<div class="code"><span class="code-lang">Alur</span><pre><code class="language-text">Admin: Pilih Karyawan + Jadwal Penyerahan (tanggal, jam) + Catatan
+   ├─ Simpan Draft ─────────────────────────────────────────── draft (item sudah dibuat, asset &quot;terkunci&quot;)
+   └─ Submit ke Karyawan                                       pengajuan
+        • item = SEMUA asset yang dipegang karyawan (tetap + pinjaman)
+        • asset pinjaman → dibuatkan transaksi pengembalian KRY05 (child) otomatis
+      │
+      ▼  (Admin dapat Ubah Jadwal → kembali ke pengajuan)
+Karyawan: isi kondisi tiap asset Normal / Rusak (+ keterangan) → Konfirmasi Off Boarding
+                                                               dikonfirmasi (child pengembalian → dikonfirmasi)
+      │
+      ▼
+Admin: Terima Penyerahan Asset                                 selesai
+   asset → gudang pilihan admin PER ASSET (tersedia / rusak) + asset_log
+   child pengembalian → selesai, peminjaman asal → selesai bila semua asset kembali
+</code></pre></div>
+<hr />
+<h2 id="s4"><span class="sec-no">04</span>Ringkasan Fitur</h2>
+<p>Off Boarding dipakai Admin Asset untuk <strong>menarik seluruh asset</strong> yang sedang dipegang seorang karyawan — misalnya saat karyawan berhenti bekerja. Berbeda dengan Retur (dipilih per asset oleh karyawan), Off Boarding:</p>
+<ul>
+<li><strong>Dimulai admin</strong> dan otomatis mencakup <strong>semua</strong> asset yang <code>pemegang_asset = karyawan</code> milik orang tersebut, termasuk asset <strong>pinjaman</strong>.</li>
+<li>Dapat disimpan sebagai <strong>Draft</strong> (jadwal opsional) sebelum dikirim ke karyawan.</li>
+<li>Untuk asset pinjaman, sistem membuat <strong>transaksi pengembalian pinjaman (KRY05) sebagai child</strong> yang ikut bergerak bersama status off boarding, sehingga modul Peminjaman tetap konsisten.</li>
+<li><strong>Karyawan</strong> yang menilai kondisi tiap asset (Normal/Rusak + keterangan); <strong>admin</strong> menutup transaksi dengan menerima asset secara fisik.</li>
+</ul>
+<p>⚠️ Belum ditemukan: keterkaitan dengan proses HR (misalnya perubahan status karyawan menjadi resign). Off Boarding <strong>tidak</strong> mengubah <code>data_karyawan</code>.</p>
+<hr />
+<h2 id="s5"><span class="sec-no">05</span>Tujuan Fitur</h2>
+<h3>5.1 Tujuan Bisnis (diturunkan dari kode)</h3>
+<ul>
+<li>Memastikan tidak ada asset perusahaan yang tertinggal pada karyawan yang keluar.</li>
+<li>Mendokumentasikan kondisi setiap asset saat diserahkan.</li>
+<li>Menjadwalkan waktu penyerahan yang disepakati.</li>
+<li>Menutup peminjaman aktif karyawan secara otomatis.</li>
+</ul>
+<h3>5.2 Tujuan Sistem</h3>
+<ul>
+<li>Membuat snapshot seluruh asset yang dipegang karyawan beserta <strong>sumber transaksinya</strong> (onboarding/request/retur/peminjaman).</li>
+<li>Mencegah asset diproses di flow lain selama off boarding aktif.</li>
+<li>Memindahkan asset ke gudang dan mencatat <code>asset_log</code>.</li>
+<li>Menjaga konsistensi dengan modul Peminjaman melalui transaksi child.</li>
+</ul>
+<hr />
+<h2 id="s6"><span class="sec-no">06</span>Aktor</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Aktor</th>
+<th>Role</th>
+<th>Fungsi</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Admin Asset</td>
+<td><code>asset_admin</code> + karyawan aktif</td>
+<td>Membuat/mengubah/menghapus draft, submit, ubah jadwal, menerima penyerahan</td>
+</tr>
+<tr>
+<td>Karyawan</td>
+<td>User login aktif, pemegang asset</td>
+<td>Melihat off boarding miliknya, mengisi kondisi asset, konfirmasi</td>
+</tr>
+<tr>
+<td>System</td>
+<td>Backend + FCM</td>
+<td>Validasi, lock, penomoran, deteksi sumber asset, transaksi child, update asset, log, notifikasi</td>
+</tr>
+</tbody>
+</table></div>
+<hr />
+<h2 id="s7"><span class="sec-no">07</span>Hak Akses</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Action</th>
+<th style="text-align: center;">Admin Asset</th>
+<th style="text-align: center;">Karyawan</th>
+<th>Keterangan</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Melihat semua off boarding (termasuk draft)</td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: center;">❌</td>
+<td><code>/asset/offboarding-karyawan</code></td>
+</tr>
+<tr>
+<td>Melihat off boarding sendiri</td>
+<td style="text-align: center;">–</td>
+<td style="text-align: center;">✅</td>
+<td>Draft <strong>tidak</strong> terlihat karyawan</td>
+</tr>
+<tr>
+<td>Membuat off boarding / draft</td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: center;">❌</td>
+<td></td>
+</tr>
+<tr>
+<td>Mengubah / menghapus draft</td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: center;">❌</td>
+<td>Hanya status <code class="chip chip-draft">draft</code></td>
+</tr>
+<tr>
+<td>Membatalkan off boarding yang sudah disubmit</td>
+<td style="text-align: center;">❌</td>
+<td style="text-align: center;">❌</td>
+<td>⚠️ Belum ditemukan (RISK-003)</td>
+</tr>
+<tr>
+<td>Ubah jadwal penyerahan</td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: center;">❌</td>
+<td>Status <code>pengajuan</code> / <code class="chip chip-done">dikonfirmasi</code></td>
+</tr>
+<tr>
+<td>Konfirmasi kondisi asset</td>
+<td style="text-align: center;">❌</td>
+<td style="text-align: center;">✅</td>
+<td>Status <code>pengajuan</code>, karyawan harus <strong>aktif</strong></td>
+</tr>
+<tr>
+<td>Terima Penyerahan Asset</td>
+<td style="text-align: center;">✅</td>
+<td style="text-align: center;">❌</td>
+<td>Status <code class="chip chip-done">dikonfirmasi</code></td>
+</tr>
+<tr>
+<td>Mengubah kondisi yang diisi karyawan</td>
+<td style="text-align: center;">❌</td>
+<td style="text-align: center;">–</td>
+<td>⚠️ Belum ditemukan (RISK-004)</td>
+</tr>
+</tbody>
+</table></div>
+<hr />
+<h2 id="s8"><span class="sec-no">08</span>Terminologi</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Istilah</th>
+<th>Arti di sistem</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Off Boarding / Off Board</td>
+<td>Transaksi penarikan seluruh asset karyawan (KRY02)</td>
+</tr>
+<tr>
+<td>Jadwal Penyerahan</td>
+<td><code>tgl_offboarding</code> + <code>jam_offboarding</code></td>
+</tr>
+<tr>
+<td>Draft</td>
+<td>Off boarding tersimpan, belum dikirim ke karyawan; jadwal boleh kosong</td>
+</tr>
+<tr>
+<td>Off boarding aktif</td>
+<td>Status <code class="chip chip-draft">draft</code>, <code>pengajuan</code>, atau <code class="chip chip-done">dikonfirmasi</code></td>
+</tr>
+<tr>
+<td><code>jenis_transaksi</code> item</td>
+<td><code>onboarding</code> (asset tetap — termasuk hasil request/penambahan/retur) atau <code>peminjaman</code></td>
+</tr>
+<tr>
+<td>Sumber transaksi</td>
+<td><code>id_transaksi_sumber</code> + <code>tabel_transaksi_sumber</code>: transaksi yang membuat asset dipegang karyawan</td>
+</tr>
+<tr>
+<td>Transaksi child</td>
+<td>Header pengembalian pinjaman KRY05 yang dibuat otomatis oleh off boarding, dicatat di <code>asset_trx_offboarding_relasi</code></td>
+</tr>
+<tr>
+<td><code>status_item</code></td>
+<td><code class="chip chip-wait">belum_dicek</code> → <code class="chip chip-done">normal</code> / <code class="chip chip-bad">rusak</code></td>
+</tr>
+</tbody>
+</table></div>
+<hr />
+<h2 id="s9"><span class="sec-no">09</span>Business Rules</h2>
+<h3>BR-001 — Hanya admin yang membuat &amp; menerima</h3>
+<p>Semua aksi admin memanggil <code>requireAdmin</code> → "Pengguna tidak terdaftar sebagai admin asset."</p>
+<h3>BR-002 — Karyawan harus aktif dan memegang asset</h3>
+<p>Saat simpan/submit: "Karyawan tidak ditemukan atau tidak aktif." / "Karyawan tidak memiliki asset yang sedang dipegang." Opsi karyawan hanya menampilkan karyawan aktif yang memegang ≥1 asset dan belum punya off boarding aktif.</p>
+<h3>BR-003 — Satu off boarding aktif per karyawan</h3>
+<p>Status aktif = <code class="chip chip-draft">draft</code>, <code>pengajuan</code>, <code class="chip chip-done">dikonfirmasi</code> → "Karyawan masih memiliki offboarding aktif."</p>
+<h3>BR-004 — Item = seluruh asset yang dipegang</h3>
+<p><code>employeeAssets</code>: semua <code>asset_data</code> dengan <code>pemegang_asset = karyawan</code> dan <code>id_pemegang_asset = id_karyawan</code> (tanpa filter <code>status_asset</code>). Admin <strong>tidak memilih</strong> asset.</p>
+<h3>BR-005 — Asset tidak boleh sedang diproses flow lain (<code>assertNoCrossFlow</code>)</h3>
+<p>Ditolak bila ada asset yang:
+- berada di <strong>retur aktif</strong> (<code>status_transaksi = proses</code> dan <code>status_approval != ditolak</code>), atau
+- berada di <strong>pengembalian pinjaman</strong> berstatus <code>pengajuan</code>/<code class="chip chip-done">dikonfirmasi</code>.</p>
+<p>→ "Satu atau beberapa asset sedang diproses pada flow lain."</p>
+<p>Selain itu (sejak v1.1) ditolak bila ada asset yang:
+- berada di <strong>upgrade aktif</strong> (<code>hasActiveUpgradeAsset</code>) → "Satu atau beberapa asset sedang diproses pada upgrade."
+- berada di <strong>laporan kerusakan aktif</strong> (<code>hasActiveRusakAsset</code>) → "Satu atau beberapa asset sedang diproses pada laporan kerusakan."
+- berada di <strong>pemeliharaan terjadwal aktif</strong> PML01 (<code>hasActivePemeliharaanAsset</code>, fase ≠ <code>selesai</code>) → "Satu atau beberapa asset sedang diproses pada pemeliharaan."</p>
+<p>Karena <code>employeeAssets</code> tidak memfilter status, asset <code>dalam_perbaikan</code> (sedang di teknisi lewat Upgrade atau PML01 mekanisme <em>diserahkan</em>) ikut tercek.</p>
+<h3>BR-006 — Setiap asset harus punya sumber transaksi</h3>
+<p><code>sourceForAsset</code> mencari berurutan: peminjaman aktif (bila <code>dipinjam</code>) → <code>asset_log</code> terakhir ke karyawan → request/penambahan dikonfirmasi → onboarding dikonfirmasi → peminjaman aktif → fallback <code>asset_data</code> (data legacy). Pesan bila gagal: "Asset {nama} tidak memiliki sumber transaksi yang valid." (⚠️ praktis tidak terjadi karena ada fallback).</p>
+<h3>BR-007 — Jadwal wajib saat submit, opsional saat draft</h3>
+<p>Controller: <code>tgl_offboarding</code> (Y-m-d) &amp; <code>jam_offboarding</code> (H:i) <code>required</code> bila <code>is_draft = false</code>. Model: "Jadwal offboarding wajib diisi saat pengajuan." Backend <strong>tidak</strong> memvalidasi tanggal ≥ hari ini (mobile membatasi mulai hari ini).</p>
+<h3>BR-008 — Draft hanya bisa diubah/dihapus saat berstatus draft</h3>
+<p>→ "Hanya offboarding berstatus draft yang dapat diubah." / "…dapat dihapus." Saat diubah, <strong>seluruh item dibangun ulang</strong> dari asset yang dipegang saat itu.</p>
+<h3>BR-009 — Asset pinjaman menjadi transaksi child</h3>
+<p>Saat submit (bukan draft), per peminjaman sumber dibuat header pengembalian KRY05 (<code>jenis_status = pengembalian</code>, <code>status = pengajuan</code>, <code>keterangan_serah_terima = "Dibuat otomatis dari offboarding {id}"</code>) + item + baris <code>asset_trx_offboarding_relasi</code>. Pengembalian child <strong>disembunyikan</strong> dari list/pending admin Peminjaman dan <strong>tidak dapat</strong> dikonfirmasi lewat modul Peminjaman ("Pengembalian ini diproses melalui offboarding.").</p>
+<h3>BR-010 — Ubah jadwal mengembalikan status ke pengajuan</h3>
+<p>Status <code>pengajuan</code>/<code class="chip chip-done">dikonfirmasi</code> → update jadwal, status → <code>pengajuan</code>, approval dikosongkan, child direset ke <code>pengajuan</code> dan kondisi item → <code class="chip chip-wait">belum_dicek</code> (lihat INC-04). Status lain → "Jadwal offboarding sudah tidak dapat diubah."</p>
+<h3>BR-011 — Konfirmasi karyawan</h3>
+<ul>
+<li>Header harus milik karyawan dan berstatus <code>pengajuan</code> → "Offboarding tidak menunggu konfirmasi."</li>
+<li>Daftar asset yang dipegang saat ini harus <strong>sama persis</strong> dengan item → "Daftar asset yang dipegang karyawan sudah berubah."</li>
+<li>Semua item wajib diisi → "Seluruh kondisi asset offboarding wajib diisi."</li>
+<li>Kondisi <code class="chip chip-done">normal</code>/<code class="chip chip-bad">rusak</code>; rusak wajib keterangan → "Keterangan kerusakan asset wajib diisi."</li>
+<li>Child pengembalian: item <code>normal → disetujui</code>, <code>rusak → ditolak</code> (+<code>ket_tolak</code> = keterangan rusak); header child → <code class="chip chip-done">dikonfirmasi</code>.</li>
+<li>Header → <code class="chip chip-done">dikonfirmasi</code>, <code>user_approval</code>/<code>tgl_approval</code> = karyawan.</li>
+</ul>
+<h3>BR-012 — Penerimaan admin</h3>
+<ul>
+<li>Status harus <code class="chip chip-done">dikonfirmasi</code> → "Offboarding belum dikonfirmasi karyawan."</li>
+<li>Daftar asset dipegang harus tetap sama; semua item <code class="chip chip-done">normal</code>/<code class="chip chip-bad">rusak</code> → "Kondisi asset belum dikonfirmasi karyawan."</li>
+<li>Asset tetap: <code class="chip chip-bad">rusak</code> → <code>status_asset = rusak</code> + <code>ket_rusak</code>; <code class="chip chip-done">normal</code> → <code class="chip chip-neutral">tersedia</code>; <code>pemegang = gudang</code>; log <code>offboarding_karyawan</code>.</li>
+<li>Asset pinjaman: diproses via child → asset ke gudang (tersedia/rusak), log <code>pengembalian_karyawan</code>, child → <code>selesai</code>.</li>
+<li><strong>Lokasi gudang tujuan dipilih admin per asset</strong> (v1.2): <code>items[]</code> pada request wajib memuat <strong>setiap</strong> item tepat satu kali dengan <code>id_asset_lokasi_m</code> bertipe <code>gudang</code> pada company yang sama → "Lokasi gudang tujuan setiap asset wajib dipilih." / "Lokasi gudang tujuan tidak valid." Lokasi ditulis ke <code>asset_data.id_asset_lokasi_m</code> dan <code>asset_trx_offboarding_karyawan_item.id_asset_lokasi_m_tujuan</code>; asset pinjaman memakai pemetaan yang sama lewat child.</li>
+<li>Peminjaman sumber → <code>selesai</code> bila tidak ada lagi asset yang dipegang karyawan.</li>
+<li>Header → <code>selesai</code>.</li>
+</ul>
+<h3>BR-013 — Off boarding aktif mengunci asset di modul lain</h3>
+<p><code>hasActiveOffboardingAsset</code> (status draft/pengajuan/dikonfirmasi) dipakai oleh: Retur (ajukan), Peminjaman (ajukan pengembalian), Kerusakan, Upgrade → "…sedang diproses pada offboarding." <strong>Draft pun mengunci</strong> (RISK-005).</p>
+<h3>BR-014 — Penomoran</h3>
+<p>Header/item/relasi: <code>id_company + YYYYMM + 3 digit</code>; <code>no_trx = KRY02-YYYYMMNNN</code> (unique per company). Child pengembalian memakai penomoran KRY05. Log: 5 digit.</p>
+<hr />
+<h2 id="s10"><span class="sec-no">10</span>Business Flow</h2>
+<div class="code"><span class="code-lang">Alur</span><pre><code class="language-text">1. Admin: Asset Karyawan → Off Boarding → (+) Tambah Off Boarding Asset
+   → Pilih Karyawan → Jadwal Serah Terima (Tanggal &amp; Jam Penyerahan) → Catatan Tambahan
+   → Simpan Draft                         [draft · tanpa notifikasi]
+   → Submit ke Karyawan                   [pengajuan · child pengembalian pinjaman · notif karyawan]
+2. (Opsional) Admin: Ubah Jadwal Penyerahan  [kembali ke pengajuan · notif karyawan]
+3. Karyawan: banner Asset Saya / menu Off Board → Detail
+   → isi kondisi tiap asset Normal / Rusak (+ Keterangan Kerusakan)
+   → Konfirmasi Off Boarding               [dikonfirmasi · notif admin]
+4. Serah terima fisik sesuai jadwal
+5. Admin: Detail → Terima Penyerahan Asset  [selesai · asset ke gudang · asset_log · notif karyawan]
+</code></pre></div>
+<hr />
+<h2 id="s11"><span class="sec-no">11</span>Flow Berdasarkan Role</h2>
+<h3>11.1 Admin Asset</h3>
+<ol>
+<li>Halaman <strong>Asset Karyawan</strong> → aksi <strong>Off Boarding</strong> atau panel <strong>"Off Boarding Perlu Diproses"</strong> (berisi draft → tombol <strong>Lanjutkan Draft</strong>, dan yang sudah dikonfirmasi → tombol <strong>Terima Asset</strong>).</li>
+<li><strong>Tambah Off Boarding Asset</strong> → <strong>Simpan Draft</strong> atau <strong>Submit ke Karyawan</strong>.</li>
+<li>Draft dapat dibuka lagi (edit) atau dihapus (<strong>Hapus Draft</strong>).</li>
+<li>Detail: <strong>Ubah Jadwal Penyerahan</strong> (pengajuan/dikonfirmasi), <strong>Terima Penyerahan Asset</strong> (dikonfirmasi).</li>
+</ol>
+<h3>11.2 Karyawan</h3>
+<ol>
+<li><strong>Asset Saya</strong> menampilkan banner <strong>Off Boarding Asset</strong> ("Periksa jadwal penyerahan dan konfirmasi setelah Anda siap menyerahkan seluruh asset.") atau menu <strong>Off Board</strong>.</li>
+<li>Detail → pilih kondisi <strong>Normal/Rusak</strong> setiap asset → <strong>Konfirmasi Off Boarding</strong>.</li>
+</ol>
+<h3>11.3 Approver</h3>
+<p>Tidak ada approval terpisah; "konfirmasi" dilakukan karyawan, "penerimaan" oleh admin.</p>
+<h3>11.4 System</h3>
+<p>Deteksi asset &amp; sumber, cek flow lain, buat/reset/konfirmasi/finalisasi child pengembalian, update asset &amp; log, notifikasi.</p>
+<hr />
+<h2 id="s12"><span class="sec-no">12</span>Flow Diagram</h2>
+<div class="diagram"><pre class="mermaid">flowchart TD
+    A[Admin pilih karyawan + jadwal] --&gt; B{Simpan sebagai}
+    B --&gt;|Draft| C[draft, item dibuat, tanpa notif]
+    C --&gt;|Edit| B
+    C --&gt;|Hapus Draft| Z[Dihapus]
+    B --&gt;|Submit ke Karyawan| D{Validasi}
+    D --&gt;|Gagal| X[Pesan error]
+    D --&gt;|OK| E[pengajuan, notif karyawan]
+    E --&gt; F{Ada asset pinjaman?}
+    F --&gt;|Ya| G[Buat child pengembalian KRY05 status pengajuan]
+    F --&gt;|Tidak| H[Menunggu karyawan]
+    G --&gt; H
+    H --&gt;|Admin ubah jadwal| E
+    H --&gt; I[Karyawan isi Normal atau Rusak per asset]
+    I --&gt; J[dikonfirmasi, child dikonfirmasi, notif admin]
+    J --&gt;|Admin ubah jadwal| E
+    J --&gt; K[Admin: Terima Penyerahan Asset]
+    K --&gt; L[Asset tetap ke gudang, log offboarding_karyawan]
+    K --&gt; M[Asset pinjaman ke gudang via child, log pengembalian_karyawan]
+    L --&gt; N[selesai, notif karyawan]
+    M --&gt; N
+</pre></div>
+<hr />
+<h2 id="s13"><span class="sec-no">13</span>Sequence Diagram</h2>
+<div class="diagram"><pre class="mermaid">sequenceDiagram
+    actor A as Admin
+    actor K as Karyawan
+    participant M as Mobile
+    participant CA as AssetAdminOffboarding_c
+    participant CK as AssetKaryawanOffboarding_c
+    participant O as AssetOffboardingKaryawan_m
+    participant DB
+    participant N as AssetNotification
+
+    A-&gt;&gt;M: Pilih karyawan, jadwal, Submit ke Karyawan
+    M-&gt;&gt;CA: POST /asset/offboarding-karyawan (is_draft false)
+    CA-&gt;&gt;O: store()
+    O-&gt;&gt;DB: lock company, cek admin, karyawan aktif, tidak ada offboarding aktif
+    O-&gt;&gt;DB: ambil semua asset dipegang karyawan (FOR UPDATE), cek retur dan pengembalian aktif
+    O-&gt;&gt;DB: INSERT header pengajuan + item (sumber transaksi)
+    O-&gt;&gt;DB: INSERT child pengembalian KRY05 + relasi (asset pinjaman)
+    CA-&gt;&gt;N: offboarding.diajukan (karyawan)
+    K-&gt;&gt;M: Isi kondisi, Konfirmasi Off Boarding
+    M-&gt;&gt;CK: POST /asset/karyawan/offboarding/{id}/konfirmasi
+    CK-&gt;&gt;O: confirm()
+    O-&gt;&gt;DB: cek daftar asset tidak berubah, UPDATE item kondisi
+    O-&gt;&gt;DB: UPDATE child item dan header dikonfirmasi, UPDATE header dikonfirmasi
+    CK-&gt;&gt;N: offboarding.dikonfirmasi (admin)
+    A-&gt;&gt;M: Terima Penyerahan Asset
+    M-&gt;&gt;CA: POST /asset/offboarding-karyawan/{id}/terima
+    CA-&gt;&gt;O: receive()
+    O-&gt;&gt;DB: UPDATE asset_data gudang tersedia atau rusak
+    O-&gt;&gt;DB: INSERT asset_log, child selesai, peminjaman asal selesai
+    O-&gt;&gt;DB: UPDATE header selesai
+    CA-&gt;&gt;N: offboarding.diterima (karyawan)
+</pre></div>
+<hr />
+<h2 id="s14"><span class="sec-no">14</span>Status Transaksi</h2>
+<p>Enum PHP <code>App\Models\Asset\OffboardingStatus</code> (kolom <code>status_approval</code>, enum DB <code class="chip chip-draft">draft</code>, <code>pengajuan</code>, <code class="chip chip-done">dikonfirmasi</code>, <code>selesai</code>).</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Status</th>
+<th>Label API</th>
+<th>Tab</th>
+<th style="text-align: center;">Terlihat karyawan</th>
+<th>Arti</th>
+<th>Aksi berikutnya</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code class="chip chip-draft">draft</code></td>
+<td>Draft</td>
+<td>pengajuan (admin saja)</td>
+<td style="text-align: center;">❌</td>
+<td>Disimpan admin</td>
+<td>Admin: edit, submit, hapus</td>
+</tr>
+<tr>
+<td><code>pengajuan</code></td>
+<td>Menunggu Diterima</td>
+<td>pengajuan</td>
+<td style="text-align: center;">✅</td>
+<td>Menunggu konfirmasi kondisi karyawan</td>
+<td>Karyawan: konfirmasi; Admin: ubah jadwal</td>
+</tr>
+<tr>
+<td><code class="chip chip-done">dikonfirmasi</code></td>
+<td>Dikonfirmasi Karyawan</td>
+<td>dikonfirmasi</td>
+<td style="text-align: center;">✅</td>
+<td>Kondisi sudah diisi</td>
+<td>Admin: terima atau ubah jadwal</td>
+</tr>
+<tr>
+<td><code>selesai</code></td>
+<td>Selesai</td>
+<td>selesai</td>
+<td style="text-align: center;">✅</td>
+<td>Asset sudah di gudang</td>
+<td>–</td>
+</tr>
+</tbody>
+</table></div>
+<p>Tidak ada status ditolak/dibatalkan (⚠️ Belum ditemukan).</p>
+<p>Status item (<code>status_item</code>): <code class="chip chip-wait">belum_dicek</code> → <code class="chip chip-done">normal</code> / <code class="chip chip-bad">rusak</code>.</p>
+<p>Status child pengembalian (tabel peminjaman): <code>pengajuan</code> → <code class="chip chip-done">dikonfirmasi</code> → <code>selesai</code>.</p>
+<hr />
+<h2 id="s15"><span class="sec-no">15</span>State Transition</h2>
+<div class="diagram"><pre class="mermaid">stateDiagram-v2
+    [*] --&gt; draft: Simpan Draft (Admin)
+    [*] --&gt; pengajuan: Submit ke Karyawan (Admin)
+    draft --&gt; draft: Edit draft (Admin)
+    draft --&gt; pengajuan: Submit draft (Admin)
+    draft --&gt; [*]: Hapus Draft (Admin)
+    pengajuan --&gt; pengajuan: Ubah jadwal (Admin)
+    pengajuan --&gt; dikonfirmasi: Konfirmasi kondisi (Karyawan)
+    dikonfirmasi --&gt; pengajuan: Ubah jadwal (Admin)
+    dikonfirmasi --&gt; selesai: Terima Penyerahan Asset (Admin)
+    selesai --&gt; [*]
+</pre></div>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Status Awal</th>
+<th>Action</th>
+<th>Status Akhir</th>
+<th>Actor</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>–</td>
+<td>Simpan Draft</td>
+<td>draft</td>
+<td>Admin</td>
+</tr>
+<tr>
+<td>– / draft</td>
+<td>Submit ke Karyawan</td>
+<td>pengajuan</td>
+<td>Admin</td>
+</tr>
+<tr>
+<td>draft</td>
+<td>Hapus Draft</td>
+<td>(terhapus)</td>
+<td>Admin</td>
+</tr>
+<tr>
+<td>pengajuan / dikonfirmasi</td>
+<td>Ubah Jadwal</td>
+<td>pengajuan</td>
+<td>Admin</td>
+</tr>
+<tr>
+<td>pengajuan</td>
+<td>Konfirmasi</td>
+<td>dikonfirmasi</td>
+<td>Karyawan</td>
+</tr>
+<tr>
+<td>dikonfirmasi</td>
+<td>Terima Penyerahan Asset</td>
+<td>selesai</td>
+<td>Admin</td>
+</tr>
+</tbody>
+</table></div>
+<p>Status <code>asset_data</code>:
+| Asset | Dari | Ke | Trigger |
+|---|---|---|---|
+| Asset tetap (terpakai @karyawan) | – | tidak berubah | Draft, submit, konfirmasi |
+| Asset tetap | @karyawan | tersedia / rusak @gudang | Terima |
+| Asset pinjaman (dipinjam @karyawan) | @karyawan | tersedia / rusak @gudang | Terima (via child) |</p>
+<hr />
+<div class="group-divider" id="g16"><span>Database</span></div><h2 id="s16"><span class="sec-no">16</span>Struktur Database</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Table</th>
+<th>Type</th>
+<th>Fungsi</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>asset_trx_offboarding_karyawan</code></td>
+<td>Transaction Header</td>
+<td>Off boarding, jadwal, status</td>
+</tr>
+<tr>
+<td><code>asset_trx_offboarding_karyawan_item</code></td>
+<td>Transaction Detail</td>
+<td>Snapshot asset, kondisi, sumber transaksi</td>
+</tr>
+<tr>
+<td><code>asset_trx_offboarding_relasi</code></td>
+<td>Relation</td>
+<td>Transaksi child yang dibuat off boarding</td>
+</tr>
+<tr>
+<td><code>asset_trx_peminjaman_karyawan</code> / <code>_item</code></td>
+<td>Transaksi child</td>
+<td>Pengembalian pinjaman otomatis (KRY05)</td>
+</tr>
+<tr>
+<td><code>asset_data</code></td>
+<td>Master</td>
+<td>Status &amp; pemegang asset</td>
+</tr>
+<tr>
+<td><code>asset_log</code></td>
+<td>Log</td>
+<td><code>offboarding_karyawan</code>, <code>pengembalian_karyawan</code></td>
+</tr>
+<tr>
+<td><code>asset_trx_onboarding_karyawan(_item)</code>, <code>asset_trx_request_karyawan(_item)</code>, <code>asset_trx_retur_karyawan(_item)</code></td>
+<td>Sumber / cek</td>
+<td>Deteksi sumber &amp; cek flow lain</td>
+</tr>
+<tr>
+<td><code>data_karyawan</code>, <code>master_cabang</code>, <code>master_departemen</code></td>
+<td>Master HR</td>
+<td>Karyawan aktif, cabang, divisi</td>
+</tr>
+<tr>
+<td><code>asset_admin</code>, <code>master_company</code></td>
+<td>Akses / lock</td>
+<td>Admin &amp; mutex</td>
+</tr>
+<tr>
+<td><code>notif_data</code>, <code>users</code></td>
+<td>Notifikasi</td>
+<td>Inbox &amp; FCM</td>
+</tr>
+<tr>
+<td><code>asset_offboarding_migration_state</code></td>
+<td>Teknis</td>
+<td>Marker rollback migration</td>
+</tr>
+</tbody>
+</table></div>
+<hr />
+<h2 id="s17"><span class="sec-no">17</span>Relasi Database</h2>
+<div class="diagram"><pre class="mermaid">erDiagram
+    ASSET_TRX_OFFBOARDING_KARYAWAN ||--o{ ASSET_TRX_OFFBOARDING_KARYAWAN_ITEM : &quot;id_asset_trx_offboarding&quot;
+    ASSET_TRX_OFFBOARDING_KARYAWAN ||--o{ ASSET_TRX_OFFBOARDING_RELASI : &quot;id_asset_trx_offboarding_karyawan&quot;
+    ASSET_TRX_OFFBOARDING_RELASI }o--|| ASSET_TRX_PEMINJAMAN_KARYAWAN : &quot;id_tabel (child pengembalian)&quot;
+    ASSET_DATA ||--o{ ASSET_TRX_OFFBOARDING_KARYAWAN_ITEM : &quot;id_asset_data&quot;
+    DATA_KARYAWAN ||--o{ ASSET_TRX_OFFBOARDING_KARYAWAN : &quot;id_karyawan (logis)&quot;
+    ASSET_DATA ||--o{ ASSET_LOG : &quot;id_asset_data&quot;
+
+    ASSET_TRX_OFFBOARDING_KARYAWAN {
+        varchar id_asset_trx_offboarding_karyawan PK
+        varchar no_trx
+        date tgl_offboarding
+        time jam_offboarding
+        varchar id_karyawan
+        enum status_approval
+        varchar user_approval
+    }
+    ASSET_TRX_OFFBOARDING_KARYAWAN_ITEM {
+        varchar id_asset_trx_offboarding_item PK
+        varchar id_asset_trx_offboarding FK
+        varchar id_asset_data FK
+        varchar status_item
+        varchar ket_rusak
+        varchar jenis_transaksi
+        varchar id_transaksi_sumber
+        varchar tabel_transaksi_sumber
+    }
+    ASSET_TRX_OFFBOARDING_RELASI {
+        varchar id_asset_trx_offboarding_relasi PK
+        varchar id_asset_trx_offboarding_karyawan FK
+        varchar id_tabel
+        varchar nama_tabel
+        varchar jenis_transaksi_sumber
+    }
+    ASSET_TRX_PEMINJAMAN_KARYAWAN {
+        varchar id_asset_trx_peminjaman_karyawan PK
+        enum jenis_status
+        varchar id_peminjaman_asal
+        enum status
+    }
+    ASSET_DATA {
+        varchar id_asset_data PK
+        enum status_asset
+        enum pemegang_asset
+        varchar id_pemegang_asset
+    }
+    ASSET_LOG {
+        varchar id_asset_log PK
+        varchar id_asset_data FK
+        enum jenis_log
+        varchar id_transaksi
+    }
+</pre></div>
+<hr />
+<h2 id="s18"><span class="sec-no">18</span>Data Dictionary</h2>
+<h3>18.1 asset_trx_offboarding_karyawan (migration)</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th style="text-align: center;">Null</th>
+<th>Default</th>
+<th>Key</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>id_asset_trx_offboarding_karyawan</td>
+<td>varchar(50)</td>
+<td style="text-align: center;">No</td>
+<td>–</td>
+<td>PK</td>
+<td><code>id_company + YYYYMM + 3 digit</code></td>
+</tr>
+<tr>
+<td>no_trx</td>
+<td>varchar(50)</td>
+<td style="text-align: center;">No</td>
+<td>''</td>
+<td>UNIQUE (id_company, no_trx)</td>
+<td><code>KRY02-YYYYMMNNN</code></td>
+</tr>
+<tr>
+<td>tgl_offboarding</td>
+<td>date</td>
+<td style="text-align: center;">Yes</td>
+<td>NULL</td>
+<td>IDX</td>
+<td>Tanggal Penyerahan (NULL saat draft)</td>
+</tr>
+<tr>
+<td>jam_offboarding</td>
+<td>time</td>
+<td style="text-align: center;">Yes</td>
+<td>NULL</td>
+<td>IDX</td>
+<td>Jam Penyerahan (NULL saat draft)</td>
+</tr>
+<tr>
+<td>keterangan</td>
+<td>text</td>
+<td style="text-align: center;">Yes</td>
+<td>–</td>
+<td>–</td>
+<td>Catatan Tambahan admin</td>
+</tr>
+<tr>
+<td>id_asset_lokasi_m_tujuan</td>
+<td>varchar(50)</td>
+<td style="text-align: center;">No</td>
+<td>''</td>
+<td>–</td>
+<td><strong>DEPRECATED (v1.2)</strong>: tidak dipakai lagi; lokasi kini per asset di tabel item</td>
+</tr>
+<tr>
+<td>id_karyawan</td>
+<td>varchar(150)</td>
+<td style="text-align: center;">No</td>
+<td>''</td>
+<td>IDX</td>
+<td>Karyawan</td>
+</tr>
+<tr>
+<td>nik_karyawan, nama_karyawan</td>
+<td>varchar(255)</td>
+<td style="text-align: center;">No</td>
+<td>''</td>
+<td>–</td>
+<td>Snapshot</td>
+</tr>
+<tr>
+<td>status_approval</td>
+<td>enum(draft, pengajuan, dikonfirmasi, selesai)</td>
+<td style="text-align: center;">No</td>
+<td>pengajuan</td>
+<td>IDX</td>
+<td>Status</td>
+</tr>
+<tr>
+<td>user_approval / tgl_approval</td>
+<td>varchar / timestamp</td>
+<td style="text-align: center;">–</td>
+<td>'' / NULL</td>
+<td>–</td>
+<td><strong>Karyawan</strong> yang mengonfirmasi</td>
+</tr>
+<tr>
+<td>id_company</td>
+<td>varchar(50)</td>
+<td style="text-align: center;">No</td>
+<td>''</td>
+<td>IDX</td>
+<td></td>
+</tr>
+<tr>
+<td>tgl_input / user_input</td>
+<td>timestamp / varchar</td>
+<td style="text-align: center;">–</td>
+<td>now / ''</td>
+<td>–</td>
+<td>Admin pembuat (<code>nik - nama</code>)</td>
+</tr>
+<tr>
+<td>tgl_update / user_update</td>
+<td>timestamp / varchar</td>
+<td style="text-align: center;">Yes</td>
+<td>NULL / ''</td>
+<td>–</td>
+<td>Pelaku terakhir</td>
+</tr>
+</tbody>
+</table></div>
+<h3>18.2 asset_trx_offboarding_karyawan_item</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Default</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>id_asset_trx_offboarding_item</td>
+<td>varchar(50) PK</td>
+<td>–</td>
+<td><code>id_company + YYYYMM + 3 digit</code></td>
+</tr>
+<tr>
+<td>id_asset_trx_offboarding</td>
+<td>varchar(50)</td>
+<td>–</td>
+<td>→ header</td>
+</tr>
+<tr>
+<td>id_asset_data</td>
+<td>varchar(50)</td>
+<td>–</td>
+<td>→ asset_data</td>
+</tr>
+<tr>
+<td>nama_asset, deskripsi_asset, kategori_asset</td>
+<td>varchar(255)</td>
+<td>''</td>
+<td>Snapshot</td>
+</tr>
+<tr>
+<td>status_item</td>
+<td>varchar(30)</td>
+<td><code class="chip chip-wait">belum_dicek</code></td>
+<td><code class="chip chip-wait">belum_dicek</code> / <code class="chip chip-done">normal</code> / <code class="chip chip-bad">rusak</code></td>
+</tr>
+<tr>
+<td>ket_rusak</td>
+<td>varchar(255)</td>
+<td>''</td>
+<td>Keterangan kerusakan dari karyawan</td>
+</tr>
+<tr>
+<td>id_asset_lokasi_m_tujuan</td>
+<td>varchar(50)</td>
+<td>''</td>
+<td>Lokasi gudang tujuan asset ini, dipilih admin saat Terima (v1.2; migration <code>2026_10_05_000002</code>, SQL <code>sql-offboarding-lokasi-per-asset.sql</code>)</td>
+</tr>
+<tr>
+<td>jenis_transaksi</td>
+<td>varchar(50)</td>
+<td>''</td>
+<td><code>onboarding</code> / <code>peminjaman</code></td>
+</tr>
+<tr>
+<td>id_transaksi_sumber</td>
+<td>varchar(50)</td>
+<td>''</td>
+<td>ID transaksi asal</td>
+</tr>
+<tr>
+<td>tabel_transaksi_sumber</td>
+<td>varchar(100)</td>
+<td>''</td>
+<td>Mis. <code>asset_trx_onboarding_karyawan</code>, <code>asset_trx_request_karyawan</code>, <code>asset_trx_retur_karyawan</code>, <code>asset_trx_peminjaman_karyawan</code>, fallback <code>asset_data</code></td>
+</tr>
+<tr>
+<td>id_company, tgl_input, user_input</td>
+<td>–</td>
+<td>–</td>
+<td>–</td>
+</tr>
+</tbody>
+</table></div>
+<h3>18.3 asset_trx_offboarding_relasi</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>id_asset_trx_offboarding_relasi</td>
+<td>varchar(50) PK</td>
+<td><code>id_company + YYYYMM + 3 digit</code></td>
+</tr>
+<tr>
+<td>id_asset_trx_offboarding_karyawan</td>
+<td>varchar(50)</td>
+<td>→ header off boarding</td>
+</tr>
+<tr>
+<td>id_tabel</td>
+<td>varchar(50)</td>
+<td>ID header child pengembalian</td>
+</tr>
+<tr>
+<td>nama_tabel</td>
+<td>varchar(255)</td>
+<td><code>asset_trx_peminjaman_karyawan</code></td>
+</tr>
+<tr>
+<td>jenis_transaksi_sumber</td>
+<td>varchar(50)</td>
+<td><code>peminjaman</code></td>
+</tr>
+<tr>
+<td>id_company, tgl_input, user_input</td>
+<td>–</td>
+<td>–</td>
+</tr>
+</tbody>
+</table></div>
+<h3>18.4 asset_log</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Asset</th>
+<th>jenis_log</th>
+<th>id_transaksi</th>
+<th>kondisi_akhir</th>
+<th>posisi</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Tetap</td>
+<td><code>offboarding_karyawan</code></td>
+<td>id off boarding</td>
+<td>normal/rusak</td>
+<td>karyawan → gudang</td>
+</tr>
+<tr>
+<td>Pinjaman</td>
+<td><code>pengembalian_karyawan</code></td>
+<td>id header child pengembalian</td>
+<td>normal/rusak</td>
+<td>karyawan → gudang</td>
+</tr>
+</tbody>
+</table></div>
+<hr />
+<h2 id="s19"><span class="sec-no">19</span>Database Index</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Index</th>
+<th>Table</th>
+<th>Columns</th>
+<th>Tujuan</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>atok_company_status_schedule_idx</code></td>
+<td>header</td>
+<td>(id_company, status_approval, tgl_offboarding, jam_offboarding)</td>
+<td>List admin per status/jadwal</td>
+</tr>
+<tr>
+<td><code>atok_company_employee_status_idx</code></td>
+<td>header</td>
+<td>(id_company, id_karyawan, status_approval)</td>
+<td>List karyawan, cek off boarding aktif</td>
+</tr>
+<tr>
+<td><code>atok_company_no_trx_unique</code></td>
+<td>header</td>
+<td>UNIQUE (id_company, no_trx)</td>
+<td>Cegah nomor ganda</td>
+</tr>
+<tr>
+<td><code>atoki_company_header_asset_idx</code></td>
+<td>item</td>
+<td>(id_company, id_asset_trx_offboarding, id_asset_data)</td>
+<td>Item per header, cek asset aktif</td>
+</tr>
+<tr>
+<td><code>atokr_company_header_source_idx</code></td>
+<td>relasi</td>
+<td>(id_company, id_asset_trx_offboarding_karyawan, nama_tabel, id_tabel)</td>
+<td>Cari child</td>
+</tr>
+</tbody>
+</table></div>
+<hr />
+<div class="group-divider" id="g20"><span>Backend & API</span></div><h2 id="s20"><span class="sec-no">20</span>Backend Architecture</h2>
+<div class="code"><span class="code-lang">Alur</span><pre><code class="language-text">RouteAsset.php (prefix /asset, jwt.api + jwt.ctx)
+   ↓
+AssetAdminOffboarding_c (validateOffboardingForm / validateRequest → accessError)
+AssetKaryawanOffboarding_c (offboardingAccessError: karyawan aktif)
+   ↓
+AssetOffboardingKaryawan_m ← Asset_m (lockCompany, nextSequence, findActiveKaryawan, findAssetAdmin)
+   ↓   ↔ tabel peminjaman (child pengembalian), retur (cek flow), onboarding/request/asset_log (sumber)
+DB::transaction (retry 3) → ApiResponse + AssetNotification
+</code></pre></div>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Layer</th>
+<th>File/Class</th>
+<th>Function</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Controller</td>
+<td><code>AssetAdminOffboarding_c</code></td>
+<td>offboardingOptions, getOffboardingKaryawan, storeOffboardingKaryawan, getDetailOffboardingKaryawan, updateOffboardingDraft, deleteOffboardingDraft, updateJadwalOffboarding, terimaOffboardingKaryawan, validateOffboardingForm, offboardingPayload</td>
+</tr>
+<tr>
+<td>Controller</td>
+<td><code>AssetKaryawanOffboarding_c</code></td>
+<td>getOffboardingSaya, getDetailOffboardingSaya, konfirmasiOffboardingSaya, offboardingAccessError</td>
+</tr>
+<tr>
+<td>Model</td>
+<td><code>AssetOffboardingKaryawan_m</code></td>
+<td>getOptions, getPage, getDetail, store, updateDraft, deleteDraft, schedule, confirm, receive, getPendingForAdmin, countPendingForAdmin, hasActiveOffboardingAsset + helper (employeeAssets, insertItems, sourceForAsset, create/reset/confirm/finalize/deleteLoanReturnChildren, assertNoCrossFlow, assertCurrentHoldings, completeLoanSources)</td>
+</tr>
+<tr>
+<td>Enum</td>
+<td><code>OffboardingStatus</code></td>
+<td>value, label(), tab()</td>
+</tr>
+<tr>
+<td>Support</td>
+<td><code>AssetNotification</code></td>
+<td><code>offboarding.*</code></td>
+</tr>
+</tbody>
+</table></div>
+<hr />
+<h2 id="s21"><span class="sec-no">21</span>Backend Business Logic</h2>
+<h3>21.1 Simpan / Submit — <code>store</code></h3>
+<p>Lock company → admin → karyawan aktif → tidak ada off boarding aktif → ambil semua asset dipegang (FOR UPDATE) → minimal 1 → <code>assertNoCrossFlow</code> → <code>assertSchedule</code> → ID + <code>KRY02-…</code> → INSERT header (<code class="chip chip-draft">draft</code>/<code>pengajuan</code>) → <code>insertItems</code> (snapshot + sumber, <code>status_item = belum_dicek</code>) → bila submit: <code>createLoanReturnChildren</code>. Notifikasi <code>offboarding.diajukan</code> hanya bila submit.</p>
+<h3>21.2 Edit draft — <code>updateDraft</code></h3>
+<p>Header harus <code class="chip chip-draft">draft</code> (FOR UPDATE) → validasi sama seperti store (mengecualikan dirinya sendiri) → hapus child, item, relasi lama → insert item baru → update header (karyawan boleh diganti) → bila submit: buat child + notifikasi.</p>
+<h3>21.3 Hapus draft — <code>deleteDraft</code></h3>
+<p>Header harus <code class="chip chip-draft">draft</code> → hapus item, child, relasi, header. Response <code>{id, no_trx}</code>.</p>
+<h3>21.4 Ubah jadwal — <code>schedule</code></h3>
+<p>Header <code>pengajuan</code>/<code class="chip chip-done">dikonfirmasi</code> → update jadwal, status <code>pengajuan</code>, kosongkan approval → <code>resetLoanReturnChildren</code> (child → pengajuan, item child &amp; item off boarding → <code class="chip chip-wait">belum_dicek</code>; <strong>hanya bila ada child</strong>) → notifikasi <code>offboarding.dijadwalkan</code>.</p>
+<h3>21.5 Konfirmasi karyawan — <code>confirm</code></h3>
+<p>Karyawan aktif → header miliknya <code>pengajuan</code> → <code>assertCurrentHoldings</code> → semua item diisi → update item → <code>confirmLoanReturnChildren</code> → header <code class="chip chip-done">dikonfirmasi</code> (approval = karyawan) → notifikasi <code>offboarding.dikonfirmasi</code>.</p>
+<h3>21.6 Terima admin — <code>receive</code></h3>
+<p>Admin → header <code class="chip chip-done">dikonfirmasi</code> → <code>assertCurrentHoldings</code> → semua item normal/rusak → <code>resolveItemLocations</code> (lokasi gudang per item, v1.2) → lock asset → per item non-pinjaman: update asset (gudang, <code>id_asset_lokasi_m</code> sesuai pilihan, tersedia/rusak, <code>ket_rusak</code>) + log <code>offboarding_karyawan</code> → <code>finalizeLoanReturnChildren</code> (validasi child <code class="chip chip-done">dikonfirmasi</code>, status item cocok, update asset + log <code>pengembalian_karyawan</code>, child <code>selesai</code> + <code>tgl/jam_serah_terima = now</code>) → insert log → header <code>selesai</code> → <code>completeLoanSources</code> (peminjaman asal <code>aktif → selesai</code> bila tak ada asset tersisa) → notifikasi <code>offboarding.diterima</code>.</p>
+<h3>21.7 Query baca</h3>
+<ul>
+<li><strong>Opsi</strong>: karyawan aktif yang memegang asset dan tanpa off boarding aktif.</li>
+<li><strong>List</strong>: tab <code>pengajuan</code> (admin: draft + pengajuan; karyawan: pengajuan), <code class="chip chip-done">dikonfirmasi</code>, <code>selesai</code>; tanpa tab = semua. <code>jumlah_asset</code> = jumlah item. Key array: <code>offboardings</code>.</li>
+<li><strong>Detail</strong>: header + cabang/divisi + items (dengan <code>jenis_transaksi</code> &amp; sumber). Karyawan tidak dapat membuka draft.</li>
+<li><strong>Summary admin</strong>: <code>offboarding_perlu_proses</code> &amp; <code>offboarding_pending</code> = status <code class="chip chip-draft">draft</code> + <code class="chip chip-done">dikonfirmasi</code>.</li>
+</ul>
+<hr />
+<h2 id="s22"><span class="sec-no">22</span>Dampak terhadap asset_data</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Sebelum</th>
+<th>Sesudah</th>
+<th>Trigger</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Semua field</td>
+<td>@karyawan</td>
+<td>tidak berubah</td>
+<td>Draft, submit, jadwal, konfirmasi</td>
+</tr>
+<tr>
+<td>status_asset (tetap)</td>
+<td>terpakai</td>
+<td><code class="chip chip-neutral">tersedia</code> (normal) / <code class="chip chip-bad">rusak</code> (rusak)</td>
+<td>Terima</td>
+</tr>
+<tr>
+<td>status_asset (pinjaman)</td>
+<td>dipinjam</td>
+<td><code class="chip chip-neutral">tersedia</code> / <code class="chip chip-bad">rusak</code></td>
+<td>Terima (child)</td>
+</tr>
+<tr>
+<td>pemegang_asset / id_pemegang_asset</td>
+<td>karyawan / id</td>
+<td>gudang / ''</td>
+<td>Terima</td>
+</tr>
+<tr>
+<td>id_asset_lokasi_m</td>
+<td>(kosong / lokasi lama)</td>
+<td>lokasi gudang pilihan admin untuk asset itu (v1.2)</td>
+<td>Terima</td>
+</tr>
+<tr>
+<td>ket_rusak</td>
+<td>–</td>
+<td>keterangan karyawan / ''</td>
+<td>Terima</td>
+</tr>
+<tr>
+<td>tgl_update / user_update</td>
+<td>–</td>
+<td>now / admin</td>
+<td>Terima</td>
+</tr>
+</tbody>
+</table></div>
+<aside class="callout callout-note">
+<p>Selama off boarding aktif, asset <strong>tidak</strong> berubah status; perlindungan dari flow lain dilakukan lewat <code>hasActiveOffboardingAsset</code>.</p>
+</aside>
+<hr />
+<h2 id="s23"><span class="sec-no">23</span>API Documentation</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>ID</th>
+<th>Method</th>
+<th>Endpoint</th>
+<th>Function</th>
+<th>Auth</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>API-001</td>
+<td>GET</td>
+<td><code>/asset/offboarding-karyawan/options</code></td>
+<td>Opsi karyawan</td>
+<td>Admin</td>
+</tr>
+<tr>
+<td>API-002</td>
+<td>GET</td>
+<td><code>/asset/offboarding-karyawan</code></td>
+<td>List</td>
+<td>Admin</td>
+</tr>
+<tr>
+<td>API-003</td>
+<td>POST</td>
+<td><code>/asset/offboarding-karyawan</code></td>
+<td>Simpan draft / submit</td>
+<td>Admin</td>
+</tr>
+<tr>
+<td>API-004</td>
+<td>GET</td>
+<td><code>/asset/offboarding-karyawan/{id}</code></td>
+<td>Detail</td>
+<td>Admin</td>
+</tr>
+<tr>
+<td>API-005</td>
+<td>PUT</td>
+<td><code>/asset/offboarding-karyawan/{id}</code></td>
+<td>Edit draft / submit draft</td>
+<td>Admin</td>
+</tr>
+<tr>
+<td>API-006</td>
+<td>DELETE</td>
+<td><code>/asset/offboarding-karyawan/{id}</code></td>
+<td>Hapus draft</td>
+<td>Admin</td>
+</tr>
+<tr>
+<td>API-007</td>
+<td>PUT</td>
+<td><code>/asset/offboarding-karyawan/{id}/jadwal</code></td>
+<td>Ubah jadwal</td>
+<td>Admin</td>
+</tr>
+<tr>
+<td>API-008</td>
+<td>POST</td>
+<td><code>/asset/offboarding-karyawan/{id}/terima</code></td>
+<td>Terima penyerahan</td>
+<td>Admin</td>
+</tr>
+<tr>
+<td>API-009</td>
+<td>GET</td>
+<td><code>/asset/karyawan/offboarding</code></td>
+<td>List milik saya</td>
+<td>JWT, karyawan aktif</td>
+</tr>
+<tr>
+<td>API-010</td>
+<td>GET</td>
+<td><code>/asset/karyawan/offboarding/{id}</code></td>
+<td>Detail milik saya</td>
+<td>JWT, karyawan aktif</td>
+</tr>
+<tr>
+<td>API-011</td>
+<td>POST</td>
+<td><code>/asset/karyawan/offboarding/{id}/konfirmasi</code></td>
+<td>Konfirmasi kondisi</td>
+<td>JWT, karyawan aktif</td>
+</tr>
+</tbody>
+</table></div>
+<p>Terkait: <code>GET /asset/summary</code> (<code>offboarding_perlu_proses</code>, <code>offboarding_pending</code>).</p>
+<hr />
+<h2 id="s24"><span class="sec-no">24</span>Detail Setiap API</h2>
+<p>Header umum: <code>Authorization: Bearer &lt;token&gt;</code>, <code>Content-Type: application/json</code>, <code>Accept</code>, <code>locale</code>, <code>versi-app</code>. Format <code>{ code, message, data }</code>.</p>
+<h3>API-001 — Opsi</h3>
+<div class="code"><span class="code-lang">HTTP</span><pre><code class="language-http">GET /asset/offboarding-karyawan/options
+</code></pre></div>
+<div class="code"><span class="code-lang">JSON</span><pre><code class="language-json">{ &quot;code&quot;: &quot;SUCCESS&quot;, &quot;message&quot;: &quot;Opsi offboarding asset berhasil ditemukan.&quot;,
+  &quot;data&quot;: {
+    &quot;karyawan&quot;: [ {&quot;id_karyawan&quot;: &quot;KRY0007&quot;, &quot;nik&quot;: &quot;EMP-007&quot;, &quot;nama_karyawan&quot;: &quot;Budi Contoh&quot;} ],
+    &quot;lokasi_gudang&quot;: [ {&quot;id_asset_lokasi_m&quot;: &quot;CMP001202610001&quot;, &quot;nama_lokasi&quot;: &quot;Gudang Pusat&quot;, &quot;id_cabang&quot;: &quot;CAB-1&quot;} ]
+  } }
+</code></pre></div>
+<p><code>lokasi_gudang</code> (v1.2): lokasi <code>tipe = gudang</code> milik company, diurutkan menurut nama; dipakai dropdown <strong>Lokasi Tujuan Asset</strong> saat Terima Penyerahan.</p>
+<h3>API-002 / API-009 — List</h3>
+<div class="code"><span class="code-lang">HTTP</span><pre><code class="language-http">GET /asset/offboarding-karyawan?tab=pengajuan&amp;limit=20&amp;offset=0
+GET /asset/karyawan/offboarding?tab=dikonfirmasi
+</code></pre></div>
+<p><code>tab</code>: <code>pengajuan</code> | <code class="chip chip-done">dikonfirmasi</code> | <code>selesai</code> ("Filter offboarding tidak valid."); <code>limit</code> 1–50 ("Limit maksimal adalah 50 data.").</p>
+<div class="code"><span class="code-lang">JSON</span><pre><code class="language-json">{
+  &quot;code&quot;: &quot;SUCCESS&quot;,
+  &quot;message&quot;: &quot;Data offboarding asset berhasil ditemukan.&quot;,
+  &quot;data&quot;: {
+    &quot;offboardings&quot;: [
+      {
+        &quot;id&quot;: &quot;CMP001202609004&quot;,
+        &quot;no_trx&quot;: &quot;KRY02-202609004&quot;,
+        &quot;tgl_offboarding&quot;: &quot;2026-09-30&quot;,
+        &quot;jam_offboarding&quot;: &quot;09:00:00&quot;,
+        &quot;id_karyawan&quot;: &quot;KRY0007&quot;,
+        &quot;nik_karyawan&quot;: &quot;EMP-007&quot;,
+        &quot;nama_karyawan&quot;: &quot;Budi Contoh&quot;,
+        &quot;jumlah_asset&quot;: 3,
+        &quot;status&quot;: &quot;pengajuan&quot;,
+        &quot;status_approval&quot;: &quot;pengajuan&quot;,
+        &quot;status_label&quot;: &quot;Menunggu Diterima&quot;,
+        &quot;tab&quot;: &quot;pengajuan&quot;
+      }
+    ],
+    &quot;filters&quot;: [
+      {&quot;value&quot;: &quot;pengajuan&quot;, &quot;label&quot;: &quot;Pengajuan&quot;},
+      {&quot;value&quot;: &quot;dikonfirmasi&quot;, &quot;label&quot;: &quot;Dikonfirmasi&quot;},
+      {&quot;value&quot;: &quot;selesai&quot;, &quot;label&quot;: &quot;Selesai&quot;}
+    ],
+    &quot;pagination&quot;: {&quot;limit&quot;: 20, &quot;offset&quot;: 0, &quot;next_offset&quot;: 1, &quot;has_more&quot;: false}
+  }
+}
+</code></pre></div>
+<h3>API-003 / API-005 — Simpan / Submit / Edit Draft</h3>
+<div class="code"><span class="code-lang">HTTP</span><pre><code class="language-http">POST /asset/offboarding-karyawan
+PUT  /asset/offboarding-karyawan/{id}
+</code></pre></div>
+<div class="code"><span class="code-lang">JSON</span><pre><code class="language-json">{
+  &quot;id_karyawan&quot;: &quot;KRY0007&quot;,
+  &quot;tgl_offboarding&quot;: &quot;2026-09-30&quot;,
+  &quot;jam_offboarding&quot;: &quot;09:00&quot;,
+  &quot;keterangan&quot;: &quot;Karyawan mengakhiri kontrak&quot;,
+  &quot;is_draft&quot;: false
+}
+</code></pre></div>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Rule</th>
+<th>Message</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>id_karyawan</td>
+<td>required|string|max:150</td>
+<td>–</td>
+</tr>
+<tr>
+<td>tgl_offboarding</td>
+<td>draft: nullable|date_format:Y-m-d; submit: required</td>
+<td>Tanggal offboarding wajib diisi saat pengajuan.</td>
+</tr>
+<tr>
+<td>jam_offboarding</td>
+<td>draft: nullable|date_format:H:i; submit: required</td>
+<td>Jam offboarding wajib diisi saat pengajuan.</td>
+</tr>
+<tr>
+<td>keterangan</td>
+<td>nullable|string</td>
+<td>–</td>
+</tr>
+<tr>
+<td>is_draft</td>
+<td>required|boolean</td>
+<td>–</td>
+</tr>
+</tbody>
+</table></div>
+<p>Pesan umum validasi: "Data offboarding belum lengkap."</p>
+<p>Database impact (submit):</p>
+<div class="code"><span class="code-lang">Alur</span><pre><code class="language-text">INSERT/UPDATE asset_trx_offboarding_karyawan (draft/pengajuan)
+INSERT asset_trx_offboarding_karyawan_item (semua asset dipegang)
+INSERT asset_trx_peminjaman_karyawan + _item (child pengembalian, bila ada pinjaman)
+INSERT asset_trx_offboarding_relasi
+INSERT notif_data (submit saja)
+</code></pre></div>
+<p>Response 201/200 = detail (lihat API-004). Pesan: "Draft offboarding berhasil disimpan." / "Draft offboarding berhasil diperbarui." / "Offboarding asset berhasil diajukan."
+422: "Pengguna tidak terdaftar sebagai admin asset.", "Karyawan tidak ditemukan atau tidak aktif.", "Karyawan masih memiliki offboarding aktif.", "Karyawan tidak memiliki asset yang sedang dipegang.", "Satu atau beberapa asset sedang diproses pada flow lain.", "Satu atau beberapa asset sedang diproses pada upgrade." / "…laporan kerusakan." / "…pemeliharaan.", "Jadwal offboarding wajib diisi saat pengajuan.", "Hanya offboarding berstatus draft yang dapat diubah.", "Transaksi peminjaman sumber asset tidak ditemukan."
+500: "Terjadi kesalahan saat menyimpan offboarding asset." (POST; pesan exception tidak lagi dikirim ke klien sejak v1.3 — INC-01) / "Terjadi kesalahan saat memperbarui offboarding asset." (PUT).</p>
+<h3>API-004 / API-010 — Detail</h3>
+<div class="code"><span class="code-lang">HTTP</span><pre><code class="language-http">GET /asset/offboarding-karyawan/{id}
+GET /asset/karyawan/offboarding/{id}
+</code></pre></div>
+<div class="code"><span class="code-lang">JSON</span><pre><code class="language-json">{
+  &quot;id&quot;: &quot;CMP001202609004&quot;,
+  &quot;no_trx&quot;: &quot;KRY02-202609004&quot;,
+  &quot;tgl_offboarding&quot;: &quot;2026-09-30&quot;,
+  &quot;jam_offboarding&quot;: &quot;09:00:00&quot;,
+  &quot;keterangan&quot;: &quot;Karyawan mengakhiri kontrak&quot;,
+  &quot;id_karyawan&quot;: &quot;KRY0007&quot;,
+  &quot;nik_karyawan&quot;: &quot;EMP-007&quot;,
+  &quot;nama_karyawan&quot;: &quot;Budi Contoh&quot;,
+  &quot;nama_cabang&quot;: &quot;Kantor Pusat&quot;,
+  &quot;nama_divisi&quot;: &quot;Finance&quot;,
+  &quot;status&quot;: &quot;pengajuan&quot;,
+  &quot;status_approval&quot;: &quot;pengajuan&quot;,
+  &quot;status_label&quot;: &quot;Menunggu Diterima&quot;,
+  &quot;tab&quot;: &quot;pengajuan&quot;,
+  &quot;items&quot;: [
+    {
+      &quot;id_asset_trx_offboarding_item&quot;: &quot;CMP001202609010&quot;,
+      &quot;id_asset_data&quot;: &quot;CMP00120260100012&quot;,
+      &quot;nama_asset&quot;: &quot;Laptop 14 inch&quot;,
+      &quot;deskripsi_asset&quot;: &quot;Charger&quot;,
+      &quot;kategori_asset&quot;: &quot;Laptop&quot;,
+      &quot;status_item&quot;: &quot;belum_dicek&quot;,
+      &quot;ket_rusak&quot;: &quot;&quot;,
+      &quot;jenis_transaksi&quot;: &quot;onboarding&quot;,
+      &quot;id_transaksi_sumber&quot;: &quot;CMP001202601002&quot;,
+      &quot;tabel_transaksi_sumber&quot;: &quot;asset_trx_onboarding_karyawan&quot;
+    },
+    {
+      &quot;id_asset_trx_offboarding_item&quot;: &quot;CMP001202609011&quot;,
+      &quot;id_asset_data&quot;: &quot;CMP00120260100031&quot;,
+      &quot;nama_asset&quot;: &quot;Proyektor Mini&quot;,
+      &quot;deskripsi_asset&quot;: &quot;&quot;,
+      &quot;kategori_asset&quot;: &quot;Proyektor&quot;,
+      &quot;status_item&quot;: &quot;belum_dicek&quot;,
+      &quot;ket_rusak&quot;: &quot;&quot;,
+      &quot;jenis_transaksi&quot;: &quot;peminjaman&quot;,
+      &quot;id_transaksi_sumber&quot;: &quot;CMP001202609002&quot;,
+      &quot;tabel_transaksi_sumber&quot;: &quot;asset_trx_peminjaman_karyawan&quot;
+    }
+  ]
+}
+</code></pre></div>
+<p>404: "Offboarding asset tidak ditemukan." (termasuk draft untuk karyawan).</p>
+<p>Mulai v1.2 detail memuat <code>id_cabang</code> karyawan (dipakai mobile untuk default lokasi) dan setiap <code>items[]</code> memuat <code>id_asset_lokasi_m_tujuan</code> serta <code>nama_lokasi_tujuan</code> (kosong sampai asset diterima).</p>
+<h3>API-006 — Hapus Draft</h3>
+<div class="code"><span class="code-lang">HTTP</span><pre><code class="language-http">DELETE /asset/offboarding-karyawan/{id}
+</code></pre></div>
+<p>Response <code>DELETED</code>: <code>{ "id": "...", "no_trx": "KRY02-..." }</code>, "Draft offboarding berhasil dihapus." 422: "Hanya offboarding berstatus draft yang dapat dihapus."</p>
+<h3>API-007 — Ubah Jadwal</h3>
+<div class="code"><span class="code-lang">HTTP</span><pre><code class="language-http">PUT /asset/offboarding-karyawan/{id}/jadwal
+</code></pre></div>
+<div class="code"><span class="code-lang">JSON</span><pre><code class="language-json">{ &quot;tgl_offboarding&quot;: &quot;2026-10-02&quot;, &quot;jam_offboarding&quot;: &quot;13:30&quot; }
+</code></pre></div>
+<p>Rule: keduanya <code>required</code> + format ("Jadwal offboarding belum lengkap."). Database impact: header (jadwal, status <code>pengajuan</code>, approval kosong), child &amp; item (reset), <code>notif_data</code>. Response detail, "Jadwal offboarding berhasil diperbarui." 422: "Jadwal offboarding sudah tidak dapat diubah."</p>
+<h3>API-008 — Terima Penyerahan</h3>
+<div class="code"><span class="code-lang">HTTP</span><pre><code class="language-http">POST /asset/offboarding-karyawan/{id}/terima
+</code></pre></div>
+<p>Body (v1.2): lokasi gudang dipilih <strong>per asset</strong>.</p>
+<div class="code"><span class="code-lang">JSON</span><pre><code class="language-json">{
+  &quot;items&quot;: [
+    {&quot;id_asset_trx_offboarding_item&quot;: &quot;CMP001202609010&quot;, &quot;id_asset_lokasi_m&quot;: &quot;CMP001202610001&quot;},
+    {&quot;id_asset_trx_offboarding_item&quot;: &quot;CMP001202609011&quot;, &quot;id_asset_lokasi_m&quot;: &quot;CMP001202610002&quot;}
+  ]
+}
+</code></pre></div>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Rule</th>
+<th>Message</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>items</td>
+<td>required|array|min:1</td>
+<td>Lokasi gudang tujuan setiap asset wajib dipilih.</td>
+</tr>
+<tr>
+<td>items.*.id_asset_trx_offboarding_item</td>
+<td>required|string|max:50|distinct</td>
+<td>–</td>
+</tr>
+<tr>
+<td>items.*.id_asset_lokasi_m</td>
+<td>required|string|max:50</td>
+<td>Lokasi gudang tujuan wajib dipilih.</td>
+</tr>
+</tbody>
+</table></div>
+<p>Pesan umum validasi: "Data penerimaan offboarding belum lengkap." Setiap item offboarding wajib muncul tepat satu kali, dan lokasi harus bertipe <code>gudang</code> pada company yang sama. Database impact:</p>
+<div class="code"><span class="code-lang">Alur</span><pre><code class="language-text">UPDATE asset_data (gudang, id_asset_lokasi_m, tersedia/rusak, ket_rusak)
+UPDATE asset_trx_offboarding_karyawan_item (id_asset_lokasi_m_tujuan)
+INSERT asset_log (offboarding_karyawan / pengembalian_karyawan)
+UPDATE asset_trx_peminjaman_karyawan child → selesai; peminjaman asal → selesai
+UPDATE asset_trx_offboarding_karyawan → selesai
+INSERT notif_data
+</code></pre></div>
+<p>Response detail (<code>status = selesai</code>), "Asset offboarding berhasil diterima."
+422: "Offboarding belum dikonfirmasi karyawan.", "Daftar asset yang dipegang karyawan sudah berubah.", "Kondisi asset belum dikonfirmasi karyawan.", "Satu atau beberapa asset offboarding tidak ditemukan.", "Asset tidak lagi dipegang karyawan terkait.", "Pengembalian pinjaman belum dikonfirmasi.", "Kondisi pengembalian pinjaman tidak sesuai.", "Relasi pengembalian offboarding tidak valid.", "Transaksi pengembalian offboarding tidak ditemukan.", "Item pengembalian pinjaman offboarding tidak lengkap.", "Asset pinjaman tidak lagi dipegang karyawan terkait.", "Lokasi gudang tujuan setiap asset wajib dipilih.", "Lokasi gudang tujuan tidak valid.", "Lokasi gudang tujuan asset tidak sesuai."
+500: "Terjadi kesalahan saat menerima offboarding asset."</p>
+<h3>API-011 — Konfirmasi Karyawan</h3>
+<div class="code"><span class="code-lang">HTTP</span><pre><code class="language-http">POST /asset/karyawan/offboarding/{id}/konfirmasi
+</code></pre></div>
+<div class="code"><span class="code-lang">JSON</span><pre><code class="language-json">{
+  &quot;items&quot;: [
+    {&quot;id_asset_trx_offboarding_item&quot;: &quot;CMP001202609010&quot;, &quot;status_item&quot;: &quot;normal&quot;, &quot;ket_rusak&quot;: &quot;&quot;},
+    {&quot;id_asset_trx_offboarding_item&quot;: &quot;CMP001202609011&quot;, &quot;status_item&quot;: &quot;rusak&quot;, &quot;ket_rusak&quot;: &quot;Lensa retak&quot;}
+  ]
+}
+</code></pre></div>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Rule</th>
+<th>Message</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>items</td>
+<td>required|array|min:1</td>
+<td>Kondisi asset wajib diisi.</td>
+</tr>
+<tr>
+<td>items.*.id_asset_trx_offboarding_item</td>
+<td>required|max:50|distinct</td>
+<td>–</td>
+</tr>
+<tr>
+<td>items.*.status_item</td>
+<td>required|in:normal,rusak</td>
+<td>Kondisi asset harus normal atau rusak.</td>
+</tr>
+<tr>
+<td>items.*.ket_rusak</td>
+<td>nullable|max:255|required_if rusak</td>
+<td>Keterangan kerusakan wajib diisi.</td>
+</tr>
+</tbody>
+</table></div>
+<p>Pesan umum: "Data konfirmasi offboarding belum lengkap." Database impact: item off boarding, item &amp; header child, header off boarding, <code>notif_data</code>. Response detail (<code class="chip chip-done">dikonfirmasi</code>), "Offboarding asset berhasil dikonfirmasi."
+403: "Karyawan tidak aktif atau tidak ditemukan." 422: "Offboarding tidak menunggu konfirmasi.", "Daftar asset yang dipegang karyawan sudah berubah.", "Seluruh kondisi asset offboarding wajib diisi.", "Keterangan kerusakan asset wajib diisi.", "Item pengembalian offboarding tidak sesuai." 500: "Terjadi kesalahan saat mengonfirmasi offboarding asset."</p>
+<hr />
+<div class="group-divider" id="g25"><span>Mobile</span></div><h2 id="s25"><span class="sec-no">25</span>Mobile Architecture</h2>
+<div class="code"><span class="code-lang">Alur</span><pre><code class="language-text">Page → AssetOffboardingBloc (mode admin/employee) → AssetOffboardingApi → ApiClient → Backend
+</code></pre></div>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Layer</th>
+<th>File</th>
+<th>Function</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Api</td>
+<td><code>Repository/Service/assetOffboardingApi.dart</code></td>
+<td>getOptions, getAdminList, getEmployeeList, store, updateDraft, deleteDraft, getAdminDetail, getEmployeeDetail, updateSchedule, receive (request per asset), confirmEmployee</td>
+</tr>
+<tr>
+<td>Model</td>
+<td><code>Repository/Model/Asset/mAssetOffboarding.dart</code></td>
+<td>AssetOffboardingEmployee, AssetOffboardingOptions, AssetOffboardingLocation, AssetOffboardingItem, AssetOffboardingRecord, AssetOffboardingFilter, AssetOffboardingPage, AssetOffboardingRequest, AssetOffboardingCondition, AssetOffboardingConfirmationRequest, AssetOffboardingReceiveItem, AssetOffboardingReceiveRequest</td>
+</tr>
+<tr>
+<td>Bloc</td>
+<td><code>Bloc/Asset/AssetOffboardingBloc.dart</code></td>
+<td>LoadAssetOffboardingList, LoadMore…, LoadAssetOffboardingOptions, LoadAssetOffboardingEditor, LoadAssetOffboardingDetail, SaveAssetOffboarding, DeleteAssetOffboardingDraft, UpdateAssetOffboardingSchedule, ReceiveAssetOffboarding, ConfirmAssetOffboarding</td>
+</tr>
+<tr>
+<td>UI</td>
+<td><code>UI/Modul/Asset/Offboarding/*</code></td>
+<td>HalamanAssetOffboarding (list, admin &amp; karyawan), HalamanAssetOffboardingForm (tambah/edit draft), HalamanAssetOffboardingDetail, AssetOffboardingWidgets</td>
+</tr>
+<tr>
+<td>Entry</td>
+<td><code>HalamanAssetSaya.dart</code>, <code>HalamanAssetAdminKaryawan.dart</code></td>
+<td>Banner karyawan, menu Off Board, panel "Off Boarding Perlu Diproses"</td>
+</tr>
+</tbody>
+</table></div>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Route</th>
+<th>Page</th>
+<th>Event awal</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>/asset_admin_offboarding</code></td>
+<td>List admin</td>
+<td>LoadAssetOffboardingList()</td>
+</tr>
+<tr>
+<td><code>/asset_admin_add_offboarding</code></td>
+<td>Form (argumen <code>draftId</code> opsional)</td>
+<td>LoadAssetOffboardingEditor</td>
+</tr>
+<tr>
+<td><code>/asset_admin_detail_offboarding</code></td>
+<td>Detail admin</td>
+<td>LoadAssetOffboardingDetail(id)</td>
+</tr>
+<tr>
+<td><code>/asset_employee_offboarding</code></td>
+<td>List karyawan</td>
+<td>LoadAssetOffboardingList(mode: employee)</td>
+</tr>
+<tr>
+<td><code>/asset_employee_detail_offboarding</code></td>
+<td>Detail karyawan</td>
+<td>LoadAssetOffboardingDetail(id, mode: employee)</td>
+</tr>
+</tbody>
+</table></div>
+<hr />
+<h2 id="s26"><span class="sec-no">26</span>Mobile Screen</h2>
+<h3>26.1 Off Boarding Asset — list</h3>
+<p>Tab <strong>Pengajuan</strong>, <strong>Dikonfirmasi</strong>, <strong>Selesai</strong>. Kartu: Data Karyawan (admin) / nomor (karyawan), Tanggal Penyerahan, "Jam Penyerahan: …", jumlah asset, badge status (Draft / Menunggu Diterima / Dikonfirmasi / Selesai). Admin: tombol <strong>+</strong> (Tambah off boarding) dan ikon <strong>Hapus Draft</strong> pada kartu draft (dialog "Draft off boarding akan dihapus dan tidak dapat dipulihkan."). Kosong: "Belum ada data off boarding asset."</p>
+<h3>26.2 Tambah Off Boarding Asset (Admin)</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Field UI</th>
+<th>Widget</th>
+<th style="text-align: center;">Required</th>
+<th>Source</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Pilih Karyawan</td>
+<td>Bottom sheet + Cari Karyawan</td>
+<td style="text-align: center;">Ya ("Karyawan wajib dipilih")</td>
+<td><code>options.karyawan</code></td>
+</tr>
+<tr>
+<td>Jadwal Serah Terima → Tanggal Penyerahan</td>
+<td>Date picker (mulai hari ini)</td>
+<td style="text-align: center;">Saat submit ("Tanggal serah terima wajib dipilih.")</td>
+<td>Input</td>
+</tr>
+<tr>
+<td>Jam Penyerahan</td>
+<td>Time picker</td>
+<td style="text-align: center;">Saat submit ("Jam serah terima wajib dipilih.")</td>
+<td>Input</td>
+</tr>
+<tr>
+<td>Catatan Tambahan</td>
+<td>Text</td>
+<td style="text-align: center;">Tidak</td>
+<td>→ <code>keterangan</code></td>
+</tr>
+<tr>
+<td>Tombol</td>
+<td><strong>Simpan Draft</strong> / <strong>Submit ke Karyawan</strong></td>
+<td style="text-align: center;">–</td>
+<td>–</td>
+</tr>
+</tbody>
+</table></div>
+<aside class="callout callout-note">
+<p>Form <strong>tidak menampilkan daftar asset</strong> karyawan sebelum disimpan; daftar muncul di detail setelah disimpan.</p>
+</aside>
+<h3>26.3 Detail Off Boarding Asset</h3>
+<p>Header (nomor, status, jadwal), Catatan, Data Karyawan (cabang, divisi), daftar asset dipisah <strong>Off Boarding Asset</strong> (asset tetap) dan <strong>Asset yang Dipinjam</strong> (pinjaman). Per asset: pilihan <strong>Normal / Rusak</strong> (+ <strong>Keterangan Kerusakan</strong>) saat karyawan mengonfirmasi, atau tampilan kondisi.</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Role</th>
+<th>Status</th>
+<th>Tombol</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Karyawan</td>
+<td>pengajuan</td>
+<td><strong>Konfirmasi Off Boarding</strong> (dialog: "Dengan mengonfirmasi, Anda menyatakan seluruh asset pada daftar siap diserahkan kepada Admin/HR.")</td>
+</tr>
+<tr>
+<td>Admin</td>
+<td>pengajuan / dikonfirmasi</td>
+<td><strong>Ubah Jadwal Penyerahan</strong> (bila dikonfirmasi: dialog "Perubahan jadwal akan mengembalikan status ke Pengajuan dan membutuhkan konfirmasi ulang dari karyawan.")</td>
+</tr>
+<tr>
+<td>Admin</td>
+<td>dikonfirmasi</td>
+<td><strong>Terima Penyerahan Asset</strong> (info: "Periksa kondisi seluruh asset secara fisik sebelum menyelesaikan off boarding.") → membuka dialog <strong>Lokasi Tujuan Asset</strong> (lihat bawah)</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>Dialog Lokasi Tujuan Asset</strong> (v1.2): setiap asset (tetap dan pinjaman) punya dropdown gudang sendiri; default-nya gudang yang <code>id_cabang</code>-nya sama dengan cabang karyawan. Tombol <strong>Terima Penyerahan Asset</strong> pada dialog baru aktif setelah semua asset terpilih, lalu mengirim <code>items[]</code> per asset. Bila belum ada lokasi bertipe gudang muncul "Belum ada lokasi gudang." dan dialog tidak dibuka. Setelah selesai, kartu tiap asset menampilkan "Lokasi Tujuan Asset: {nama gudang}".</p>
+<p><strong>Alur status</strong>: <code>AssetAlurStepper.offboarding</code> (Draft → Konfirmasi → Serah Terima → Selesai) dan satu kartu timeline per aset (<code>AssetOffboardingTimelineCards</code>): Draft (jenis aset; aset pinjaman dikembalikan otomatis) · Konfirmasi (kondisi Normal/Rusak; chip <strong>Rusak</strong>) · Serah Terima (jadwal) · Selesai (lokasi gudang tujuan). Kartu timeline disembunyikan saat karyawan mengisi konfirmasi atau admin menerima penyerahan, karena form per aset sudah ada di kartu aset. File: <code>Shared/Widgets/AssetAlurWidgets.dart</code>, <code>Shared/Widgets/AssetOffboardingTimeline.dart</code>.</p>
+<h3>26.4 Asset Saya (Karyawan)</h3>
+<p>Banner <strong>Off Boarding Asset</strong> dari record pertama tab pengajuan + teks info dan jadwal; menu <strong>Off Board</strong>.</p>
+<h3>26.5 Asset Karyawan (Admin)</h3>
+<p>Panel <strong>Off Boarding Perlu Diproses</strong> (<code>summary.offboarding_pending</code>) dengan tombol <strong>Lanjutkan Draft</strong> (draft → form) atau <strong>Terima Asset</strong> (dikonfirmasi → detail).</p>
+<hr />
+<h2 id="s27"><span class="sec-no">27</span>Mobile → API</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>UI Field</th>
+<th>Mobile Variable</th>
+<th>JSON Field</th>
+<th>Type</th>
+<th style="text-align: center;">Required</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Pilih Karyawan</td>
+<td><code>AssetOffboardingRequest.idKaryawan</code></td>
+<td><code>id_karyawan</code></td>
+<td>string</td>
+<td style="text-align: center;">Ya</td>
+</tr>
+<tr>
+<td>Tanggal Penyerahan</td>
+<td><code>tglOffboarding</code></td>
+<td><code>tgl_offboarding</code></td>
+<td>Y-m-d</td>
+<td style="text-align: center;">Saat submit</td>
+</tr>
+<tr>
+<td>Jam Penyerahan</td>
+<td><code>jamOffboarding</code></td>
+<td><code>jam_offboarding</code></td>
+<td>H:i</td>
+<td style="text-align: center;">Saat submit</td>
+</tr>
+<tr>
+<td>Catatan Tambahan</td>
+<td><code>keterangan</code></td>
+<td><code>keterangan</code></td>
+<td>string</td>
+<td style="text-align: center;">Tidak</td>
+</tr>
+<tr>
+<td>Simpan Draft / Submit</td>
+<td><code>isDraft</code></td>
+<td><code>is_draft</code></td>
+<td>bool</td>
+<td style="text-align: center;">Ya</td>
+</tr>
+<tr>
+<td>Kondisi Normal/Rusak</td>
+<td><code>AssetOffboardingCondition.statusItem</code></td>
+<td><code>items[].status_item</code></td>
+<td>string</td>
+<td style="text-align: center;">Ya</td>
+</tr>
+<tr>
+<td>Keterangan Kerusakan</td>
+<td><code>ketRusak</code></td>
+<td><code>items[].ket_rusak</code></td>
+<td>string</td>
+<td style="text-align: center;">Bila rusak</td>
+</tr>
+<tr>
+<td>(id item)</td>
+<td><code>itemId</code></td>
+<td><code>items[].id_asset_trx_offboarding_item</code></td>
+<td>string</td>
+<td style="text-align: center;">Ya</td>
+</tr>
+<tr>
+<td>Ubah Jadwal</td>
+<td>date, time</td>
+<td><code>tgl_offboarding</code>, <code>jam_offboarding</code></td>
+<td>–</td>
+<td style="text-align: center;">Ya</td>
+</tr>
+</tbody>
+</table></div>
+<hr />
+<h2 id="s28"><span class="sec-no">28</span>API → Mobile</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>API JSON</th>
+<th>Mobile Model</th>
+<th>UI</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>offboardings[]</code></td>
+<td>AssetOffboardingPage / AssetOffboardingRecord</td>
+<td>Kartu list</td>
+</tr>
+<tr>
+<td><code>filters[]</code></td>
+<td>AssetOffboardingFilter</td>
+<td>Tab</td>
+</tr>
+<tr>
+<td><code>status_approval</code>, <code>status_label</code>, <code>tab</code></td>
+<td>AssetOffboardingRecord.status</td>
+<td>Badge, tombol</td>
+</tr>
+<tr>
+<td><code>tgl_offboarding</code>, <code>jam_offboarding</code></td>
+<td>tglOffboarding, jamOffboarding</td>
+<td>Jadwal</td>
+</tr>
+<tr>
+<td><code>nama_cabang</code>, <code>nama_divisi</code></td>
+<td>namaCabang, namaDivisi</td>
+<td>Data Karyawan</td>
+</tr>
+<tr>
+<td><code>items[]</code></td>
+<td>AssetOffboardingItem</td>
+<td>Daftar asset (dipisah menurut <code>jenis_transaksi</code>)</td>
+</tr>
+<tr>
+<td><code>items[].status_item</code>, <code>ket_rusak</code></td>
+<td>statusItem, ketRusak</td>
+<td>Kondisi</td>
+</tr>
+<tr>
+<td><code>karyawan[]</code> (options)</td>
+<td>AssetOffboardingEmployee</td>
+<td>Pilih Karyawan</td>
+</tr>
+<tr>
+<td><code>lokasi_gudang[]</code> (options)</td>
+<td>AssetOffboardingLocation</td>
+<td>Dropdown Lokasi Tujuan Asset</td>
+</tr>
+<tr>
+<td><code>id_cabang</code>, <code>items[].id_asset_lokasi_m_tujuan</code>, <code>nama_lokasi_tujuan</code></td>
+<td>idCabang, idLokasiTujuan, namaLokasiTujuan</td>
+<td>Default lokasi; lokasi tujuan di kartu asset</td>
+</tr>
+</tbody>
+</table></div>
+<hr />
+<h2 id="s29"><span class="sec-no">29</span>Mapping Mobile → API → Database</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>UI</th>
+<th>JSON</th>
+<th>Backend</th>
+<th>Table</th>
+<th>Column</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Pilih Karyawan</td>
+<td><code>id_karyawan</code></td>
+<td><code>findActiveKaryawan</code></td>
+<td>header</td>
+<td>id_karyawan, nik_karyawan, nama_karyawan</td>
+</tr>
+<tr>
+<td>Tanggal Penyerahan</td>
+<td><code>tgl_offboarding</code></td>
+<td><code>$data['tgl_offboarding']</code></td>
+<td>header / child</td>
+<td>tgl_offboarding / tgl_serah_terima</td>
+</tr>
+<tr>
+<td>Jam Penyerahan</td>
+<td><code>jam_offboarding</code></td>
+<td><code>databaseTime()</code> (+<code>:00</code>)</td>
+<td>header / child</td>
+<td>jam_offboarding / jam_serah_terima</td>
+</tr>
+<tr>
+<td>Catatan Tambahan</td>
+<td><code>keterangan</code></td>
+<td>trim</td>
+<td>header</td>
+<td>keterangan</td>
+</tr>
+<tr>
+<td>Simpan Draft / Submit</td>
+<td><code>is_draft</code></td>
+<td><code>OffboardingStatus</code></td>
+<td>header</td>
+<td>status_approval</td>
+</tr>
+<tr>
+<td>(otomatis)</td>
+<td>–</td>
+<td><code>employeeAssets</code> + <code>sourceForAsset</code></td>
+<td>item</td>
+<td>id_asset_data, snapshot, jenis_transaksi, sumber</td>
+</tr>
+<tr>
+<td>Kondisi</td>
+<td><code>items[].status_item</code></td>
+<td><code>confirm()</code></td>
+<td>item / child item / asset_data</td>
+<td>status_item / status_item (disetujui/ditolak) / status_asset</td>
+</tr>
+<tr>
+<td>Keterangan Kerusakan</td>
+<td><code>items[].ket_rusak</code></td>
+<td>trim</td>
+<td>item / child item / asset_data</td>
+<td>ket_rusak / ket_tolak / ket_rusak</td>
+</tr>
+<tr>
+<td>Terima Penyerahan Asset + Lokasi Tujuan Asset</td>
+<td><code>items[].id_asset_lokasi_m</code></td>
+<td><code>receive()</code> + <code>resolveItemLocations()</code></td>
+<td>asset_data, item, asset_log, header, child</td>
+<td>status, pemegang, id_asset_lokasi_m, id_asset_lokasi_m_tujuan, log, selesai</td>
+</tr>
+</tbody>
+</table></div>
+<hr />
+<h2 id="s30"><span class="sec-no">30</span>Mapping Database → API → Mobile</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Table</th>
+<th>Column</th>
+<th>API JSON</th>
+<th>Mobile</th>
+<th>UI</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>header</td>
+<td>status_approval</td>
+<td><code>status</code>, <code>status_label</code>, <code>tab</code></td>
+<td>status</td>
+<td>Badge, tab, tombol</td>
+</tr>
+<tr>
+<td>header</td>
+<td>tgl/jam_offboarding</td>
+<td><code>tgl_offboarding</code>, <code>jam_offboarding</code></td>
+<td>idem</td>
+<td>Jadwal</td>
+</tr>
+<tr>
+<td>item</td>
+<td>COUNT</td>
+<td><code>jumlah_asset</code></td>
+<td>jumlahAsset</td>
+<td>Jumlah asset</td>
+</tr>
+<tr>
+<td>item</td>
+<td>jenis_transaksi</td>
+<td><code>items[].jenis_transaksi</code></td>
+<td>jenisTransaksi</td>
+<td>Kelompok "Off Boarding Asset" / "Asset yang Dipinjam"</td>
+</tr>
+<tr>
+<td>item</td>
+<td>status_item, ket_rusak</td>
+<td>idem</td>
+<td>statusItem, ketRusak</td>
+<td>Kondisi</td>
+</tr>
+<tr>
+<td>master_cabang / master_departemen</td>
+<td>nama</td>
+<td><code>nama_cabang</code>, <code>nama_divisi</code></td>
+<td>idem</td>
+<td>Data Karyawan</td>
+</tr>
+</tbody>
+</table></div>
+<hr />
+<div class="group-divider" id="g31"><span>Validasi, Error & Keamanan</span></div><h2 id="s31"><span class="sec-no">31</span>Validation</h2>
+<h3>31.1 Mobile</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Lokasi</th>
+<th>Aturan</th>
+<th>Pesan</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Form</td>
+<td>Karyawan wajib</td>
+<td>"Karyawan wajib dipilih"</td>
+</tr>
+<tr>
+<td>Form (submit)</td>
+<td>Tanggal &amp; jam wajib; tanggal mulai hari ini</td>
+<td>"Tanggal serah terima wajib dipilih." / "Jam serah terima wajib dipilih."</td>
+</tr>
+<tr>
+<td>Detail karyawan</td>
+<td>Semua asset diberi kondisi</td>
+<td>"Pilih kondisi untuk seluruh asset."</td>
+</tr>
+<tr>
+<td>Detail karyawan</td>
+<td>Rusak wajib keterangan</td>
+<td>"Keterangan kerusakan wajib diisi."</td>
+</tr>
+<tr>
+<td>Ubah jadwal</td>
+<td>Tanggal mulai hari ini; dialog bila dikonfirmasi</td>
+<td>–</td>
+</tr>
+<tr>
+<td>Detail admin (Terima)</td>
+<td>Setiap asset wajib punya lokasi gudang (v1.2)</td>
+<td>Tombol di dialog nonaktif sampai lengkap; "Belum ada lokasi gudang." bila daftar kosong</td>
+</tr>
+</tbody>
+</table></div>
+<h3>31.2 Backend — lihat §9 &amp; §24.</h3>
+<h3>31.3 Database — enum <code>status_approval</code>; <code>no_trx</code> unique per company; <code>status_item</code> varchar(30).</h3>
+<h3>31.4 Ringkasan per Field</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Mobile</th>
+<th>Backend</th>
+<th>Database</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>id_karyawan</td>
+<td>Wajib, dari opsi</td>
+<td>aktif, memegang asset, tanpa off boarding aktif</td>
+<td>varchar(150)</td>
+</tr>
+<tr>
+<td>tgl_offboarding</td>
+<td>≥ hari ini, wajib saat submit</td>
+<td>Y-m-d, wajib saat submit (tanpa cek ≥ hari ini)</td>
+<td>date NULL</td>
+</tr>
+<tr>
+<td>jam_offboarding</td>
+<td>wajib saat submit</td>
+<td>H:i</td>
+<td>time NULL</td>
+</tr>
+<tr>
+<td>status_item</td>
+<td>wajib per asset</td>
+<td>normal/rusak, semua item</td>
+<td>varchar(30)</td>
+</tr>
+<tr>
+<td>ket_rusak</td>
+<td>wajib bila rusak</td>
+<td>wajib bila rusak, ≤255</td>
+<td>varchar(255)</td>
+</tr>
+</tbody>
+</table></div>
+<hr />
+<h2 id="s32"><span class="sec-no">32</span>Error Handling</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Error</th>
+<th style="text-align: right;">HTTP</th>
+<th>Backend</th>
+<th>Mobile</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Field tidak valid</td>
+<td style="text-align: right;">422</td>
+<td>VALIDATION_ERROR</td>
+<td><code>firstError</code></td>
+</tr>
+<tr>
+<td>Aturan bisnis</td>
+<td style="text-align: right;">422</td>
+<td>BUSINESS_RULE_VIOLATION</td>
+<td>Snackbar</td>
+</tr>
+<tr>
+<td>Detail tidak ditemukan</td>
+<td style="text-align: right;">404</td>
+<td>NOT_FOUND</td>
+<td>Halaman error</td>
+</tr>
+<tr>
+<td>Token</td>
+<td style="text-align: right;">401</td>
+<td>UNAUTHORIZED</td>
+<td>Refresh token</td>
+</tr>
+<tr>
+<td>Bukan admin / karyawan tidak aktif</td>
+<td style="text-align: right;">403</td>
+<td>FORBIDDEN</td>
+<td>Pesan</td>
+</tr>
+<tr>
+<td>Exception</td>
+<td style="text-align: right;">500</td>
+<td>SYSTEM_ERROR + <code>Log::error</code></td>
+<td>Snackbar</td>
+</tr>
+<tr>
+<td>Asset karyawan berubah setelah submit</td>
+<td style="text-align: right;">422</td>
+<td>"Daftar asset yang dipegang karyawan sudah berubah."</td>
+<td>Snackbar (lihat RISK-006)</td>
+</tr>
+</tbody>
+</table></div>
+<hr />
+<h2 id="s33"><span class="sec-no">33</span>Audit Trail</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Data</th>
+<th style="text-align: center;">Disimpan?</th>
+<th>Lokasi</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Admin pembuat &amp; waktu</td>
+<td style="text-align: center;">✅</td>
+<td><code>user_input</code>, <code>tgl_input</code></td>
+</tr>
+<tr>
+<td>Admin pengubah jadwal / penerima</td>
+<td style="text-align: center;">✅</td>
+<td><code>user_update</code>, <code>tgl_update</code> (tertimpa)</td>
+</tr>
+<tr>
+<td>Karyawan yang mengonfirmasi</td>
+<td style="text-align: center;">✅</td>
+<td><code>user_approval</code>, <code>tgl_approval</code></td>
+</tr>
+<tr>
+<td>Kondisi per asset</td>
+<td style="text-align: center;">✅</td>
+<td>item <code>status_item</code>, <code>ket_rusak</code></td>
+</tr>
+<tr>
+<td>Sumber asset</td>
+<td style="text-align: center;">✅</td>
+<td>item <code>jenis_transaksi</code>, <code>id/tabel_transaksi_sumber</code></td>
+</tr>
+<tr>
+<td>Perubahan asset</td>
+<td style="text-align: center;">✅</td>
+<td><code>asset_log</code></td>
+</tr>
+<tr>
+<td>Riwayat perubahan jadwal</td>
+<td style="text-align: center;">❌</td>
+<td>⚠️ Belum ditemukan (hanya nilai terakhir)</td>
+</tr>
+<tr>
+<td>Draft yang dihapus</td>
+<td style="text-align: center;">❌</td>
+<td>Hard delete</td>
+</tr>
+</tbody>
+</table></div>
+<hr />
+<h2 id="s34"><span class="sec-no">34</span>Notification</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Event</th>
+<th>Trigger</th>
+<th>Penerima</th>
+<th>Judul</th>
+<th>Pesan</th>
+<th>Rute</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>offboarding.diajukan</code></td>
+<td>Submit (POST/PUT non-draft)</td>
+<td>Karyawan</td>
+<td>Offboarding Asset</td>
+<td>Anda memiliki offboarding asset {no_trx}. Silakan konfirmasi kondisi asset.</td>
+<td><code>asset_employee_detail_offboarding</code></td>
+</tr>
+<tr>
+<td><code>offboarding.dijadwalkan</code></td>
+<td>Ubah jadwal</td>
+<td>Karyawan</td>
+<td>Jadwal Offboarding Asset</td>
+<td>Jadwal offboarding asset {no_trx} telah diperbarui.</td>
+<td><code>asset_employee_detail_offboarding</code></td>
+</tr>
+<tr>
+<td><code>offboarding.dikonfirmasi</code></td>
+<td>Konfirmasi karyawan</td>
+<td>Semua admin</td>
+<td>Offboarding Asset Dikonfirmasi</td>
+<td>{nama} telah mengonfirmasi offboarding asset {no_trx}.</td>
+<td><code>asset_admin_detail_offboarding</code></td>
+</tr>
+<tr>
+<td><code>offboarding.diterima</code></td>
+<td>Terima admin</td>
+<td>Karyawan</td>
+<td>Offboarding Asset Selesai</td>
+<td>Asset offboarding {no_trx} telah diterima admin.</td>
+<td><code>asset_employee_detail_offboarding</code></td>
+</tr>
+</tbody>
+</table></div>
+<p>Draft tidak mengirim notifikasi. Child pengembalian pinjaman tidak mengirim notifikasi peminjaman tersendiri.</p>
+<hr />
+<h2 id="s35"><span class="sec-no">35</span>Security</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Aspek</th>
+<th>Implementasi</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Autentikasi</td>
+<td>Bearer JWT</td>
+</tr>
+<tr>
+<td>Isolasi company</td>
+<td>Semua query <code>id_company</code> dari token</td>
+</tr>
+<tr>
+<td>Otorisasi admin</td>
+<td><code>accessError</code> di controller + <code>requireAdmin</code> di model</td>
+</tr>
+<tr>
+<td>Karyawan</td>
+<td><code>offboardingAccessError</code> (aktif) + filter <code>id_karyawan</code> + draft disembunyikan</td>
+</tr>
+<tr>
+<td>Integritas</td>
+<td>Lock company, FOR UPDATE pada header/item/asset/child, pengecekan ulang daftar asset</td>
+</tr>
+<tr>
+<td>Catatan</td>
+<td>Pesan 500 POST tidak lagi menyertakan <code>$exception-&gt;getMessage()</code> (INC-01 selesai v1.3); validasi request sebelum cek akses (INC-07)</td>
+</tr>
+</tbody>
+</table></div>
+<hr />
+<div class="group-divider" id="g36"><span>Manual Book</span></div><h2 id="s36"><span class="sec-no">36</span>Manual Book User/Admin</h2>
+<aside class="callout callout-warn">
+<p>Label dari <code>assets/id/asset.json</code> (<code>menu_asset</code>). ⚠️ Asumsi: halaman <strong>Asset Karyawan</strong> diakses dari menu Asset Management. Screenshot menyusul.</p>
+</aside>
+<h3>A. Admin — Membuat Off Boarding</h3>
+<ol>
+<li><strong>Asset Karyawan</strong> → <strong>Off Boarding</strong> → tekan <strong>+</strong>.</li>
+<li><strong>Pilih Karyawan</strong> (gunakan <strong>Cari Karyawan</strong>). Hanya karyawan aktif yang memegang asset dan belum sedang di-off boarding yang muncul.</li>
+<li>Isi <strong>Jadwal Serah Terima</strong>: <strong>Tanggal Penyerahan</strong> dan <strong>Jam Penyerahan</strong>.</li>
+<li>Isi <strong>Catatan Tambahan</strong> bila perlu.</li>
+<li>Tekan <strong>Simpan Draft</strong> untuk menyimpan dulu, atau <strong>Submit ke Karyawan</strong> untuk mengirim.</li>
+<li>Seluruh asset yang dipegang karyawan (termasuk pinjaman) otomatis masuk daftar.</li>
+</ol>
+<h3>B. Admin — Draft</h3>
+<ul>
+<li>Lanjutkan dari kartu draft atau panel <strong>Off Boarding Perlu Diproses → Lanjutkan Draft</strong>.</li>
+<li>Hapus dengan ikon <strong>Hapus Draft</strong> → konfirmasi.</li>
+</ul>
+<h3>C. Karyawan — Konfirmasi Kondisi</h3>
+<ol>
+<li>Buka banner <strong>Off Boarding Asset</strong> di <strong>Asset Saya</strong> atau menu <strong>Off Board</strong>.</li>
+<li>Periksa jadwal penyerahan.</li>
+<li>Untuk setiap asset pilih <strong>Normal</strong> atau <strong>Rusak</strong> (isi <strong>Keterangan Kerusakan</strong> bila rusak).</li>
+<li>Tekan <strong>Konfirmasi Off Boarding</strong> → konfirmasi.</li>
+</ol>
+<h3>D. Admin — Ubah Jadwal</h3>
+<p>Detail → <strong>Ubah Jadwal Penyerahan</strong> → pilih tanggal &amp; jam. Bila sudah dikonfirmasi karyawan, status kembali ke <strong>Pengajuan</strong> dan karyawan harus konfirmasi ulang.</p>
+<h3>E. Admin — Menyelesaikan</h3>
+<ol>
+<li>Terima asset secara fisik sesuai jadwal dan periksa kondisinya.</li>
+<li>Detail → <strong>Terima Penyerahan Asset</strong>.</li>
+<li>Pada dialog <strong>Lokasi Tujuan Asset</strong>, pilih gudang untuk <strong>setiap asset</strong> (default: gudang di cabang karyawan), lalu tekan <strong>Terima Penyerahan Asset</strong>.</li>
+<li>Semua asset kembali ke gudang yang dipilih (Tersedia/Rusak), peminjaman aktif karyawan ikut selesai, status <strong>Selesai</strong>.</li>
+</ol>
+<hr />
+<h2 id="s37"><span class="sec-no">37</span>Kondisi Button</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Button</th>
+<th>Role</th>
+<th>Halaman</th>
+<th>Condition</th>
+<th>Action</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>+ (Tambah off boarding)</td>
+<td>Admin</td>
+<td>List</td>
+<td>Selalu</td>
+<td>Form</td>
+</tr>
+<tr>
+<td>Simpan Draft</td>
+<td>Admin</td>
+<td>Form</td>
+<td>Tidak submitting</td>
+<td>POST/PUT <code>is_draft = true</code></td>
+</tr>
+<tr>
+<td>Submit ke Karyawan</td>
+<td>Admin</td>
+<td>Form</td>
+<td>Tidak submitting</td>
+<td>POST/PUT <code>is_draft = false</code></td>
+</tr>
+<tr>
+<td>Hapus Draft</td>
+<td>Admin</td>
+<td>List</td>
+<td>Status draft</td>
+<td>DELETE</td>
+</tr>
+<tr>
+<td>Lanjutkan Draft</td>
+<td>Admin</td>
+<td>Panel summary</td>
+<td>Status draft</td>
+<td>Form draft</td>
+</tr>
+<tr>
+<td>Terima Asset (panel)</td>
+<td>Admin</td>
+<td>Panel summary</td>
+<td>Status dikonfirmasi</td>
+<td>Detail</td>
+</tr>
+<tr>
+<td>Ubah Jadwal Penyerahan</td>
+<td>Admin</td>
+<td>Detail</td>
+<td>pengajuan / dikonfirmasi</td>
+<td>PUT jadwal</td>
+</tr>
+<tr>
+<td>Terima Penyerahan Asset</td>
+<td>Admin</td>
+<td>Detail</td>
+<td>dikonfirmasi</td>
+<td>Dialog Lokasi Tujuan Asset → POST terima (<code>items[]</code> per asset)</td>
+</tr>
+<tr>
+<td>Konfirmasi Off Boarding</td>
+<td>Karyawan</td>
+<td>Detail</td>
+<td>pengajuan</td>
+<td>POST konfirmasi</td>
+</tr>
+<tr>
+<td>Batalkan off boarding</td>
+<td>–</td>
+<td>–</td>
+<td>⚠️ Belum ditemukan</td>
+<td>–</td>
+</tr>
+</tbody>
+</table></div>
+<hr />
+<div class="group-divider" id="g38"><span>QA & Risiko</span></div><h2 id="s38"><span class="sec-no">38</span>Testing Scenario</h2>
+<p>Test otomatis yang sudah ada (API): <code>test_offboarding_routes_are_registered</code>, <code>test_offboarding_requires_authentication</code>, <code>test_offboarding_lifecycle_uses_string_statuses</code>, <code>test_admin_pending_lists_draft_and_confirmed_offboarding</code>, <code>test_employee_list_hides_drafts</code>, <code>test_employee_reports_damage_before_admin_receives</code>, <code>test_offboarding_preserves_request_source</code>, <code>test_offboarding_orchestrates_loan_return_as_child_transaction</code>, <code>test_draft_does_not_create_loan_return_child</code>, <code>test_migration_converts_and_restores_offboarding_statuses</code>, <code>test_migration_converts_legacy_string_statuses</code>, <code>test_offboarding_rejects_assets_in_upgrade_or_damage_report</code> (v1.1). v1.2: <code>test_receive_requires_a_valid_warehouse_location</code>, <code>test_options_list_only_warehouse_locations</code>, lokasi per asset pada <code>test_offboarding_orchestrates_loan_return_as_child_transaction</code>; mobile <code>asset_offboarding_widget_test.dart</code> (admin memilih lokasi per asset) dan <code>asset_offboarding_model_test.dart</code>.</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>TC</th>
+<th>Scenario</th>
+<th>Expected</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>TC-01</td>
+<td>Simpan draft tanpa jadwal</td>
+<td>201; <code class="chip chip-draft">draft</code>; item dibuat; tanpa notif; tidak ada child</td>
+</tr>
+<tr>
+<td>TC-02</td>
+<td>Submit dengan jadwal</td>
+<td>201; <code>pengajuan</code>; notif karyawan</td>
+</tr>
+<tr>
+<td>TC-03</td>
+<td>Submit tanpa jadwal</td>
+<td>422 "Tanggal offboarding wajib diisi saat pengajuan."</td>
+</tr>
+<tr>
+<td>TC-04</td>
+<td>Karyawan tanpa asset</td>
+<td>422 "Karyawan tidak memiliki asset yang sedang dipegang."</td>
+</tr>
+<tr>
+<td>TC-05</td>
+<td>Karyawan sudah punya off boarding aktif (termasuk draft)</td>
+<td>422 "Karyawan masih memiliki offboarding aktif."</td>
+</tr>
+<tr>
+<td>TC-06</td>
+<td>Asset karyawan sedang diretur</td>
+<td>422 "…sedang diproses pada flow lain."</td>
+</tr>
+<tr>
+<td>TC-07</td>
+<td>Asset pinjaman sedang dalam pengembalian</td>
+<td>422 "…flow lain."</td>
+</tr>
+<tr>
+<td>TC-08</td>
+<td>Karyawan punya pinjaman aktif</td>
+<td>Child pengembalian KRY05 + relasi dibuat; tidak tampil di list pengembalian admin Peminjaman</td>
+</tr>
+<tr>
+<td>TC-09</td>
+<td>Admin coba konfirmasi child lewat modul Peminjaman</td>
+<td>422 "Pengembalian ini diproses melalui offboarding."</td>
+</tr>
+<tr>
+<td>TC-10</td>
+<td>Edit draft ganti karyawan</td>
+<td>Item dibangun ulang untuk karyawan baru</td>
+</tr>
+<tr>
+<td>TC-11</td>
+<td>Hapus draft</td>
+<td>Header, item, relasi, child terhapus</td>
+</tr>
+<tr>
+<td>TC-12</td>
+<td>Karyawan lihat list/detail</td>
+<td>Draft tidak terlihat; detail draft 404</td>
+</tr>
+<tr>
+<td>TC-13</td>
+<td>Karyawan konfirmasi semua normal</td>
+<td><code class="chip chip-done">dikonfirmasi</code>; child item <code>disetujui</code>; notif admin</td>
+</tr>
+<tr>
+<td>TC-14</td>
+<td>Konfirmasi rusak tanpa keterangan</td>
+<td>422</td>
+</tr>
+<tr>
+<td>TC-15</td>
+<td>Konfirmasi sebagian item</td>
+<td>422 "Seluruh kondisi asset offboarding wajib diisi."</td>
+</tr>
+<tr>
+<td>TC-16</td>
+<td>Asset baru diberikan ke karyawan setelah submit</td>
+<td>Konfirmasi/terima 422 "Daftar asset yang dipegang karyawan sudah berubah."</td>
+</tr>
+<tr>
+<td>TC-17</td>
+<td>Ubah jadwal saat dikonfirmasi</td>
+<td>Kembali <code>pengajuan</code>; notif karyawan; karyawan wajib konfirmasi ulang</td>
+</tr>
+<tr>
+<td>TC-18</td>
+<td>Terima sebelum dikonfirmasi</td>
+<td>422 "Offboarding belum dikonfirmasi karyawan."</td>
+</tr>
+<tr>
+<td>TC-19</td>
+<td>Terima normal &amp; rusak</td>
+<td>Asset → tersedia / rusak @gudang; log; <code>selesai</code>; notif karyawan</td>
+</tr>
+<tr>
+<td>TC-20</td>
+<td>Terima dengan pinjaman</td>
+<td>Child <code>selesai</code>; log <code>pengembalian_karyawan</code>; peminjaman asal <code>selesai</code></td>
+</tr>
+<tr>
+<td>TC-21</td>
+<td>Retur/Kerusakan/Upgrade/Pengembalian untuk asset dalam off boarding aktif</td>
+<td>Ditolak modul tersebut</td>
+</tr>
+<tr>
+<td>TC-22</td>
+<td>Karyawan dinonaktifkan sebelum konfirmasi</td>
+<td>403 — transaksi tertahan (RISK-001)</td>
+</tr>
+<tr>
+<td>TC-23</td>
+<td>Asset sedang dalam Kerusakan/Upgrade/Pemeliharaan lalu di-off boarding</td>
+<td>422 "…sedang diproses pada upgrade." / "…laporan kerusakan." / "…pemeliharaan."</td>
+</tr>
+<tr>
+<td>TC-24</td>
+<td>Tanpa token / bukan admin</td>
+<td>401 / 403</td>
+</tr>
+<tr>
+<td>TC-25</td>
+<td>Terima dengan lokasi gudang berbeda per asset (asset tetap dan pinjaman)</td>
+<td><code>asset_data.id_asset_lokasi_m</code> dan item <code>id_asset_lokasi_m_tujuan</code> sesuai pilihan masing-masing; log tercatat; <code>selesai</code></td>
+</tr>
+<tr>
+<td>TC-26</td>
+<td>Terima tanpa lokasi / sebagian item / lokasi bertipe ruangan / lokasi tidak ada</td>
+<td>422 "Lokasi gudang tujuan setiap asset wajib dipilih." atau "Lokasi gudang tujuan tidak valid."; status tetap <code>dikonfirmasi</code>, asset tidak berubah</td>
+</tr>
+<tr>
+<td>TC-27</td>
+<td>Mobile: dialog Lokasi Tujuan Asset</td>
+<td>Default gudang cabang karyawan; tombol aktif setelah semua asset terpilih; payload <code>items[]</code> per asset; kartu menampilkan lokasi setelah selesai</td>
+</tr>
+</tbody>
+</table></div>
+<hr />
+<h2 id="s39"><span class="sec-no">39</span>Temuan Ketidaksesuaian</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>ID</th>
+<th>Component</th>
+<th>Finding</th>
+<th>Impact</th>
+<th>Recommendation</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>INC-01</td>
+<td>Backend</td>
+<td><strong>Sudah diperbaiki 2026-10-12</strong>: sebelumnya pesan 500 POST menyertakan <code>$exception-&gt;getMessage()</code>; pesan umum kini sama dengan endpoint lain, detail hanya di log</td>
+<td>–</td>
+<td>–</td>
+</tr>
+<tr>
+<td>INC-02</td>
+<td>Backend ↔ Mobile</td>
+<td>Label status <code>pengajuan</code> di API "Menunggu Diterima", padahal yang ditunggu adalah <strong>konfirmasi karyawan</strong>; <code class="chip chip-done">dikonfirmasi</code> = "Dikonfirmasi Karyawan"</td>
+<td>Membingungkan</td>
+<td>Selaraskan label</td>
+</tr>
+<tr>
+<td>INC-03</td>
+<td>DBML ↔ Migration</td>
+<td>DBML: <code>status_item</code> enum <code>kondisi_awal</code>, <code>jenis_transaksi</code> enum; tidak ada unique <code>no_trx</code>. Migration: varchar &amp; unique (id_company, no_trx)</td>
+<td>Dokumen skema tidak akurat</td>
+<td>Perbarui DBML</td>
+</tr>
+<tr>
+<td>INC-04</td>
+<td>Backend</td>
+<td>Reset kondisi item saat ubah jadwal hanya terjadi di <code>resetLoanReturnChildren</code>, yang <strong>berhenti lebih awal bila tidak ada child</strong></td>
+<td>Off boarding tanpa pinjaman: kondisi lama tetap tampil walau status kembali pengajuan</td>
+<td>Reset item di <code>schedule()</code> langsung</td>
+</tr>
+<tr>
+<td>INC-05</td>
+<td>Backend</td>
+<td>Child pengembalian memakai <code>status_item = disetujui/ditolak</code> untuk arti normal/rusak dan <code>ket_tolak</code> untuk keterangan rusak</td>
+<td>Semantik ganda di tabel peminjaman</td>
+<td>Dokumentasikan / kolom kondisi</td>
+</tr>
+<tr>
+<td>INC-06</td>
+<td>Backend ↔ Mobile</td>
+<td>Backend tidak memvalidasi tanggal ≥ hari ini (mobile membatasi)</td>
+<td>Jadwal lampau via API</td>
+<td>Validasi <code>after_or_equal:today</code></td>
+</tr>
+<tr>
+<td>INC-07</td>
+<td>Backend</td>
+<td>Validasi request sebelum cek admin/karyawan aktif</td>
+<td>422 bukan 403</td>
+<td>Pindahkan cek akses</td>
+</tr>
+<tr>
+<td>INC-08</td>
+<td>Mobile</td>
+<td>Label status tampil "Menunggu Diterima"; key <code>status.dikonfirmasi_karyawan</code> tidak ada di <code>asset.json</code> (mobile memakai "Dikonfirmasi")</td>
+<td>Label beda dengan API</td>
+<td>Satukan sumber label</td>
+</tr>
+<tr>
+<td>INC-09</td>
+<td>Mobile</td>
+<td>Form tidak menampilkan asset yang akan ditarik sebelum disimpan</td>
+<td>Admin baru tahu daftar asset setelah simpan</td>
+<td>Preview asset di form</td>
+</tr>
+<tr>
+<td>INC-10</td>
+<td>Migration</td>
+<td>Konversi legacy memetakan <code class="chip chip-done">dikonfirmasi</code> dan <code class="chip chip-bad">ditolak</code> lama → <code>selesai</code></td>
+<td>Data lama berubah makna</td>
+<td>Dokumentasikan untuk data historis</td>
+</tr>
+</tbody>
+</table></div>
+<hr />
+<h2 id="s40"><span class="sec-no">40</span>Edge Case</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Edge Case</th>
+<th>Current Behavior</th>
+<th>Impact</th>
+<th>Recommendation</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Karyawan nonaktif sebelum konfirmasi</td>
+<td>Konfirmasi 403; admin tidak bisa bypass</td>
+<td>Transaksi macet</td>
+<td>Izinkan admin konfirmasi atas nama karyawan</td>
+</tr>
+<tr>
+<td>Admin memberi asset baru (onboarding/penambahan/peminjaman) setelah submit</td>
+<td>Konfirmasi/terima gagal "Daftar asset … sudah berubah"; ubah jadwal tidak membangun ulang item</td>
+<td>Transaksi macet</td>
+<td>Sediakan "sinkron ulang daftar asset"</td>
+</tr>
+<tr>
+<td>Draft terlupakan</td>
+<td>Draft tetap "aktif" dan mengunci asset</td>
+<td>Karyawan tidak bisa retur/lapor rusak/upgrade</td>
+<td>Kedaluwarsa draft atau jangan kunci saat draft</td>
+</tr>
+<tr>
+<td>Asset berstatus <code class="chip chip-wait">proses</code> (mis. dalam alur lain) dipegang karyawan</td>
+<td>Ikut ditarik</td>
+<td>Konflik status</td>
+<td>Filter/cek status</td>
+</tr>
+<tr>
+<td>Asset dalam Kerusakan/Upgrade aktif</td>
+<td>Tidak dicek</td>
+<td>Dua flow pada asset sama</td>
+<td>Tambahkan cek</td>
+</tr>
+<tr>
+<td>Karyawan mengisi kondisi tidak sesuai</td>
+<td>Admin tidak bisa mengoreksi, hanya ubah jadwal</td>
+<td>Data kondisi salah</td>
+<td>Admin dapat override kondisi saat terima</td>
+</tr>
+<tr>
+<td>Peminjaman/onboarding yang belum diterima karyawan</td>
+<td>Tidak ikut (asset belum dipegang)</td>
+<td>Asset bisa sampai setelah off boarding</td>
+<td>Cek transaksi pending lain</td>
+</tr>
+<tr>
+<td>Belum ada lokasi bertipe gudang di <code>asset_lokasi_m</code></td>
+<td>Dialog tidak dibuka ("Belum ada lokasi gudang."); API 422</td>
+<td>Terima tidak bisa selesai</td>
+<td>Siapkan master lokasi gudang</td>
+</tr>
+<tr>
+<td>Asset yang sudah di gudang sebelum v1.2</td>
+<td><code>id_asset_lokasi_m</code> kosong</td>
+<td>Lokasi tidak diketahui sampai diproses lagi</td>
+<td>Backfill (belum dikerjakan)</td>
+</tr>
+</tbody>
+</table></div>
+<hr />
+<h2 id="s41"><span class="sec-no">41</span>Potential Bug / Technical Risk</h2>
+<h3>RISK-001 — Karyawan nonaktif menghentikan alur (TINGGI)</h3>
+<p><strong>Lokasi:</strong> <code>AssetKaryawanOffboarding_c::offboardingAccessError</code>, <code>AssetOffboardingKaryawan_m::confirm</code> (<code>findActiveKaryawan</code>).
+<strong>Masalah:</strong> Konfirmasi hanya bisa oleh karyawan <strong>aktif</strong>. Off boarding umumnya dilakukan saat karyawan keluar; bila status karyawan diubah lebih dulu, off boarding tidak bisa dikonfirmasi dan admin tidak punya jalan lain.
+<strong>Recommendation:</strong> Tambah aksi admin untuk mengisi kondisi, atau izinkan karyawan nonaktif yang punya off boarding aktif.</p>
+<h3>RISK-002 — Selesai (v1.1)</h3>
+<p>Sebelumnya Kerusakan &amp; Upgrade tidak dicek saat membuat off boarding. <code>assertNoCrossFlow</code> kini memanggil <code>hasActiveUpgradeAsset</code>, <code>hasActiveRusakAsset</code>, dan <code>hasActivePemeliharaanAsset</code> (lihat BR-005). Diuji oleh <code>test_offboarding_rejects_assets_in_upgrade_or_damage_report</code>.</p>
+<h3>RISK-003 — Tidak ada pembatalan setelah submit (SEDANG)</h3>
+<p>Hanya draft yang bisa dihapus. Off boarding yang salah karyawan/terlanjur dikirim tidak bisa dibatalkan dan terus mengunci asset.</p>
+<h3>RISK-004 — Kondisi sepenuhnya dari karyawan (SEDANG)</h3>
+<p>Admin tidak dapat mengubah Normal/Rusak saat menerima; satu-satunya jalan adalah ubah jadwal (reset) dan meminta karyawan mengonfirmasi ulang.</p>
+<h3>RISK-005 — Draft mengunci asset (SEDANG)</h3>
+<p><code>activeStatuses()</code> memasukkan <code class="chip chip-draft">draft</code>, sehingga draft yang belum dikirim (dan tidak terlihat karyawan) sudah memblokir Retur, Kerusakan, Upgrade, dan pengembalian pinjaman.</p>
+<h3>RISK-006 — Daftar asset beku setelah submit (SEDANG)</h3>
+<p>Tidak ada mekanisme menyinkronkan item bila asset karyawan berubah; <code>assertCurrentHoldings</code> akan terus gagal.</p>
+<h3>RISK-007 — Notifikasi di luar transaksi (RENDAH)</h3>
+<p>Dikirim setelah commit; kegagalan tidak membatalkan transaksi.</p>
+<h3>RISK-008 — Kapasitas penomoran (RENDAH)</h3>
+<p>3 digit/bulan/company untuk header, item, relasi; item memakan satu nomor per asset.</p>
+<h3>RISK-009 — Lokasi gudang belum tersedia (SEDANG)</h3>
+<p>Terima Penyerahan mewajibkan lokasi bertipe <code>gudang</code> dari <code>asset_lokasi_m</code>. Tabel ini hanya terdokumentasi di DBML (tidak ada migration pembuatnya di repo); bila tabel kosong, off boarding tidak dapat diselesaikan. Kolom header <code>asset_trx_offboarding_karyawan.id_asset_lokasi_m_tujuan</code> (v1.2 awal) kini tidak dipakai dan dapat dihapus.</p>
+<hr />
+<div class="group-divider" id="g42"><span>Referensi Developer</span></div><h2 id="s42"><span class="sec-no">42</span>Dependency</h2>
+<div class="code"><span class="code-lang">Alur</span><pre><code class="language-text">Asset dipegang karyawan (Onboarding / Request-Penambahan / Retur pengganti / Peminjaman)
+        ↓ deteksi sumber (asset_log, onboarding, request, peminjaman)
+Off Boarding (draft → pengajuan → dikonfirmasi → selesai) ──► Notifikasi
+        ├─ asset pinjaman → child Pengembalian KRY05 (via asset_trx_offboarding_relasi)
+        ↓ Terima
+Asset → gudang (tersedia / rusak) + asset_log; Peminjaman asal → selesai
+
+Aturan silang:
+  - Off boarding mengecek: Retur aktif, Pengembalian pinjaman aktif, Upgrade aktif, Kerusakan aktif, Pemeliharaan (PML01) aktif
+  - Dicek oleh: Retur, Pengembalian pinjaman, Kerusakan, Upgrade, Pemeliharaan PML01 (hasActiveOffboardingAsset)
+  - Modul Peminjaman menyembunyikan &amp; menolak konfirmasi child milik off boarding
+  - Summary admin: offboarding_perlu_proses / offboarding_pending
+</code></pre></div>
+<hr />
+<h2 id="s43"><span class="sec-no">43</span>Source Code Reference</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>File</th>
+<th>Layer</th>
+<th>Function</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>API/routes/modules/asset/RouteAsset.php</code> (baris 36–43, 85–87)</td>
+<td>Route</td>
+<td>11 endpoint</td>
+</tr>
+<tr>
+<td><code>API/app/Http/Controllers/Asset/Admin/AssetAdminOffboarding_c.php</code></td>
+<td>Controller</td>
+<td>Admin off boarding</td>
+</tr>
+<tr>
+<td><code>API/app/Http/Controllers/Asset/Karyawan/AssetKaryawanOffboarding_c.php</code></td>
+<td>Controller</td>
+<td>Karyawan off boarding</td>
+</tr>
+<tr>
+<td><code>API/app/Models/Asset/AssetOffboardingKaryawan_m.php</code></td>
+<td>Model</td>
+<td>Seluruh logika</td>
+</tr>
+<tr>
+<td><code>API/app/Models/Asset/OffboardingStatus.php</code></td>
+<td>Enum</td>
+<td>Status, label, tab</td>
+</tr>
+<tr>
+<td><code>API/app/Models/Asset/AssetPeminjamanKaryawan_m.php</code></td>
+<td>Model</td>
+<td>Filter &amp; guard child off boarding</td>
+</tr>
+<tr>
+<td><code>API/app/Models/Asset/AssetReturKaryawan_m.php</code>, <code>AssetRusakKaryawan_m.php</code>, <code>AssetUpgradeKaryawan_m.php</code>, <code>AssetPemeliharaanKaryawan_m.php</code></td>
+<td>Model</td>
+<td>Pemakai <code>hasActiveOffboardingAsset</code>; Rusak, Upgrade, dan Pemeliharaan juga dipanggil balik oleh <code>assertNoCrossFlow</code></td>
+</tr>
+<tr>
+<td><code>API/app/Models/Asset/AssetAdmin_m.php</code></td>
+<td>Model</td>
+<td>Summary</td>
+</tr>
+<tr>
+<td><code>API/app/Support/Asset/AssetNotification.php</code></td>
+<td>Support</td>
+<td><code>offboarding.*</code></td>
+</tr>
+<tr>
+<td><code>API/database/migrations/2026_09_22_000001_create_asset_offboarding_tables.php</code></td>
+<td>Migration</td>
+<td>Tabel, index, konversi status</td>
+</tr>
+<tr>
+<td><code>API/diagram-asset.dbml</code></td>
+<td>DB</td>
+<td>Struktur</td>
+</tr>
+<tr>
+<td><code>API/tests/Asset/*Offboarding*</code></td>
+<td>Test</td>
+<td>12 test</td>
+</tr>
+<tr>
+<td><code>MOBILE/lib/Repository/Service/assetOffboardingApi.dart</code></td>
+<td>Api</td>
+<td>–</td>
+</tr>
+<tr>
+<td><code>MOBILE/lib/Repository/Model/Asset/mAssetOffboarding.dart</code></td>
+<td>Model</td>
+<td>–</td>
+</tr>
+<tr>
+<td><code>MOBILE/lib/Bloc/Asset/AssetOffboardingBloc.dart</code></td>
+<td>Bloc</td>
+<td>–</td>
+</tr>
+<tr>
+<td><code>MOBILE/lib/UI/Modul/Asset/Offboarding/*</code></td>
+<td>UI</td>
+<td>List, form, detail, widgets</td>
+</tr>
+<tr>
+<td><code>MOBILE/lib/UI/Modul/Asset/AssetSaya/HalamanAssetSaya.dart</code>, <code>AssetAdmin/AssetAdminKaryawan/HalamanAssetAdminKaryawan.dart</code></td>
+<td>UI</td>
+<td>Banner, menu, panel</td>
+</tr>
+</tbody>
+</table></div>
+<hr />
+<h2 id="s44"><span class="sec-no">44</span>Developer Notes</h2>
+<ul>
+<li><strong>Status sebagai enum PHP</strong> (<code>OffboardingStatus</code>) — label &amp; tab berasal dari enum, bukan dari tabel.</li>
+<li><strong>Item dibangun otomatis</strong> dari <code>asset_data</code>; tidak ada input asset dari klien.</li>
+<li><strong><code>sourceForAsset</code></strong> menentukan sumber dengan urutan prioritas; asset hasil retur pengganti biasanya terdeteksi lewat <code>asset_log</code> (tabel <code>asset_trx_retur_karyawan</code>) dengan <code>jenis_transaksi = onboarding</code>.</li>
+<li><strong>Transaksi child</strong> hanya dibuat saat submit, dihapus saat edit/hapus draft, direset saat ubah jadwal, dikonfirmasi saat karyawan konfirmasi, dan difinalisasi saat terima — semuanya dalam transaksi DB yang sama.</li>
+<li><strong>Migration idempotent</strong> dengan tabel marker <code>asset_offboarding_migration_state</code> untuk rollback; mendukung konversi status numerik/legacy.</li>
+<li><strong>Summary admin</strong> mengembalikan <code>[]</code>/<code>0</code> bila tabel belum ada (<code>offboardingTablesExist</code>).</li>
+</ul>
+<hr />
+<h2 id="s45"><span class="sec-no">45</span>End-to-End Traceability</h2>
+<div class="code"><span class="code-lang">Alur</span><pre><code class="language-text">Admin memilih &quot;Budi&quot; + 30 Sep 09:00 → Submit ke Karyawan
+  → AssetOffboardingRequest(idKaryawan, tglOffboarding, jamOffboarding, isDraft=false)
+  → POST /asset/offboarding-karyawan
+  → store(): employeeAssets() = [Laptop (onboarding), Proyektor (dipinjam)]
+  → INSERT header KRY02-… (pengajuan) + 2 item (belum_dicek)
+  → createLoanReturnChildren(): header pengembalian KRY05 + relasi
+Karyawan: Laptop Normal, Proyektor Rusak &quot;Lensa retak&quot; → Konfirmasi Off Boarding
+  → items[].status_item / ket_rusak → confirm()
+  → item: normal / rusak; child item: disetujui / ditolak(ket_tolak); header dikonfirmasi
+Admin: Terima Penyerahan Asset → receive()
+  → Laptop: tersedia @gudang + log offboarding_karyawan
+  → Proyektor: rusak @gudang (ket_rusak &quot;Lensa retak&quot;) + log pengembalian_karyawan; child selesai; peminjaman asal selesai
+  → header selesai → Mobile: badge &quot;Selesai&quot;
+</code></pre></div>
+<hr />
+<h2 id="s46"><span class="sec-no">46</span>Ringkasan Database Impact</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Event</th>
+<th>INSERT</th>
+<th>UPDATE</th>
+<th>DELETE</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Simpan draft</td>
+<td>header, item</td>
+<td>–</td>
+<td>–</td>
+</tr>
+<tr>
+<td>Submit (baru)</td>
+<td>header, item, child header+item, relasi, notif</td>
+<td>–</td>
+<td>–</td>
+</tr>
+<tr>
+<td>Edit draft / submit draft</td>
+<td>item, (child, relasi), notif</td>
+<td>header</td>
+<td>item, child, relasi lama</td>
+</tr>
+<tr>
+<td>Hapus draft</td>
+<td>–</td>
+<td>–</td>
+<td>header, item, child, relasi</td>
+</tr>
+<tr>
+<td>Ubah jadwal</td>
+<td>notif</td>
+<td>header, child header+item, item</td>
+<td>–</td>
+</tr>
+<tr>
+<td>Konfirmasi karyawan</td>
+<td>notif</td>
+<td>item, child item+header, header</td>
+<td>–</td>
+</tr>
+<tr>
+<td>Terima</td>
+<td>asset_log, notif</td>
+<td>asset_data, child header, peminjaman asal, header</td>
+<td>–</td>
+</tr>
+</tbody>
+</table></div>
+<hr />
+<h2 id="s47"><span class="sec-no">47</span>Checklist Implementasi</h2>
+<h3>Database</h3>
+<ul>
+<li class="task done">Header, item, relasi + index + unique no_trx</li>
+<li class="task done">Migration dengan rollback &amp; konversi legacy</li>
+<li class="task">Selaraskan DBML dengan migration</li>
+<li class="task done">Lokasi gudang tujuan: <code>asset_data.id_asset_lokasi_m</code> + item <code>id_asset_lokasi_m_tujuan</code> (v1.2)</li>
+<li class="task">Backfill lokasi asset yang sudah di gudang</li>
+<li class="task">Hapus kolom header <code>id_asset_lokasi_m_tujuan</code> (deprecated)</li>
+</ul>
+<h3>Backend</h3>
+<ul>
+<li class="task done">Draft, submit, edit, hapus draft</li>
+<li class="task done">Ubah jadwal, konfirmasi karyawan, terima admin</li>
+<li class="task done">Orkestrasi pengembalian pinjaman sebagai child</li>
+<li class="task done">Kunci asset untuk modul lain</li>
+<li class="task done">Test otomatis (12)</li>
+<li class="task done">Lokasi gudang tujuan dipilih per asset saat Terima (v1.2)</li>
+<li class="task">Lokasi gudang untuk Retur &amp; Peminjaman</li>
+<li class="task done">Hilangkan pesan exception di response 500 (v1.3)</li>
+<li class="task done">Cek Kerusakan/Upgrade/Pemeliharaan aktif (v1.1)</li>
+<li class="task">Pembatalan setelah submit</li>
+<li class="task">Jalan keluar untuk karyawan nonaktif / override kondisi oleh admin</li>
+<li class="task">Reset kondisi item saat ubah jadwal tanpa child</li>
+</ul>
+<h3>Mobile</h3>
+<ul>
+<li class="task done">List, form (draft/submit), detail, konfirmasi, terima, ubah jadwal</li>
+<li class="task done">Banner Asset Saya &amp; panel admin</li>
+<li class="task done">Dialog Lokasi Tujuan Asset per asset (v1.2)</li>
+<li class="task">Preview daftar asset di form</li>
+<li class="task">Selaraskan label status</li>
+</ul>
+<h3>Documentation</h3>
+<ul>
+<li class="task done">Business Flow, DB, API, Mobile, Mapping, Manual Book, Testing</li>
+<li class="task">Screenshot</li>
+</ul>
+<hr />
+<h2 id="s48"><span class="sec-no">48</span>Changelog</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Version</th>
+<th>Date</th>
+<th>Changes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1.4</td>
+<td>2026-10-12</td>
+<td>Mobile: stepper alur status (<code>AssetAlurStepper.offboarding</code>) dan kartu timeline vertikal per aset (<code>AssetOffboardingTimelineCards</code>) di detail off boarding (§26.3). Teks langkah di grup JSON <code>alur</code>. Tidak ada perubahan API.</td>
+</tr>
+<tr>
+<td>1.3</td>
+<td>2026-10-12</td>
+<td>INC-01 diperbaiki: respons 500 simpan off boarding tidak lagi memuat pesan exception. Sinkronisasi dengan kode 12 Okt 2026: path file mobile mengikuti struktur folder baru (<code>UI/Modul/Asset/&lt;Fitur&gt;/</code> berhuruf kapital, model di <code>Repository/Model/Asset/</code>).</td>
+</tr>
+<tr>
+<td>1.2</td>
+<td>2026-10-05</td>
+<td>Lokasi gudang tujuan dipilih admin <strong>per asset</strong> saat Terima Penyerahan: kolom <code>asset_data.id_asset_lokasi_m</code> dan item <code>id_asset_lokasi_m_tujuan</code>; <code>POST .../terima</code> kini menerima <code>items[]</code> (kontrak berubah); <code>options</code> memuat <code>lokasi_gudang</code>; mobile menambah dialog Lokasi Tujuan Asset. RISK-009, TC-25..27, edge case, checklist ditambah. Nama controller disesuaikan dengan pemisahan file (<code>AssetAdminOffboarding_c</code>, <code>AssetKaryawanOffboarding_c</code>)</td>
+</tr>
+<tr>
+<td>1.1</td>
+<td>2026-09-28</td>
+<td>BR-005 diperluas: off boarding kini menolak asset dalam Upgrade, Kerusakan, dan Pemeliharaan (PML01) aktif. RISK-002 selesai; TC-23, error 422, dependency, checklist disesuaikan</td>
+</tr>
+<tr>
+<td>1.0</td>
+<td>2026-09-28</td>
+<td>Initial documentation — disusun dari source lokal API &amp; MOBILE</td>
+</tr>
+</tbody>
+</table></div>
+    </article>
+
+    <footer>Dokumentasi Off Boarding Asset v1.1 · 28 September 2026 · Disusun dari source lokal API (Lumen) &amp; MOBILE (Flutter). Contoh ID dan nama pada payload adalah data sintetis.</footer>
+  </main>
+</div>
+<button class="to-top" id="to-top" type="button" aria-label="Kembali ke atas">↑</button>
+
+<script>
+(function(){
+  var search=document.getElementById('nav-search');
+  var navs=document.querySelectorAll('.nav');
+  search.addEventListener('input',function(){
+    var q=search.value.trim().toLowerCase();
+    navs.forEach(function(nav){
+      nav.querySelectorAll('.nav-group').forEach(function(g){
+        var any=false;
+        g.querySelectorAll('a').forEach(function(a){
+          var hit=!q||a.textContent.toLowerCase().indexOf(q)>-1;
+          a.hidden=!hit; if(hit) any=true;
+        });
+        g.hidden=!any;
+      });
+    });
+  });
+  var links={};
+  document.querySelectorAll('#nav a').forEach(function(a){links[a.dataset.sec]=a;});
+  var current=null;
+  if('IntersectionObserver' in window){
+    var io=new IntersectionObserver(function(entries){
+      entries.forEach(function(e){
+        if(e.isIntersecting){
+          if(current) current.classList.remove('active');
+          current=links[e.target.id];
+          if(current){current.classList.add('active');var nav=current.closest('.nav');var top=current.offsetTop-nav.offsetTop;if(top<nav.scrollTop||top>nav.scrollTop+nav.clientHeight-30){nav.scrollTop=top-nav.clientHeight/2;}}
+        }
+      });
+    },{rootMargin:'0px 0px -75% 0px'});
+    document.querySelectorAll('.doc h2[id]').forEach(function(h){io.observe(h);});
+  }
+  document.querySelectorAll('.mobile-toc a').forEach(function(a){
+    a.addEventListener('click',function(){a.closest('details').open=false;});
+  });
+  document.getElementById('to-top').addEventListener('click',function(){window.scrollTo({top:0});});
+})();
+</script>
+<script type="module">
+// Fallback renderer: hanya jalan bila viewer belum merender diagram (mis. file dibuka langsung).
+const blocks=[...document.querySelectorAll('pre.mermaid')].filter(function(el){return !el.hasAttribute('data-claude-mermaid-claimed');});
+if(blocks.length){
+  blocks.forEach(function(el){el.setAttribute('data-claude-mermaid-claimed','1');el.dataset.src=el.textContent;});
+  const {default:mermaid}=await import("https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs");
+  const media=window.matchMedia('(prefers-color-scheme: dark)');
+  const render=async function(){
+    const css=getComputedStyle(document.documentElement);
+    const v=function(n){return css.getPropertyValue(n).trim();};
+    mermaid.initialize({startOnLoad:false,securityLevel:'strict',theme:'base',fontFamily:'inherit',
+      themeVariables:{background:v('--surface'),primaryColor:v('--accent-soft'),primaryTextColor:v('--ink'),
+        primaryBorderColor:v('--accent'),lineColor:v('--muted'),secondaryColor:v('--surface-2'),tertiaryColor:v('--surface'),
+        textColor:v('--ink'),mainBkg:v('--accent-soft'),nodeBorder:v('--accent'),clusterBkg:v('--surface-2'),
+        noteBkgColor:v('--surface-2'),noteTextColor:v('--ink'),noteBorderColor:v('--line'),
+        actorBkg:v('--accent-soft'),actorBorder:v('--accent'),actorTextColor:v('--ink'),actorLineColor:v('--muted'),
+        signalColor:v('--ink-2'),signalTextColor:v('--ink'),labelBoxBkgColor:v('--surface-2'),labelTextColor:v('--ink'),
+        edgeLabelBackground:v('--surface'),attributeBackgroundColorOdd:v('--surface'),attributeBackgroundColorEven:v('--surface-2')}});
+    blocks.forEach(function(el){el.removeAttribute('data-processed');el.textContent=el.dataset.src;});
+    try{await mermaid.run({nodes:blocks});}catch(e){console.error(e);}
+  };
+  render();
+  if(media.addEventListener) media.addEventListener('change',render);
+}
+</script>
+<script>
+// Kembali ke index lokal bila dibuka dari komputer, ke index artifact bila dibuka dari claude.ai.
+(function(){var h=location.hostname;var art=location.protocol!=='file:'&&/claude/i.test(h);
+if(art){document.querySelectorAll('a.back').forEach(function(a){a.href='https://claude.ai/artifact/X39UeaJRpBKwqFjswGNqip';a.target='_blank';a.rel='noopener';});
+document.querySelectorAll('.dl').forEach(function(d){d.hidden=true;});}})();
+</script>

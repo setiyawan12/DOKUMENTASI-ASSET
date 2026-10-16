@@ -1,0 +1,2202 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Penambahan Asset Ruangan</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap">
+<style>
+:root{
+  --ground:#F3F5F9; --surface:#FFFFFF; --surface-2:#EAEEF5; --ink:#162033; --ink-2:#3A4559; --muted:#657089;
+  --line:#D9DFEA; --accent:#1F5AA6; --accent-soft:#E3ECF8; --accent-ink:#163F75;
+  --wait:#B45F00; --wait-bg:#FFE9C7; --draft:#0078A8; --draft-bg:#D6F1FA;
+  --bad:#C22F2F; --bad-bg:#FDE1E1; --done:#157A41; --done-bg:#D9F2E3; --neutral:#4E5A70; --neutral-bg:#E6EAF1;
+  --code-bg:#0F1A2C; --code-ink:#DCE6F5; --code-muted:#8FA3C2;
+  --shadow:0 1px 2px rgba(22,32,51,.06),0 8px 24px rgba(22,32,51,.06);
+  --font:"Plus Jakarta Sans",ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  color-scheme:dark;
+  --ground:#0E1420; --surface:#151D2C; --surface-2:#1C2638; --ink:#E7ECF5; --ink-2:#C3CBDA; --muted:#8E99AF;
+  --line:#28334A; --accent:#7FAEF0; --accent-soft:#1B2A45; --accent-ink:#B8D2F7;
+  --wait:#FFB861; --wait-bg:#3A2A12; --draft:#6CD3F5; --draft-bg:#113442; --bad:#FF8A8A; --bad-bg:#3D1C1F;
+  --done:#6FD69C; --done-bg:#15321F; --neutral:#B7C1D3; --neutral-bg:#243047;
+  --code-bg:#0A101B; --code-ink:#DCE6F5; --code-muted:#7F93B3; --shadow:0 1px 2px rgba(0,0,0,.3),0 8px 24px rgba(0,0,0,.25);
+}}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --ground:#0E1420; --surface:#151D2C; --surface-2:#1C2638; --ink:#E7ECF5; --ink-2:#C3CBDA; --muted:#8E99AF;
+  --line:#28334A; --accent:#7FAEF0; --accent-soft:#1B2A45; --accent-ink:#B8D2F7;
+  --wait:#FFB861; --wait-bg:#3A2A12; --draft:#6CD3F5; --draft-bg:#113442; --bad:#FF8A8A; --bad-bg:#3D1C1F;
+  --done:#6FD69C; --done-bg:#15321F; --neutral:#B7C1D3; --neutral-bg:#243047;
+  --code-bg:#0A101B; --code-ink:#DCE6F5; --code-muted:#7F93B3; --shadow:0 1px 2px rgba(0,0,0,.3),0 8px 24px rgba(0,0,0,.25);
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth;scroll-padding-top:24px}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+body{background:var(--ground);color:var(--ink);font-family:var(--font);font-size:15px;line-height:1.65;padding-inline:16px}
+a{color:var(--accent)}
+a:focus-visible,button:focus-visible,input:focus-visible,summary:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:4px}
+
+.shell{max-width:1320px;margin:0 auto;display:grid;grid-template-columns:270px minmax(0,1fr);gap:40px;padding-block:28px 80px}
+@media (max-width:960px){.shell{grid-template-columns:minmax(0,1fr);gap:20px}}
+
+/* Navigasi */
+.sidebar{position:sticky;top:calc(env(safe-area-inset-top,0px) + 16px);align-self:start;max-height:calc(100vh - 32px);display:flex;flex-direction:column;gap:12px}
+@media (max-width:960px){.sidebar{display:none}}
+.back{font-size:13px;font-weight:600;text-decoration:none}
+.back-mobile{display:none;margin:0 0 8px}
+@media (max-width:960px){.back-mobile{display:block}}
+.brand{display:flex;align-items:center;gap:10px;font-weight:700;font-size:14px}
+.brand-mark{height:30px;padding-inline:8px;border-radius:8px;background:var(--accent);color:var(--surface);display:grid;place-items:center;font-family:var(--mono);font-size:12px;font-weight:600}
+.search{width:100%;padding:9px 12px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--ink);font:inherit;font-size:13.5px}
+.nav{overflow-y:auto;padding-right:6px;display:flex;flex-direction:column;gap:14px}
+.nav-group p{margin:0 0 4px;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:700}
+.nav a{display:flex;gap:10px;padding:4px 8px;border-radius:6px;text-decoration:none;color:var(--ink-2);font-size:13.5px;line-height:1.4}
+.nav a span{font-family:var(--mono);font-size:11.5px;color:var(--muted);padding-top:1px;min-width:18px}
+.nav a:hover{background:var(--surface-2)}
+.nav a.active{background:var(--accent-soft);color:var(--accent-ink);font-weight:600}
+.nav a.active span{color:var(--accent)}
+.mobile-toc{display:none;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px 14px}
+.mobile-toc summary{font-weight:700;cursor:pointer}
+.mobile-toc .nav{max-height:60vh;margin-top:10px}
+@media (max-width:960px){.mobile-toc{display:block}}
+
+main{min-width:0}
+
+/* Header bergaya label asset */
+.hero{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:28px;align-items:end;padding-block:8px 28px;border-bottom:1px solid var(--line)}
+@media (max-width:760px){.hero{grid-template-columns:minmax(0,1fr)}}
+.eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:.06em;color:var(--accent);text-transform:uppercase;margin:0 0 8px}
+.hero h1{font-size:clamp(30px,5vw,46px);line-height:1.08;letter-spacing:-.02em;margin:0 0 12px;font-weight:800;text-wrap:balance}
+.hero .lede{max-width:62ch;color:var(--ink-2);margin:0;font-size:16px}
+.hero .lede code{font-family:var(--mono);font-size:.86em;background:var(--surface-2);padding:1px 5px;border-radius:5px}
+.tag{background:var(--surface);border:1px dashed var(--muted);border-radius:12px;padding:14px 16px;min-width:250px;font-family:var(--mono);font-size:12px;box-shadow:var(--shadow);position:relative}
+@media (max-width:760px){.tag{min-width:0}}
+.tag::before{content:"";position:absolute;left:14px;top:-7px;width:12px;height:12px;border-radius:50%;background:var(--ground);border:1px dashed var(--muted)}
+.tag dl{display:grid;grid-template-columns:auto 1fr;gap:4px 14px;margin:0}
+.tag dt{color:var(--muted)}
+.tag dd{margin:0;color:var(--ink);font-weight:500}
+.barcode{height:26px;margin-top:10px;background:repeating-linear-gradient(90deg,var(--ink) 0 2px,transparent 2px 4px,var(--ink) 4px 5px,transparent 5px 8px,var(--ink) 8px 11px,transparent 11px 12px);opacity:.75;border-radius:2px}
+.tag .trx{margin-top:4px;text-align:center;letter-spacing:.2em;font-size:11px;color:var(--ink-2)}
+
+/* Panel ringkas */
+.overview{display:grid;gap:18px;padding-block:28px 8px}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:22px}
+.panel h3{margin:0 0 4px;font-size:18px}
+.panel .sub{margin:0 0 18px;color:var(--muted);font-size:14px}
+.panel code{font-family:var(--mono);font-size:.86em;background:var(--surface-2);padding:1px 5px;border-radius:5px;overflow-wrap:anywhere}
+.three{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
+@media (max-width:760px){.three{grid-template-columns:minmax(0,1fr)}}
+.fact{border-left:3px solid var(--accent);padding:2px 0 2px 14px}
+.fact b{display:block;font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.fact p{margin:4px 0 0;font-size:14.5px}
+
+/* Lifecycle */
+.flow{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;align-items:stretch}
+@media (max-width:760px){.flow{grid-template-columns:minmax(0,1fr)}}
+.step{border:1px solid var(--line);border-radius:12px;padding:14px;background:var(--surface);display:flex;flex-direction:column;gap:6px}
+.step .who{font-size:11.5px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.06em}
+.step p{margin:0;font-size:13.5px;color:var(--ink-2)}
+.step .db{font-family:var(--mono);font-size:11.5px;color:var(--muted);margin-top:auto;padding-top:8px;border-top:1px dashed var(--line)}
+.loop{margin-top:12px;display:flex;flex-wrap:wrap;gap:10px;align-items:center;padding:12px 14px;border-radius:12px;background:var(--bad-bg);color:var(--ink);font-size:13.5px}
+.loop strong{color:var(--bad)}
+
+.badge{display:inline-flex;align-items:center;gap:6px;padding:3px 10px;border-radius:999px;font-size:12.5px;font-weight:700;width:max-content}
+.badge::before{content:"";width:7px;height:7px;border-radius:50%;background:currentColor}
+.b-draft{background:var(--draft-bg);color:var(--draft)}
+.b-wait{background:var(--wait-bg);color:var(--wait)}
+.b-bad{background:var(--bad-bg);color:var(--bad)}
+.b-done{background:var(--done-bg);color:var(--done)}
+
+/* Peran */
+.roles{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+@media (max-width:900px){.roles{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:520px){.roles{grid-template-columns:minmax(0,1fr)}}
+.role{border:1px solid var(--line);border-radius:12px;padding:14px 16px;background:var(--surface);display:flex;flex-direction:column;gap:8px}
+.role h4{margin:0;font-size:14.5px}
+.role p{margin:0;font-size:13px;color:var(--muted)}
+.role .links{display:flex;flex-wrap:wrap;gap:6px;margin-top:auto}
+.role .links a{font-family:var(--mono);font-size:11.5px;text-decoration:none;padding:2px 8px;border-radius:6px;background:var(--accent-soft);color:var(--accent-ink)}
+.role .links a:hover{background:var(--accent);color:var(--surface)}
+
+.attention{list-style:none;margin:0;padding:0;display:grid;gap:10px}
+.attention li{display:grid;grid-template-columns:72px minmax(0,1fr);gap:12px;align-items:start;font-size:14px}
+.sev{font-family:var(--mono);font-size:11px;font-weight:600;padding:2px 8px;border-radius:6px;margin-top:2px;text-align:center}
+.sev-h{background:var(--bad-bg);color:var(--bad)}
+.sev-m{background:var(--wait-bg);color:var(--wait)}
+
+/* Konten dokumen */
+.doc{padding-top:8px}
+.group-divider{margin:64px 0 0;display:flex;align-items:center;gap:14px;color:var(--accent);font-size:12px;font-weight:800;letter-spacing:.12em;text-transform:uppercase}
+.group-divider::after{content:"";flex:1;height:2px;background:var(--accent);opacity:.25}
+.doc h2{font-size:clamp(22px,3vw,27px);line-height:1.2;letter-spacing:-.01em;margin:40px 0 14px;display:flex;align-items:baseline;gap:14px;text-wrap:balance}
+.sec-no{font-family:var(--mono);font-size:14px;color:var(--accent);font-weight:600;padding:3px 8px;border:1px solid var(--accent);border-radius:6px;flex:none;transform:translateY(-3px)}
+.doc h3{font-size:18px;margin:30px 0 10px;text-wrap:balance}
+.doc h4{font-size:15.5px;margin:22px 0 8px}
+.doc p,.doc li{max-width:78ch;color:var(--ink-2)}
+.doc strong{color:var(--ink)}
+.doc hr{display:none}
+.doc code{font-family:var(--mono);font-size:.86em;background:var(--surface-2);padding:1px 5px;border-radius:5px;color:var(--ink);overflow-wrap:anywhere}
+.doc .chip{font-weight:600;border-radius:999px;padding:1px 8px}
+.doc .chip-draft{background:var(--draft-bg);color:var(--draft)}
+.doc .chip-wait{background:var(--wait-bg);color:var(--wait)}
+.doc .chip-bad{background:var(--bad-bg);color:var(--bad)}
+.doc .chip-done{background:var(--done-bg);color:var(--done)}
+.doc .chip-neutral{background:var(--neutral-bg);color:var(--neutral)}
+
+.table-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:12px;background:var(--surface);margin:14px 0 20px}
+table{border-collapse:collapse;width:100%;font-size:13.5px;font-variant-numeric:tabular-nums}
+th{text-align:left;background:var(--surface-2);color:var(--ink);font-weight:700;font-size:12.5px;letter-spacing:.02em;padding:10px 12px;border-bottom:1px solid var(--line);white-space:nowrap}
+td{padding:9px 12px;border-bottom:1px solid var(--line);vertical-align:top;color:var(--ink-2);min-width:90px}
+tr:last-child td{border-bottom:0}
+tbody tr:hover td{background:var(--accent-soft)}
+
+.code{position:relative;margin:14px 0 20px}
+.code-lang{position:absolute;top:8px;right:12px;font-family:var(--mono);font-size:10.5px;color:var(--code-muted);letter-spacing:.08em;text-transform:uppercase}
+.doc .code pre{background:var(--code-bg);color:var(--code-ink);border-radius:12px;padding:18px;overflow-x:auto;margin:0;font-size:12.8px;line-height:1.6}
+.doc .code pre code{background:none;color:inherit;padding:0;font-size:inherit;overflow-wrap:normal}
+.diagram{overflow-x:auto;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:18px;margin:14px 0 20px}
+.diagram pre{margin:0}
+.diagram pre.mermaid{font-family:var(--mono);font-size:12px;color:var(--muted);white-space:pre;text-align:center}
+.diagram pre.mermaid[data-processed]{color:inherit;white-space:normal}
+.diagram svg{max-width:100%;height:auto}
+
+.callout{border-radius:12px;padding:12px 16px;margin:14px 0;border:1px solid var(--line);background:var(--surface)}
+.callout p{margin:4px 0}
+.callout-warn{background:var(--wait-bg);border-color:transparent}
+.doc .callout-warn p,.doc .callout-warn strong{color:var(--ink)}
+.callout-note{border-left:3px solid var(--accent)}
+
+.doc .task{list-style:none;padding-left:4px}
+.task::before{content:"";display:inline-block;width:14px;height:14px;border:1.5px solid var(--muted);border-radius:4px;margin-right:10px;vertical-align:-2px}
+.task.done::before{background:var(--done);border-color:var(--done);box-shadow:inset 0 0 0 2px var(--surface)}
+footer{margin-top:64px;padding-top:18px;border-top:1px solid var(--line);color:var(--muted);font-size:13px}
+.to-top{position:fixed;right:16px;bottom:calc(env(safe-area-inset-bottom,0px) + 16px);width:40px;height:40px;border-radius:50%;border:1px solid var(--line);background:var(--surface);color:var(--ink);box-shadow:var(--shadow);cursor:pointer;font-size:16px}
+.dl{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0 12px}.dl a{font-size:12px;font-weight:600;text-decoration:none;border:1px solid var(--line);border-radius:999px;padding:3px 10px;color:var(--ink);background:var(--surface)}.dl a:hover{border-color:var(--accent);color:var(--accent)}.dl[hidden]{display:none}
+</style>
+
+<div class="shell">
+  <aside class="sidebar" aria-label="Daftar isi">
+    <a class="back" href="index.html">← Semua dokumen</a>
+    <div class="dl" aria-label="Unduh dokumen"><a href="dokumentasi-asset-penambahan-ruangan.html" download>⬇ HTML</a><a href="dokumentasi-asset-penambahan-ruangan.md" download>⬇ Markdown</a></div>
+    <div class="brand"><span class="brand-mark">RGN04</span>Penambahan Ruangan</div>
+    <input class="search" id="nav-search" type="search" placeholder="Cari bagian… (mis. API, status)" aria-label="Cari bagian">
+    <nav class="nav" id="nav"><div class="nav-group"><p>Gambaran &amp; Bisnis</p><a href="#s1" data-sec="s1"><span>01</span>Informasi Dokumen</a><a href="#s3" data-sec="s3"><span>03</span>Quick Overview</a><a href="#s4" data-sec="s4"><span>04</span>Ringkasan Fitur</a><a href="#s5" data-sec="s5"><span>05</span>Tujuan Fitur</a><a href="#s6" data-sec="s6"><span>06</span>Aktor</a><a href="#s7" data-sec="s7"><span>07</span>Hak Akses</a><a href="#s8" data-sec="s8"><span>08</span>Terminologi</a><a href="#s9" data-sec="s9"><span>09</span>Business Rules</a><a href="#s10" data-sec="s10"><span>10</span>Business Flow</a><a href="#s11" data-sec="s11"><span>11</span>Flow Berdasarkan Role</a><a href="#s12" data-sec="s12"><span>12</span>Flow Diagram</a><a href="#s13" data-sec="s13"><span>13</span>Sequence Diagram</a><a href="#s14" data-sec="s14"><span>14</span>Status Transaksi</a><a href="#s15" data-sec="s15"><span>15</span>State Transition</a></div><div class="nav-group"><p>Database</p><a href="#s16" data-sec="s16"><span>16</span>Struktur Database</a><a href="#s17" data-sec="s17"><span>17</span>Relasi Database</a><a href="#s18" data-sec="s18"><span>18</span>Data Dictionary</a><a href="#s19" data-sec="s19"><span>19</span>Database Index</a></div><div class="nav-group"><p>Backend &amp; API</p><a href="#s20" data-sec="s20"><span>20</span>Backend Architecture</a><a href="#s21" data-sec="s21"><span>21</span>Backend Business Logic</a><a href="#s22" data-sec="s22"><span>22</span>Dampak terhadap asset_data</a><a href="#s23" data-sec="s23"><span>23</span>API Documentation</a><a href="#s24" data-sec="s24"><span>24</span>Detail Setiap API</a></div><div class="nav-group"><p>Mobile</p><a href="#s25" data-sec="s25"><span>25</span>Mobile Architecture</a><a href="#s26" data-sec="s26"><span>26</span>Mobile Screen</a><a href="#s27" data-sec="s27"><span>27</span>Mobile → API</a><a href="#s28" data-sec="s28"><span>28</span>API → Mobile</a><a href="#s29" data-sec="s29"><span>29</span>Mapping Mobile → API → Database</a><a href="#s30" data-sec="s30"><span>30</span>Mapping Database → API → Mobile</a></div><div class="nav-group"><p>Validasi, Error &amp; Keamanan</p><a href="#s31" data-sec="s31"><span>31</span>Validation</a><a href="#s32" data-sec="s32"><span>32</span>Error Handling</a><a href="#s33" data-sec="s33"><span>33</span>Audit Trail</a><a href="#s34" data-sec="s34"><span>34</span>Notification</a><a href="#s35" data-sec="s35"><span>35</span>Security</a></div><div class="nav-group"><p>Manual Book</p><a href="#s36" data-sec="s36"><span>36</span>Manual Book User/Admin</a><a href="#s37" data-sec="s37"><span>37</span>Kondisi Button</a></div><div class="nav-group"><p>QA &amp; Risiko</p><a href="#s38" data-sec="s38"><span>38</span>Testing Scenario</a><a href="#s39" data-sec="s39"><span>39</span>Temuan Ketidaksesuaian</a><a href="#s40" data-sec="s40"><span>40</span>Edge Case</a><a href="#s41" data-sec="s41"><span>41</span>Potential Bug / Technical Risk</a></div><div class="nav-group"><p>Referensi Developer</p><a href="#s42" data-sec="s42"><span>42</span>Dependency</a><a href="#s43" data-sec="s43"><span>43</span>Source Code Reference</a><a href="#s44" data-sec="s44"><span>44</span>Developer Notes</a><a href="#s45" data-sec="s45"><span>45</span>End-to-End Traceability</a><a href="#s46" data-sec="s46"><span>46</span>Ringkasan Database Impact</a><a href="#s47" data-sec="s47"><span>47</span>Checklist Implementasi</a><a href="#s48" data-sec="s48"><span>48</span>Changelog</a></div></nav>
+  </aside>
+
+  <main>
+    <p class="back-mobile"><a class="back" href="index.html">← Semua dokumen</a> <div class="dl" aria-label="Unduh dokumen"><a href="dokumentasi-asset-penambahan-ruangan.html" download>⬇ HTML</a><a href="dokumentasi-asset-penambahan-ruangan.md" download>⬇ Markdown</a></div></p>
+    <header class="hero">
+      <div>
+        <p class="eyebrow">Asset Management · Dokumentasi Teknis &amp; Manual Book</p>
+        <h1>Penambahan Asset ke Ruangan Aktif (ALK-RGN04)</h1>
+        <p class="lede">Ruangan yang sudah beroperasi bisa ditambah aset lewat dua jalur dalam satu tabel: PIC Ruangan mengajukan lalu Admin/HR menyetujui atau menolak (Jalur A), atau Admin/HR langsung memilih aset (Jalur B). Setelah dijadwalkan, serah terimanya sama dengan onboarding ruangan: PIC menilai tiap aset normal atau rusak, aset rusak diganti per ronde, lalu Admin/HR mengonfirmasi sehingga aset tercatat <code>terpakai</code> di ruangan. Seluruh isi diturunkan dari source code <code>API</code> (Lumen) dan <code>MOBILE</code> (Flutter).</p>
+      </div>
+      <div class="tag" aria-label="Identitas dokumen">
+        <dl>
+          <dt>Kode</dt><dd>ALK-RGN04</dd><dt>Modul</dt><dd>Ruangan</dd><dt>Versi</dt><dd>1.0 · 14 Okt 2026</dd><dt>Stack</dt><dd>Lumen 10 · Flutter</dd><dt>API</dt><dd>14 endpoint</dd>
+        </dl>
+        <div class="barcode" aria-hidden="true"></div>
+        <div class="trx">RGN04-YYYYMMNNN</div>
+      </div>
+    </header>
+
+    <details class="mobile-toc">
+      <summary>Daftar isi</summary>
+      <nav class="nav"><div class="nav-group"><p>Gambaran &amp; Bisnis</p><a href="#s1" data-sec="s1"><span>01</span>Informasi Dokumen</a><a href="#s3" data-sec="s3"><span>03</span>Quick Overview</a><a href="#s4" data-sec="s4"><span>04</span>Ringkasan Fitur</a><a href="#s5" data-sec="s5"><span>05</span>Tujuan Fitur</a><a href="#s6" data-sec="s6"><span>06</span>Aktor</a><a href="#s7" data-sec="s7"><span>07</span>Hak Akses</a><a href="#s8" data-sec="s8"><span>08</span>Terminologi</a><a href="#s9" data-sec="s9"><span>09</span>Business Rules</a><a href="#s10" data-sec="s10"><span>10</span>Business Flow</a><a href="#s11" data-sec="s11"><span>11</span>Flow Berdasarkan Role</a><a href="#s12" data-sec="s12"><span>12</span>Flow Diagram</a><a href="#s13" data-sec="s13"><span>13</span>Sequence Diagram</a><a href="#s14" data-sec="s14"><span>14</span>Status Transaksi</a><a href="#s15" data-sec="s15"><span>15</span>State Transition</a></div><div class="nav-group"><p>Database</p><a href="#s16" data-sec="s16"><span>16</span>Struktur Database</a><a href="#s17" data-sec="s17"><span>17</span>Relasi Database</a><a href="#s18" data-sec="s18"><span>18</span>Data Dictionary</a><a href="#s19" data-sec="s19"><span>19</span>Database Index</a></div><div class="nav-group"><p>Backend &amp; API</p><a href="#s20" data-sec="s20"><span>20</span>Backend Architecture</a><a href="#s21" data-sec="s21"><span>21</span>Backend Business Logic</a><a href="#s22" data-sec="s22"><span>22</span>Dampak terhadap asset_data</a><a href="#s23" data-sec="s23"><span>23</span>API Documentation</a><a href="#s24" data-sec="s24"><span>24</span>Detail Setiap API</a></div><div class="nav-group"><p>Mobile</p><a href="#s25" data-sec="s25"><span>25</span>Mobile Architecture</a><a href="#s26" data-sec="s26"><span>26</span>Mobile Screen</a><a href="#s27" data-sec="s27"><span>27</span>Mobile → API</a><a href="#s28" data-sec="s28"><span>28</span>API → Mobile</a><a href="#s29" data-sec="s29"><span>29</span>Mapping Mobile → API → Database</a><a href="#s30" data-sec="s30"><span>30</span>Mapping Database → API → Mobile</a></div><div class="nav-group"><p>Validasi, Error &amp; Keamanan</p><a href="#s31" data-sec="s31"><span>31</span>Validation</a><a href="#s32" data-sec="s32"><span>32</span>Error Handling</a><a href="#s33" data-sec="s33"><span>33</span>Audit Trail</a><a href="#s34" data-sec="s34"><span>34</span>Notification</a><a href="#s35" data-sec="s35"><span>35</span>Security</a></div><div class="nav-group"><p>Manual Book</p><a href="#s36" data-sec="s36"><span>36</span>Manual Book User/Admin</a><a href="#s37" data-sec="s37"><span>37</span>Kondisi Button</a></div><div class="nav-group"><p>QA &amp; Risiko</p><a href="#s38" data-sec="s38"><span>38</span>Testing Scenario</a><a href="#s39" data-sec="s39"><span>39</span>Temuan Ketidaksesuaian</a><a href="#s40" data-sec="s40"><span>40</span>Edge Case</a><a href="#s41" data-sec="s41"><span>41</span>Potential Bug / Technical Risk</a></div><div class="nav-group"><p>Referensi Developer</p><a href="#s42" data-sec="s42"><span>42</span>Dependency</a><a href="#s43" data-sec="s43"><span>43</span>Source Code Reference</a><a href="#s44" data-sec="s44"><span>44</span>Developer Notes</a><a href="#s45" data-sec="s45"><span>45</span>End-to-End Traceability</a><a href="#s46" data-sec="s46"><span>46</span>Ringkasan Database Impact</a><a href="#s47" data-sec="s47"><span>47</span>Checklist Implementasi</a><a href="#s48" data-sec="s48"><span>48</span>Changelog</a></div></nav>
+    </details>
+
+    <section class="overview" aria-label="Ringkasan">
+      <div class="panel">
+        <h3>Ringkasan dalam 1 menit: penambahan aset ruangan</h3>
+        <p class="sub">Menambah aset gudang ke ruangan aktif secara terdokumentasi, dengan keputusan Admin/HR dan penerimaan fisik oleh PIC.</p>
+        <div class="three">
+          <div class="fact"><b>Satu tabel, dua jalur</b><p><code>sumber_pengajuan</code> membedakan pengajuan PIC (<code>karyawan</code>) dan inisiasi Admin (<code>admin</code>), sama seperti request karyawan KRY-03-1.</p></div>
+          <div class="fact"><b>Keputusan tercatat</b><p>Pengajuan ditolak wajib beralasan. Disetujui berarti Admin memilih aset gudang dan jadwal; aset langsung <code>proses</code>.</p></div>
+          <div class="fact"><b>Aset rusak wajib diganti</b><p>Proses tidak selesai selama ada aset rusak. Pengganti dari gudang, serah terima diulang pada ronde berikutnya (<code>parent_id</code> = baris rusak).</p></div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h3>Siklus penambahan</h3>
+        <p class="sub">Fase diturunkan dari data (status header dan jadwal ronde terakhir), bukan kolom status.</p>
+        <div class="flow">
+          <div class="step"><span class="badge b-wait">Menunggu Persetujuan</span><span class="who">PIC: Ajukan</span><p>Jenis aset, alasan, urgensi. Belum ada aset terkunci. Jalur B melewati langkah ini.</p><span class="db">header proses · tanpa jadwal</span></div>
+          <div class="step"><span class="badge b-wait">Menunggu Serah Terima</span><span class="who">Admin: Setujui / Kirim</span><p>Admin memilih aset gudang dan jadwal; PIC dinotifikasi.</p><span class="db">asset → proses</span></div>
+          <div class="step"><span class="badge b-draft">Menunggu Review</span><span class="who">PIC: Terima</span><p>PIC menilai tiap aset Normal / Rusak dan mengirim checklist.</p><span class="db">item.status_item · jadwal.tgl_terima_pic</span></div>
+          <div class="step"><span class="badge b-done">Selesai</span><span class="who">Admin: Konfirmasi</span><p>Semua aset aktif menjadi terpakai di ruangan; rusak diganti dulu.</p><span class="db">terpakai / ruangan · asset_log</span></div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h3>Mulai dari sini sesuai peran</h3>
+        <p class="sub">Lompat langsung ke bagian yang paling relevan.</p>
+        <div class="roles">
+          <div class="role"><h4>Business Analyst / PM</h4><p>Aturan bisnis, status, perbedaan dengan dokumen bisnis.</p><div class="links"><a href="#s3">§3</a><a href="#s9">§9 Rules</a><a href="#s14">§14 Status</a><a href="#s39">§39 INC</a></div></div>
+          <div class="role"><h4>Backend Developer</h4><p>Logika, dampak ke asset_data, kontrak API.</p><div class="links"><a href="#s21">§21 Logic</a><a href="#s22">§22 asset_data</a><a href="#s24">§24 API</a></div></div>
+          <div class="role"><h4>Mobile Developer</h4><p>Pemakaian ulang halaman RGN01, bloc, route, pemetaan.</p><div class="links"><a href="#s25">§25</a><a href="#s26">§26 Screen</a><a href="#s29">§29 Mapping</a></div></div>
+          <div class="role"><h4>QA / Tester</h4><p>12 test API, 11 test mobile, skenario, edge case, risiko.</p><div class="links"><a href="#s38">§38 Test</a><a href="#s40">§40 Edge</a><a href="#s41">§41 Risk</a></div></div>
+          <div class="role"><h4>Technical Support</h4><p>Pesan error, audit trail, notifikasi.</p><div class="links"><a href="#s32">§32 Error</a><a href="#s33">§33 Audit</a><a href="#s34">§34 Notif</a></div></div>
+          <div class="role"><h4>User / Admin Asset</h4><p>Langkah operasional dan kondisi tombol.</p><div class="links"><a href="#s36">§36 Manual Book</a><a href="#s37">§37 Tombol</a></div></div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h3>Perlu perhatian</h3>
+        <p class="sub">Temuan terpenting. Detail di <a href="#s39">§39</a> dan <a href="#s41">§41</a>.</p>
+        <ul class="attention">
+          <li><span class="sev sev-h">TINGGI</span><span><code>status_approval</code> harus enum di database; bila masih <code>tinyint</code> penyimpanan gagal. <a href="#s41">RISK-001</a></span></li>
+          <li><span class="sev sev-m">SEDANG</span><span>Belum ada pembatalan oleh Admin; transaksi tertahan menahan aset. <a href="#s41">RISK-002</a></span></li>
+          <li><span class="sev sev-m">SEDANG</span><span>Aset yang disetujui tidak dicek sesuai kategori yang diminta. <a href="#s41">RISK-003</a></span></li>
+          <li><span class="sev sev-m">SEDANG</span><span>Belum diuji di server/emulator, termasuk push notifikasi. <a href="#s41">RISK-005</a></span></li>
+        </ul>
+      </div>
+    </section>
+
+    <article class="doc">
+<div class="group-divider" id="g1"><span>Gambaran &amp; Bisnis</span></div>
+<h2 id="s1"><span class="sec-no">01</span>Informasi Dokumen</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Informasi</th>
+<th>Nilai</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Nama Fitur</td>
+<td>Penambahan Asset ke Ruangan Aktif (UI Admin: item <strong>"Penambahan"</strong> di dashboard Ruangan; UI PIC: tombol <strong>"Ajukan Penambahan Asset"</strong> dan banner di halaman <strong>"PIC Ruangan"</strong>)</td>
+</tr>
+<tr>
+<td>Kode Fitur</td>
+<td><strong>ALK-RGN04</strong> (nomor transaksi <code>RGN04-YYYYMMNNN</code>)</td>
+</tr>
+<tr>
+<td>Modul</td>
+<td>Asset Management — Ruangan</td>
+</tr>
+<tr>
+<td>Backend</td>
+<td>Laravel <strong>Lumen ^10.0</strong>, PHP ^8.1, JWT, Query Builder</td>
+</tr>
+<tr>
+<td>Database</td>
+<td><code>API/diagram-asset.dbml</code> (tanda <code>[REVISI ALK-RGN04]</code>) + SQL manual <code>Claude outputs/sql-alk-rgn04-request-penambahan-ruangan.sql</code></td>
+</tr>
+<tr>
+<td>Mobile</td>
+<td>Flutter (<code>professional_flutter_3_35</code>), <code>flutter_bloc</code>, <code>dio</code></td>
+</tr>
+<tr>
+<td>Web</td>
+<td>⚠️ Belum ditemukan: tidak ada source web di workspace</td>
+</tr>
+<tr>
+<td>Test otomatis</td>
+<td>API <code>tests/Asset/AssetRequestRuanganTest.php</code> (12 test) · Mobile <code>test/asset/asset_request_ruangan_test.dart</code> (11 test)</td>
+</tr>
+<tr>
+<td>Versi dokumen</td>
+<td>1.0 — 14 Oktober 2026</td>
+</tr>
+<tr>
+<td>Dokumen terkait</td>
+<td>Onboarding Ruangan (ALK-RGN01), Request &amp; Penambahan Karyawan (KRY-03-1), Master Lokasi &amp; PIC Ruangan</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="s2"><span class="sec-no">02</span>Daftar Isi</h2>
+<p>Lihat panel navigasi di samping.</p>
+<h2 id="s3"><span class="sec-no">03</span>Quick Overview</h2>
+<p>Ruangan yang sudah beroperasi bisa <strong>ditambah aset</strong> lewat dua jalur dalam <strong>satu tabel</strong> (<code>asset_trx_request_ruangan</code>), dibedakan kolom <code>sumber_pengajuan</code> seperti request karyawan KRY-03-1. Pada <strong>Jalur A</strong> PIC Ruangan mengajukan (jenis aset, alasan, urgensi); Admin/HR menyetujui dengan memilih aset gudang dan jadwal, atau menolak dengan alasan. Pada <strong>Jalur B</strong> Admin/HR langsung memilih aset dan jadwal tanpa persetujuan. Setelah dijadwalkan, alurnya sama dengan RGN01: aset gudang <code>tersedia</code> → <code>proses</code>, PIC menilai <strong>setiap aset Normal atau Rusak</strong>, Admin/HR mereview lalu <strong>mengonfirmasi</strong> (aset menjadi <code>terpakai</code> di ruangan) atau <strong>menjadwalkan pengganti</strong> untuk aset rusak (ronde berikutnya) sampai semua normal.</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Aspek</th>
+<th>Ringkasan</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Aktor</td>
+<td>Admin/HR (Admin Asset), PIC Ruangan, Sistem</td>
+</tr>
+<tr>
+<td>Jalur</td>
+<td>A = <code>sumber_pengajuan='karyawan'</code> (PIC mengajukan) · B = <code>sumber_pengajuan='admin'</code> (Admin langsung)</td>
+</tr>
+<tr>
+<td>Fase (diturunkan dari data)</td>
+<td><code>menunggu_persetujuan</code> → <code>menunggu_serah_terima</code> → <code>menunggu_review</code> → <code>selesai</code>; cabang <code>ditolak</code> (Jalur A)</td>
+</tr>
+<tr>
+<td>Status header</td>
+<td><code>status_approval</code>: <code>proses</code> → <code>dikonfirmasi</code> atau <code>ditolak</code> (enum <code>status_request_karyawan</code>, sama dengan KRY-03-1)</td>
+</tr>
+<tr>
+<td>Status asset</td>
+<td><code>tersedia</code> → <code>proses</code> → <code>terpakai</code> (pemegang <code>ruangan</code>); aset rusak → <code>rusak</code> (kembali ke gudang)</td>
+</tr>
+<tr>
+<td>Endpoint</td>
+<td>9 admin + 5 PIC</td>
+</tr>
+<tr>
+<td>Notifikasi</td>
+<td>8 event (<code>request_ruangan.*</code>)</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="s4"><span class="sec-no">04</span>Ringkasan Fitur</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Fitur</th>
+<th>Aktor</th>
+<th>Keterangan</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Ajukan penambahan aset</td>
+<td>PIC Ruangan</td>
+<td>Pilih ruangan miliknya, jenis aset (kategori), alasan, urgensi. Status <code>proses</code>, belum ada jadwal.</td>
+</tr>
+<tr>
+<td>Setujui pengajuan</td>
+<td>Admin/HR</td>
+<td>Memilih aset gudang <code>tersedia</code> + jadwal. Aset menjadi <code>proses</code>, PIC dinotifikasi.</td>
+</tr>
+<tr>
+<td>Tolak pengajuan</td>
+<td>Admin/HR</td>
+<td>Alasan penolakan wajib. Status <code>ditolak</code>, tidak ada aset yang dikunci.</td>
+</tr>
+<tr>
+<td>Inisiasi langsung</td>
+<td>Admin/HR</td>
+<td>Memilih ruangan aktif, aset, jadwal. PIC otomatis dari master PIC ruangan.</td>
+</tr>
+<tr>
+<td>Ubah jadwal</td>
+<td>Admin/HR</td>
+<td>Selama PIC belum menerima. Riwayat jadwal bertambah satu baris.</td>
+</tr>
+<tr>
+<td>Serah terima</td>
+<td>PIC Ruangan</td>
+<td>Checklist Normal/Rusak per aset; keterangan wajib bila rusak.</td>
+</tr>
+<tr>
+<td>Jadwalkan pengganti</td>
+<td>Admin/HR</td>
+<td>Wajib mengganti semua aset rusak ronde ini; ronde bertambah.</td>
+</tr>
+<tr>
+<td>Konfirmasi selesai</td>
+<td>Admin/HR</td>
+<td>Semua aset aktif menjadi <code>terpakai</code> di ruangan + log aset.</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="s5"><span class="sec-no">05</span>Tujuan Fitur</h2>
+<ul>
+<li>Menambah aset ke ruangan yang sudah aktif tanpa mengulang onboarding ruangan (RGN01).</li>
+<li>Memberi PIC Ruangan jalur resmi untuk meminta aset tambahan, lengkap dengan alasan dan urgensi.</li>
+<li>Memberi Admin/HR keputusan terdokumentasi: setujui (dengan aset dan jadwal) atau tolak (dengan alasan).</li>
+<li>Memastikan serah terima fisik tercatat (waktu dan identitas PIC) dan aset rusak diganti sebelum selesai.</li>
+</ul>
+<h2 id="s6"><span class="sec-no">06</span>Aktor</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Aktor</th>
+<th>Peran</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Admin/HR</td>
+<td>Terdaftar di <code>asset_admin</code>. Menginisiasi (Jalur B), menyetujui/menolak (Jalur A), memilih aset, menetapkan dan mengubah jadwal, mereview checklist, menjadwalkan pengganti, mengonfirmasi.</td>
+</tr>
+<tr>
+<td>PIC Ruangan</td>
+<td>Karyawan di <code>asset_lokasi_pic_m</code> untuk ruangan tersebut. Mengajukan (Jalur A), menerima aset, mengisi checklist.</td>
+</tr>
+<tr>
+<td>Sistem</td>
+<td>Mengunci aset (<code>proses</code>), menurunkan fase dari data, mencatat log aset, mengirim notifikasi.</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="s7"><span class="sec-no">07</span>Hak Akses</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Aksi</th>
+<th>Admin/HR</th>
+<th>PIC Ruangan</th>
+<th>Keterangan</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Lihat opsi/daftar/detail (admin)</td>
+<td>✔</td>
+<td>✘</td>
+<td><code>accessError</code> memeriksa <code>asset_admin</code>.</td>
+</tr>
+<tr>
+<td>Inisiasi, setujui, tolak, ubah jadwal, pengganti, konfirmasi</td>
+<td>✔</td>
+<td>✘</td>
+<td>Model memeriksa <code>findAssetAdmin</code>; pesan <code>Pengguna tidak terdaftar sebagai admin asset.</code></td>
+</tr>
+<tr>
+<td>Ajukan penambahan</td>
+<td>✘</td>
+<td>✔</td>
+<td>Hanya untuk ruangan yang PIC-nya pengaju.</td>
+</tr>
+<tr>
+<td>Lihat detail/daftar milik sendiri</td>
+<td>✘</td>
+<td>✔</td>
+<td>Filter <code>id_karyawan_pic</code> = pengguna. PIC lain mendapat <code>NOT_FOUND</code>.</td>
+</tr>
+<tr>
+<td>Terima &amp; kirim checklist</td>
+<td>✘</td>
+<td>✔</td>
+<td>Hanya PIC transaksi tersebut.</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="s8"><span class="sec-no">08</span>Terminologi</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Istilah</th>
+<th>Arti</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Jalur A / Jalur B</td>
+<td>Pengajuan PIC (<code>sumber_pengajuan='karyawan'</code>) / inisiasi Admin (<code>'admin'</code>).</td>
+</tr>
+<tr>
+<td>Ronde</td>
+<td>Putaran serah terima. Ronde 1 = aset awal; ronde berikutnya = unit pengganti.</td>
+</tr>
+<tr>
+<td>Fase</td>
+<td>Posisi alur yang <strong>diturunkan dari data</strong>, bukan kolom: lihat §14.</td>
+</tr>
+<tr>
+<td><code>parent_id</code></td>
+<td>Pada baris pengganti berisi id baris aset rusak yang digantikan.</td>
+</tr>
+<tr>
+<td>DIALOKASIKAN</td>
+<td>Istilah dokumen bisnis; di sistem = <code>asset_data.status_asset='proses'</code>.</td>
+</tr>
+<tr>
+<td>Ruangan aktif</td>
+<td><code>asset_lokasi_m.tipe='ruangan'</code>, <code>status_aktif='1'</code>, punya PIC, dan sudah beroperasi (lihat §9).</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="s9"><span class="sec-no">09</span>Business Rules</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>No</th>
+<th>Aturan</th>
+<th>Implementasi</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>BR-01</td>
+<td>Hanya ruangan aktif yang bisa ditambah aset</td>
+<td><code>ruanganAktif()</code>: tipe <code>ruangan</code>, <code>status_aktif='1'</code>, ada baris <code>asset_lokasi_pic_m</code>.</td>
+</tr>
+<tr>
+<td>BR-02</td>
+<td>Ruangan harus sudah beroperasi</td>
+<td>Ada onboarding <code>dikonfirmasi</code> untuk ruangan itu <strong>atau</strong> ada <code>asset_data</code> dengan <code>pemegang_asset='ruangan'</code> di ruangan itu.</td>
+</tr>
+<tr>
+<td>BR-03</td>
+<td>PIC pengaju harus PIC ruangan tersebut</td>
+<td><code>ajukanPic</code> memakai <code>ruanganAktif($idCompany, $idKaryawan)</code>; ruangan lain ditolak.</td>
+</tr>
+<tr>
+<td>BR-04</td>
+<td>Pengajuan wajib berisi jenis aset, alasan, urgensi</td>
+<td>Jenis aset harus ada di <code>asset_kategori_m</code>; alasan tidak kosong; urgensi ∈ <code>normal</code>, <code>secepatnya</code>, <code>mendesak</code>.</td>
+</tr>
+<tr>
+<td>BR-05</td>
+<td>Jalur B tidak perlu persetujuan</td>
+<td><code>storeAdmin</code> langsung membuat item + jadwal + mengunci aset.</td>
+</tr>
+<tr>
+<td>BR-06</td>
+<td>Penolakan wajib beralasan</td>
+<td><code>tolak</code> menolak alasan kosong (<code>Alasan penolakan wajib diisi.</code>).</td>
+</tr>
+<tr>
+<td>BR-07</td>
+<td>Hanya aset <code>tersedia</code> di gudang yang dipilih</td>
+<td><code>getLockedAssets</code>: <code>status_asset='tersedia'</code> dan <code>pemegang_asset='gudang'</code>, dikunci <code>FOR UPDATE</code>.</td>
+</tr>
+<tr>
+<td>BR-08</td>
+<td>Aset dipilih → langsung <code>proses</code></td>
+<td><code>alokasikan()</code> mengubah status saat disetujui / diinisiasi.</td>
+</tr>
+<tr>
+<td>BR-09</td>
+<td>PIC Jalur B = PIC master ruangan</td>
+<td><code>storeAdmin</code> mengambil PIC dari <code>asset_lokasi_pic_m</code>; Admin tidak dapat memilih PIC lain.</td>
+</tr>
+<tr>
+<td>BR-10</td>
+<td>Jadwal tidak boleh sebelum tanggal pengajuan</td>
+<td><code>parseJadwalValue</code>: <code>Tanggal serah terima tidak boleh sebelum tanggal pengajuan.</code></td>
+</tr>
+<tr>
+<td>BR-11</td>
+<td>Jadwal hanya bisa diubah sebelum PIC menerima</td>
+<td>Fase harus <code>menunggu_serah_terima</code>.</td>
+</tr>
+<tr>
+<td>BR-12</td>
+<td>PIC wajib mengecek seluruh aset ronde berjalan</td>
+<td>Jumlah dan id item harus lengkap; rusak wajib keterangan.</td>
+</tr>
+<tr>
+<td>BR-13</td>
+<td>Tidak boleh selesai selama ada aset rusak</td>
+<td><code>konfirmasi</code> menolak bila <code>asetRusakRondeIni</code> tidak kosong.</td>
+</tr>
+<tr>
+<td>BR-14</td>
+<td>Semua aset rusak wajib diganti sekaligus</td>
+<td><code>jadwalkanPengganti</code> mensyaratkan id item rusak = id item pengganti; pengganti tidak boleh ganda.</td>
+</tr>
+<tr>
+<td>BR-15</td>
+<td>Setiap tindakan mencatat waktu dan pelaku</td>
+<td><code>user_input</code>, <code>user_approval</code>, <code>tgl_approval</code>, <code>tgl_terima_pic</code>, <code>asset_trx_log</code>.</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="s10"><span class="sec-no">10</span>Business Flow</h2>
+<ol>
+<li><strong>Jalur A.</strong> PIC mengisi form (ruangan, jenis aset, alasan, urgensi) dan mengirim. Admin/HR dinotifikasi (<code>request_ruangan.diajukan</code>).</li>
+<li>Admin/HR membuka tab <strong>Pengajuan</strong>, mereview.
+   - <strong>Tolak:</strong> isi alasan → status <code>ditolak</code>, PIC dinotifikasi. Selesai.
+   - <strong>Setujui:</strong> pilih aset gudang dan jadwal → aset <code>proses</code>, item ronde 1 dan jadwal dibuat, PIC dinotifikasi (<code>disetujui</code>).</li>
+<li><strong>Jalur B.</strong> Admin/HR memilih ruangan aktif, aset, jadwal → langsung seperti langkah setujui; PIC dinotifikasi (<code>dikirim</code>).</li>
+<li>Pada jadwal, HR menyerahkan aset di ruangan. PIC menilai tiap aset Normal/Rusak lalu <strong>Terima &amp; Kirim Checklist</strong>. Admin dinotifikasi (<code>diterima</code>).</li>
+<li>Admin/HR mereview:
+   - Semua normal → <strong>Konfirmasi Selesai</strong>: aset <code>terpakai</code> di ruangan, log aset dicatat, PIC dinotifikasi (<code>selesai</code>).
+   - Ada rusak → <strong>Jadwalkan Pengganti</strong>: aset rusak → <code>rusak</code> (gudang), pengganti → <code>proses</code>, item ronde + 1, jadwal baru; PIC dinotifikasi (<code>pengganti</code>). Kembali ke langkah 4.</li>
+</ol>
+<h2 id="s11"><span class="sec-no">11</span>Flow Berdasarkan Role</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Role</th>
+<th>Langkah</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>PIC Ruangan</td>
+<td>Ajukan → (tunggu keputusan) → terima notifikasi jadwal → periksa fisik → isi checklist → kirim → (bila ada pengganti, ulangi) → selesai.</td>
+</tr>
+<tr>
+<td>Admin/HR</td>
+<td>Tab Pengajuan → setujui/tolak → (tab Proses) ubah jadwal bila perlu → review checklist → konfirmasi atau jadwalkan pengganti → selesai. Atau tombol <strong>Tambah Asset</strong> untuk Jalur B.</td>
+</tr>
+<tr>
+<td>Sistem</td>
+<td>Mengunci/melepas aset, menurunkan fase, mencatat log, mengirim notifikasi.</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="s12"><span class="sec-no">12</span>Flow Diagram</h2>
+<div class="diagram"><pre class="mermaid">flowchart TD
+    A([Mulai]) --> J{Jalur}
+    J -->|A: PIC mengajukan| P[Pengajuan: ruangan, jenis aset, alasan, urgensi]
+    J -->|B: Admin langsung| B[Pilih ruangan, aset gudang, jadwal]
+    P --> R{Admin/HR review}
+    R -->|Tolak + alasan| T([Ditolak - selesai])
+    R -->|Setujui| S[Pilih aset gudang + jadwal]
+    S --> L[Aset tersedia → proses, PIC dinotifikasi]
+    B --> L
+    L --> H[Serah terima: PIC cek tiap aset]
+    H --> V{Ada aset rusak?}
+    V -->|Tidak| K[Admin konfirmasi: aset terpakai di ruangan]
+    V -->|Ya| G[Admin jadwalkan pengganti, ronde + 1]
+    G --> H
+    K --> Z([Selesai])
+</pre></div>
+<h2 id="s13"><span class="sec-no">13</span>Sequence Diagram</h2>
+<div class="diagram"><pre class="mermaid">sequenceDiagram
+    participant PIC as PIC Ruangan (Mobile)
+    participant API as API Lumen
+    participant DB as Database
+    participant ADM as Admin/HR (Mobile)
+    PIC->>API: POST pic-ruangan/request
+    API->>DB: insert header (proses, tanpa jadwal)
+    API-->>ADM: notifikasi request_ruangan.diajukan
+    ADM->>API: POST request-ruangan/{id}/setujui
+    API->>DB: aset → proses, insert item ronde 1 + jadwal
+    API-->>PIC: notifikasi request_ruangan.disetujui
+    PIC->>API: POST pic-ruangan/request/{id}/terima
+    API->>DB: item.status_item, jadwal.tgl_terima_pic
+    API-->>ADM: notifikasi request_ruangan.diterima
+    ADM->>API: POST request-ruangan/{id}/konfirmasi
+    API->>DB: aset → terpakai/ruangan, asset_trx_log, header dikonfirmasi
+    API-->>PIC: notifikasi request_ruangan.selesai
+</pre></div>
+<h2 id="s14"><span class="sec-no">14</span>Status Transaksi</h2>
+<p>Hanya <code>status_approval</code> yang disimpan. Fase diturunkan dari status header dan jadwal ronde terakhir.</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Fase</th>
+<th>Kondisi data</th>
+<th>Label</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>menunggu_persetujuan</code></td>
+<td><code>proses</code> dan <strong>belum ada</strong> baris jadwal (hanya Jalur A)</td>
+<td>Menunggu Persetujuan</td>
+</tr>
+<tr>
+<td><code>menunggu_serah_terima</code></td>
+<td><code>proses</code>, jadwal ronde terakhir <code>tgl_terima_pic</code> kosong</td>
+<td>Menunggu Serah Terima</td>
+</tr>
+<tr>
+<td><code>menunggu_review</code></td>
+<td><code>proses</code>, jadwal ronde terakhir <code>tgl_terima_pic</code> terisi</td>
+<td>Menunggu Review Admin</td>
+</tr>
+<tr>
+<td><code>ditolak</code></td>
+<td><code>status_approval='ditolak'</code></td>
+<td>Ditolak</td>
+</tr>
+<tr>
+<td><code>selesai</code></td>
+<td><code>status_approval='dikonfirmasi'</code></td>
+<td>Selesai</td>
+</tr>
+</tbody>
+</table></div>
+<p><code>draft</code> ada di enum tetapi tidak dipakai alur ini. Status aset: lihat §22.</p>
+<h2 id="s15"><span class="sec-no">15</span>State Transition</h2>
+<div class="diagram"><pre class="mermaid">stateDiagram-v2
+    [*] --> menunggu_persetujuan: PIC ajukan (Jalur A)
+    [*] --> menunggu_serah_terima: Admin inisiasi (Jalur B)
+    menunggu_persetujuan --> ditolak: Admin tolak
+    menunggu_persetujuan --> menunggu_serah_terima: Admin setujui
+    menunggu_serah_terima --> menunggu_serah_terima: Admin ubah jadwal
+    menunggu_serah_terima --> menunggu_review: PIC kirim checklist
+    menunggu_review --> menunggu_serah_terima: Jadwalkan pengganti (ronde + 1)
+    menunggu_review --> selesai: Admin konfirmasi
+    ditolak --> [*]
+    selesai --> [*]
+</pre></div>
+<div class="group-divider" id="g2"><span>Database</span></div>
+<h2 id="s16"><span class="sec-no">16</span>Struktur Database</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Tabel</th>
+<th>Fungsi</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>asset_trx_request_ruangan</code></td>
+<td>Header transaksi (kedua jalur).</td>
+</tr>
+<tr>
+<td><code>asset_trx_request_ruangan_jadwal</code></td>
+<td>Riwayat jadwal serah terima per ronde (append-only).</td>
+</tr>
+<tr>
+<td><code>asset_trx_request_ruangan_item</code></td>
+<td>Satu baris per aset utama; rantai penggantian lewat <code>parent_id</code>.</td>
+</tr>
+</tbody>
+</table></div>
+<p>Tabel lama <code>asset_trx_penambahan_ruangan</code> (+ <code>_item</code>) digantikan; perintah <code>DROP</code>-nya tersedia di SQL tetapi <strong>dikomentari</strong> dan datanya tidak dimigrasi.</p>
+<h2 id="s17"><span class="sec-no">17</span>Relasi Database</h2>
+<div class="diagram"><pre class="mermaid">erDiagram
+    asset_lokasi_m ||--o{ asset_trx_request_ruangan : "id_asset_lokasi_m"
+    asset_trx_request_ruangan ||--o{ asset_trx_request_ruangan_jadwal : "id_asset_trx_request_ruangan"
+    asset_trx_request_ruangan ||--o{ asset_trx_request_ruangan_item : "id_asset_trx_request"
+    asset_data ||--o{ asset_trx_request_ruangan_item : "id_asset_data"
+    asset_lokasi_m ||--o| asset_lokasi_pic_m : "PIC ruangan"
+</pre></div>
+<p>PIC pada header disimpan sebagai <code>id_karyawan_pic</code> (snapshot <code>nama_pic</code>, <code>nik_pic</code>); master PIC dibaca dari <code>asset_lokasi_pic_m</code>.</p>
+<h2 id="s18"><span class="sec-no">18</span>Data Dictionary</h2>
+<p><strong><code>asset_trx_request_ruangan</code></strong></p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Kolom</th>
+<th>Tipe</th>
+<th>Keterangan</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>id_asset_trx_request_ruangan</code></td>
+<td>varchar(50) PK</td>
+<td><code>id_company</code> + <code>YYYYMM</code> + 3 digit urut</td>
+</tr>
+<tr>
+<td><code>no_trx</code></td>
+<td>varchar(50) unik</td>
+<td><code>RGN04-YYYYMMNNN</code></td>
+</tr>
+<tr>
+<td><code>sumber_pengajuan</code></td>
+<td>enum(<code>admin</code>,<code>karyawan</code>)</td>
+<td>Jalur B / Jalur A</td>
+</tr>
+<tr>
+<td><code>id_asset_lokasi_m</code> + snapshot <code>nama_asset_ruangan</code>, <code>nama_cabang</code>, <code>nama_departemen</code></td>
+<td>varchar</td>
+<td>Ruangan tujuan</td>
+</tr>
+<tr>
+<td><code>id_karyawan_pic</code>, <code>nama_pic</code>, <code>nik_pic</code></td>
+<td>varchar</td>
+<td>PIC penerima/pengaju; dasar notifikasi dan hak akses</td>
+</tr>
+<tr>
+<td><code>id_asset_kategori_m</code>, <code>nama_kategori</code></td>
+<td>varchar</td>
+<td>Jenis aset yang diminta (Jalur A); kosong pada Jalur B</td>
+</tr>
+<tr>
+<td><code>keterangan</code></td>
+<td>text</td>
+<td>Jalur A: alasan (wajib). Jalur B: catatan opsional</td>
+</tr>
+<tr>
+<td><code>urgensi</code></td>
+<td>varchar(50)</td>
+<td><code>normal</code> / <code>secepatnya</code> / <code>mendesak</code> (Jalur A)</td>
+</tr>
+<tr>
+<td><code>ket_tolak</code></td>
+<td>varchar(255)</td>
+<td>Alasan penolakan</td>
+</tr>
+<tr>
+<td><code>id_karyawan</code>, <code>nik_karyawan</code>, <code>nama_karyawan</code></td>
+<td>varchar</td>
+<td>Pembuat transaksi (PIC pada Jalur A, Admin pada Jalur B)</td>
+</tr>
+<tr>
+<td><code>tgl_pengajuan</code></td>
+<td>date</td>
+<td>Default tanggal hari ini</td>
+</tr>
+<tr>
+<td><code>tgl_serah_terima</code>, <code>jam_serah_terima</code></td>
+<td>date / time, NULL</td>
+<td>Jadwal <strong>terkini</strong> (salinan baris jadwal terakhir)</td>
+</tr>
+<tr>
+<td><code>keterangan_serah_terima</code></td>
+<td>varchar(255)</td>
+<td>Catatan untuk PIC</td>
+</tr>
+<tr>
+<td><code>status_approval</code></td>
+<td>enum(<code>draft</code>,<code>proses</code>,<code>ditolak</code>,<code>dikonfirmasi</code>)</td>
+<td>Default <code>proses</code></td>
+</tr>
+<tr>
+<td><code>user_approval</code>, <code>tgl_approval</code></td>
+<td>varchar / timestamp NULL</td>
+<td>Diisi saat disetujui, ditolak, dan dikonfirmasi</td>
+</tr>
+<tr>
+<td><code>id_company</code>, <code>tgl_input</code>, <code>user_input</code>, <code>tgl_update</code>, <code>user_update</code></td>
+<td></td>
+<td>Audit standar</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong><code>asset_trx_request_ruangan_jadwal</code></strong>: <code>id_..._jadwal</code> (PK), <code>id_asset_trx_request_ruangan</code>, <code>ronde</code>, <code>tanggal</code>, <code>jam</code>, <code>tgl_terima_pic</code> (NULL = belum diterima), <code>keterangan</code>, audit.</p>
+<p><strong><code>asset_trx_request_ruangan_item</code></strong>: <code>id_asset_trx_request_item</code> (PK), <code>id_asset_trx_request</code>, <code>parent_id</code> (default <code>''</code>), <code>id_asset_data</code>, snapshot <code>nama_asset</code>, <code>deskripsi_asset</code>, <code>kategori_asset</code>, <code>ronde</code>, <code>status_item</code> (<code>normal</code>/<code>rusak</code>/<code>belum_dicek</code>), <code>ket_rusak</code>, audit.</p>
+<h2 id="s19"><span class="sec-no">19</span>Database Index</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Tabel</th>
+<th>Index</th>
+<th>Kegunaan</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>asset_trx_request_ruangan</code></td>
+<td>unik <code>uq_req_rgn_no_trx (no_trx)</code></td>
+<td>Nomor transaksi unik</td>
+</tr>
+<tr>
+<td></td>
+<td><code>idx_req_rgn_status (id_company, sumber_pengajuan, status_approval, tgl_approval, tgl_input, id)</code></td>
+<td>Daftar admin per tab</td>
+</tr>
+<tr>
+<td></td>
+<td><code>idx_req_rgn_pic (id_company, id_karyawan_pic, status_approval)</code></td>
+<td>Daftar dan beranda PIC</td>
+</tr>
+<tr>
+<td></td>
+<td><code>idx_req_rgn_lokasi (id_company, id_asset_lokasi_m, status_approval)</code></td>
+<td>Pencarian per ruangan</td>
+</tr>
+<tr>
+<td><code>..._jadwal</code></td>
+<td><code>idx_req_rgn_jadwal_trx (id_asset_trx_request_ruangan, ronde, id_company)</code></td>
+<td>Jadwal ronde terakhir</td>
+</tr>
+<tr>
+<td><code>..._item</code></td>
+<td><code>idx_req_rgn_item_trx (id_asset_trx_request, id_company, status_item, parent_id)</code></td>
+<td>Checklist dan rantai pengganti</td>
+</tr>
+<tr>
+<td></td>
+<td><code>idx_req_rgn_item_asset (id_asset_data, id_company)</code></td>
+<td>Pencarian per aset</td>
+</tr>
+</tbody>
+</table></div>
+<div class="group-divider" id="g3"><span>Backend &amp; API</span></div>
+<h2 id="s20"><span class="sec-no">20</span>Backend Architecture</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Lapisan</th>
+<th>File</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Route</td>
+<td><code>API/routes/modules/asset/RouteAsset.php</code> (<code>request-ruangan/*</code>, <code>karyawan/pic-ruangan/request*</code>)</td>
+</tr>
+<tr>
+<td>Controller Admin</td>
+<td><code>app/Http/Controllers/Asset/Admin/AssetAdminRequestRuangan_c.php</code></td>
+</tr>
+<tr>
+<td>Controller PIC</td>
+<td><code>app/Http/Controllers/Asset/Karyawan/AssetKaryawanRequestRuangan_c.php</code></td>
+</tr>
+<tr>
+<td>Model</td>
+<td><code>app/Models/Asset/AssetRequestRuangan_m.php</code> (admin + PIC; mewarisi <code>Asset_m</code>)</td>
+</tr>
+<tr>
+<td>Notifikasi</td>
+<td><code>app/Support/Asset/AssetNotification.php</code> (event <code>request_ruangan.*</code>)</td>
+</tr>
+<tr>
+<td>Pendukung</td>
+<td><code>AssetAdminRuangan_m::getOptions</code> (aset gudang + kategori), <code>AssetLokasiPic_m::getAssetRuanganSaya</code> (beranda PIC memuat <code>request_ruangan</code>)</td>
+</tr>
+</tbody>
+</table></div>
+<p>Controller memvalidasi input, memanggil model dalam <code>DB::transaction</code>, lalu mengirim notifikasi <strong>setelah</strong> transaksi sukses. Aksi admin memakai <code>mutateAssetTrx</code>.</p>
+<h2 id="s21"><span class="sec-no">21</span>Backend Business Logic</h2>
+<ul>
+<li><strong><code>ajukanPic</code></strong>: kunci company; validasi karyawan aktif, ruangan milik PIC (BR-03), kategori, alasan, urgensi; buat header <code>proses</code> tanpa jadwal.</li>
+<li><strong><code>storeAdmin</code></strong>: validasi admin dan ruangan; PIC dari master ruangan; buat header lalu <code>alokasikan()</code>.</li>
+<li><strong><code>setujui</code></strong>: header harus fase <code>menunggu_persetujuan</code>; <code>alokasikan()</code>; isi <code>user_approval</code> dan <code>tgl_approval</code>.</li>
+<li><strong><code>alokasikan</code></strong>: kunci aset <code>tersedia</code> (<code>FOR UPDATE</code>), pastikan jumlah sama dengan yang diminta, buat item ronde 1 (<code>belum_dicek</code>) + jadwal ronde 1, isi jadwal terkini di header, set aset <code>proses</code>.</li>
+<li><strong><code>tolak</code></strong>: fase harus <code>menunggu_persetujuan</code>; alasan wajib; status <code>ditolak</code>. Tidak ada aset yang berubah.</li>
+<li><strong><code>updateJadwal</code></strong>: fase <code>menunggu_serah_terima</code>; tambah baris jadwal; perbarui jadwal terkini header.</li>
+<li><strong><code>terima</code></strong> (PIC): fase <code>menunggu_serah_terima</code>; semua item ronde harus dicek; isi <code>status_item</code>/<code>ket_rusak</code>; isi <code>tgl_terima_pic</code> pada jadwal terakhir. Status aset <strong>tidak berubah</strong> di sini.</li>
+<li><strong><code>jadwalkanPengganti</code></strong>: fase <code>menunggu_review</code>; semua aset rusak ronde ini wajib punya pengganti unik; aset rusak → <code>rusak</code>, <code>id_pemegang_asset=''</code>; pengganti → <code>proses</code>; item ronde + 1 dengan <code>parent_id</code>; jadwal baru.</li>
+<li><strong><code>konfirmasi</code></strong>: fase <code>menunggu_review</code> dan tidak ada aset rusak aktif; aset aktif (belum digantikan) → <code>terpakai</code>, <code>pemegang_asset='ruangan'</code>, <code>id_pemegang_asset</code> dan <code>id_asset_lokasi_m</code> = ruangan; <code>asset_trx_log</code> jenis <code>penambahan_ruangan</code>; header <code>dikonfirmasi</code>.</li>
+</ul>
+<h2 id="s22"><span class="sec-no">22</span>Dampak terhadap asset_data</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Tahap</th>
+<th><code>status_asset</code></th>
+<th><code>pemegang_asset</code></th>
+<th>Catatan</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Dipilih (setujui / Jalur B)</td>
+<td><code>tersedia</code> → <code>proses</code></td>
+<td><code>gudang</code></td>
+<td>Tidak bisa dialokasikan ganda</td>
+</tr>
+<tr>
+<td>PIC kirim checklist</td>
+<td>tetap <code>proses</code></td>
+<td><code>gudang</code></td>
+<td>Menunggu review</td>
+</tr>
+<tr>
+<td>Aset rusak diganti</td>
+<td><code>proses</code> → <code>rusak</code></td>
+<td><code>gudang</code> (<code>id_pemegang_asset</code> dikosongkan)</td>
+<td><code>ket_rusak</code> diisi dari checklist</td>
+</tr>
+<tr>
+<td>Unit pengganti dipilih</td>
+<td><code>tersedia</code> → <code>proses</code></td>
+<td><code>gudang</code></td>
+<td>Item ronde + 1</td>
+</tr>
+<tr>
+<td>Konfirmasi</td>
+<td><code>proses</code> → <code>terpakai</code></td>
+<td><code>ruangan</code></td>
+<td><code>id_pemegang_asset</code> = <code>id_asset_lokasi_m</code> = ruangan; log <code>penambahan_ruangan</code></td>
+</tr>
+<tr>
+<td>Pengajuan ditolak</td>
+<td>tidak berubah</td>
+<td></td>
+<td>Belum ada aset terkunci</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="s23"><span class="sec-no">23</span>API Documentation</h2>
+<p>Base <code>asset/</code>. Semua memakai JWT dan envelope <code>ApiResponse</code>.</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>ID</th>
+<th>Method</th>
+<th>Path</th>
+<th>Peran</th>
+<th>Fungsi</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>API-01</td>
+<td>GET</td>
+<td><code>request-ruangan/options</code></td>
+<td>Admin</td>
+<td>Aset gudang, kategori, ruangan aktif</td>
+</tr>
+<tr>
+<td>API-02</td>
+<td>GET</td>
+<td><code>request-ruangan?tab&amp;limit&amp;offset</code></td>
+<td>Admin</td>
+<td>Daftar (<code>pengajuan</code>/<code>proses</code>/<code>selesai</code>)</td>
+</tr>
+<tr>
+<td>API-03</td>
+<td>GET</td>
+<td><code>request-ruangan/{id}</code></td>
+<td>Admin</td>
+<td>Detail + flag aksi</td>
+</tr>
+<tr>
+<td>API-04</td>
+<td>POST</td>
+<td><code>request-ruangan</code></td>
+<td>Admin</td>
+<td>Jalur B: kirim aset langsung</td>
+</tr>
+<tr>
+<td>API-05</td>
+<td>POST</td>
+<td><code>request-ruangan/{id}/setujui</code></td>
+<td>Admin</td>
+<td>Jalur A: setujui + aset + jadwal</td>
+</tr>
+<tr>
+<td>API-06</td>
+<td>POST</td>
+<td><code>request-ruangan/{id}/tolak</code></td>
+<td>Admin</td>
+<td>Jalur A: tolak + alasan</td>
+</tr>
+<tr>
+<td>API-07</td>
+<td>PUT</td>
+<td><code>request-ruangan/{id}/jadwal</code></td>
+<td>Admin</td>
+<td>Ubah jadwal</td>
+</tr>
+<tr>
+<td>API-08</td>
+<td>POST</td>
+<td><code>request-ruangan/{id}/pengganti</code></td>
+<td>Admin</td>
+<td>Jadwalkan pengganti</td>
+</tr>
+<tr>
+<td>API-09</td>
+<td>POST</td>
+<td><code>request-ruangan/{id}/konfirmasi</code></td>
+<td>Admin</td>
+<td>Konfirmasi selesai</td>
+</tr>
+<tr>
+<td>API-10</td>
+<td>GET</td>
+<td><code>karyawan/pic-ruangan/request/options</code></td>
+<td>PIC</td>
+<td>Ruangan miliknya, kategori, urgensi</td>
+</tr>
+<tr>
+<td>API-11</td>
+<td>GET</td>
+<td><code>karyawan/pic-ruangan/request?tab</code></td>
+<td>PIC</td>
+<td>Daftar milik PIC (<code>proses</code>/<code>selesai</code>)</td>
+</tr>
+<tr>
+<td>API-12</td>
+<td>POST</td>
+<td><code>karyawan/pic-ruangan/request</code></td>
+<td>PIC</td>
+<td>Ajukan penambahan</td>
+</tr>
+<tr>
+<td>API-13</td>
+<td>GET</td>
+<td><code>karyawan/pic-ruangan/request/{id}</code></td>
+<td>PIC</td>
+<td>Detail</td>
+</tr>
+<tr>
+<td>API-14</td>
+<td>POST</td>
+<td><code>karyawan/pic-ruangan/request/{id}/terima</code></td>
+<td>PIC</td>
+<td>Kirim checklist</td>
+</tr>
+</tbody>
+</table></div>
+<p>Tambahan: <code>GET karyawan/pic-ruangan</code> (beranda PIC) kini menyertakan key <code>request_ruangan</code>.</p>
+<h2 id="s24"><span class="sec-no">24</span>Detail Setiap API</h2>
+<p><strong>API-04 · POST <code>asset/request-ruangan</code></strong> (Jalur B)</p>
+<pre><code class="language-json">{ &quot;id_asset_lokasi_m&quot;: &quot;RGN-1&quot;, &quot;asset_ids&quot;: [&quot;AST-1&quot;, &quot;AST-2&quot;],
+  &quot;tanggal&quot;: &quot;2026-10-20&quot;, &quot;jam&quot;: &quot;09:00&quot;, &quot;catatan&quot;: &quot;Bawa kunci&quot;, &quot;keterangan&quot;: &quot;&quot; }
+</code></pre>
+<p>Respons <code>CREATED</code>: <code>{ "id": "COMP202610001", "no_trx": "RGN04-202610001", "fase": "menunggu_serah_terima" }</code>. Validasi: <code>asset_ids</code> wajib, minimal 1, tidak boleh ganda; <code>tanggal</code> <code>Y-m-d</code>; <code>jam</code> <code>H:i</code>.</p>
+<p><strong>API-12 · POST <code>asset/karyawan/pic-ruangan/request</code></strong> (Jalur A)</p>
+<pre><code class="language-json">{ &quot;id_asset_lokasi_m&quot;: &quot;RGN-1&quot;, &quot;id_asset_kategori_m&quot;: &quot;KAT-KOM&quot;,
+  &quot;keterangan&quot;: &quot;Tim bertambah dua orang&quot;, &quot;urgensi&quot;: &quot;mendesak&quot; }
+</code></pre>
+<p>Respons <code>CREATED</code>: <code>{ "id": "...", "no_trx": "RGN04-...", "fase": "menunggu_persetujuan" }</code>. <code>urgensi</code> ∈ <code>normal|secepatnya|mendesak</code>.</p>
+<p><strong>API-05 · POST <code>.../{id}/setujui</code></strong></p>
+<pre><code class="language-json">{ &quot;asset_ids&quot;: [&quot;AST-1&quot;], &quot;tanggal&quot;: &quot;2026-10-20&quot;, &quot;jam&quot;: &quot;09:00&quot;, &quot;catatan&quot;: &quot;Bawa kunci&quot; }
+</code></pre>
+<p>Respons <code>UPDATED</code>: <code>{ "id", "no_trx", "fase": "menunggu_serah_terima" }</code>.</p>
+<p><strong>API-06 · POST <code>.../{id}/tolak</code></strong>: <code>{ "ket_tolak": "Stok kosong" }</code> → <code>{ "status_approval": "ditolak", "fase": "ditolak" }</code>.</p>
+<p><strong>API-07 · PUT <code>.../{id}/jadwal</code></strong>: <code>{ "tanggal", "jam", "keterangan" }</code>.</p>
+<p><strong>API-08 · POST <code>.../{id}/pengganti</code></strong></p>
+<pre><code class="language-json">{ &quot;items&quot;: [{ &quot;id_item&quot;: &quot;&lt;id baris rusak&gt;&quot;, &quot;id_asset_data&quot;: &quot;AST-3&quot; }],
+  &quot;tanggal&quot;: &quot;2026-10-22&quot;, &quot;jam&quot;: &quot;10:00&quot;, &quot;keterangan&quot;: &quot;Unit pengganti&quot; }
+</code></pre>
+<p>Respons: <code>{ "ronde": 2, "jumlah_pengganti": 1 }</code>.</p>
+<p><strong>API-14 · POST <code>.../request/{id}/terima</code></strong></p>
+<pre><code class="language-json">{ &quot;items&quot;: [
+  { &quot;id_item&quot;: &quot;ITM-1&quot;, &quot;status_item&quot;: &quot;normal&quot; },
+  { &quot;id_item&quot;: &quot;ITM-2&quot;, &quot;status_item&quot;: &quot;rusak&quot;, &quot;ket_rusak&quot;: &quot;Layar retak&quot; } ] }
+</code></pre>
+<p>Respons: <code>{ "ada_rusak": true, "fase": "menunggu_review" }</code>.</p>
+<p><strong>API-03 / API-13 · Detail</strong> mengembalikan: <code>id</code>, <code>no_trx</code>, <code>sumber_pengajuan</code>, ruangan + cabang + departemen, PIC, <code>nama_kategori</code>, <code>alasan</code>, <code>urgensi</code>, <code>ket_tolak</code>, <code>tgl_pengajuan</code>, jadwal terkini, <code>ronde</code>, <code>fase</code>, <code>fase_label</code>, <code>jadwal[]</code> (riwayat), <code>items[]</code> (<code>id_item</code>, <code>parent_id</code>, <code>nama_asset</code>, <code>ronde</code>, <code>status_item</code>, <code>ket_rusak</code>, <code>diganti</code>, <code>perlu_dicek</code>). Khusus admin ditambah <code>bisa_setujui</code>, <code>bisa_ubah_jadwal</code>, <code>bisa_konfirmasi</code>, <code>perlu_pengganti[]</code>; khusus PIC <code>bisa_diterima</code>.</p>
+<div class="group-divider" id="g4"><span>Mobile</span></div>
+<h2 id="s25"><span class="sec-no">25</span>Mobile Architecture</h2>
+<p>Flutter + <code>flutter_bloc</code> + <code>dio</code>. Halaman RGN01 <strong>dipakai ulang lewat parameter</strong> agar tidak menggandakan kode.</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Komponen</th>
+<th>Cara pakai ulang</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>AssetAdminRuanganApi(base:)</code></td>
+<td><code>requestBase = 'asset/request-ruangan'</code>; metode baru <code>setujui</code>, <code>tolak</code></td>
+</tr>
+<tr>
+<td><code>HalamanAssetAdminOnboardingRuangan(untukRequest:)</code></td>
+<td>Daftar dengan tab Pengajuan/Proses/Selesai</td>
+</tr>
+<tr>
+<td><code>HalamanAssetAdminAddOnboardingRuangan(untukRequest:)</code></td>
+<td>Form Jalur B tanpa pemilih PIC</td>
+</tr>
+<tr>
+<td><code>HalamanAssetAdminDetailOnboardingRuangan</code></td>
+<td>Mendeteksi <code>isRequest</code>; panel Setujui + dialog Tolak</td>
+</tr>
+<tr>
+<td><code>AssetPicRuanganDetailBloc(jenis:)</code></td>
+<td><code>AssetPicRuanganJenis.request</code> memanggil endpoint request</td>
+</tr>
+</tbody>
+</table></div>
+<p>File baru: <code>Bloc/Asset/AssetPicRuanganRequestFormBloc.dart</code>, <code>UI/Modul/Asset/PicRuangan/HalamanAjukanRequestPicRuangan.dart</code>.</p>
+<h2 id="s26"><span class="sec-no">26</span>Mobile Screen</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Layar</th>
+<th>Rute</th>
+<th>Pengguna</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Dashboard Ruangan → item <strong>Penambahan</strong></td>
+<td><code>/asset_admin_request_ruangan</code></td>
+<td>Admin/HR</td>
+</tr>
+<tr>
+<td>Daftar penambahan (3 tab)</td>
+<td><code>/asset_admin_request_ruangan</code></td>
+<td>Admin/HR</td>
+</tr>
+<tr>
+<td>Form Tambah Asset (Jalur B)</td>
+<td><code>/asset_admin_add_request_ruangan</code></td>
+<td>Admin/HR</td>
+</tr>
+<tr>
+<td>Detail penambahan</td>
+<td><code>/asset_admin_detail_request_ruangan</code></td>
+<td>Admin/HR</td>
+</tr>
+<tr>
+<td>PIC Ruangan + banner + tombol Ajukan</td>
+<td><code>/asset_pic_ruangan</code></td>
+<td>PIC</td>
+</tr>
+<tr>
+<td>Form Ajukan Penambahan</td>
+<td><code>/asset_pic_ruangan_ajukan</code></td>
+<td>PIC</td>
+</tr>
+<tr>
+<td>Detail / serah terima</td>
+<td><code>/asset_pic_ruangan_request</code></td>
+<td>PIC</td>
+</tr>
+</tbody>
+</table></div>
+<p>Detail Admin menampilkan kartu info pengajuan (jenis aset, urgensi, alasan, penolakan), stepper, dan timeline per aset. Saat <code>bisa_setujui</code>, muncul panel pilih aset gudang + jadwal serta tombol <strong>Tolak</strong> dan <strong>Setujui &amp; Jadwalkan</strong>.</p>
+<h2 id="s27"><span class="sec-no">27</span>Mobile → API</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Aksi di layar</th>
+<th>Pemanggilan</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Buka daftar / pindah tab</td>
+<td><code>getPage(tab)</code> → API-02</td>
+</tr>
+<tr>
+<td>Buka form Jalur B</td>
+<td><code>getOptions()</code> → API-01; kirim → <code>store</code> → API-04</td>
+</tr>
+<tr>
+<td>Buka detail Admin</td>
+<td><code>getDetail</code> → API-03</td>
+</tr>
+<tr>
+<td>Setujui</td>
+<td><code>setujui</code> → API-05</td>
+</tr>
+<tr>
+<td>Tolak</td>
+<td><code>tolak</code> → API-06</td>
+</tr>
+<tr>
+<td>Ubah jadwal / pengganti / konfirmasi</td>
+<td>API-07 / API-08 / API-09</td>
+</tr>
+<tr>
+<td>Buka form Ajukan (PIC)</td>
+<td><code>getRequestOptions</code> → API-10; kirim → <code>ajukanRequest</code> → API-12</td>
+</tr>
+<tr>
+<td>Buka detail PIC</td>
+<td><code>getDetailRequest</code> → API-13; kirim checklist → <code>terimaPenambahan</code> → API-14</td>
+</tr>
+<tr>
+<td>Beranda PIC</td>
+<td><code>getHome</code> (<code>request_ruangan</code>)</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="s28"><span class="sec-no">28</span>API → Mobile</h2>
+<p>Model: <code>mAssetPicRuangan.dart</code> (<code>AssetPicRuanganRequest</code>, <code>AssetPicRuanganRequestOptions</code>, <code>AssetPicRuanganAjukanRequest</code>, detail diperluas dengan <code>sumberPengajuan</code>, <code>namaKategori</code>, <code>alasan</code>, <code>urgensi</code>, <code>ketTolak</code>) dan <code>mAssetAdminRuangan.dart</code> (<code>AssetAdminRuanganSetujuiRequest</code>, <code>bisaSetujui</code>, daftar membaca key <code>requests</code> selain <code>onboardings</code>). Fase baru: <code>menunggu_persetujuan</code> dan <code>ditolak</code>.</p>
+<h2 id="s29"><span class="sec-no">29</span>Mapping Mobile → API → Database</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Mobile</th>
+<th>API</th>
+<th>Tabel yang ditulis</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Kirim Pengajuan</td>
+<td>API-12</td>
+<td><code>asset_trx_request_ruangan</code></td>
+</tr>
+<tr>
+<td>Setujui &amp; Jadwalkan</td>
+<td>API-05</td>
+<td><code>..._item</code>, <code>..._jadwal</code>, <code>asset_data</code>, header</td>
+</tr>
+<tr>
+<td>Tolak</td>
+<td>API-06</td>
+<td>header (<code>ket_tolak</code>, <code>status_approval</code>)</td>
+</tr>
+<tr>
+<td>Tambah Asset (Jalur B)</td>
+<td>API-04</td>
+<td>header, <code>..._item</code>, <code>..._jadwal</code>, <code>asset_data</code></td>
+</tr>
+<tr>
+<td>Ubah Jadwal</td>
+<td>API-07</td>
+<td><code>..._jadwal</code>, header</td>
+</tr>
+<tr>
+<td>Terima &amp; Kirim Checklist</td>
+<td>API-14</td>
+<td><code>..._item</code>, <code>..._jadwal.tgl_terima_pic</code></td>
+</tr>
+<tr>
+<td>Jadwalkan Pengganti</td>
+<td>API-08</td>
+<td><code>..._item</code>, <code>..._jadwal</code>, <code>asset_data</code></td>
+</tr>
+<tr>
+<td>Konfirmasi Selesai</td>
+<td>API-09</td>
+<td><code>asset_data</code>, <code>asset_trx_log</code>, header</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="s30"><span class="sec-no">30</span>Mapping Database → API → Mobile</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Kolom</th>
+<th>API</th>
+<th>Tampilan</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>sumber_pengajuan</code></td>
+<td><code>sumber_pengajuan</code></td>
+<td>"Diajukan Oleh": PIC Ruangan / Admin/HR</td>
+</tr>
+<tr>
+<td><code>nama_kategori</code>, <code>urgensi</code>, <code>keterangan</code></td>
+<td><code>nama_kategori</code>, <code>urgensi</code>, <code>alasan</code></td>
+<td>Kartu info pengajuan</td>
+</tr>
+<tr>
+<td><code>ket_tolak</code></td>
+<td><code>ket_tolak</code></td>
+<td>Kotak merah "Alasan Penolakan"</td>
+</tr>
+<tr>
+<td>jadwal terakhir + <code>tgl_terima_pic</code></td>
+<td><code>fase</code></td>
+<td>Chip fase, stepper, banner beranda</td>
+</tr>
+<tr>
+<td><code>status_item</code>, <code>ket_rusak</code>, <code>parent_id</code>, <code>ronde</code></td>
+<td><code>items[]</code></td>
+<td>Timeline per aset</td>
+</tr>
+</tbody>
+</table></div>
+<div class="group-divider" id="g5"><span>Validasi, Error &amp; Keamanan</span></div>
+<h2 id="s31"><span class="sec-no">31</span>Validation</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Aturan</th>
+<th>Pesan</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>id_asset_lokasi_m</code></td>
+<td>wajib</td>
+<td>Ruangan wajib dipilih.</td>
+</tr>
+<tr>
+<td><code>id_asset_kategori_m</code></td>
+<td>wajib (Jalur A)</td>
+<td>Jenis aset wajib dipilih.</td>
+</tr>
+<tr>
+<td><code>keterangan</code></td>
+<td>wajib, ≤ 1000 (Jalur A)</td>
+<td>Alasan wajib diisi.</td>
+</tr>
+<tr>
+<td><code>urgensi</code></td>
+<td>wajib, ∈ 3 nilai (Jalur A)</td>
+<td>Urgensi wajib dipilih. / Urgensi pengajuan tidak valid.</td>
+</tr>
+<tr>
+<td><code>asset_ids</code></td>
+<td>wajib, ≥ 1, tidak ganda</td>
+<td>Minimal satu asset wajib dipilih.</td>
+</tr>
+<tr>
+<td><code>tanggal</code> / <code>jam</code></td>
+<td>wajib, <code>Y-m-d</code> / <code>H:i</code></td>
+<td>Tanggal/Jam serah terima wajib diisi.</td>
+</tr>
+<tr>
+<td><code>ket_tolak</code></td>
+<td>wajib, ≤ 255</td>
+<td>Alasan penolakan wajib diisi.</td>
+</tr>
+<tr>
+<td><code>items.*.status_item</code></td>
+<td><code>normal</code> atau <code>rusak</code></td>
+<td>Kondisi item harus normal atau rusak.</td>
+</tr>
+<tr>
+<td><code>items.*.ket_rusak</code></td>
+<td>wajib bila rusak</td>
+<td>Keterangan kerusakan wajib diisi.</td>
+</tr>
+</tbody>
+</table></div>
+<p>Mobile menampilkan error wajib pada form pengajuan (ruangan, jenis, urgensi, alasan) dan menonaktifkan tombol <strong>Setujui</strong> sampai aset dan jadwal dipilih serta tombol <strong>Tolak</strong> pada dialog sampai alasan diisi.</p>
+<h2 id="s32"><span class="sec-no">32</span>Error Handling</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Kondisi</th>
+<th>Kode</th>
+<th>Pesan</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Pengguna bukan admin</td>
+<td><code>BUSINESS_RULE_VIOLATION</code></td>
+<td>Pengguna tidak terdaftar sebagai admin asset.</td>
+</tr>
+<tr>
+<td>Ruangan tidak sah</td>
+<td><code>BUSINESS_RULE_VIOLATION</code></td>
+<td>Ruangan tujuan tidak ditemukan, tidak aktif, atau belum memiliki aset.</td>
+</tr>
+<tr>
+<td>Aset tidak tersedia</td>
+<td><code>BUSINESS_RULE_VIOLATION</code></td>
+<td>Satu atau beberapa asset tidak tersedia untuk dialokasikan.</td>
+</tr>
+<tr>
+<td>Disetujui/ditolak dua kali</td>
+<td><code>BUSINESS_RULE_VIOLATION</code></td>
+<td>Pengajuan sudah tidak menunggu persetujuan.</td>
+</tr>
+<tr>
+<td>Transaksi sudah ditutup</td>
+<td><code>BUSINESS_RULE_VIOLATION</code></td>
+<td>Penambahan aset sudah selesai.</td>
+</tr>
+<tr>
+<td>Ubah jadwal terlambat</td>
+<td><code>BUSINESS_RULE_VIOLATION</code></td>
+<td>Jadwal hanya dapat diubah sebelum PIC Ruangan menerima asset.</td>
+</tr>
+<tr>
+<td>Konfirmasi dengan aset rusak</td>
+<td><code>BUSINESS_RULE_VIOLATION</code></td>
+<td>Masih ada asset rusak. Jadwalkan penggantian sebelum menyelesaikan penambahan.</td>
+</tr>
+<tr>
+<td>Pengganti tidak lengkap</td>
+<td><code>BUSINESS_RULE_VIOLATION</code></td>
+<td>Seluruh asset rusak wajib diberi asset pengganti.</td>
+</tr>
+<tr>
+<td>Transaksi/PIC lain</td>
+<td><code>NOT_FOUND</code> / <code>BUSINESS_RULE_VIOLATION</code></td>
+<td>Penambahan asset ruangan tidak ditemukan.</td>
+</tr>
+<tr>
+<td>Kesalahan sistem</td>
+<td><code>SYSTEM_ERROR</code></td>
+<td>Terjadi kesalahan saat ... (detail di log).</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="s33"><span class="sec-no">33</span>Audit Trail</h2>
+<ul>
+<li>Header: <code>user_input</code>, <code>tgl_input</code>, <code>user_update</code>, <code>tgl_update</code>; <code>user_approval</code> + <code>tgl_approval</code> (setujui, tolak, konfirmasi).</li>
+<li>Jadwal: satu baris per penetapan/perubahan; <code>tgl_terima_pic</code> = waktu PIC menerima.</li>
+<li>Item: <code>user_input</code> per baris; rantai pengganti lewat <code>parent_id</code>.</li>
+<li><code>asset_trx_log</code> jenis <code>penambahan_ruangan</code> saat konfirmasi (posisi <code>gudang</code> → <code>ruangan</code>).</li>
+</ul>
+<h2 id="s34"><span class="sec-no">34</span>Notification</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Event</th>
+<th>Penerima</th>
+<th>Isi</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>request_ruangan.diajukan</code></td>
+<td>Admin/HR</td>
+<td>PIC mengajukan penambahan</td>
+</tr>
+<tr>
+<td><code>request_ruangan.disetujui</code></td>
+<td>PIC</td>
+<td>Pengajuan disetujui, cek jadwal</td>
+</tr>
+<tr>
+<td><code>request_ruangan.ditolak</code></td>
+<td>PIC</td>
+<td>Pengajuan ditolak, lihat alasan</td>
+</tr>
+<tr>
+<td><code>request_ruangan.dikirim</code></td>
+<td>PIC</td>
+<td>Admin mengirim aset (Jalur B), cek jadwal</td>
+</tr>
+<tr>
+<td><code>request_ruangan.jadwal_diubah</code></td>
+<td>PIC</td>
+<td>Jadwal diperbarui</td>
+</tr>
+<tr>
+<td><code>request_ruangan.pengganti</code></td>
+<td>PIC</td>
+<td>Pengganti dijadwalkan</td>
+</tr>
+<tr>
+<td><code>request_ruangan.selesai</code></td>
+<td>PIC</td>
+<td>Serah terima dikonfirmasi</td>
+</tr>
+<tr>
+<td><code>request_ruangan.diterima</code></td>
+<td>Admin/HR</td>
+<td>PIC mengirim checklist</td>
+</tr>
+</tbody>
+</table></div>
+<p>Rute tujuan di aplikasi: <code>asset_pic_ruangan_request</code> (PIC) dan <code>asset_admin_detail_request_ruangan</code> (Admin). Notifikasi dibuat setelah transaksi database sukses; kegagalan kirim tidak membatalkan transaksi.</p>
+<h2 id="s35"><span class="sec-no">35</span>Security</h2>
+<ul>
+<li>JWT wajib; <code>ctx</code> memuat <code>id_company</code> dan <code>id_karyawan</code>. Seluruh query dibatasi <code>id_company</code>.</li>
+<li>Aksi admin memeriksa keanggotaan <code>asset_admin</code>; sisi PIC dibatasi <code>id_karyawan_pic</code>.</li>
+<li>Aset dikunci <code>FOR UPDATE</code> dan company dikunci per transaksi untuk mencegah alokasi ganda dan nomor ganda.</li>
+<li>Input divalidasi di controller dan model; tidak ada query mentah dari input pengguna.</li>
+<li>Foto/berkas: tidak dipakai di alur ini.</li>
+</ul>
+<div class="group-divider" id="g6"><span>Manual Book</span></div>
+<h2 id="s36"><span class="sec-no">36</span>Manual Book User/Admin</h2>
+<p><strong>PIC Ruangan: mengajukan penambahan</strong>
+1. Buka <strong>Asset → PIC Ruangan</strong>, ketuk <strong>Ajukan Penambahan Asset</strong>.
+2. Pilih <strong>Ruangan</strong>, <strong>Jenis Asset</strong>, <strong>Urgensi</strong>, isi <strong>Alasan</strong>, ketuk <strong>Kirim Pengajuan</strong>.
+3. Pantau status di banner beranda ("Menunggu persetujuan Admin/HR"). Bila ditolak, alasan terlihat di detail.</p>
+<p><strong>PIC Ruangan: menerima aset</strong>
+1. Setelah disetujui/dikirim, banner berubah menjadi serah terima dengan jadwal.
+2. Pada jadwal, periksa fisik tiap aset, pilih <strong>Normal</strong> atau <strong>Rusak</strong> (isi keterangan bila rusak).
+3. Ketuk <strong>Terima &amp; Kirim Checklist</strong>. Checklist tidak dapat diubah setelah dikirim.</p>
+<p><strong>Admin/HR: memproses pengajuan</strong>
+1. Buka <strong>Asset → Ruangan → Penambahan</strong>, tab <strong>Pengajuan</strong>, pilih transaksi.
+2. Tinjau jenis aset, urgensi, alasan. Pilih <strong>Tolak</strong> (isi alasan) atau pilih aset gudang + tanggal + jam lalu <strong>Setujui &amp; Jadwalkan</strong>.</p>
+<p><strong>Admin/HR: inisiasi langsung (Jalur B)</strong>
+1. Di daftar Penambahan, ketuk <strong>Tambah Asset</strong>.
+2. Pilih ruangan (PIC tampil otomatis), tambah aset, tetapkan jadwal, <strong>Kirim ke PIC Ruangan</strong>.</p>
+<p><strong>Admin/HR: review</strong>
+1. Tab <strong>Proses</strong>, buka transaksi. Bila PIC belum menerima, <strong>Ubah Jadwal</strong> tersedia.
+2. Setelah checklist masuk: semua normal → <strong>Konfirmasi Selesai</strong>; ada rusak → pilih pengganti untuk setiap aset rusak, tetapkan jadwal, <strong>Jadwalkan Pengganti</strong>.</p>
+<h2 id="s37"><span class="sec-no">37</span>Kondisi Button</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Tombol</th>
+<th>Tampil bila</th>
+<th>Aktif bila</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Ajukan Penambahan Asset (PIC)</td>
+<td>PIC memegang minimal satu ruangan</td>
+<td>selalu</td>
+</tr>
+<tr>
+<td>Kirim Pengajuan</td>
+<td>di form</td>
+<td>tidak sedang mengirim; bila ada isian kosong menampilkan error</td>
+</tr>
+<tr>
+<td>Tolak</td>
+<td><code>bisa_setujui</code></td>
+<td>tidak sedang bekerja; di dialog aktif setelah alasan diisi</td>
+</tr>
+<tr>
+<td>Setujui &amp; Jadwalkan</td>
+<td><code>bisa_setujui</code></td>
+<td>≥ 1 aset + tanggal + jam dipilih</td>
+</tr>
+<tr>
+<td>Ubah Jadwal</td>
+<td><code>bisa_ubah_jadwal</code></td>
+<td>tidak sedang bekerja</td>
+</tr>
+<tr>
+<td>Konfirmasi Selesai</td>
+<td><code>bisa_konfirmasi</code></td>
+<td>tidak sedang bekerja</td>
+</tr>
+<tr>
+<td>Jadwalkan Pengganti</td>
+<td><code>perlu_pengganti</code> tidak kosong</td>
+<td>semua aset rusak berpengganti + jadwal</td>
+</tr>
+<tr>
+<td>Terima &amp; Kirim Checklist</td>
+<td><code>bisa_diterima</code></td>
+<td>semua aset dicek (rusak wajib keterangan)</td>
+</tr>
+</tbody>
+</table></div>
+<div class="group-divider" id="g7"><span>QA &amp; Risiko</span></div>
+<h2 id="s38"><span class="sec-no">38</span>Testing Scenario</h2>
+<p>Hasil terakhir: API 207 test di <code>tests/Asset</code> lolos; mobile 29 test ruangan lolos.</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>ID</th>
+<th>Skenario</th>
+<th>Hasil yang diharapkan</th>
+<th>Otomatis</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>TC-01</td>
+<td>Opsi admin/PIC</td>
+<td>Hanya ruangan aktif, punya PIC, sudah beraset</td>
+<td>✔ API</td>
+</tr>
+<tr>
+<td>TC-02</td>
+<td>Jalur B</td>
+<td>Aset <code>proses</code>, item + jadwal terbuat, fase serah terima</td>
+<td>✔ API</td>
+</tr>
+<tr>
+<td>TC-03</td>
+<td>Jalur B ruangan/aset/jadwal tidak sah</td>
+<td>Ditolak dengan pesan, aset tetap <code>tersedia</code></td>
+<td>✔ API</td>
+</tr>
+<tr>
+<td>TC-04</td>
+<td>Jalur A pengajuan</td>
+<td>Fase menunggu persetujuan, tanpa item, masuk tab Pengajuan</td>
+<td>✔ API</td>
+</tr>
+<tr>
+<td>TC-05</td>
+<td>Jalur A validasi</td>
+<td>Ruangan milik PIC lain, alasan/urgensi/jenis salah ditolak</td>
+<td>✔ API</td>
+</tr>
+<tr>
+<td>TC-06</td>
+<td>Setujui</td>
+<td>Aset <code>proses</code>, <code>user_approval</code> terisi, pindah ke tab Proses, setujui ulang ditolak</td>
+<td>✔ API</td>
+</tr>
+<tr>
+<td>TC-07</td>
+<td>Tolak</td>
+<td>Alasan wajib; status <code>ditolak</code>; PIC melihat alasan</td>
+<td>✔ API</td>
+</tr>
+<tr>
+<td>TC-08</td>
+<td>Ubah jadwal</td>
+<td>Berhasil sebelum PIC menerima, ditolak sesudahnya</td>
+<td>✔ API</td>
+</tr>
+<tr>
+<td>TC-09</td>
+<td>Konfirmasi</td>
+<td>Aset <code>terpakai</code> di ruangan, 2 baris log</td>
+<td>✔ API</td>
+</tr>
+<tr>
+<td>TC-10</td>
+<td>Aset rusak</td>
+<td>Konfirmasi ditolak, pengganti ronde 2, rantai <code>parent_id</code>, selesai</td>
+<td>✔ API</td>
+</tr>
+<tr>
+<td>TC-11</td>
+<td>Checklist PIC</td>
+<td>Wajib lengkap, rusak wajib keterangan, PIC lain ditolak</td>
+<td>✔ API</td>
+</tr>
+<tr>
+<td>TC-12</td>
+<td>Hak akses</td>
+<td>Non-admin ditolak; PIC hanya melihat miliknya</td>
+<td>✔ API</td>
+</tr>
+<tr>
+<td>TC-13</td>
+<td>Form PIC</td>
+<td>Error wajib, kirim payload benar</td>
+<td>✔ Mobile</td>
+</tr>
+<tr>
+<td>TC-14</td>
+<td>Daftar admin</td>
+<td>Tab Pengajuan, kartu fase, buka detail</td>
+<td>✔ Mobile</td>
+</tr>
+<tr>
+<td>TC-15</td>
+<td>Detail admin</td>
+<td>Tombol Tolak/Setujui, Setujui nonaktif sebelum pilih, tolak wajib alasan, tampil alasan penolakan</td>
+<td>✔ Mobile</td>
+</tr>
+<tr>
+<td>TC-16</td>
+<td>Model</td>
+<td>Parsing <code>request_ruangan</code>, <code>requests</code>, <code>bisa_setujui</code>, payload</td>
+<td>✔ Mobile</td>
+</tr>
+<tr>
+<td>TC-17</td>
+<td>Push notifikasi end-to-end</td>
+<td>Notif tiba dan membuka rute yang benar</td>
+<td>✘ manual</td>
+</tr>
+<tr>
+<td>TC-18</td>
+<td>Alur penuh di server/emulator</td>
+<td>Jalur A dan B sampai selesai</td>
+<td>✘ manual</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="s39"><span class="sec-no">39</span>Temuan Ketidaksesuaian</h2>
+<p>Perbandingan dengan dokumen bisnis RGN04 v1.0.</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>ID</th>
+<th>Dokumen bisnis</th>
+<th>Implementasi</th>
+<th>Dampak</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>INC-01</td>
+<td>Header menulis <strong>ALK-RGN03</strong>, judul file RGN04; ruang lingkup memakai RGN04 juga untuk "Pelaporan Kerusakan"</td>
+<td>Kode <strong>RGN04</strong> (keputusan pengguna); <code>no_trx</code> <code>RGN04-</code></td>
+<td>Dokumen bisnis perlu dirapikan</td>
+</tr>
+<tr>
+<td>INC-02</td>
+<td>Checklist per Daftar Atribut (Aset Utama + Kelengkapan)</td>
+<td>Satu baris per <strong>aset utama</strong>, seperti RGN01</td>
+<td>Kelengkapan tidak dinilai terpisah</td>
+</tr>
+<tr>
+<td>INC-03</td>
+<td>Pre-condition 3: "Aset <strong>pengganti</strong> berstatus TERSEDIA"</td>
+<td>Dibaca sebagai aset yang dipilih Admin harus <code>tersedia</code></td>
+<td>Salah ketik di dokumen</td>
+</tr>
+<tr>
+<td>INC-04</td>
+<td>Jenis aset "Teks / Dropdown"</td>
+<td>Dipilih dari kategori master (<code>asset_kategori_m</code>), id + nama disimpan</td>
+<td>Seragam dengan request karyawan</td>
+</tr>
+<tr>
+<td>INC-05</td>
+<td>Status "DIALOKASIKAN"</td>
+<td><code>asset_data.status_asset='proses'</code></td>
+<td>Tidak ada nilai enum baru</td>
+</tr>
+<tr>
+<td>INC-06</td>
+<td>Tabel status: item rusak → RUSAK saat ditemukan</td>
+<td>Aset rusak berubah <code>rusak</code> saat Admin menjadwalkan pengganti, bukan saat PIC mengirim</td>
+<td>Aset tetap <code>proses</code> selama menunggu review</td>
+</tr>
+<tr>
+<td>INC-07</td>
+<td>"Ruangan sudah memiliki aset"</td>
+<td>Onboarding <code>dikonfirmasi</code> <strong>atau</strong> ada aset berpemegang ruangan itu</td>
+<td>Mencakup ruangan yang diisi lewat jalur lain</td>
+</tr>
+<tr>
+<td>INC-08</td>
+<td>Jalur B: Admin memilih ruangan</td>
+<td>PIC tidak dapat dipilih; selalu PIC master ruangan</td>
+<td>PIC wajib sudah ditetapkan</td>
+</tr>
+<tr>
+<td>INC-09</td>
+<td>Skenario penolakan tidak ada di tabel status akhir</td>
+<td>Status header <code>ditolak</code>, aset tidak berubah</td>
+<td>Konsisten dengan alur</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="s40"><span class="sec-no">40</span>Edge Case</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Kasus</th>
+<th>Perilaku</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Pengajuan lebih dari satu untuk ruangan yang sama</td>
+<td>Diperbolehkan; tiap transaksi berdiri sendiri (RISK-004).</td>
+</tr>
+<tr>
+<td>Dua admin menyetujui bersamaan</td>
+<td>Header dikunci <code>FOR UPDATE</code>; yang kedua mendapat "sudah tidak menunggu persetujuan".</td>
+</tr>
+<tr>
+<td>Dua admin memilih aset yang sama</td>
+<td>Aset dikunci; yang kedua gagal "tidak tersedia".</td>
+</tr>
+<tr>
+<td>Aset dipilih berkategori beda dari permintaan</td>
+<td>Tidak dicegah (RISK-003).</td>
+</tr>
+<tr>
+<td>Seluruh aset rusak pada satu ronde</td>
+<td>Semua wajib diganti sekaligus; ronde bertambah satu.</td>
+</tr>
+<tr>
+<td>Pengganti rusak lagi</td>
+<td>Ronde berikutnya; rantai <code>parent_id</code> berlanjut.</td>
+</tr>
+<tr>
+<td>PIC ruangan diganti saat transaksi berjalan</td>
+<td>Transaksi tetap pada <code>id_karyawan_pic</code> saat dibuat.</td>
+</tr>
+<tr>
+<td>Jadwal tanggal hari ini</td>
+<td>Diizinkan; tanggal sebelum pengajuan ditolak.</td>
+</tr>
+<tr>
+<td>Pengajuan ditolak</td>
+<td>Tidak ada aset terkunci; tidak dapat dibuka kembali.</td>
+</tr>
+<tr>
+<td>Daftar kosong</td>
+<td>Teks "Belum ada penambahan asset ruangan."</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="s41"><span class="sec-no">41</span>Potential Bug / Technical Risk</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>ID</th>
+<th>Tingkat</th>
+<th>Risiko</th>
+<th>Saran</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>RISK-001</td>
+<td>TINGGI</td>
+<td>Bergantung pada SQL manual: <code>status_approval</code> harus enum (<code>proses</code>/<code>ditolak</code>/<code>dikonfirmasi</code>). Bila masih <code>tinyint</code>, penyimpanan gagal.</td>
+<td>Jalankan blok 1b SQL dan verifikasi tipe kolom sebelum rilis.</td>
+</tr>
+<tr>
+<td>RISK-002</td>
+<td>SEDANG</td>
+<td>Belum ada pembatalan oleh Admin; transaksi tertahan menahan aset di <code>proses</code>.</td>
+<td>Tambahkan aksi batal yang melepas aset.</td>
+</tr>
+<tr>
+<td>RISK-003</td>
+<td>SEDANG</td>
+<td>Aset yang disetujui tidak diperiksa sesuai kategori yang diminta.</td>
+<td>Peringatan di UI atau validasi kategori.</td>
+</tr>
+<tr>
+<td>RISK-004</td>
+<td>RENDAH</td>
+<td>Pengajuan ganda untuk satu ruangan dibolehkan.</td>
+<td>Batasi satu pengajuan aktif per ruangan bila diperlukan.</td>
+</tr>
+<tr>
+<td>RISK-005</td>
+<td>SEDANG</td>
+<td>Belum diuji di server/emulator nyata, termasuk push notifikasi dan rute notifikasi.</td>
+<td>Uji alur penuh dua jalur.</td>
+</tr>
+<tr>
+<td>RISK-006</td>
+<td>RENDAH</td>
+<td><code>sumber_pengajuan='karyawan'</code> dipakai untuk PIC (enum dipakai bersama KRY-03-1).</td>
+<td>Dokumentasikan; ubah bila enum dipisah.</td>
+</tr>
+<tr>
+<td>RISK-007</td>
+<td>RENDAH</td>
+<td>Data lama <code>asset_trx_penambahan_ruangan</code> tidak dimigrasi dan tabelnya hanya dihapus manual.</td>
+<td>Periksa jumlah baris sebelum <code>DROP</code>.</td>
+</tr>
+</tbody>
+</table></div>
+<div class="group-divider" id="g8"><span>Referensi Developer</span></div>
+<h2 id="s42"><span class="sec-no">42</span>Dependency</h2>
+<ul>
+<li><strong>Data master</strong>: <code>asset_lokasi_m</code> (tipe <code>ruangan</code>, <code>status_aktif</code>), <code>asset_lokasi_pic_m</code>, <code>asset_kategori_m</code>, <code>data_karyawan</code>, <code>asset_admin</code>.</li>
+<li><strong>Modul lain</strong>: Onboarding Ruangan RGN01 (syarat ruangan beroperasi dan pola serah terima), <code>asset_data</code>, <code>asset_trx_log</code>, notifikasi (<code>notif_data</code>, FCM).</li>
+<li><strong>Berbagi komponen</strong>: <code>AssetAdminRuangan_m::getOptions</code>, <code>showAssetOnboardingAssetPicker</code>, <code>showAssetPickerSheet</code>, timeline <code>AssetRuanganTimeline</code>.</li>
+</ul>
+<h2 id="s43"><span class="sec-no">43</span>Source Code Reference</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Area</th>
+<th>File</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Model API</td>
+<td><code>API/app/Models/Asset/AssetRequestRuangan_m.php</code></td>
+</tr>
+<tr>
+<td>Controller</td>
+<td><code>API/app/Http/Controllers/Asset/Admin/AssetAdminRequestRuangan_c.php</code>, <code>.../Karyawan/AssetKaryawanRequestRuangan_c.php</code></td>
+</tr>
+<tr>
+<td>Route</td>
+<td><code>API/routes/modules/asset/RouteAsset.php</code></td>
+</tr>
+<tr>
+<td>Notifikasi</td>
+<td><code>API/app/Support/Asset/AssetNotification.php</code></td>
+</tr>
+<tr>
+<td>Skema</td>
+<td><code>API/diagram-asset.dbml</code>, <code>Claude outputs/sql-alk-rgn04-request-penambahan-ruangan.sql</code></td>
+</tr>
+<tr>
+<td>Test API</td>
+<td><code>API/tests/Asset/AssetRequestRuanganTest.php</code></td>
+</tr>
+<tr>
+<td>Mobile model</td>
+<td><code>MOBILE/lib/Repository/Model/Asset/mAssetPicRuangan.dart</code>, <code>mAssetAdminRuangan.dart</code></td>
+</tr>
+<tr>
+<td>Mobile API</td>
+<td><code>MOBILE/lib/Repository/Service/assetPicRuanganApi.dart</code>, <code>assetAdminRuanganApi.dart</code></td>
+</tr>
+<tr>
+<td>Mobile bloc</td>
+<td><code>MOBILE/lib/Bloc/Asset/AssetPicRuanganDetailBloc.dart</code>, <code>AssetPicRuanganRequestFormBloc.dart</code>, <code>AssetAdminRuanganDetailBloc.dart</code></td>
+</tr>
+<tr>
+<td>Mobile UI</td>
+<td><code>MOBILE/lib/UI/Modul/Asset/PicRuangan/*</code>, <code>.../AssetAdmin/AssetAdminRuangan/*</code></td>
+</tr>
+<tr>
+<td>Navigasi</td>
+<td><code>MOBILE/lib/Bloc/NavigatorBloc.dart</code>, <code>MOBILE/lib/Setting/router.dart</code></td>
+</tr>
+<tr>
+<td>Teks</td>
+<td><code>MOBILE/assets/id/asset.json</code>, <code>assets/en/asset.json</code> (grup <code>menu_asset.pic_ruangan</code>)</td>
+</tr>
+<tr>
+<td>Test mobile</td>
+<td><code>MOBILE/test/asset/asset_request_ruangan_test.dart</code></td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="s44"><span class="sec-no">44</span>Developer Notes</h2>
+<ul>
+<li>Skema mengikuti pola KRY-03-1: satu tabel dua jalur lewat <code>sumber_pengajuan</code>, enum status dipakai bersama.</li>
+<li>Fase tidak disimpan. Bila menambah fase, ubah <code>AssetRequestRuangan_m::fase()</code> dan stepper mobile (<code>langkahAktifRuangan</code>).</li>
+<li>Aset tidak berpindah pemegang sebelum konfirmasi; PIC mengirim checklist tanpa mengubah <code>asset_data</code>.</li>
+<li><code>terimaPenambahan</code> (bukan <code>terimaRequest</code>) adalah nama metode API mobile agar tidak bentrok dengan field pada fake API di test.</li>
+<li>Hook GateGuard menolak pembuatan/edit pertama setiap file; ulangi percobaan.</li>
+<li>Master PIC ruangan adalah <code>asset_lokasi_pic_m</code> (komentar lama SQL RGN01 menyebut <code>asset_ruangan_pic_m</code>).</li>
+</ul>
+<h2 id="s45"><span class="sec-no">45</span>End-to-End Traceability</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Kebutuhan bisnis</th>
+<th>Aturan</th>
+<th>API</th>
+<th>Mobile</th>
+<th>Test</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>PIC mengajukan penambahan</td>
+<td>BR-03, BR-04</td>
+<td>API-12</td>
+<td>Form Ajukan</td>
+<td>TC-04, TC-05, TC-13</td>
+</tr>
+<tr>
+<td>Admin setujui + pilih aset + jadwal</td>
+<td>BR-07, BR-08, BR-10</td>
+<td>API-05</td>
+<td>Panel Setujui</td>
+<td>TC-06, TC-15</td>
+</tr>
+<tr>
+<td>Admin tolak dengan alasan</td>
+<td>BR-06</td>
+<td>API-06</td>
+<td>Dialog Tolak</td>
+<td>TC-07, TC-15</td>
+</tr>
+<tr>
+<td>Inisiasi langsung</td>
+<td>BR-05, BR-09</td>
+<td>API-04</td>
+<td>Form Tambah Asset</td>
+<td>TC-02, TC-03</td>
+</tr>
+<tr>
+<td>Serah terima + checklist</td>
+<td>BR-12</td>
+<td>API-14</td>
+<td>Detail PIC</td>
+<td>TC-11</td>
+</tr>
+<tr>
+<td>Aset rusak diganti</td>
+<td>BR-13, BR-14</td>
+<td>API-08</td>
+<td>Panel Pengganti</td>
+<td>TC-10</td>
+</tr>
+<tr>
+<td>Selesai: aset terpakai</td>
+<td>BR-15</td>
+<td>API-09</td>
+<td>Konfirmasi</td>
+<td>TC-09</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="s46"><span class="sec-no">46</span>Ringkasan Database Impact</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Tabel</th>
+<th>Operasi</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>asset_trx_request_ruangan</code></td>
+<td>INSERT (ajukan/inisiasi), UPDATE (jadwal terkini, setujui, tolak, konfirmasi)</td>
+</tr>
+<tr>
+<td><code>asset_trx_request_ruangan_jadwal</code></td>
+<td>INSERT (jadwal awal, ubah, pengganti), UPDATE <code>tgl_terima_pic</code></td>
+</tr>
+<tr>
+<td><code>asset_trx_request_ruangan_item</code></td>
+<td>INSERT (ronde 1 dan pengganti), UPDATE <code>status_item</code>/<code>ket_rusak</code></td>
+</tr>
+<tr>
+<td><code>asset_data</code></td>
+<td>UPDATE <code>status_asset</code>, <code>pemegang_asset</code>, <code>id_pemegang_asset</code>, <code>id_asset_lokasi_m</code>, <code>ket_rusak</code></td>
+</tr>
+<tr>
+<td><code>asset_trx_log</code></td>
+<td>INSERT saat konfirmasi</td>
+</tr>
+<tr>
+<td><code>notif_data</code></td>
+<td>INSERT per notifikasi</td>
+</tr>
+<tr>
+<td><code>asset_trx_penambahan_ruangan</code> (+ <code>_item</code>)</td>
+<td>Digantikan; <code>DROP</code> manual opsional</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="s47"><span class="sec-no">47</span>Checklist Implementasi</h2>
+<ul>
+<li class="task done">DBML diperbarui (<code>[REVISI ALK-RGN04]</code>)</li>
+<li class="task done">SQL manual dibuat (<code>sql-alk-rgn04-request-penambahan-ruangan.sql</code>)</li>
+<li class="task">SQL manual dijalankan lengkap, <code>status_approval</code> bertipe enum (<strong>periksa</strong>)</li>
+<li class="task"><code>DROP</code> tabel lama penambahan (hanya bila kosong)</li>
+<li class="task done">Model, controller, route, notifikasi API</li>
+<li class="task done">Test API (12) dan seluruh <code>tests/Asset</code> (207) lolos</li>
+<li class="task done">Model, API client, bloc, halaman, route, teks mobile</li>
+<li class="task done">Test mobile (11) dan 29 test ruangan lolos</li>
+<li class="task">Uji di server/emulator, termasuk push notifikasi</li>
+<li class="task">Pembatalan oleh Admin (belum ada)</li>
+</ul>
+<h2 id="s48"><span class="sec-no">48</span>Changelog</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Versi</th>
+<th>Tanggal</th>
+<th>Perubahan</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1.0</td>
+<td>14 Oktober 2026</td>
+<td>Dokumen awal ALK-RGN04: skema satu tabel dua jalur, API admin dan PIC, mobile, notifikasi, test.</td>
+</tr>
+</tbody>
+</table></div>
+    </article>
+
+    <footer>Dokumentasi Penambahan Asset ke Ruangan Aktif (ALK-RGN04) v1.0 · 14 Oktober 2026 · Disusun dari source lokal API (Lumen) &amp; MOBILE (Flutter). Contoh ID dan nama pada payload adalah data sintetis.</footer>
+  </main>
+</div>
+<button class="to-top" id="to-top" type="button" aria-label="Kembali ke atas">↑</button>
+
+<script>
+(function(){
+  var search=document.getElementById('nav-search');
+  var navs=document.querySelectorAll('.nav');
+  search.addEventListener('input',function(){
+    var q=search.value.trim().toLowerCase();
+    navs.forEach(function(nav){
+      nav.querySelectorAll('.nav-group').forEach(function(g){
+        var any=false;
+        g.querySelectorAll('a').forEach(function(a){
+          var hit=!q||a.textContent.toLowerCase().indexOf(q)>-1;
+          a.hidden=!hit; if(hit) any=true;
+        });
+        g.hidden=!any;
+      });
+    });
+  });
+  var links={};
+  document.querySelectorAll('#nav a').forEach(function(a){links[a.dataset.sec]=a;});
+  var current=null;
+  if('IntersectionObserver' in window){
+    var io=new IntersectionObserver(function(entries){
+      entries.forEach(function(e){
+        if(e.isIntersecting){
+          if(current) current.classList.remove('active');
+          current=links[e.target.id];
+          if(current){current.classList.add('active');var nav=current.closest('.nav');var top=current.offsetTop-nav.offsetTop;if(top<nav.scrollTop||top>nav.scrollTop+nav.clientHeight-30){nav.scrollTop=top-nav.clientHeight/2;}}
+        }
+      });
+    },{rootMargin:'0px 0px -75% 0px'});
+    document.querySelectorAll('.doc h2[id]').forEach(function(h){io.observe(h);});
+  }
+  document.querySelectorAll('.mobile-toc a').forEach(function(a){
+    a.addEventListener('click',function(){a.closest('details').open=false;});
+  });
+  document.getElementById('to-top').addEventListener('click',function(){window.scrollTo({top:0});});
+})();
+</script>
+<script type="module">
+// Fallback renderer: hanya jalan bila viewer belum merender diagram (mis. file dibuka langsung).
+const blocks=[...document.querySelectorAll('pre.mermaid')].filter(function(el){return !el.hasAttribute('data-claude-mermaid-claimed');});
+if(blocks.length){
+  blocks.forEach(function(el){el.setAttribute('data-claude-mermaid-claimed','1');el.dataset.src=el.textContent;});
+  const {default:mermaid}=await import("https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs");
+  const media=window.matchMedia('(prefers-color-scheme: dark)');
+  const render=async function(){
+    const css=getComputedStyle(document.documentElement);
+    const v=function(n){return css.getPropertyValue(n).trim();};
+    mermaid.initialize({startOnLoad:false,securityLevel:'strict',theme:'base',fontFamily:'inherit',
+      themeVariables:{background:v('--surface'),primaryColor:v('--accent-soft'),primaryTextColor:v('--ink'),
+        primaryBorderColor:v('--accent'),lineColor:v('--muted'),secondaryColor:v('--surface-2'),tertiaryColor:v('--surface'),
+        textColor:v('--ink'),mainBkg:v('--accent-soft'),nodeBorder:v('--accent'),clusterBkg:v('--surface-2'),
+        noteBkgColor:v('--surface-2'),noteTextColor:v('--ink'),noteBorderColor:v('--line'),
+        actorBkg:v('--accent-soft'),actorBorder:v('--accent'),actorTextColor:v('--ink'),actorLineColor:v('--muted'),
+        signalColor:v('--ink-2'),signalTextColor:v('--ink'),labelBoxBkgColor:v('--surface-2'),labelTextColor:v('--ink'),
+        edgeLabelBackground:v('--surface'),attributeBackgroundColorOdd:v('--surface'),attributeBackgroundColorEven:v('--surface-2')}});
+    blocks.forEach(function(el){el.removeAttribute('data-processed');el.textContent=el.dataset.src;});
+    try{await mermaid.run({nodes:blocks});}catch(e){console.error(e);}
+  };
+  render();
+  if(media.addEventListener) media.addEventListener('change',render);
+}
+</script>
+<script>
+// Kembali ke index lokal bila dibuka dari komputer, ke index artifact bila dibuka dari claude.ai.
+(function(){var h=location.hostname;var art=location.protocol!=='file:'&&/claude/i.test(h);
+if(art){document.querySelectorAll('a.back').forEach(function(a){a.href='https://claude.ai/artifact/X39UeaJRpBKwqFjswGNqip';a.target='_blank';a.rel='noopener';});
+document.querySelectorAll('.dl').forEach(function(d){d.hidden=true;});}})();
+</script>

@@ -1,0 +1,2953 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Retur Asset Ruangan</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap">
+<style>
+:root{
+  --ground:#F3F5F9; --surface:#FFFFFF; --surface-2:#EAEEF5; --ink:#162033; --ink-2:#3A4559; --muted:#657089;
+  --line:#D9DFEA; --accent:#1F5AA6; --accent-soft:#E3ECF8; --accent-ink:#163F75;
+  --wait:#B45F00; --wait-bg:#FFE9C7; --draft:#0078A8; --draft-bg:#D6F1FA;
+  --bad:#C22F2F; --bad-bg:#FDE1E1; --done:#157A41; --done-bg:#D9F2E3; --neutral:#4E5A70; --neutral-bg:#E6EAF1;
+  --code-bg:#0F1A2C; --code-ink:#DCE6F5; --code-muted:#8FA3C2;
+  --shadow:0 1px 2px rgba(22,32,51,.06),0 8px 24px rgba(22,32,51,.06);
+  --font:"Plus Jakarta Sans",ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  color-scheme:dark;
+  --ground:#0E1420; --surface:#151D2C; --surface-2:#1C2638; --ink:#E7ECF5; --ink-2:#C3CBDA; --muted:#8E99AF;
+  --line:#28334A; --accent:#7FAEF0; --accent-soft:#1B2A45; --accent-ink:#B8D2F7;
+  --wait:#FFB861; --wait-bg:#3A2A12; --draft:#6CD3F5; --draft-bg:#113442; --bad:#FF8A8A; --bad-bg:#3D1C1F;
+  --done:#6FD69C; --done-bg:#15321F; --neutral:#B7C1D3; --neutral-bg:#243047;
+  --code-bg:#0A101B; --code-ink:#DCE6F5; --code-muted:#7F93B3; --shadow:0 1px 2px rgba(0,0,0,.3),0 8px 24px rgba(0,0,0,.25);
+}}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --ground:#0E1420; --surface:#151D2C; --surface-2:#1C2638; --ink:#E7ECF5; --ink-2:#C3CBDA; --muted:#8E99AF;
+  --line:#28334A; --accent:#7FAEF0; --accent-soft:#1B2A45; --accent-ink:#B8D2F7;
+  --wait:#FFB861; --wait-bg:#3A2A12; --draft:#6CD3F5; --draft-bg:#113442; --bad:#FF8A8A; --bad-bg:#3D1C1F;
+  --done:#6FD69C; --done-bg:#15321F; --neutral:#B7C1D3; --neutral-bg:#243047;
+  --code-bg:#0A101B; --code-ink:#DCE6F5; --code-muted:#7F93B3; --shadow:0 1px 2px rgba(0,0,0,.3),0 8px 24px rgba(0,0,0,.25);
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth;scroll-padding-top:24px}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+body{background:var(--ground);color:var(--ink);font-family:var(--font);font-size:15px;line-height:1.65;padding-inline:16px}
+a{color:var(--accent)}
+a:focus-visible,button:focus-visible,input:focus-visible,summary:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:4px}
+
+.shell{max-width:1320px;margin:0 auto;display:grid;grid-template-columns:270px minmax(0,1fr);gap:40px;padding-block:28px 80px}
+@media (max-width:960px){.shell{grid-template-columns:minmax(0,1fr);gap:20px}}
+
+/* Navigasi */
+.sidebar{position:sticky;top:calc(env(safe-area-inset-top,0px) + 16px);align-self:start;max-height:calc(100vh - 32px);display:flex;flex-direction:column;gap:12px}
+@media (max-width:960px){.sidebar{display:none}}
+.back{font-size:13px;font-weight:600;text-decoration:none}
+.back-mobile{display:none;margin:0 0 8px}
+@media (max-width:960px){.back-mobile{display:block}}
+.brand{display:flex;align-items:center;gap:10px;font-weight:700;font-size:14px}
+.brand-mark{height:30px;padding-inline:8px;border-radius:8px;background:var(--accent);color:var(--surface);display:grid;place-items:center;font-family:var(--mono);font-size:12px;font-weight:600}
+.search{width:100%;padding:9px 12px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--ink);font:inherit;font-size:13.5px}
+.nav{overflow-y:auto;padding-right:6px;display:flex;flex-direction:column;gap:14px}
+.nav-group p{margin:0 0 4px;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:700}
+.nav a{display:flex;gap:10px;padding:4px 8px;border-radius:6px;text-decoration:none;color:var(--ink-2);font-size:13.5px;line-height:1.4}
+.nav a span{font-family:var(--mono);font-size:11.5px;color:var(--muted);padding-top:1px;min-width:18px}
+.nav a:hover{background:var(--surface-2)}
+.nav a.active{background:var(--accent-soft);color:var(--accent-ink);font-weight:600}
+.nav a.active span{color:var(--accent)}
+.mobile-toc{display:none;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px 14px}
+.mobile-toc summary{font-weight:700;cursor:pointer}
+.mobile-toc .nav{max-height:60vh;margin-top:10px}
+@media (max-width:960px){.mobile-toc{display:block}}
+
+main{min-width:0}
+
+/* Header bergaya label asset */
+.hero{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:28px;align-items:end;padding-block:8px 28px;border-bottom:1px solid var(--line)}
+@media (max-width:760px){.hero{grid-template-columns:minmax(0,1fr)}}
+.eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:.06em;color:var(--accent);text-transform:uppercase;margin:0 0 8px}
+.hero h1{font-size:clamp(30px,5vw,46px);line-height:1.08;letter-spacing:-.02em;margin:0 0 12px;font-weight:800;text-wrap:balance}
+.hero .lede{max-width:62ch;color:var(--ink-2);margin:0;font-size:16px}
+.hero .lede code{font-family:var(--mono);font-size:.86em;background:var(--surface-2);padding:1px 5px;border-radius:5px}
+.tag{background:var(--surface);border:1px dashed var(--muted);border-radius:12px;padding:14px 16px;min-width:250px;font-family:var(--mono);font-size:12px;box-shadow:var(--shadow);position:relative}
+@media (max-width:760px){.tag{min-width:0}}
+.tag::before{content:"";position:absolute;left:14px;top:-7px;width:12px;height:12px;border-radius:50%;background:var(--ground);border:1px dashed var(--muted)}
+.tag dl{display:grid;grid-template-columns:auto 1fr;gap:4px 14px;margin:0}
+.tag dt{color:var(--muted)}
+.tag dd{margin:0;color:var(--ink);font-weight:500}
+.barcode{height:26px;margin-top:10px;background:repeating-linear-gradient(90deg,var(--ink) 0 2px,transparent 2px 4px,var(--ink) 4px 5px,transparent 5px 8px,var(--ink) 8px 11px,transparent 11px 12px);opacity:.75;border-radius:2px}
+.tag .trx{margin-top:4px;text-align:center;letter-spacing:.2em;font-size:11px;color:var(--ink-2)}
+
+/* Panel ringkas */
+.overview{display:grid;gap:18px;padding-block:28px 8px}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:22px}
+.panel h3{margin:0 0 4px;font-size:18px}
+.panel .sub{margin:0 0 18px;color:var(--muted);font-size:14px}
+.panel code{font-family:var(--mono);font-size:.86em;background:var(--surface-2);padding:1px 5px;border-radius:5px;overflow-wrap:anywhere}
+.three{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
+@media (max-width:760px){.three{grid-template-columns:minmax(0,1fr)}}
+.fact{border-left:3px solid var(--accent);padding:2px 0 2px 14px}
+.fact b{display:block;font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.fact p{margin:4px 0 0;font-size:14.5px}
+
+/* Lifecycle */
+.flow{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;align-items:stretch}
+@media (max-width:760px){.flow{grid-template-columns:minmax(0,1fr)}}
+.step{border:1px solid var(--line);border-radius:12px;padding:14px;background:var(--surface);display:flex;flex-direction:column;gap:6px}
+.step .who{font-size:11.5px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.06em}
+.step p{margin:0;font-size:13.5px;color:var(--ink-2)}
+.step .db{font-family:var(--mono);font-size:11.5px;color:var(--muted);margin-top:auto;padding-top:8px;border-top:1px dashed var(--line)}
+.loop{margin-top:12px;display:flex;flex-wrap:wrap;gap:10px;align-items:center;padding:12px 14px;border-radius:12px;background:var(--bad-bg);color:var(--ink);font-size:13.5px}
+.loop strong{color:var(--bad)}
+
+.badge{display:inline-flex;align-items:center;gap:6px;padding:3px 10px;border-radius:999px;font-size:12.5px;font-weight:700;width:max-content}
+.badge::before{content:"";width:7px;height:7px;border-radius:50%;background:currentColor}
+.b-draft{background:var(--draft-bg);color:var(--draft)}
+.b-wait{background:var(--wait-bg);color:var(--wait)}
+.b-bad{background:var(--bad-bg);color:var(--bad)}
+.b-done{background:var(--done-bg);color:var(--done)}
+
+/* Peran */
+.roles{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+@media (max-width:900px){.roles{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:520px){.roles{grid-template-columns:minmax(0,1fr)}}
+.role{border:1px solid var(--line);border-radius:12px;padding:14px 16px;background:var(--surface);display:flex;flex-direction:column;gap:8px}
+.role h4{margin:0;font-size:14.5px}
+.role p{margin:0;font-size:13px;color:var(--muted)}
+.role .links{display:flex;flex-wrap:wrap;gap:6px;margin-top:auto}
+.role .links a{font-family:var(--mono);font-size:11.5px;text-decoration:none;padding:2px 8px;border-radius:6px;background:var(--accent-soft);color:var(--accent-ink)}
+.role .links a:hover{background:var(--accent);color:var(--surface)}
+
+.attention{list-style:none;margin:0;padding:0;display:grid;gap:10px}
+.attention li{display:grid;grid-template-columns:72px minmax(0,1fr);gap:12px;align-items:start;font-size:14px}
+.sev{font-family:var(--mono);font-size:11px;font-weight:600;padding:2px 8px;border-radius:6px;margin-top:2px;text-align:center}
+.sev-h{background:var(--bad-bg);color:var(--bad)}
+.sev-m{background:var(--wait-bg);color:var(--wait)}
+.sev-l{background:var(--surface-2);color:var(--muted)}
+
+/* Konten dokumen */
+.doc{padding-top:8px}
+.group-divider{margin:64px 0 0;display:flex;align-items:center;gap:14px;color:var(--accent);font-size:12px;font-weight:800;letter-spacing:.12em;text-transform:uppercase}
+.group-divider::after{content:"";flex:1;height:2px;background:var(--accent);opacity:.25}
+.doc h2{font-size:clamp(22px,3vw,27px);line-height:1.2;letter-spacing:-.01em;margin:40px 0 14px;display:flex;align-items:baseline;gap:14px;text-wrap:balance}
+.sec-no{font-family:var(--mono);font-size:14px;color:var(--accent);font-weight:600;padding:3px 8px;border:1px solid var(--accent);border-radius:6px;flex:none;transform:translateY(-3px)}
+.doc h3{font-size:18px;margin:30px 0 10px;text-wrap:balance}
+.doc h4{font-size:15.5px;margin:22px 0 8px}
+.doc p,.doc li{max-width:78ch;color:var(--ink-2)}
+.doc strong{color:var(--ink)}
+.doc hr{display:none}
+.doc code{font-family:var(--mono);font-size:.86em;background:var(--surface-2);padding:1px 5px;border-radius:5px;color:var(--ink);overflow-wrap:anywhere}
+.doc .chip{font-weight:600;border-radius:999px;padding:1px 8px}
+.doc .chip-draft{background:var(--draft-bg);color:var(--draft)}
+.doc .chip-wait{background:var(--wait-bg);color:var(--wait)}
+.doc .chip-bad{background:var(--bad-bg);color:var(--bad)}
+.doc .chip-done{background:var(--done-bg);color:var(--done)}
+.doc .chip-neutral{background:var(--neutral-bg);color:var(--neutral)}
+
+.table-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:12px;background:var(--surface);margin:14px 0 20px}
+table{border-collapse:collapse;width:100%;font-size:13.5px;font-variant-numeric:tabular-nums}
+th{text-align:left;background:var(--surface-2);color:var(--ink);font-weight:700;font-size:12.5px;letter-spacing:.02em;padding:10px 12px;border-bottom:1px solid var(--line);white-space:nowrap}
+td{padding:9px 12px;border-bottom:1px solid var(--line);vertical-align:top;color:var(--ink-2);min-width:90px}
+tr:last-child td{border-bottom:0}
+tbody tr:hover td{background:var(--accent-soft)}
+
+.code{position:relative;margin:14px 0 20px}
+.code-lang{position:absolute;top:8px;right:12px;font-family:var(--mono);font-size:10.5px;color:var(--code-muted);letter-spacing:.08em;text-transform:uppercase}
+.doc .code pre{background:var(--code-bg);color:var(--code-ink);border-radius:12px;padding:18px;overflow-x:auto;margin:0;font-size:12.8px;line-height:1.6}
+.doc .code pre code{background:none;color:inherit;padding:0;font-size:inherit;overflow-wrap:normal}
+.diagram{overflow-x:auto;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:18px;margin:14px 0 20px}
+.diagram pre{margin:0}
+.diagram pre.mermaid{font-family:var(--mono);font-size:12px;color:var(--muted);white-space:pre;text-align:center}
+.diagram pre.mermaid[data-processed]{color:inherit;white-space:normal}
+.diagram svg{max-width:100%;height:auto}
+
+.callout{border-radius:12px;padding:12px 16px;margin:14px 0;border:1px solid var(--line);background:var(--surface)}
+.callout p{margin:4px 0}
+.callout-warn{background:var(--wait-bg);border-color:transparent}
+.doc .callout-warn p,.doc .callout-warn strong{color:var(--ink)}
+.callout-note{border-left:3px solid var(--accent)}
+
+.doc .task{list-style:none;padding-left:4px}
+.task::before{content:"";display:inline-block;width:14px;height:14px;border:1.5px solid var(--muted);border-radius:4px;margin-right:10px;vertical-align:-2px}
+.task.done::before{background:var(--done);border-color:var(--done);box-shadow:inset 0 0 0 2px var(--surface)}
+footer{margin-top:64px;padding-top:18px;border-top:1px solid var(--line);color:var(--muted);font-size:13px}
+.to-top{position:fixed;right:16px;bottom:calc(env(safe-area-inset-bottom,0px) + 16px);width:40px;height:40px;border-radius:50%;border:1px solid var(--line);background:var(--surface);color:var(--ink);box-shadow:var(--shadow);cursor:pointer;font-size:16px}
+.dl{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0 12px}.dl a{font-size:12px;font-weight:600;text-decoration:none;border:1px solid var(--line);border-radius:999px;padding:3px 10px;color:var(--ink);background:var(--surface)}.dl a:hover{border-color:var(--accent);color:var(--accent)}.dl[hidden]{display:none}
+</style>
+
+<div class="shell">
+  <aside class="sidebar" aria-label="Daftar isi">
+    <a class="back" href="index.html">← Semua dokumen</a>
+    <div class="dl" aria-label="Unduh dokumen"><a href="dokumentasi-asset-retur-ruangan.html" download>⬇ HTML</a><a href="dokumentasi-asset-retur-ruangan.md" download>⬇ Markdown</a></div>
+    <div class="brand"><span class="brand-mark">RGN06</span>Retur Ruangan</div>
+    <input class="search" id="nav-search" type="search" placeholder="Cari bagian… (mis. API, status)" aria-label="Cari bagian">
+    <nav class="nav" id="nav"><div class="nav-group"><p>Gambaran &amp; Bisnis</p><a href="#s1" data-sec="s1"><span>01</span>Informasi Dokumen</a><a href="#s3" data-sec="s3"><span>03</span>Quick Overview</a><a href="#s4" data-sec="s4"><span>04</span>Ringkasan Fitur</a><a href="#s5" data-sec="s5"><span>05</span>Tujuan Fitur</a><a href="#s6" data-sec="s6"><span>06</span>Aktor</a><a href="#s7" data-sec="s7"><span>07</span>Hak Akses</a><a href="#s8" data-sec="s8"><span>08</span>Terminologi</a><a href="#s9" data-sec="s9"><span>09</span>Business Rules</a><a href="#s10" data-sec="s10"><span>10</span>Business Flow</a><a href="#s11" data-sec="s11"><span>11</span>Flow Berdasarkan Role</a><a href="#s12" data-sec="s12"><span>12</span>Flow Diagram</a><a href="#s13" data-sec="s13"><span>13</span>Sequence Diagram</a><a href="#s14" data-sec="s14"><span>14</span>Status Transaksi</a><a href="#s15" data-sec="s15"><span>15</span>State Transition</a></div><div class="nav-group"><p>Database</p><a href="#s16" data-sec="s16"><span>16</span>Struktur Database</a><a href="#s17" data-sec="s17"><span>17</span>Relasi Database</a><a href="#s18" data-sec="s18"><span>18</span>Data Dictionary</a><a href="#s19" data-sec="s19"><span>19</span>Database Index</a></div><div class="nav-group"><p>Backend &amp; API</p><a href="#s20" data-sec="s20"><span>20</span>Backend Architecture</a><a href="#s21" data-sec="s21"><span>21</span>Backend Business Logic</a><a href="#s22" data-sec="s22"><span>22</span>Dampak terhadap asset_data</a><a href="#s23" data-sec="s23"><span>23</span>API Documentation</a><a href="#s24" data-sec="s24"><span>24</span>Detail Setiap API</a></div><div class="nav-group"><p>Mobile</p><a href="#s25" data-sec="s25"><span>25</span>Mobile Architecture</a><a href="#s26" data-sec="s26"><span>26</span>Mobile Screen</a><a href="#s27" data-sec="s27"><span>27</span>Mobile → API</a><a href="#s28" data-sec="s28"><span>28</span>API → Mobile</a><a href="#s29" data-sec="s29"><span>29</span>Mapping Mobile → API → Database</a><a href="#s30" data-sec="s30"><span>30</span>Mapping Database → API → Mobile</a></div><div class="nav-group"><p>Validasi, Error &amp; Keamanan</p><a href="#s31" data-sec="s31"><span>31</span>Validation</a><a href="#s32" data-sec="s32"><span>32</span>Error Handling</a><a href="#s33" data-sec="s33"><span>33</span>Audit Trail</a><a href="#s34" data-sec="s34"><span>34</span>Notification</a><a href="#s35" data-sec="s35"><span>35</span>Security</a></div><div class="nav-group"><p>Manual Book</p><a href="#s36" data-sec="s36"><span>36</span>Manual Book User/Admin</a><a href="#s37" data-sec="s37"><span>37</span>Kondisi Button</a></div><div class="nav-group"><p>QA &amp; Risiko</p><a href="#s38" data-sec="s38"><span>38</span>Testing Scenario</a><a href="#s39" data-sec="s39"><span>39</span>Temuan Ketidaksesuaian</a><a href="#s40" data-sec="s40"><span>40</span>Edge Case</a><a href="#s41" data-sec="s41"><span>41</span>Potential Bug / Technical Risk</a></div><div class="nav-group"><p>Referensi Developer</p><a href="#s42" data-sec="s42"><span>42</span>Dependency</a><a href="#s43" data-sec="s43"><span>43</span>Source Code Reference</a><a href="#s44" data-sec="s44"><span>44</span>Developer Notes</a><a href="#s45" data-sec="s45"><span>45</span>End-to-End Traceability</a><a href="#s46" data-sec="s46"><span>46</span>Ringkasan Database Impact</a><a href="#s47" data-sec="s47"><span>47</span>Checklist Implementasi</a><a href="#s48" data-sec="s48"><span>48</span>Changelog</a></div></nav>
+  </aside>
+
+  <main>
+    <p class="back-mobile"><a class="back" href="index.html">← Semua dokumen</a> <div class="dl" aria-label="Unduh dokumen"><a href="dokumentasi-asset-retur-ruangan.html" download>⬇ HTML</a><a href="dokumentasi-asset-retur-ruangan.md" download>⬇ Markdown</a></div></p>
+    <header class="hero">
+      <div>
+        <p class="eyebrow">Asset Management · Dokumentasi Teknis &amp; Manual Book</p>
+        <h1>Retur Asset Ruangan (ALK-RGN06)</h1>
+        <p class="lede">PIC Ruangan mengajukan retur asset milik ruangannya dengan alasan per asset (rusak, tidak digunakan, tukar unit). Admin/HR memutuskan per asset, memilih asset pengganti bila perlu, menentukan serah terima dijadwalkan atau langsung, lalu menerima asset dan memilih gudang tujuan untuk setiap asset. Alurnya sama dengan Retur Asset Karyawan (KRY04), tetapi pemiliknya ruangan dan PIC tidak memiliki aksi terima. Seluruh isi diturunkan dari source code <code>API</code> (Lumen) dan <code>MOBILE</code> (Flutter).</p>
+      </div>
+      <div class="tag" aria-label="Identitas dokumen">
+        <dl>
+          <dt>Kode</dt><dd>ALK-RGN06</dd><dt>Modul</dt><dd>Ruangan</dd><dt>Versi</dt><dd>1.0 · 15 Okt 2026</dd><dt>Stack</dt><dd>Lumen 10 · Flutter</dd><dt>API</dt><dd>9 endpoint</dd>
+        </dl>
+        <div class="barcode" aria-hidden="true"></div>
+        <div class="trx">RGN06-YYYYMMNNN</div>
+      </div>
+    </header>
+
+    <details class="mobile-toc">
+      <summary>Daftar isi</summary>
+      <nav class="nav"><div class="nav-group"><p>Gambaran &amp; Bisnis</p><a href="#s1" data-sec="s1"><span>01</span>Informasi Dokumen</a><a href="#s3" data-sec="s3"><span>03</span>Quick Overview</a><a href="#s4" data-sec="s4"><span>04</span>Ringkasan Fitur</a><a href="#s5" data-sec="s5"><span>05</span>Tujuan Fitur</a><a href="#s6" data-sec="s6"><span>06</span>Aktor</a><a href="#s7" data-sec="s7"><span>07</span>Hak Akses</a><a href="#s8" data-sec="s8"><span>08</span>Terminologi</a><a href="#s9" data-sec="s9"><span>09</span>Business Rules</a><a href="#s10" data-sec="s10"><span>10</span>Business Flow</a><a href="#s11" data-sec="s11"><span>11</span>Flow Berdasarkan Role</a><a href="#s12" data-sec="s12"><span>12</span>Flow Diagram</a><a href="#s13" data-sec="s13"><span>13</span>Sequence Diagram</a><a href="#s14" data-sec="s14"><span>14</span>Status Transaksi</a><a href="#s15" data-sec="s15"><span>15</span>State Transition</a></div><div class="nav-group"><p>Database</p><a href="#s16" data-sec="s16"><span>16</span>Struktur Database</a><a href="#s17" data-sec="s17"><span>17</span>Relasi Database</a><a href="#s18" data-sec="s18"><span>18</span>Data Dictionary</a><a href="#s19" data-sec="s19"><span>19</span>Database Index</a></div><div class="nav-group"><p>Backend &amp; API</p><a href="#s20" data-sec="s20"><span>20</span>Backend Architecture</a><a href="#s21" data-sec="s21"><span>21</span>Backend Business Logic</a><a href="#s22" data-sec="s22"><span>22</span>Dampak terhadap asset_data</a><a href="#s23" data-sec="s23"><span>23</span>API Documentation</a><a href="#s24" data-sec="s24"><span>24</span>Detail Setiap API</a></div><div class="nav-group"><p>Mobile</p><a href="#s25" data-sec="s25"><span>25</span>Mobile Architecture</a><a href="#s26" data-sec="s26"><span>26</span>Mobile Screen</a><a href="#s27" data-sec="s27"><span>27</span>Mobile → API</a><a href="#s28" data-sec="s28"><span>28</span>API → Mobile</a><a href="#s29" data-sec="s29"><span>29</span>Mapping Mobile → API → Database</a><a href="#s30" data-sec="s30"><span>30</span>Mapping Database → API → Mobile</a></div><div class="nav-group"><p>Validasi, Error &amp; Keamanan</p><a href="#s31" data-sec="s31"><span>31</span>Validation</a><a href="#s32" data-sec="s32"><span>32</span>Error Handling</a><a href="#s33" data-sec="s33"><span>33</span>Audit Trail</a><a href="#s34" data-sec="s34"><span>34</span>Notification</a><a href="#s35" data-sec="s35"><span>35</span>Security</a></div><div class="nav-group"><p>Manual Book</p><a href="#s36" data-sec="s36"><span>36</span>Manual Book User/Admin</a><a href="#s37" data-sec="s37"><span>37</span>Kondisi Button</a></div><div class="nav-group"><p>QA &amp; Risiko</p><a href="#s38" data-sec="s38"><span>38</span>Testing Scenario</a><a href="#s39" data-sec="s39"><span>39</span>Temuan Ketidaksesuaian</a><a href="#s40" data-sec="s40"><span>40</span>Edge Case</a><a href="#s41" data-sec="s41"><span>41</span>Potential Bug / Technical Risk</a></div><div class="nav-group"><p>Referensi Developer</p><a href="#s42" data-sec="s42"><span>42</span>Dependency</a><a href="#s43" data-sec="s43"><span>43</span>Source Code Reference</a><a href="#s44" data-sec="s44"><span>44</span>Developer Notes</a><a href="#s45" data-sec="s45"><span>45</span>End-to-End Traceability</a><a href="#s46" data-sec="s46"><span>46</span>Ringkasan Database Impact</a><a href="#s47" data-sec="s47"><span>47</span>Checklist Implementasi</a><a href="#s48" data-sec="s48"><span>48</span>Changelog</a></div></nav>
+    </details>
+
+    <section class="overview" aria-label="Ringkasan">
+      <div class="panel">
+        <h3>Ringkasan dalam 1 menit: retur asset ruangan</h3>
+        <p class="sub">Mengembalikan asset ruangan ke gudang secara terdokumentasi, dengan keputusan Admin/HR per asset dan penerimaan oleh Admin/HR.</p>
+        <div class="three">
+          <div class="fact"><b>Alur sama dengan KRY04</b><p>Satu header dan item per asset; item pengganti memakai <code>parent_id</code>. Halaman mobile retur karyawan dipakai ulang lewat parameter <code>untukRuangan</code>.</p></div>
+          <div class="fact"><b>PIC mengajukan, Admin/HR menerima</b><p>PIC hanya mengajukan dan memantau; tidak ada aksi terima, edit, atau batal. Admin/HR memilih gudang tujuan per asset saat Terima Asset.</p></div>
+          <div class="fact"><b>Asset tidak dikunci saat diajukan</b><p><code>asset_data</code> baru berubah saat konfirmasi (pengganti jadi <code>proses</code>) dan Terima Asset. Penjagaan lewat pengecekan retur, onboarding, dan penambahan ruangan aktif.</p></div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h3>Siklus retur</h3>
+        <p class="sub">Dua kolom status: <code>status_approval</code> dan <code>status_transaksi</code>.</p>
+        <div class="flow">
+          <div class="step"><span class="badge b-wait">Menunggu Konfirmasi</span><span class="who">PIC: Ajukan</span><p>Pilih ruangan, asset, alasan per asset. Asset belum berubah.</p><span class="db">pengajuan / proses</span></div>
+          <div class="step"><span class="badge b-draft">Dikonfirmasi</span><span class="who">Admin/HR: Konfirmasi</span><p>Keputusan per asset, pengganti, metode serah terima. Semua ditolak berarti selesai.</p><span class="db">disetujui / proses · pengganti proses</span></div>
+          <div class="step"><span class="badge b-done">Diterima</span><span class="who">Admin/HR: Terima Asset</span><p>Gudang per asset. Asal ke gudang, pengganti ke ruangan.</p><span class="db">disetujui / selesai · asset_trx_log</span></div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h3>Mulai dari sini sesuai peran</h3>
+        <p class="sub">Lompat langsung ke bagian yang paling relevan.</p>
+        <div class="roles">
+          <div class="role"><h4>Business Analyst / PM</h4><p>Aturan bisnis, status, perbedaan dengan KRY04.</p><div class="links"><a href="#s3">§3</a><a href="#s9">§9 Rules</a><a href="#s14">§14 Status</a><a href="#s39">§39 INC</a></div></div>
+          <div class="role"><h4>Backend Developer</h4><p>Logika, dampak ke asset_data, kontrak API.</p><div class="links"><a href="#s21">§21 Logic</a><a href="#s22">§22 asset_data</a><a href="#s24">§24 API</a></div></div>
+          <div class="role"><h4>Mobile Developer</h4><p>Pemakaian ulang halaman retur karyawan, bloc, route, pemetaan.</p><div class="links"><a href="#s25">§25</a><a href="#s26">§26 Screen</a><a href="#s29">§29 Mapping</a></div></div>
+          <div class="role"><h4>QA / Tester</h4><p>16 test API, 25 test mobile, skenario, edge case, risiko.</p><div class="links"><a href="#s38">§38 Test</a><a href="#s40">§40 Edge</a><a href="#s41">§41 Risk</a></div></div>
+          <div class="role"><h4>Technical Support</h4><p>Pesan error, audit trail, notifikasi.</p><div class="links"><a href="#s32">§32 Error</a><a href="#s33">§33 Audit</a><a href="#s34">§34 Notif</a></div></div>
+          <div class="role"><h4>User / Admin Asset</h4><p>Langkah operasional dan kondisi tombol.</p><div class="links"><a href="#s36">§36 Manual Book</a><a href="#s37">§37 Tombol</a></div></div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h3>Perlu perhatian</h3>
+        <p class="sub">Temuan terpenting. Detail di <a href="#s39">§39</a> dan <a href="#s41">§41</a>.</p>
+        <ul class="attention">
+          <li><span class="sev sev-m">SEDANG</span><span>Skrip unique <code>no_trx</code> per company belum dikonfirmasi dijalankan. <a href="#s41">RISK-009</a></span></li>
+          <li><span class="sev sev-m">SEDANG</span><span>Belum diuji di server, emulator, atau MariaDB nyata, termasuk push notifikasi. <a href="#s41">RISK-010</a></span></li>
+          <li><span class="sev sev-l">RENDAH</span><span>Gudang default per cabang tidak pernah terpilih karena <code>id_cabang</code> tidak dikirim. <a href="#s41">RISK-003</a></span></li>
+          <li><span class="sev sev-l">RENDAH</span><span>Riwayat log asset belum mengenali <code>retur_ruangan</code>; tidak ada jalur batal/edit. <a href="#s41">RISK-004</a> · <a href="#s41">RISK-006</a></span></li>
+        </ul>
+      </div>
+    </section>
+
+    <article class="doc">
+<div class="group-divider" id="g1"><span>Gambaran &amp; Bisnis</span></div>
+<h2 id="s1"><span class="sec-no">01</span>Informasi Dokumen</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Informasi</th>
+<th>Nilai</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Nama Fitur</td>
+<td>Retur Asset Ruangan (UI Admin: item <strong>"Retur"</strong> di dashboard Ruangan; UI PIC: tombol <strong>"Retur Asset"</strong> dan banner di halaman <strong>"PIC Ruangan"</strong>)</td>
+</tr>
+<tr>
+<td>Kode Fitur</td>
+<td><strong>ALK-RGN06</strong> (nomor transaksi <code>RGN06-YYYYMMNNN</code>)</td>
+</tr>
+<tr>
+<td>Modul</td>
+<td>Asset Management — Ruangan</td>
+</tr>
+<tr>
+<td>Backend</td>
+<td>Laravel <strong>Lumen ^10.0</strong>, PHP ^8.1, JWT, Query Builder</td>
+</tr>
+<tr>
+<td>Database</td>
+<td><code>API/diagram-asset.dbml</code> (tanda <code>[NEW ALK-RGN06]</code>) + SQL manual <code>Claude outputs/sql-alk-rgn06-retur-ruangan.sql</code> dan <code>Claude outputs/sql-alk-rgn06-no-trx-unik-per-company.sql</code></td>
+</tr>
+<tr>
+<td>Mobile</td>
+<td>Flutter (<code>professional_flutter_3_35</code>), <code>flutter_bloc</code>, <code>dio</code></td>
+</tr>
+<tr>
+<td>Web</td>
+<td>⚠️ Belum ditemukan: tidak ada source web di workspace</td>
+</tr>
+<tr>
+<td>Test otomatis</td>
+<td>API <code>tests/Asset/AssetReturRuanganTest.php</code> (16 test, 269 assertion) · Mobile <code>test/asset/asset_retur_ruangan_test.dart</code> (25 test)</td>
+</tr>
+<tr>
+<td>Versi dokumen</td>
+<td>1.0 — 15 Oktober 2026</td>
+</tr>
+<tr>
+<td>Dokumen terkait</td>
+<td>Retur Asset Karyawan (KRY04), Onboarding Ruangan (ALK-RGN01), Penambahan Asset Ruangan (ALK-RGN04), Master Lokasi &amp; PIC Ruangan</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="s2"><span class="sec-no">02</span>Daftar Isi</h2>
+<p>Lihat panel navigasi di samping.</p>
+<h2 id="s3"><span class="sec-no">03</span>Quick Overview</h2>
+<p><strong>PIC Ruangan</strong> mengajukan retur satu atau beberapa asset yang dipegang ruangannya, masing-masing dengan alasan (<strong>rusak</strong>, <strong>tidak digunakan</strong>, atau <strong>tukar unit</strong>). <strong>Admin/HR</strong> memutuskan <strong>per asset</strong> (setujui atau tolak), memilih <strong>asset pengganti</strong> dari gudang bila alasannya tukar unit atau rusak dengan pengganti, lalu menentukan metode serah terima (<strong>dijadwalkan</strong> atau <strong>langsung</strong>). Setelah serah terima fisik, Admin/HR menekan <strong>Terima Asset</strong> dan memilih <strong>gudang tujuan untuk setiap asset</strong>. Asset lama masuk gudang (<code>tersedia</code>, atau <code>rusak</code> bila alasannya rusak) dan asset pengganti menjadi <code>terpakai</code> di ruangan. <strong>PIC tidak memiliki aksi terima</strong> dan tidak ada aksi edit/batal pengajuan.</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Aspek</th>
+<th>Ringkasan</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Aktor</td>
+<td>PIC Ruangan (mengajukan), Admin/HR (memutuskan dan menerima), Sistem</td>
+</tr>
+<tr>
+<td>Transaksi utama</td>
+<td><code>asset_trx_retur_ruangan</code> (header) + <code>asset_trx_retur_ruangan_item</code> (item asal dan item pengganti lewat <code>parent_id</code>)</td>
+</tr>
+<tr>
+<td>Alasan retur</td>
+<td><code>rusak</code> (tanpa/dengan pengganti), <code>tidak_digunakan</code>, <code>tukar_unit</code></td>
+</tr>
+<tr>
+<td>Status header</td>
+<td><code>status_approval</code>: <code>pengajuan</code> → <code>disetujui</code> atau <code>ditolak</code>; <code>status_transaksi</code>: <code>proses</code> → <code>selesai</code></td>
+</tr>
+<tr>
+<td>Tab daftar</td>
+<td>Pengajuan (termasuk yang ditolak) · Dikonfirmasi · Diterima</td>
+</tr>
+<tr>
+<td>Status asset</td>
+<td>Asal: <code>terpakai</code>/ruangan → <code>tersedia</code> atau <code>rusak</code>/gudang. Pengganti: <code>tersedia</code> → <code>proses</code> → <code>terpakai</code>/ruangan</td>
+</tr>
+<tr>
+<td>Log</td>
+<td><code>asset_trx_log</code> dengan <code>jenis_log = retur_ruangan</code> (bukan <code>asset_log</code>)</td>
+</tr>
+<tr>
+<td>Endpoint</td>
+<td>9: 5 admin + 4 PIC</td>
+</tr>
+<tr>
+<td>Notifikasi</td>
+<td>4 event (<code>retur_ruangan.*</code>)</td>
+</tr>
+</tbody>
+</table></div>
+<pre><code class="language-text">PIC Ruangan: pilih ruangan + asset + alasan per asset → Ajukan Retur   [pengajuan / proses · notif Admin/HR]
+   asset TIDAK dikunci di asset_data (dijaga lewat pengecekan retur aktif)
+Admin/HR: Setujui / Tolak tiap asset (+ pengganti) + metode serah terima
+   [disetujui / proses · notif PIC]      semua ditolak → [ditolak / selesai · notif PIC]
+Admin/HR: Terima Asset (pilih gudang per asset)
+   [disetujui / selesai · asset diperbarui · asset_trx_log · notif PIC]
+</code></pre>
+<h2 id="s4"><span class="sec-no">04</span>Ringkasan Fitur</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Fitur</th>
+<th>Aktor</th>
+<th>Keterangan</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Ajukan retur</td>
+<td>PIC Ruangan</td>
+<td>Pilih ruangan miliknya, asset ruangan itu, alasan per asset, catatan tambahan. Status <code>pengajuan</code>/<code>proses</code>.</td>
+</tr>
+<tr>
+<td>Keputusan per asset</td>
+<td>Admin/HR</td>
+<td>Setujui atau tolak (alasan wajib). Asset yang butuh pengganti wajib diberi pengganti.</td>
+</tr>
+<tr>
+<td>Asset pengganti</td>
+<td>Admin/HR</td>
+<td>Dipilih dari asset <code>tersedia</code> di gudang; langsung <code>proses</code> saat dikonfirmasi.</td>
+</tr>
+<tr>
+<td>Metode serah terima</td>
+<td>Admin/HR</td>
+<td><strong>Dijadwalkan</strong> (tanggal + jam) atau <strong>Langsung</strong> (tanpa jadwal).</td>
+</tr>
+<tr>
+<td>Terima Asset</td>
+<td>Admin/HR</td>
+<td>Memilih gudang untuk setiap asset asal yang disetujui; finalisasi asset dan log.</td>
+</tr>
+<tr>
+<td>Pantau retur</td>
+<td>PIC Ruangan</td>
+<td>Daftar 3 tab, detail hanya-baca, banner di halaman PIC Ruangan.</td>
+</tr>
+<tr>
+<td>Ringkasan admin</td>
+<td>Admin/HR</td>
+<td>Panel "Retur Asset Ruangan Perlu Diproses" dan tile "Retur" di dashboard Ruangan.</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="s5"><span class="sec-no">05</span>Tujuan Fitur</h2>
+<ul>
+<li>Mengembalikan asset milik ruangan ke gudang secara terdokumentasi, dengan alasan per asset dan keputusan Admin/HR per asset.</li>
+<li>Menjamin asset pengganti (tukar unit atau rusak dengan pengganti) berpindah ke ruangan dalam satu transaksi serah terima.</li>
+<li>Mencatat gudang tujuan setiap asset yang kembali, kondisi akhir (tersedia atau rusak), pelaku, dan waktu.</li>
+<li>Memakai ulang alur dan layar KRY04 supaya perilaku dan tampilannya seragam.</li>
+</ul>
+<h2 id="s6"><span class="sec-no">06</span>Aktor</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Aktor</th>
+<th>Peran</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>PIC Ruangan</td>
+<td>Karyawan di <code>asset_lokasi_pic_m</code> untuk ruangan tersebut. Mengajukan retur, memantau status. <strong>Tidak</strong> menerima asset.</td>
+</tr>
+<tr>
+<td>Admin/HR</td>
+<td>Terdaftar di <code>asset_admin</code>. Memutuskan per asset, memilih pengganti, menetapkan metode serah terima, menerima asset dan memilih gudang.</td>
+</tr>
+<tr>
+<td>Sistem</td>
+<td>Memeriksa kepemilikan dan kunci lintas flow, mereservasi asset pengganti (<code>proses</code>), memperbarui <code>asset_data</code>, menulis log, mengirim notifikasi setelah transaksi sukses.</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="s7"><span class="sec-no">07</span>Hak Akses</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Aksi</th>
+<th>Admin/HR</th>
+<th>PIC Ruangan</th>
+<th>Keterangan</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Lihat opsi pengganti, daftar, dan detail (admin)</td>
+<td>✔</td>
+<td>✘</td>
+<td><code>accessError</code> memeriksa <code>asset_admin</code>; selain admin mendapat <code>403 FORBIDDEN</code>.</td>
+</tr>
+<tr>
+<td>Konfirmasi dan Terima Asset</td>
+<td>✔</td>
+<td>✘</td>
+<td>Model juga memeriksa <code>findAssetAdmin</code>: "Pengguna tidak terdaftar sebagai admin asset."</td>
+</tr>
+<tr>
+<td>Lihat opsi retur satu ruangan</td>
+<td>✘</td>
+<td>✔</td>
+<td>Hanya PIC ruangan aktif tersebut; selain itu <code>403 FORBIDDEN</code>.</td>
+</tr>
+<tr>
+<td>Ajukan retur</td>
+<td>✘</td>
+<td>✔</td>
+<td>Hanya untuk ruangan yang PIC-nya pengaju.</td>
+</tr>
+<tr>
+<td>Lihat daftar/detail</td>
+<td>✘</td>
+<td>✔</td>
+<td>Dibatasi ke ruangan yang <strong>saat ini</strong> dipegang PIC (join <code>asset_lokasi_pic_m</code>). PIC lain mendapat <code>404 NOT_FOUND</code>.</td>
+</tr>
+<tr>
+<td>Terima / edit / batal</td>
+<td>✘</td>
+<td>✘</td>
+<td>⚠️ Belum ditemukan untuk PIC: tidak ada route terima, edit, maupun batal.</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="s8"><span class="sec-no">08</span>Terminologi</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Istilah</th>
+<th>Arti</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Ruangan</td>
+<td><code>asset_lokasi_m</code> bertipe <code>ruangan</code>, <code>status_aktif='1'</code>, punya PIC di <code>asset_lokasi_pic_m</code>.</td>
+</tr>
+<tr>
+<td>Asset asal / item asal</td>
+<td>Asset ruangan yang diretur; <code>parent_id</code> NULL.</td>
+</tr>
+<tr>
+<td>Asset pengganti / item pengganti</td>
+<td>Asset gudang yang dipilih Admin/HR; baris item dengan <code>parent_id</code> = id item asal.</td>
+</tr>
+<tr>
+<td><code>rusak_dengan_pengganti</code></td>
+<td>Hanya untuk alasan rusak: <code>1</code> tanpa pengganti, <code>2</code> dengan pengganti; selain itu <code>0</code>.</td>
+</tr>
+<tr>
+<td>Dijadwalkan / Langsung</td>
+<td>Metode serah terima. Dijadwalkan: <code>flag_jadwalkan='1'</code> + tanggal dan jam. Langsung: <code>flag_jadwalkan='0'</code>, jadwal NULL.</td>
+</tr>
+<tr>
+<td>Terima Asset</td>
+<td>Finalisasi oleh Admin/HR setelah serah terima fisik; status transaksi <code>selesai</code>.</td>
+</tr>
+<tr>
+<td>Dikonfirmasi / Diterima</td>
+<td>Label tab: <code>disetujui</code>+<code>proses</code> / <code>disetujui</code>+<code>selesai</code>.</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="s9"><span class="sec-no">09</span>Business Rules</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>No</th>
+<th>Aturan</th>
+<th>Implementasi</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>BR-01</td>
+<td>Retur hanya untuk ruangan aktif yang PIC-nya pengaju</td>
+<td><code>findRuanganPic</code>: tipe <code>ruangan</code>, <code>status_aktif='1'</code>, <code>asset_lokasi_pic_m.id_karyawan</code> = pengaju. Pesan: "Ruangan tidak ditemukan, tidak aktif, atau Anda bukan PIC ruangan ini."</td>
+</tr>
+<tr>
+<td>BR-02</td>
+<td>Pengaju harus karyawan aktif</td>
+<td><code>findActiveKaryawan</code> → "Karyawan tidak ditemukan atau tidak aktif."</td>
+</tr>
+<tr>
+<td>BR-03</td>
+<td>Hanya asset milik ruangan itu dan berstatus <code>terpakai</code></td>
+<td><code>pemegang_asset='ruangan'</code> dan <code>id_asset_lokasi_m</code> = ruangan; bila tidak → "Satu atau beberapa asset bukan milik ruangan atau sudah tidak dapat diretur."; status ≠ <code>terpakai</code> → "Satu atau beberapa asset tidak berstatus terpakai dan tidak dapat diretur."</td>
+</tr>
+<tr>
+<td>BR-04</td>
+<td>Minimal satu asset, tanpa duplikat</td>
+<td>"Minimal satu asset wajib dipilih." / "Asset yang sama tidak boleh dipilih lebih dari sekali."</td>
+</tr>
+<tr>
+<td>BR-05</td>
+<td>Aturan per alasan</td>
+<td>Lihat tabel di bawah.</td>
+</tr>
+<tr>
+<td>BR-06</td>
+<td>Asset tidak boleh sedang di flow lain</td>
+<td>Retur ruangan aktif lain, onboarding ruangan <code>proses</code>, penambahan ruangan (RGN04) <code>proses</code>. ⚠️ Kerusakan/pemeliharaan ruangan belum ada model/API sehingga <strong>belum dicek</strong>.</td>
+</tr>
+<tr>
+<td>BR-07</td>
+<td>Pengajuan tidak mengunci <code>asset_data</code></td>
+<td>Asset tetap <code>terpakai</code> sampai Terima Asset; penjagaan lewat <code>hasActiveReturRuanganAsset</code> dan penyaringan opsi.</td>
+</tr>
+<tr>
+<td>BR-08</td>
+<td>Admin memutuskan seluruh item asal</td>
+<td>"Seluruh asset retur wajib dikonfirmasi." Tolak wajib alasan; item ditolak tidak boleh memiliki pengganti.</td>
+</tr>
+<tr>
+<td>BR-09</td>
+<td>Asset masih dipegang ruangan saat konfirmasi dan terima</td>
+<td>"Satu atau beberapa asset sudah tidak dipegang oleh ruangan."</td>
+</tr>
+<tr>
+<td>BR-10</td>
+<td>Asset pengganti</td>
+<td>Wajib untuk tukar unit dan rusak dengan pengganti, dilarang untuk alasan lain, unik, harus <code>tersedia</code> @gudang (<code>getLockedAssets</code>, <code>FOR UPDATE</code>). Tidak ada syarat kategori sama.</td>
+</tr>
+<tr>
+<td>BR-11</td>
+<td>Metode serah terima wajib bila ada asset disetujui</td>
+<td><code>dijadwalkan</code> wajib tanggal + jam, tanggal ≥ tanggal pengajuan.</td>
+</tr>
+<tr>
+<td>BR-12</td>
+<td>Hasil keputusan</td>
+<td>≥ 1 disetujui → <code>disetujui</code>/<code>proses</code>; semua ditolak → <code>ditolak</code>/<code>selesai</code> dengan <code>ket_tolak</code> "Seluruh asset retur ditolak."</td>
+</tr>
+<tr>
+<td>BR-13</td>
+<td>Terima Asset hanya oleh Admin/HR dan wajib memilih gudang per asset</td>
+<td>Hanya untuk <code>disetujui</code>+<code>proses</code>; tiap item asal yang disetujui dipetakan tepat satu kali ke lokasi bertipe <code>gudang</code> pada company yang sama.</td>
+</tr>
+<tr>
+<td>BR-14</td>
+<td>Dampak finalisasi</td>
+<td>Asal → gudang (<code>tersedia</code> atau <code>rusak</code>+<code>ket_rusak</code>); pengganti → <code>terpakai</code> @ruangan; log <code>retur_ruangan</code>; header <code>selesai</code>. Item yang ditolak <strong>tetap di ruangan</strong>.</td>
+</tr>
+<tr>
+<td>BR-15</td>
+<td>Penomoran dan keunikan</td>
+<td>ID <code>id_company</code>+<code>YYYYMM</code>+3 digit; <code>no_trx</code> <code>RGN06-YYYYMMNNN</code>, unik <strong>per company</strong> (<code>uq_retur_rgn_company_no_trx</code>).</td>
+</tr>
+<tr>
+<td>BR-16</td>
+<td>PIC tidak menerima, mengubah, atau membatalkan</td>
+<td>Tidak ada route untuk itu.</td>
+</tr>
+</tbody>
+</table></div>
+<p>Aturan per alasan (BR-05):</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Alasan</th>
+<th><code>rusak_dengan_pengganti</code></th>
+<th><code>ket_retur</code></th>
+<th>Pengganti</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>rusak</code></td>
+<td>wajib 1 atau 2 ("Asset rusak wajib memilih tanpa atau dengan pengganti.")</td>
+<td>wajib ("Keterangan kerusakan asset wajib diisi.")</td>
+<td>wajib bila 2</td>
+</tr>
+<tr>
+<td><code>tidak_digunakan</code></td>
+<td>dipaksa 0</td>
+<td>opsional</td>
+<td>tidak boleh</td>
+</tr>
+<tr>
+<td><code>tukar_unit</code></td>
+<td>dipaksa 0</td>
+<td>wajib ("Alasan tukar unit wajib diisi.")</td>
+<td>wajib</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="s10"><span class="sec-no">10</span>Business Flow</h2>
+<pre><code class="language-text">1. PIC Ruangan: PIC Ruangan → Retur Asset → (+) Ajukan Retur Asset Ruangan
+   → pilih Ruangan → Tambah Retur Asset (hanya asset ruangan itu yang bebas dari flow lain)
+   → per asset: Alasan Retur Asset → (Rusak: Tanpa/Dengan Pengganti) → Keterangan
+   → Catatan Tambahan → Ajukan Retur            [pengajuan/proses · notif Admin/HR]
+2. Admin/HR: Ruangan → Retur → tab Pengajuan → Detail
+   → per asset: Tolak (+alasan) / Setujui / Ganti Asset (pilih pengganti)
+   → Konfirmasi Asset → sheet: Dijadwalkan (tanggal + jam) / Serahkan Langsung, Catatan → Submit
+                                                [disetujui/proses atau ditolak/selesai · notif PIC]
+3. Serah terima fisik sesuai jadwal atau langsung
+4. Admin/HR: Detail → Terima Asset → dialog Lokasi Tujuan Asset (gudang per asset)
+                                                [disetujui/selesai · asset diperbarui · log · notif PIC]
+</code></pre>
+<h2 id="s11"><span class="sec-no">11</span>Flow Berdasarkan Role</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Role</th>
+<th>Langkah</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>PIC Ruangan</td>
+<td>Ajukan → (tunggu keputusan) → lihat status di banner dan detail → serahkan asset sesuai jadwal atau langsung → selesai saat Admin/HR menekan Terima Asset.</td>
+</tr>
+<tr>
+<td>Admin/HR</td>
+<td>Tab Pengajuan → keputusan per asset → Konfirmasi Asset → (tab Dikonfirmasi) setelah serah terima fisik → Terima Asset + gudang per asset.</td>
+</tr>
+<tr>
+<td>Sistem</td>
+<td>Memeriksa kepemilikan dan kunci lintas flow, mereservasi pengganti, memperbarui asset dan log, mengirim notifikasi.</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="s12"><span class="sec-no">12</span>Flow Diagram</h2>
+<div class="diagram"><pre class="mermaid">flowchart TD
+    A([Mulai]) --&gt; B[PIC pilih ruangan, asset, alasan per asset]
+    B --&gt; C{Validasi}
+    C --&gt;|Gagal| X([Pesan error])
+    C --&gt;|OK| D[Header pengajuan/proses, notif Admin/HR]
+    D --&gt; E{Admin putuskan per asset}
+    E --&gt;|Semua ditolak| F([ditolak/selesai, notif PIC])
+    E --&gt;|Ada disetujui| G{Butuh pengganti?}
+    G --&gt;|Tukar unit atau rusak dengan pengganti| H[Pilih asset pengganti, pengganti jadi proses]
+    G --&gt;|Tidak| I[Tanpa pengganti]
+    H --&gt; J{Metode serah terima}
+    I --&gt; J
+    J --&gt;|Dijadwalkan| K[Simpan tanggal dan jam]
+    J --&gt;|Langsung| L[Jadwal tetap NULL]
+    K --&gt; M[disetujui/proses, notif PIC]
+    L --&gt; M
+    M --&gt; N[Admin Terima Asset, pilih gudang per asset]
+    N --&gt; O[Asset asal ke gudang: tersedia atau rusak]
+    N --&gt; P[Pengganti ke ruangan: terpakai]
+    O --&gt; Q([disetujui/selesai, log retur_ruangan])
+    P --&gt; Q</pre></div>
+<h2 id="s13"><span class="sec-no">13</span>Sequence Diagram</h2>
+<div class="diagram"><pre class="mermaid">sequenceDiagram
+    actor PIC as PIC Ruangan
+    actor ADM as Admin/HR
+    participant M as Mobile
+    participant CP as AssetKaryawanReturRuangan_c
+    participant CA as AssetAdminReturRuangan_c
+    participant R as AssetReturRuangan_m
+    participant DB as Database
+    participant N as AssetNotification
+
+    PIC-&gt;&gt;M: Pilih ruangan, asset, alasan, Ajukan Retur
+    M-&gt;&gt;CP: POST /asset/karyawan/pic-ruangan/retur
+    CP-&gt;&gt;R: store()
+    R-&gt;&gt;DB: lock company, cek PIC ruangan, kepemilikan, kunci flow lain
+    R-&gt;&gt;DB: INSERT header pengajuan + item asal
+    CP-&gt;&gt;N: retur_ruangan.diajukan (Admin/HR)
+    ADM-&gt;&gt;M: Keputusan per asset, pengganti, metode serah terima
+    M-&gt;&gt;CA: POST /asset/retur-ruangan/{id}/konfirmasi
+    CA-&gt;&gt;R: konfirmasiAdmin()
+    R-&gt;&gt;DB: UPDATE item keputusan, INSERT item pengganti, pengganti jadi proses
+    R-&gt;&gt;DB: UPDATE header disetujui/proses atau ditolak/selesai
+    CA-&gt;&gt;N: retur_ruangan.dikonfirmasi atau .ditolak (PIC)
+    ADM-&gt;&gt;M: Terima Asset, pilih gudang per asset
+    M-&gt;&gt;CA: POST /asset/retur-ruangan/{id}/terima
+    CA-&gt;&gt;R: terimaAdmin()
+    R-&gt;&gt;DB: UPDATE asset asal ke gudang, pengganti ke ruangan, INSERT asset_trx_log
+    R-&gt;&gt;DB: UPDATE header selesai
+    CA-&gt;&gt;N: retur_ruangan.diterima_admin (PIC)</pre></div>
+<h2 id="s14"><span class="sec-no">14</span>Status Transaksi</h2>
+<p>Header memiliki <strong>dua</strong> kolom status: <code>status_approval</code> (enum <code>status_approval_retur</code>: <code>pengajuan</code>, <code>disetujui</code>, <code>ditolak</code>, <code>proses</code>, <code>serah_terima</code>) dan <code>status_transaksi</code> (enum <code>status</code>: <code>proses</code>, <code>selesai</code>).</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>status_approval</th>
+<th>status_transaksi</th>
+<th>Label</th>
+<th>Tab</th>
+<th>Arti</th>
+<th>Aksi berikutnya</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>pengajuan</code></td>
+<td><code>proses</code></td>
+<td>Menunggu Konfirmasi</td>
+<td>pengajuan</td>
+<td>Menunggu Admin/HR</td>
+<td>Admin/HR: konfirmasi</td>
+</tr>
+<tr>
+<td><code>ditolak</code></td>
+<td><code>selesai</code></td>
+<td>Ditolak</td>
+<td>pengajuan</td>
+<td>Semua asset ditolak</td>
+<td>–</td>
+</tr>
+<tr>
+<td><code>disetujui</code></td>
+<td><code>proses</code></td>
+<td>Dikonfirmasi</td>
+<td>dikonfirmasi</td>
+<td>Menunggu serah terima dan Terima Asset</td>
+<td>Admin/HR: Terima Asset</td>
+</tr>
+<tr>
+<td><code>disetujui</code></td>
+<td><code>selesai</code></td>
+<td>Selesai (mobile: "Diterima")</td>
+<td>diterima</td>
+<td>Serah terima selesai</td>
+<td>–</td>
+</tr>
+<tr>
+<td><code>proses</code> / <code>serah_terima</code></td>
+<td>–</td>
+<td>Diperlakukan seperti <code>disetujui</code></td>
+<td>–</td>
+<td>⚠️ Nilai enum ada, tetapi <strong>tidak pernah di-set</strong> oleh kode</td>
+<td>–</td>
+</tr>
+</tbody>
+</table></div>
+<p>Status item (<code>status_approval</code> item, enum <code>approval_item</code>): NULL (belum ditinjau) → <code>disetujui</code> / <code>ditolak</code>. Item pengganti langsung <code>disetujui</code>.</p>
+<h2 id="s15"><span class="sec-no">15</span>State Transition</h2>
+<div class="diagram"><pre class="mermaid">stateDiagram-v2
+    [*] --&gt; pengajuan: Ajukan Retur (PIC)
+    pengajuan --&gt; ditolak: Konfirmasi, semua ditolak (Admin/HR)
+    pengajuan --&gt; disetujui_proses: Konfirmasi, ada disetujui (Admin/HR)
+    disetujui_proses --&gt; disetujui_selesai: Terima Asset (Admin/HR)
+    ditolak --&gt; [*]
+    disetujui_selesai --&gt; [*]</pre></div>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Status awal</th>
+<th>Aksi</th>
+<th>Status akhir</th>
+<th>Aktor</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>–</td>
+<td>Ajukan Retur</td>
+<td>pengajuan / proses</td>
+<td>PIC Ruangan</td>
+</tr>
+<tr>
+<td>pengajuan / proses</td>
+<td>Konfirmasi, semua ditolak</td>
+<td>ditolak / selesai</td>
+<td>Admin/HR</td>
+</tr>
+<tr>
+<td>pengajuan / proses</td>
+<td>Konfirmasi, ≥ 1 disetujui</td>
+<td>disetujui / proses</td>
+<td>Admin/HR</td>
+</tr>
+<tr>
+<td>disetujui / proses</td>
+<td>Terima Asset</td>
+<td>disetujui / selesai</td>
+<td>Admin/HR</td>
+</tr>
+</tbody>
+</table></div>
+<div class="group-divider" id="g2"><span>Database</span></div>
+<h2 id="s16"><span class="sec-no">16</span>Struktur Database</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Tabel</th>
+<th>Fungsi</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>asset_trx_retur_ruangan</code></td>
+<td>Header transaksi: snapshot ruangan dan PIC, jadwal serah terima, status.</td>
+</tr>
+<tr>
+<td><code>asset_trx_retur_ruangan_item</code></td>
+<td>Satu baris per asset asal; baris pengganti memakai <code>parent_id</code> = id item asal.</td>
+</tr>
+<tr>
+<td><code>asset_trx_log</code></td>
+<td>Diperluas: nilai enum <code>jenis_log</code> ditambah <code>retur_ruangan</code>.</td>
+</tr>
+</tbody>
+</table></div>
+<p>SQL manual: <code>sql-alk-rgn06-retur-ruangan.sql</code> (guard, 2 tabel, <code>ALTER</code> enum <code>jenis_log</code>, verifikasi, rollback) dan <code>sql-alk-rgn06-no-trx-unik-per-company.sql</code> (mengganti unique global <code>uq_retur_rgn_no_trx</code> menjadi per company). Skrip pertama <strong>sudah dijalankan pengguna</strong>; skrip kedua <strong>perlu dijalankan/dikonfirmasi</strong> (status eksekusi belum dikonfirmasi pengguna).</p>
+<h2 id="s17"><span class="sec-no">17</span>Relasi Database</h2>
+<div class="diagram"><pre class="mermaid">erDiagram
+    asset_lokasi_m ||--o{ asset_trx_retur_ruangan : "id_asset_lokasi_m"
+    asset_trx_retur_ruangan ||--o{ asset_trx_retur_ruangan_item : "id_asset_trx_retur_ruangan"
+    asset_trx_retur_ruangan_item |o--o{ asset_trx_retur_ruangan_item : "parent_id (pengganti)"
+    asset_data ||--o{ asset_trx_retur_ruangan_item : "id_asset_data"
+    asset_lokasi_m ||--o{ asset_trx_retur_ruangan_item : "id_asset_lokasi_m_tujuan (gudang)"
+    asset_lokasi_m ||--o{ asset_lokasi_pic_m : "PIC ruangan"</pre></div>
+<p>PIC pada header disimpan sebagai <code>id_karyawan_pic</code> (snapshot <code>nama_pic</code>, <code>nik_pic</code>). Hak akses lihat/daftar dihitung dari master <code>asset_lokasi_pic_m</code> <strong>saat ini</strong>, bukan dari snapshot. <code>parent_id</code> pada item <strong>tidak</strong> memakai foreign key (hanya kolom referensi).</p>
+<h2 id="s18"><span class="sec-no">18</span>Data Dictionary</h2>
+<p><strong><code>asset_trx_retur_ruangan</code></strong></p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Kolom</th>
+<th>Tipe</th>
+<th>Keterangan</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>id_asset_trx_retur_ruangan</code></td>
+<td>varchar(50) PK</td>
+<td><code>id_company</code> + <code>YYYYMM</code> + 3 digit urut</td>
+</tr>
+<tr>
+<td><code>no_trx</code></td>
+<td>varchar(50)</td>
+<td><code>RGN06-YYYYMMNNN</code>; unik bersama <code>id_company</code></td>
+</tr>
+<tr>
+<td><code>id_asset_lokasi_m</code></td>
+<td>varchar(50) FK, NULL</td>
+<td>Ruangan (FK ke <code>asset_lokasi_m</code>)</td>
+</tr>
+<tr>
+<td><code>nama_asset_ruangan</code>, <code>nama_cabang</code>, <code>nama_departemen</code></td>
+<td>varchar(255)</td>
+<td>Snapshot saat transaksi</td>
+</tr>
+<tr>
+<td><code>id_karyawan_pic</code>, <code>nama_pic</code>, <code>nik_pic</code></td>
+<td>varchar</td>
+<td>PIC pengaju; dasar notifikasi</td>
+</tr>
+<tr>
+<td><code>keterangan</code></td>
+<td>text</td>
+<td>Catatan tambahan PIC</td>
+</tr>
+<tr>
+<td><code>ket_tolak</code></td>
+<td>varchar(255)</td>
+<td>"Seluruh asset retur ditolak." bila semua ditolak</td>
+</tr>
+<tr>
+<td><code>id_karyawan</code>, <code>nik_karyawan</code>, <code>nama_karyawan</code></td>
+<td>varchar</td>
+<td>Pembuat transaksi (PIC Ruangan)</td>
+</tr>
+<tr>
+<td><code>tgl_pengajuan</code></td>
+<td>date</td>
+<td>Tanggal hari ini</td>
+</tr>
+<tr>
+<td><code>tgl_pengambilan</code>, <code>jam_pengambilan</code></td>
+<td>date / time, <strong>NULL</strong></td>
+<td>Jadwal serah terima bila <code>flag_jadwalkan='1'</code></td>
+</tr>
+<tr>
+<td><code>flag_jadwalkan</code></td>
+<td>enum(<code>0</code>,<code>1</code>)</td>
+<td><code>1</code> dijadwalkan, <code>0</code> serah langsung (default <code>0</code>)</td>
+</tr>
+<tr>
+<td><code>tgl_serah_terima</code>, <code>jam_serah_terima</code></td>
+<td>date / time, <strong>NULL</strong></td>
+<td>Diisi saat Terima Asset</td>
+</tr>
+<tr>
+<td><code>keterangan_serah_terima</code></td>
+<td>varchar(255)</td>
+<td>Catatan Admin/HR (dipotong 255)</td>
+</tr>
+<tr>
+<td><code>status_approval</code></td>
+<td>enum(<code>pengajuan</code>,<code>disetujui</code>,<code>ditolak</code>,<code>proses</code>,<code>serah_terima</code>)</td>
+<td>Default <code>pengajuan</code></td>
+</tr>
+<tr>
+<td><code>status_transaksi</code></td>
+<td>enum(<code>proses</code>,<code>selesai</code>)</td>
+<td>Default <code>proses</code></td>
+</tr>
+<tr>
+<td><code>user_approval</code>, <code>tgl_approval</code></td>
+<td>varchar / timestamp NULL</td>
+<td>Admin/HR pemutus dan waktunya</td>
+</tr>
+<tr>
+<td><code>id_company</code>, <code>tgl_input</code>, <code>user_input</code>, <code>tgl_update</code>, <code>user_update</code></td>
+<td></td>
+<td>Audit standar</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong><code>asset_trx_retur_ruangan_item</code></strong></p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Kolom</th>
+<th>Tipe</th>
+<th>Keterangan</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>id_asset_trx_retur_ruangan_item</code></td>
+<td>varchar(50) PK</td>
+<td><code>id_company</code> + <code>YYYYMM</code> + 3 digit urut</td>
+</tr>
+<tr>
+<td><code>parent_id</code></td>
+<td>varchar(50), NULL</td>
+<td>NULL = item asal; id item asal = item pengganti</td>
+</tr>
+<tr>
+<td><code>id_asset_trx_retur_ruangan</code></td>
+<td>varchar(50) FK</td>
+<td>Header</td>
+</tr>
+<tr>
+<td><code>id_asset_data</code></td>
+<td>varchar(50) FK</td>
+<td>Asset</td>
+</tr>
+<tr>
+<td><code>nama_asset</code>, <code>deskripsi_asset</code>, <code>kategori_asset</code></td>
+<td>varchar(255)</td>
+<td>Snapshot</td>
+</tr>
+<tr>
+<td><code>status_approval</code></td>
+<td>enum(<code>disetujui</code>,<code>ditolak</code>), NULL</td>
+<td>NULL sebelum direview</td>
+</tr>
+<tr>
+<td><code>ket_tolak</code></td>
+<td>varchar(255)</td>
+<td>Wajib bagi item ditolak</td>
+</tr>
+<tr>
+<td><code>alasan_retur</code></td>
+<td>enum(<code>tukar_unit</code>,<code>rusak</code>,<code>tidak_digunakan</code>)</td>
+<td>Default <code>rusak</code></td>
+</tr>
+<tr>
+<td><code>rusak_dengan_pengganti</code></td>
+<td>int(1)</td>
+<td>0 / 1 tanpa pengganti / 2 dengan pengganti</td>
+</tr>
+<tr>
+<td><code>ket_retur</code></td>
+<td>varchar(255)</td>
+<td>Keterangan kerusakan / alasan tukar unit / tidak digunakan</td>
+</tr>
+<tr>
+<td><code>id_asset_lokasi_m_tujuan</code></td>
+<td>varchar(50) FK, NULL</td>
+<td>Gudang tujuan item asal; NULL sebelum diterima</td>
+</tr>
+<tr>
+<td><code>id_company</code>, <code>tgl_input</code>, <code>user_input</code></td>
+<td></td>
+<td>Audit</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="s19"><span class="sec-no">19</span>Database Index</h2>
+<p>Nama index di SQL manual (DBML mendefinisikan kolom yang sama dengan nama otomatis, kecuali unique yang diberi nama).</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Tabel</th>
+<th>Index</th>
+<th>Kegunaan</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>asset_trx_retur_ruangan</code></td>
+<td>unik <code>uq_retur_rgn_company_no_trx (id_company, no_trx)</code></td>
+<td>Nomor transaksi unik per company</td>
+</tr>
+<tr>
+<td></td>
+<td><code>atrr_admin_list_idx (id_company, status_approval, status_transaksi, tgl_input, id_asset_trx_retur_ruangan)</code></td>
+<td>Daftar admin per tab</td>
+</tr>
+<tr>
+<td></td>
+<td><code>atrr_pic_list_idx (id_company, id_karyawan_pic, status_approval, status_transaksi)</code></td>
+<td>Daftar PIC</td>
+</tr>
+<tr>
+<td></td>
+<td><code>atrr_lokasi_idx (id_company, id_asset_lokasi_m, status_approval, status_transaksi)</code></td>
+<td>Pencarian per ruangan</td>
+</tr>
+<tr>
+<td><code>asset_trx_retur_ruangan_item</code></td>
+<td><code>atrri_status_idx (id_asset_trx_retur_ruangan, id_company, status_approval, parent_id, id_asset_data)</code></td>
+<td>Item per header dan pengganti</td>
+</tr>
+<tr>
+<td></td>
+<td><code>atrri_asset_idx (id_asset_data)</code></td>
+<td>Pengecekan retur aktif per asset</td>
+</tr>
+<tr>
+<td></td>
+<td><code>atrri_lokasi_tujuan_idx (id_asset_lokasi_m_tujuan)</code></td>
+<td>FK gudang tujuan</td>
+</tr>
+</tbody>
+</table></div>
+<p>Foreign key: <code>fk_atrr_retur_id_asset_lokasi_m</code>, <code>fk_atrri_retur_header</code>, <code>fk_atrri_retur_asset_data</code>, <code>fk_atrri_retur_lokasi_tujuan</code>.</p>
+<div class="group-divider" id="g3"><span>Backend &amp; API</span></div>
+<h2 id="s20"><span class="sec-no">20</span>Backend Architecture</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Lapisan</th>
+<th>File</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Route</td>
+<td><code>API/routes/modules/asset/RouteAsset.php</code> (grup <code>retur-ruangan</code> dan <code>karyawan/pic-ruangan/retur*</code>)</td>
+</tr>
+<tr>
+<td>Controller Admin</td>
+<td><code>app/Http/Controllers/Asset/Admin/AssetAdminReturRuangan_c.php</code></td>
+</tr>
+<tr>
+<td>Controller PIC</td>
+<td><code>app/Http/Controllers/Asset/Karyawan/AssetKaryawanReturRuangan_c.php</code></td>
+</tr>
+<tr>
+<td>Model</td>
+<td><code>app/Models/Asset/AssetReturRuangan_m.php</code> (mewarisi <code>Asset_m</code>; opsi admin memakai ulang <code>AssetReturKaryawan_m::getAdminOptions</code>)</td>
+</tr>
+<tr>
+<td>Notifikasi</td>
+<td><code>app/Support/Asset/AssetNotification.php</code> (event <code>retur_ruangan.*</code>)</td>
+</tr>
+<tr>
+<td>Pendukung</td>
+<td><code>AssetAdmin_m</code> (summary <code>ruangan_retur_*</code>), <code>AssetLokasiPic_m::getAssetRuanganSaya</code> (key <code>retur_ruangan</code> di beranda PIC), helper <code>Asset_m</code> (<code>getLockedAssets</code>, <code>resolveItemLocations</code>, <code>warehouseLocations</code>)</td>
+</tr>
+</tbody>
+</table></div>
+<p>Controller memvalidasi input, memanggil model dalam <code>DB::transaction</code> (model), lalu mengirim notifikasi <strong>setelah</strong> transaksi sukses. Pengecualian <code>InvalidArgumentException</code> menjadi <code>BUSINESS_RULE_VIOLATION</code>; <code>Throwable</code> lain menjadi <code>SYSTEM_ERROR</code> dan dicatat di log.</p>
+<h2 id="s21"><span class="sec-no">21</span>Backend Business Logic</h2>
+<ul>
+<li><strong><code>getOptionsPic</code></strong>: memastikan karyawan PIC ruangan aktif tersebut (null → 403). Mengembalikan <code>ruangan</code>, daftar <code>assets</code> (milik ruangan, <code>terpakai</code>, belum terkunci retur/onboarding/penambahan ruangan, urut nama lalu kode), dan <code>alasan</code>.</li>
+<li><strong><code>store</code></strong>: kunci company; validasi karyawan aktif, PIC ruangan, <code>normalizeItems</code> (BR-04, BR-05); asset dikunci <code>FOR UPDATE</code>; cek milik ruangan, kunci flow lain, status <code>terpakai</code>; buat header <code>pengajuan</code>/<code>proses</code> (jadwal NULL, <code>flag_jadwalkan='0'</code>) dan item asal. <code>asset_data</code> <strong>tidak</strong> diubah.</li>
+<li><strong><code>konfirmasiAdmin</code></strong>: kunci company; cek admin; header harus <code>pengajuan</code>/<code>proses</code>; seluruh item asal wajib diputuskan; asset asal masih dipegang ruangan; validasi pengganti dan jadwal; update status item; sisipkan item pengganti (<code>parent_id</code>, <code>status_approval='disetujui'</code>) dan set aset pengganti <code>proses</code>; update header (<code>disetujui</code>/<code>proses</code> atau <code>ditolak</code>/<code>selesai</code>).</li>
+<li><strong><code>terimaAdmin</code></strong>: kunci company; cek admin; header harus <code>disetujui</code>/<code>proses</code>; <code>resolveItemLocations</code> memetakan gudang per item asal yang disetujui; cek asal masih dipegang ruangan dan pengganti masih <code>proses</code> @gudang; update asset, <code>id_asset_lokasi_m_tujuan</code>, sisipkan <code>asset_trx_log</code>, header <code>selesai</code> dengan <code>tgl/jam_serah_terima</code> = sekarang.</li>
+<li><strong>Daftar dan detail</strong>: <code>getPageAdmin</code>, <code>getPagePic</code> (filter PIC lewat <code>wherePicRuangan</code>), <code>getDetail</code>, <code>getDetailAdmin</code> (menambah <code>lokasi_gudang</code>).</li>
+<li><strong>Ringkasan</strong>: <code>countPendingForAdmin</code>, <code>getPendingForAdmin</code> (maks. 3, terlama di atas), <code>getPerluTindakanPic</code> (maks. 50, <code>proses</code> dan bukan <code>ditolak</code>).</li>
+</ul>
+<h2 id="s22"><span class="sec-no">22</span>Dampak terhadap asset_data</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Tahap</th>
+<th>Asset</th>
+<th><code>status_asset</code></th>
+<th><code>pemegang_asset</code></th>
+<th>Catatan</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Pengajuan</td>
+<td>asal</td>
+<td>tetap <code>terpakai</code></td>
+<td><code>ruangan</code></td>
+<td>Tidak dikunci; dijaga lewat pengecekan retur aktif</td>
+</tr>
+<tr>
+<td>Konfirmasi (disetujui)</td>
+<td>asal</td>
+<td>tetap <code>terpakai</code></td>
+<td><code>ruangan</code></td>
+<td>Belum berubah</td>
+</tr>
+<tr>
+<td>Konfirmasi</td>
+<td>pengganti</td>
+<td><code>tersedia</code> → <code>proses</code></td>
+<td><code>gudang</code></td>
+<td>Direservasi</td>
+</tr>
+<tr>
+<td>Konfirmasi (ditolak)</td>
+<td>asal</td>
+<td>tidak berubah</td>
+<td><code>ruangan</code></td>
+<td>Tetap di ruangan</td>
+</tr>
+<tr>
+<td>Terima Asset</td>
+<td>asal, alasan tidak digunakan / tukar unit / rusak</td>
+<td>→ <code>tersedia</code></td>
+<td><code>gudang</code></td>
+<td><code>id_pemegang_asset=''</code>, <code>id_asset_lokasi_m</code> = gudang pilihan admin, <code>ket_rusak=''</code></td>
+</tr>
+<tr>
+<td>Terima Asset</td>
+<td>asal, alasan rusak</td>
+<td>→ <code>rusak</code></td>
+<td><code>gudang</code></td>
+<td><code>ket_rusak</code> = <code>ket_retur</code>; lokasi = gudang pilihan</td>
+</tr>
+<tr>
+<td>Terima Asset</td>
+<td>pengganti</td>
+<td><code>proses</code> → <code>terpakai</code></td>
+<td><code>ruangan</code></td>
+<td><code>id_pemegang_asset</code> = <code>id_asset_lokasi_m</code> = id ruangan</td>
+</tr>
+<tr>
+<td>Semua ditolak</td>
+<td>–</td>
+<td>tidak berubah</td>
+<td>–</td>
+<td>Tidak ada asset yang berpindah</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="s23"><span class="sec-no">23</span>API Documentation</h2>
+<p>Base <code>asset/</code>. Semua memakai JWT dan envelope <code>ApiResponse</code>.</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>ID</th>
+<th>Method</th>
+<th>Path</th>
+<th>Peran</th>
+<th>Fungsi</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>API-01</td>
+<td>GET</td>
+<td><code>retur-ruangan/options</code></td>
+<td>Admin</td>
+<td>Opsi asset pengganti (asset <code>tersedia</code> @gudang) dan kategori</td>
+</tr>
+<tr>
+<td>API-02</td>
+<td>GET</td>
+<td><code>retur-ruangan?tab&amp;limit&amp;offset</code></td>
+<td>Admin</td>
+<td>Daftar (<code>pengajuan</code>/<code>dikonfirmasi</code>/<code>diterima</code>)</td>
+</tr>
+<tr>
+<td>API-03</td>
+<td>GET</td>
+<td><code>retur-ruangan/{id}</code></td>
+<td>Admin</td>
+<td>Detail + <code>lokasi_gudang[]</code></td>
+</tr>
+<tr>
+<td>API-04</td>
+<td>POST</td>
+<td><code>retur-ruangan/{id}/konfirmasi</code></td>
+<td>Admin</td>
+<td>Keputusan per asset, pengganti, metode serah terima</td>
+</tr>
+<tr>
+<td>API-05</td>
+<td>POST</td>
+<td><code>retur-ruangan/{id}/terima</code></td>
+<td>Admin</td>
+<td>Terima Asset + gudang per asset</td>
+</tr>
+<tr>
+<td>API-06</td>
+<td>GET</td>
+<td><code>karyawan/pic-ruangan/retur/options?id_asset_lokasi_m</code></td>
+<td>PIC</td>
+<td>Asset dan alasan untuk satu ruangan</td>
+</tr>
+<tr>
+<td>API-07</td>
+<td>GET</td>
+<td><code>karyawan/pic-ruangan/retur?tab&amp;limit&amp;offset</code></td>
+<td>PIC</td>
+<td>Daftar milik PIC</td>
+</tr>
+<tr>
+<td>API-08</td>
+<td>POST</td>
+<td><code>karyawan/pic-ruangan/retur</code></td>
+<td>PIC</td>
+<td>Ajukan retur</td>
+</tr>
+<tr>
+<td>API-09</td>
+<td>GET</td>
+<td><code>karyawan/pic-ruangan/retur/{id}</code></td>
+<td>PIC</td>
+<td>Detail (tanpa <code>lokasi_gudang</code>)</td>
+</tr>
+</tbody>
+</table></div>
+<p>Tambahan pada endpoint lain: <code>GET karyawan/pic-ruangan</code> (beranda PIC) memuat key <code>retur_ruangan</code> dan <code>ruangan[]</code> (dipakai form untuk memilih ruangan); <code>GET summary</code> (admin) memuat <code>ruangan_retur_perlu_proses</code> dan <code>ruangan_retur_pending</code>.</p>
+<h2 id="s24"><span class="sec-no">24</span>Detail Setiap API</h2>
+<p>Header umum: <code>Authorization: Bearer &lt;token&gt;</code>, <code>Content-Type: application/json</code>. Format <code>{ code, message, data }</code>.</p>
+<p><strong>API-08 · POST <code>asset/karyawan/pic-ruangan/retur</code></strong> (PIC)</p>
+<pre><code class="language-json">{
+  &quot;id_asset_lokasi_m&quot;: &quot;RGN-1&quot;,
+  &quot;keterangan&quot;: &quot;Renovasi ruangan&quot;,
+  &quot;items&quot;: [
+    { &quot;id_asset_data&quot;: &quot;AST-1&quot;, &quot;alasan_retur&quot;: &quot;rusak&quot;, &quot;rusak_dengan_pengganti&quot;: 2, &quot;ket_retur&quot;: &quot;Layar pecah&quot; },
+    { &quot;id_asset_data&quot;: &quot;AST-2&quot;, &quot;alasan_retur&quot;: &quot;tidak_digunakan&quot;, &quot;rusak_dengan_pengganti&quot;: 0, &quot;ket_retur&quot;: &quot;&quot; },
+    { &quot;id_asset_data&quot;: &quot;AST-3&quot;, &quot;alasan_retur&quot;: &quot;tukar_unit&quot;, &quot;rusak_dengan_pengganti&quot;: 0, &quot;ket_retur&quot;: &quot;Perlu spek lebih tinggi&quot; }
+  ]
+}
+</code></pre>
+<p>Respons <code>CREATED</code> ("Pengajuan retur asset ruangan berhasil dikirim."):</p>
+<pre><code class="language-json">{ &quot;code&quot;: &quot;CREATED&quot;, &quot;message&quot;: &quot;Pengajuan retur asset ruangan berhasil dikirim.&quot;,
+  &quot;data&quot;: { &quot;id&quot;: &quot;COMP202610001&quot;, &quot;no_trx&quot;: &quot;RGN06-202610001&quot;, &quot;status_approval&quot;: &quot;pengajuan&quot;,
+            &quot;status_transaksi&quot;: &quot;proses&quot;, &quot;status_label&quot;: &quot;Menunggu Konfirmasi&quot;, &quot;tab&quot;: &quot;pengajuan&quot; } }
+</code></pre>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Aturan</th>
+<th>Pesan</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>id_asset_lokasi_m</code></td>
+<td>required, string, max 50</td>
+<td>Ruangan wajib dipilih.</td>
+</tr>
+<tr>
+<td><code>keterangan</code></td>
+<td>nullable string</td>
+<td>–</td>
+</tr>
+<tr>
+<td><code>items</code></td>
+<td>required, array, min 1</td>
+<td>Minimal satu asset wajib dipilih.</td>
+</tr>
+<tr>
+<td><code>items.*.id_asset_data</code></td>
+<td>required, max 50, distinct</td>
+<td>Asset retur wajib dipilih. / Asset yang sama tidak boleh dipilih lebih dari sekali.</td>
+</tr>
+<tr>
+<td><code>items.*.alasan_retur</code></td>
+<td>required, in <code>rusak,tidak_digunakan,tukar_unit</code></td>
+<td>Alasan retur setiap asset wajib dipilih. / Alasan retur asset tidak valid.</td>
+</tr>
+<tr>
+<td><code>items.*.rusak_dengan_pengganti</code></td>
+<td>nullable integer in 0,1,2</td>
+<td>Pilihan pengganti asset rusak tidak valid.</td>
+</tr>
+<tr>
+<td><code>items.*.ket_retur</code></td>
+<td>nullable, max 255</td>
+<td>Keterangan retur maksimal 255 karakter.</td>
+</tr>
+</tbody>
+</table></div>
+<p>Pesan umum validasi: "Data retur asset ruangan belum lengkap." Aturan model tambahan: §9 (BR-01 sampai BR-06). Database impact: <code>INSERT</code> header, <code>INSERT</code> item, <code>INSERT notif_data</code>; tanpa <code>UPDATE asset_data</code>.</p>
+<p><strong>API-06 · GET <code>asset/karyawan/pic-ruangan/retur/options?id_asset_lokasi_m=RGN-1</code></strong> (PIC)</p>
+<pre><code class="language-json">{ &quot;code&quot;: &quot;SUCCESS&quot;, &quot;message&quot;: &quot;Opsi retur asset ruangan berhasil ditemukan.&quot;,
+  &quot;data&quot;: {
+    &quot;ruangan&quot;: { &quot;id_asset_lokasi_m&quot;: &quot;RGN-1&quot;, &quot;nama_ruangan&quot;: &quot;Ruang Finance Lt.2&quot;, &quot;cabang&quot;: &quot;Pusat&quot;, &quot;divisi&quot;: &quot;Finance&quot; },
+    &quot;assets&quot;: [
+      { &quot;id_asset_data&quot;: &quot;AST-1&quot;, &quot;kode_asset&quot;: &quot;KOM-0001&quot;, &quot;nama_asset&quot;: &quot;Komputer R1&quot;,
+        &quot;kategori_asset&quot;: &quot;Komputer&quot;, &quot;merek&quot;: &quot;MerekX&quot;, &quot;deskripsi&quot;: &quot;&quot; } ],
+    &quot;alasan&quot;: [
+      { &quot;value&quot;: &quot;rusak&quot;, &quot;label&quot;: &quot;Asset Rusak&quot; },
+      { &quot;value&quot;: &quot;tidak_digunakan&quot;, &quot;label&quot;: &quot;Asset Tidak Digunakan&quot; },
+      { &quot;value&quot;: &quot;tukar_unit&quot;, &quot;label&quot;: &quot;Tukar Unit&quot; } ] } }
+</code></pre>
+<p><code>id_asset_lokasi_m</code> kosong → 422 ("Ruangan wajib dipilih."). Bukan PIC ruangan, ruangan nonaktif, atau lokasi bertipe gudang → 403 <code>FORBIDDEN</code> ("Ruangan tidak ditemukan, tidak aktif, atau Anda bukan PIC ruangan ini."). Key alasan di respons adalah <code>alasan</code> (bukan <code>alasan_retur</code> seperti retur karyawan).</p>
+<p><strong>API-02 / API-07 · Daftar</strong></p>
+<pre><code class="language-http">GET /asset/retur-ruangan?tab=pengajuan&amp;limit=20&amp;offset=0                 (admin)
+GET /asset/karyawan/pic-ruangan/retur?tab=dikonfirmasi                   (PIC)
+</code></pre>
+<p><code>tab</code>: <code>pengajuan</code> | <code>dikonfirmasi</code> | <code>diterima</code> ("Filter retur asset ruangan tidak valid."); <code>limit</code> 1–50 ("Limit maksimal adalah 50 data."). Pesan umum: "Parameter daftar retur asset ruangan tidak valid."</p>
+<pre><code class="language-json">{ &quot;code&quot;: &quot;SUCCESS&quot;, &quot;message&quot;: &quot;Data retur asset ruangan berhasil ditemukan.&quot;,
+  &quot;data&quot;: {
+    &quot;filters&quot;: [ {&quot;value&quot;:&quot;pengajuan&quot;,&quot;label&quot;:&quot;Pengajuan&quot;}, {&quot;value&quot;:&quot;dikonfirmasi&quot;,&quot;label&quot;:&quot;Dikonfirmasi&quot;}, {&quot;value&quot;:&quot;diterima&quot;,&quot;label&quot;:&quot;Diterima&quot;} ],
+    &quot;records&quot;: [ {
+      &quot;id&quot;: &quot;COMP202610001&quot;, &quot;no_trx&quot;: &quot;RGN06-202610001&quot;, &quot;tgl_pengajuan&quot;: &quot;2026-10-15&quot;,
+      &quot;tgl_pengambilan&quot;: &quot;2026-10-20&quot;, &quot;jam_pengambilan&quot;: &quot;09:00:00&quot;, &quot;flag_jadwalkan&quot;: &quot;1&quot;,
+      &quot;tgl_serah_terima&quot;: &quot;&quot;, &quot;jam_serah_terima&quot;: &quot;&quot;,
+      &quot;status_approval&quot;: &quot;disetujui&quot;, &quot;status_transaksi&quot;: &quot;proses&quot;, &quot;status_label&quot;: &quot;Dikonfirmasi&quot;,
+      &quot;tab&quot;: &quot;dikonfirmasi&quot;, &quot;ket_tolak&quot;: &quot;&quot;, &quot;jumlah_asset&quot;: 3,
+      &quot;ruangan&quot;: { &quot;id_asset_lokasi_m&quot;: &quot;RGN-1&quot;, &quot;nama_ruangan&quot;: &quot;Ruang Finance Lt.2&quot;, &quot;cabang&quot;: &quot;Pusat&quot;, &quot;divisi&quot;: &quot;Finance&quot; },
+      &quot;pic&quot;: { &quot;id_karyawan&quot;: &quot;PIC-1&quot;, &quot;nik&quot;: &quot;111&quot;, &quot;nama&quot;: &quot;Pic Satu&quot; } } ],
+    &quot;pagination&quot;: { &quot;limit&quot;: 20, &quot;offset&quot;: 0, &quot;next_offset&quot;: 1, &quot;has_more&quot;: false } } }
+</code></pre>
+<p>Tanggal/jam yang NULL ditampilkan sebagai string kosong <code>""</code>.</p>
+<p><strong>API-03 / API-09 · Detail</strong></p>
+<pre><code class="language-json">{
+  &quot;id&quot;: &quot;COMP202610001&quot;, &quot;no_trx&quot;: &quot;RGN06-202610001&quot;, &quot;tgl_pengajuan&quot;: &quot;2026-10-15&quot;,
+  &quot;keterangan&quot;: &quot;Renovasi ruangan&quot;, &quot;ket_tolak&quot;: &quot;&quot;,
+  &quot;tgl_pengambilan&quot;: &quot;&quot;, &quot;jam_pengambilan&quot;: &quot;&quot;, &quot;flag_jadwalkan&quot;: &quot;0&quot;,
+  &quot;tgl_serah_terima&quot;: &quot;&quot;, &quot;jam_serah_terima&quot;: &quot;&quot;, &quot;keterangan_serah_terima&quot;: &quot;&quot;,
+  &quot;status_approval&quot;: &quot;disetujui&quot;, &quot;status_transaksi&quot;: &quot;proses&quot;, &quot;status_label&quot;: &quot;Dikonfirmasi&quot;,
+  &quot;tab&quot;: &quot;dikonfirmasi&quot;, &quot;jumlah_asset&quot;: 1,
+  &quot;ruangan&quot;: { &quot;id_asset_lokasi_m&quot;: &quot;RGN-1&quot;, &quot;nama_ruangan&quot;: &quot;Ruang Finance Lt.2&quot;, &quot;cabang&quot;: &quot;Pusat&quot;, &quot;divisi&quot;: &quot;Finance&quot; },
+  &quot;pic&quot;: { &quot;id_karyawan&quot;: &quot;PIC-1&quot;, &quot;nik&quot;: &quot;111&quot;, &quot;nama&quot;: &quot;Pic Satu&quot; },
+  &quot;items&quot;: [ {
+    &quot;id_item&quot;: &quot;COMP202610011&quot;, &quot;parent_id&quot;: &quot;&quot;, &quot;id_asset_data&quot;: &quot;AST-1&quot;, &quot;kode_asset&quot;: &quot;KOM-0001&quot;,
+    &quot;nama_asset&quot;: &quot;Komputer R1&quot;, &quot;kategori_asset&quot;: &quot;Komputer&quot;, &quot;merek&quot;: &quot;MerekX&quot;, &quot;deskripsi&quot;: &quot;&quot;,
+    &quot;status_item&quot;: &quot;disetujui&quot;, &quot;ket_tolak&quot;: &quot;&quot;,
+    &quot;alasan_retur&quot;: &quot;rusak&quot;, &quot;alasan_label&quot;: &quot;Asset Rusak&quot;, &quot;rusak_dengan_pengganti&quot;: 2, &quot;ket_retur&quot;: &quot;Layar pecah&quot;,
+    &quot;id_asset_lokasi_m_tujuan&quot;: &quot;&quot;, &quot;nama_lokasi_tujuan&quot;: &quot;&quot;,
+    &quot;asset_pengganti&quot;: { &quot;id_item&quot;: &quot;COMP202610012&quot;, &quot;parent_id&quot;: &quot;COMP202610011&quot;, &quot;id_asset_data&quot;: &quot;AST-9&quot;,
+                         &quot;kode_asset&quot;: &quot;KOM-0009&quot;, &quot;nama_asset&quot;: &quot;Komputer Gudang&quot;, &quot;status_item&quot;: &quot;disetujui&quot; } } ]
+}
+</code></pre>
+<p>Item pengganti tidak muncul di <code>items[]</code> utama, melainkan di <code>asset_pengganti</code> (objek item dengan field yang sama; <code>null</code> bila tidak ada). Khusus admin (API-03) ditambah <code>lokasi_gudang[]</code> (<code>id_asset_lokasi_m</code>, <code>nama_lokasi</code>, <code>id_cabang</code>). 404 <code>NOT_FOUND</code>: "Retur asset ruangan tidak ditemukan."</p>
+<p><strong>API-04 · POST <code>asset/retur-ruangan/{id}/konfirmasi</code></strong> (Admin)</p>
+<pre><code class="language-json">{
+  &quot;items&quot;: [
+    { &quot;id_item&quot;: &quot;COMP202610011&quot;, &quot;status_item&quot;: &quot;disetujui&quot;, &quot;ket_tolak&quot;: &quot;&quot;, &quot;id_asset_pengganti&quot;: &quot;AST-9&quot; },
+    { &quot;id_item&quot;: &quot;COMP202610013&quot;, &quot;status_item&quot;: &quot;ditolak&quot;, &quot;ket_tolak&quot;: &quot;Masih dipakai&quot; }
+  ],
+  &quot;metode_serah_terima&quot;: &quot;dijadwalkan&quot;,
+  &quot;tgl_pengambilan&quot;: &quot;2026-10-20&quot;,
+  &quot;jam_pengambilan&quot;: &quot;09:00&quot;,
+  &quot;keterangan_serah_terima&quot;: &quot;Bawa kabel daya&quot;
+}
+</code></pre>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Aturan</th>
+<th>Pesan</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>items</code></td>
+<td>required, array, min 1</td>
+<td>Keputusan asset retur wajib diisi.</td>
+</tr>
+<tr>
+<td><code>items.*.id_item</code></td>
+<td>required, max 50, distinct</td>
+<td>Asset retur yang sama tidak boleh dikirim lebih dari sekali.</td>
+</tr>
+<tr>
+<td><code>items.*.status_item</code></td>
+<td>required, in <code>disetujui,ditolak</code></td>
+<td>Keputusan setiap asset wajib dipilih. / Keputusan asset harus disetujui atau ditolak.</td>
+</tr>
+<tr>
+<td><code>items.*.ket_tolak</code></td>
+<td>nullable, max 255, wajib bila ditolak</td>
+<td>Alasan penolakan asset wajib diisi.</td>
+</tr>
+<tr>
+<td><code>items.*.id_asset_pengganti</code></td>
+<td>nullable, max 50, distinct</td>
+<td>Asset pengganti yang sama tidak boleh dipilih lebih dari sekali.</td>
+</tr>
+<tr>
+<td><code>metode_serah_terima</code></td>
+<td>nullable, in <code>dijadwalkan,langsung</code> (wajib di model bila ada yang disetujui)</td>
+<td>Metode serah terima retur tidak valid.</td>
+</tr>
+<tr>
+<td><code>tgl_pengambilan</code></td>
+<td><code>Y-m-d</code>, wajib bila dijadwalkan</td>
+<td>Tanggal serah terima wajib diisi. / Format tanggal serah terima harus YYYY-MM-DD.</td>
+</tr>
+<tr>
+<td><code>jam_pengambilan</code></td>
+<td><code>H:i</code>, wajib bila dijadwalkan</td>
+<td>Jam serah terima wajib diisi. / Format jam serah terima harus HH:MM.</td>
+</tr>
+<tr>
+<td><code>keterangan_serah_terima</code></td>
+<td>nullable, max 255</td>
+<td>–</td>
+</tr>
+</tbody>
+</table></div>
+<p>Pesan umum: "Data konfirmasi retur asset ruangan belum lengkap." Database impact: <code>UPDATE</code> item (<code>status_approval</code>, <code>ket_tolak</code>), <code>INSERT</code> item pengganti (<code>parent_id</code>), <code>UPDATE asset_data</code> pengganti → <code>proses</code>, <code>UPDATE</code> header, <code>INSERT notif_data</code>.</p>
+<pre><code class="language-json">{ &quot;code&quot;: &quot;UPDATED&quot;, &quot;message&quot;: &quot;Retur asset ruangan berhasil dikonfirmasi.&quot;,
+  &quot;data&quot;: { &quot;id&quot;: &quot;COMP202610001&quot;, &quot;no_trx&quot;: &quot;RGN06-202610001&quot;, &quot;status_approval&quot;: &quot;disetujui&quot;,
+            &quot;status_transaksi&quot;: &quot;proses&quot;, &quot;status_label&quot;: &quot;Dikonfirmasi&quot;, &quot;tab&quot;: &quot;dikonfirmasi&quot;,
+            &quot;jumlah_disetujui&quot;: 1, &quot;jumlah_ditolak&quot;: 1, &quot;jumlah_pengganti&quot;: 1 } }
+</code></pre>
+<p>Semua ditolak: pesan "Retur asset ruangan berhasil ditolak.", <code>status_approval</code> <code>ditolak</code>, <code>status_transaksi</code> <code>selesai</code>, event notifikasi <code>retur_ruangan.ditolak</code>.</p>
+<p><strong>API-05 · POST <code>asset/retur-ruangan/{id}/terima</code></strong> (Admin)</p>
+<pre><code class="language-json">{ &quot;items&quot;: [
+    { &quot;id_asset_trx_retur_item&quot;: &quot;COMP202610011&quot;, &quot;id_asset_lokasi_m&quot;: &quot;GDG-1&quot; },
+    { &quot;id_asset_trx_retur_item&quot;: &quot;COMP202610014&quot;, &quot;id_asset_lokasi_m&quot;: &quot;GDG-2&quot; } ] }
+</code></pre>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Aturan</th>
+<th>Pesan</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>items</code></td>
+<td>required, array, min 1</td>
+<td>Lokasi gudang tujuan setiap asset wajib dipilih.</td>
+</tr>
+<tr>
+<td><code>items.*.id_asset_trx_retur_item</code></td>
+<td>required, max 50, distinct</td>
+<td>–</td>
+</tr>
+<tr>
+<td><code>items.*.id_asset_lokasi_m</code></td>
+<td>required, max 50</td>
+<td>Lokasi gudang tujuan wajib dipilih.</td>
+</tr>
+</tbody>
+</table></div>
+<p>Pesan umum: "Data penerimaan retur belum lengkap." Item yang dikirim harus <strong>tepat sama</strong> dengan item asal yang disetujui. Database impact: <code>UPDATE asset_data</code> (asal dan pengganti), <code>UPDATE</code> item (<code>id_asset_lokasi_m_tujuan</code>), <code>INSERT asset_trx_log</code>, <code>UPDATE</code> header, <code>INSERT notif_data</code>.</p>
+<pre><code class="language-json">{ &quot;code&quot;: &quot;UPDATED&quot;, &quot;message&quot;: &quot;Retur asset ruangan berhasil diterima.&quot;,
+  &quot;data&quot;: { &quot;id&quot;: &quot;COMP202610001&quot;, &quot;no_trx&quot;: &quot;RGN06-202610001&quot;, &quot;status_approval&quot;: &quot;disetujui&quot;,
+            &quot;status_transaksi&quot;: &quot;selesai&quot;, &quot;status_label&quot;: &quot;Selesai&quot;, &quot;tab&quot;: &quot;diterima&quot;,
+            &quot;jumlah_diterima&quot;: 2, &quot;jumlah_pengganti&quot;: 1 } }
+</code></pre>
+<p><strong>API-01 · GET <code>asset/retur-ruangan/options</code></strong> (Admin): mengembalikan data yang sama dengan opsi admin retur karyawan (<code>kategori_asset[]</code> dan <code>assets[]</code> asset <code>tersedia</code> @gudang) karena memanggil <code>AssetReturKaryawan_m::getAdminOptions</code>. Pesan: "Opsi retur asset ruangan berhasil ditemukan."</p>
+<p><strong>Ringkasan admin dan beranda PIC (bukan endpoint baru)</strong>: <code>GET summary</code> → <code>ruangan_retur_perlu_proses</code> (jumlah) dan <code>ruangan_retur_pending[]</code> (<code>id</code>, <code>no_trx</code>, <code>nama_asset</code>, <code>nama_ruangan</code>, <code>nama_karyawan</code>, <code>status_approval</code>); <code>GET karyawan/pic-ruangan</code> → <code>retur_ruangan[]</code> (bentuk sama dengan <code>records[]</code>).</p>
+<div class="group-divider" id="g4"><span>Mobile</span></div>
+<h2 id="s25"><span class="sec-no">25</span>Mobile Architecture</h2>
+<p>Halaman retur karyawan <strong>dipakai ulang lewat parameter <code>untukRuangan</code></strong>, supaya kode tidak digandakan.</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Komponen</th>
+<th>Cara pakai ulang</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>AssetReturApi(base: AssetReturApi.picRuanganBase)</code></td>
+<td>Basis <code>asset/karyawan/pic-ruangan/retur</code>; metode baru <code>getOptionsRuangan(id)</code> dan <code>getRuanganPic()</code> (membaca <code>ruangan[]</code> dari beranda PIC)</td>
+</tr>
+<tr>
+<td><code>AssetReturAdminApi(base: AssetReturAdminApi.ruanganBase)</code></td>
+<td>Basis <code>asset/retur-ruangan</code></td>
+</tr>
+<tr>
+<td><code>AssetReturBloc</code></td>
+<td>Event baru <code>LoadAssetReturRuangan</code>; <code>LoadAssetReturOptions(idAssetLokasi)</code> memuat opsi satu ruangan; state <code>ruangan</code>, <code>ruanganLoaded</code></td>
+</tr>
+<tr>
+<td><code>HalamanAssetRetur(untukRuangan:)</code></td>
+<td>Daftar 3 tab dan kartu menampilkan nama ruangan</td>
+</tr>
+<tr>
+<td><code>HalamanTambahAssetRetur(untukRuangan:)</code></td>
+<td>Form dengan pemilih ruangan (PIC satu ruangan: dipilih otomatis)</td>
+</tr>
+<tr>
+<td><code>HalamanDetailAssetRetur(untukRuangan:)</code></td>
+<td>Detail PIC hanya-baca + kartu <code>AssetReturRuanganCard</code></td>
+</tr>
+<tr>
+<td><code>HalamanAssetAdminRetur(untukRuangan:)</code>, <code>HalamanAssetAdminDetailRetur(untukRuangan:)</code></td>
+<td>Daftar dan detail Admin/HR; sheet konfirmasi dan dialog gudang dipakai bersama</td>
+</tr>
+<tr>
+<td><code>AssetReturRuanganCard</code></td>
+<td>Kartu "Data Ruangan" (ruangan, PIC, cabang, divisi), pengganti kartu data karyawan</td>
+</tr>
+</tbody>
+</table></div>
+<p>File: model <code>Repository/Model/Asset/mAssetRetur.dart</code> (<code>AssetReturRuangan</code>, <code>AssetReturRecord.ruangan/pic/untukRuangan</code>), <code>mAssetSummary.dart</code> (<code>ruanganReturPerluProses</code>, <code>ruanganReturPending</code>), <code>mAssetPicRuangan.dart</code> (<code>returRuangan</code>); API <code>Repository/Service/assetReturApi.dart</code>, <code>assetReturAdminApi.dart</code>; bloc <code>Bloc/Asset/AssetReturBloc.dart</code>; UI <code>UI/Modul/Asset/AssetSaya/Retur/*</code>, <code>UI/Modul/Asset/AssetAdmin/AssetAdminKaryawan/Retur/*</code>, <code>UI/Modul/Asset/Shared/Widgets/AssetReturRuanganCard.dart</code>, <code>UI/Modul/Asset/PicRuangan/HalamanAssetPicRuangan.dart</code>, <code>UI/Modul/Asset/AssetAdmin/AssetAdminRuangan/HalamanAssetAdminRuangan.dart</code>.</p>
+<h2 id="s26"><span class="sec-no">26</span>Mobile Screen</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Layar</th>
+<th>Rute</th>
+<th>Pengguna</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>PIC Ruangan: tombol <strong>Retur Asset</strong> + banner retur</td>
+<td><code>/asset_pic_ruangan</code></td>
+<td>PIC</td>
+</tr>
+<tr>
+<td>Daftar retur (3 tab); dari notifikasi dengan id langsung ke detail</td>
+<td><code>/asset_pic_ruangan_retur</code></td>
+<td>PIC</td>
+</tr>
+<tr>
+<td>Form Ajukan Retur Asset Ruangan</td>
+<td><code>/asset_pic_ruangan_tambah_retur</code></td>
+<td>PIC</td>
+</tr>
+<tr>
+<td>Detail retur (hanya-baca)</td>
+<td><code>/asset_pic_ruangan_detail_retur</code></td>
+<td>PIC</td>
+</tr>
+<tr>
+<td>Dashboard Ruangan → tile <strong>Retur</strong> dan panel "Retur Asset Ruangan Perlu Diproses"</td>
+<td>halaman Asset Admin Ruangan</td>
+<td>Admin/HR</td>
+</tr>
+<tr>
+<td>Daftar retur ruangan (3 tab)</td>
+<td><code>/asset_admin_retur_ruangan</code></td>
+<td>Admin/HR</td>
+</tr>
+<tr>
+<td>Detail retur + keputusan + Terima Asset</td>
+<td><code>/asset_admin_detail_retur_ruangan</code></td>
+<td>Admin/HR</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>Form PIC.</strong> Dropdown <strong>Ruangan</strong> (dari <code>ruangan[]</code> beranda PIC; satu ruangan dipilih otomatis; bila kosong tampil pemberitahuan "Tidak ada ruangan yang dapat diretur."), lalu <strong>Pilih Asset yang Diretur</strong> → picker. Mengganti ruangan membuang asset terpilih dan memuat asset ruangan baru. Per asset: <strong>Alasan Retur Asset</strong>, pilihan <strong>Tanpa/Dengan Pengganti</strong> (bila rusak), <strong>Keterangan</strong>. Lalu <strong>Catatan Tambahan</strong> dan tombol <strong>Ajukan Retur</strong>.</p>
+<p><strong>Detail.</strong> Kartu info (nomor, tanggal, status, catatan, alasan penolakan, jadwal), <code>AssetAlurStepper.retur</code>, kartu timeline per aset, kartu <strong>Data Ruangan</strong>, daftar asset retur (alasan, keputusan, pengganti, gudang tujuan). Admin pada status <code>pengajuan</code> melihat tombol keputusan per asset; pada <code>disetujui</code>/<code>proses</code> melihat <strong>Terima Asset</strong>. PIC hanya melihat pemberitahuan serah terima (jadwal atau langsung).</p>
+<p><strong>Beranda PIC.</strong> Tombol <strong>Retur Asset</strong> dan banner untuk retur berjalan ("Menunggu konfirmasi Admin/HR" atau jumlah asset menunggu serah terima + jadwal). <strong>Dashboard Admin Ruangan.</strong> Panel ringkasan memakai <code>ruangan_retur_*</code>.</p>
+<h2 id="s27"><span class="sec-no">27</span>Mobile → API</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Aksi di layar</th>
+<th>Pemanggilan</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Buka form retur (PIC)</td>
+<td><code>getRuanganPic()</code> → <code>GET karyawan/pic-ruangan</code>; pilih ruangan → <code>getOptionsRuangan(id)</code> → API-06</td>
+</tr>
+<tr>
+<td>Ajukan Retur</td>
+<td><code>store</code> → API-08</td>
+</tr>
+<tr>
+<td>Buka daftar / pindah tab (PIC)</td>
+<td><code>getRetur(tab)</code> → API-07</td>
+</tr>
+<tr>
+<td>Buka detail (PIC)</td>
+<td><code>getDetail</code> → API-09</td>
+</tr>
+<tr>
+<td>Buka daftar / pindah tab (Admin)</td>
+<td><code>getRetur(tab)</code> → API-02</td>
+</tr>
+<tr>
+<td>Buka detail (Admin)</td>
+<td><code>getDetail</code> → API-03 dan <code>getOptions</code> → API-01</td>
+</tr>
+<tr>
+<td>Konfirmasi Asset (sheet → Submit)</td>
+<td><code>konfirmasi</code> → API-04</td>
+</tr>
+<tr>
+<td>Terima Asset (dialog gudang)</td>
+<td><code>terima</code> → API-05</td>
+</tr>
+<tr>
+<td>Beranda PIC / Dashboard Admin</td>
+<td><code>getHome</code> (<code>retur_ruangan</code>) / <code>getSummary</code> (<code>ruangan_retur_*</code>)</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="s28"><span class="sec-no">28</span>API → Mobile</h2>
+<p>Model: <code>mAssetRetur.dart</code> (<code>AssetReturRuangan</code> dengan <code>id_asset_lokasi_m</code>/<code>nama_ruangan</code>/<code>id_cabang</code>/<code>cabang</code>/<code>divisi</code>; <code>AssetReturRecord.ruangan</code>, <code>.pic</code>, <code>.untukRuangan</code> = ruangan tidak kosong; <code>AssetReturOptions.ruangan</code>; <code>AssetReturRequest.idAssetLokasi</code> hanya dikirim bila retur ruangan), <code>mAssetPicRuangan.dart</code> (<code>returRuangan</code>, toleran bila key <code>retur_ruangan</code> tidak ada), <code>mAssetSummary.dart</code> (<code>ruanganReturPerluProses</code>, <code>ruanganReturPending</code>, toleran bila key tidak ada). Daftar ruangan PIC (<code>AssetReturRuangan.listFrom</code>) membuang entri tanpa id. Opsi alasan dibaca dari key <code>alasan_retur</code>, <code>reasons</code>, atau <code>alasan</code>.</p>
+<h2 id="s29"><span class="sec-no">29</span>Mapping Mobile → API → Database</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>UI</th>
+<th>JSON</th>
+<th>Tabel</th>
+<th>Kolom</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Ruangan</td>
+<td><code>id_asset_lokasi_m</code></td>
+<td>header</td>
+<td><code>id_asset_lokasi_m</code> + snapshot <code>nama_asset_ruangan</code>, <code>nama_cabang</code>, <code>nama_departemen</code>, <code>id_karyawan_pic</code>, <code>nama_pic</code>, <code>nik_pic</code></td>
+</tr>
+<tr>
+<td>Asset dipilih</td>
+<td><code>items[].id_asset_data</code></td>
+<td>item</td>
+<td><code>id_asset_data</code> + snapshot nama/deskripsi/kategori</td>
+</tr>
+<tr>
+<td>Alasan Retur Asset</td>
+<td><code>items[].alasan_retur</code></td>
+<td>item</td>
+<td><code>alasan_retur</code></td>
+</tr>
+<tr>
+<td>Tanpa/Dengan Pengganti</td>
+<td><code>items[].rusak_dengan_pengganti</code></td>
+<td>item</td>
+<td><code>rusak_dengan_pengganti</code> (dipaksa 0 bila bukan rusak)</td>
+</tr>
+<tr>
+<td>Keterangan</td>
+<td><code>items[].ket_retur</code></td>
+<td>item / <code>asset_data</code></td>
+<td><code>ket_retur</code> / <code>ket_rusak</code> (saat Terima, alasan rusak)</td>
+</tr>
+<tr>
+<td>Catatan Tambahan</td>
+<td><code>keterangan</code></td>
+<td>header</td>
+<td><code>keterangan</code></td>
+</tr>
+<tr>
+<td>Setujui / Tolak</td>
+<td><code>items[].status_item</code></td>
+<td>item</td>
+<td><code>status_approval</code></td>
+</tr>
+<tr>
+<td>Alasan Penolakan</td>
+<td><code>items[].ket_tolak</code></td>
+<td>item</td>
+<td><code>ket_tolak</code></td>
+</tr>
+<tr>
+<td>Asset pengganti</td>
+<td><code>items[].id_asset_pengganti</code></td>
+<td>item (baru, <code>parent_id</code>) / <code>asset_data</code></td>
+<td><code>id_asset_data</code>; <code>status_asset='proses'</code></td>
+</tr>
+<tr>
+<td>Metode Serah Terima</td>
+<td><code>metode_serah_terima</code></td>
+<td>header</td>
+<td><code>flag_jadwalkan</code></td>
+</tr>
+<tr>
+<td>Jadwal / Jam</td>
+<td><code>tgl_pengambilan</code>, <code>jam_pengambilan</code></td>
+<td>header</td>
+<td><code>tgl_pengambilan</code>, <code>jam_pengambilan</code> (NULL bila langsung)</td>
+</tr>
+<tr>
+<td>Catatan (sheet)</td>
+<td><code>keterangan_serah_terima</code></td>
+<td>header</td>
+<td><code>keterangan_serah_terima</code></td>
+</tr>
+<tr>
+<td>Terima Asset + Lokasi Tujuan</td>
+<td><code>items[].id_asset_lokasi_m</code></td>
+<td>header / item / <code>asset_data</code> / <code>asset_trx_log</code></td>
+<td><code>status_transaksi</code>, <code>tgl/jam_serah_terima</code> / <code>id_asset_lokasi_m_tujuan</code> / status, pemegang, lokasi / <code>jenis_log='retur_ruangan'</code></td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="s30"><span class="sec-no">30</span>Mapping Database → API → Mobile</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Kolom</th>
+<th>API</th>
+<th>Tampilan</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>status_approval</code> + <code>status_transaksi</code></td>
+<td><code>status_label</code>, <code>tab</code></td>
+<td>Badge, tab, tombol Terima (Admin)</td>
+</tr>
+<tr>
+<td><code>tgl_pengambilan</code>, <code>jam_pengambilan</code>, <code>flag_jadwalkan</code></td>
+<td>idem (NULL → <code>""</code>)</td>
+<td>"Jadwal Serah Terima Retur Asset" atau info serah langsung</td>
+</tr>
+<tr>
+<td><code>tgl_serah_terima</code>, <code>jam_serah_terima</code></td>
+<td>idem</td>
+<td>Waktu diterima</td>
+</tr>
+<tr>
+<td><code>nama_asset_ruangan</code>, <code>nama_cabang</code>, <code>nama_departemen</code></td>
+<td><code>ruangan.nama_ruangan/cabang/divisi</code></td>
+<td>Kartu Data Ruangan, judul kartu daftar</td>
+</tr>
+<tr>
+<td><code>nama_pic</code>, <code>nik_pic</code></td>
+<td><code>pic.nama/nik</code></td>
+<td>"PIC Ruangan: …"</td>
+</tr>
+<tr>
+<td>item asal (COUNT <code>parent_id</code> kosong)</td>
+<td><code>jumlah_asset</code></td>
+<td>"{jumlah} Asset"</td>
+</tr>
+<tr>
+<td>item <code>alasan_retur</code>, <code>rusak_dengan_pengganti</code>, <code>ket_retur</code></td>
+<td><code>alasan_label</code> dst.</td>
+<td>Kartu asset retur</td>
+</tr>
+<tr>
+<td>item <code>status_approval</code>, <code>ket_tolak</code></td>
+<td><code>status_item</code>, <code>ket_tolak</code></td>
+<td>Disetujui/Ditolak Admin</td>
+</tr>
+<tr>
+<td>item pengganti (<code>parent_id</code>)</td>
+<td><code>items[].asset_pengganti</code></td>
+<td>Asset Pengganti</td>
+</tr>
+<tr>
+<td>item <code>id_asset_lokasi_m_tujuan</code> + <code>asset_lokasi_m.nama_lokasi</code></td>
+<td><code>id_asset_lokasi_m_tujuan</code>, <code>nama_lokasi_tujuan</code></td>
+<td>"Lokasi Tujuan Asset"</td>
+</tr>
+<tr>
+<td><code>asset_lokasi_m</code> bertipe gudang</td>
+<td><code>lokasi_gudang[]</code> (admin)</td>
+<td>Dropdown gudang saat Terima Asset</td>
+</tr>
+</tbody>
+</table></div>
+<div class="group-divider" id="g5"><span>Validasi, Error &amp; Keamanan</span></div>
+<h2 id="s31"><span class="sec-no">31</span>Validation</h2>
+<p><strong>Mobile</strong></p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Lokasi</th>
+<th>Aturan</th>
+<th>Pesan</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Form</td>
+<td>Ruangan wajib dipilih</td>
+<td>"Ruangan wajib dipilih" / "Pilih ruangan terlebih dahulu."</td>
+</tr>
+<tr>
+<td>Form</td>
+<td>Minimal satu asset</td>
+<td>"Tambahkan minimal satu asset untuk diretur."</td>
+</tr>
+<tr>
+<td>Form</td>
+<td>Alasan per asset wajib</td>
+<td>"Alasan retur setiap asset wajib dipilih."</td>
+</tr>
+<tr>
+<td>Form</td>
+<td>Rusak: pilih tanpa/dengan pengganti</td>
+<td>"Pilih tanpa pengganti atau dengan pengganti."</td>
+</tr>
+<tr>
+<td>Form</td>
+<td>Keterangan wajib bila rusak atau tukar unit</td>
+<td>"Keterangan kerusakan wajib diisi." / "Alasan tukar unit wajib diisi."</td>
+</tr>
+<tr>
+<td>Form</td>
+<td>Ruangan belum punya asset yang dapat diretur</td>
+<td>"Ruangan ini belum memiliki asset yang dapat diretur."</td>
+</tr>
+<tr>
+<td>Detail admin</td>
+<td>Semua diputuskan; tolak wajib alasan; pengganti wajib bila perlu</td>
+<td>"Pilih keputusan untuk seluruh asset." / "Alasan penolakan wajib diisi." / "Asset pengganti wajib dipilih."</td>
+</tr>
+<tr>
+<td>Sheet admin</td>
+<td>Tanggal dan jam wajib bila Dijadwalkan</td>
+<td>"Tanggal/Jam serah terima wajib dipilih."</td>
+</tr>
+<tr>
+<td>Terima (admin)</td>
+<td>Setiap asset wajib punya gudang</td>
+<td>"Pilih lokasi gudang tujuan untuk seluruh asset." / "Belum ada lokasi gudang."</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>Backend</strong>: lihat §9 dan §24. <strong>Database</strong>: enum <code>status_approval_retur</code>, <code>status</code>, <code>approval_item</code>, <code>retur_aset</code>, <code>kondisi_on_off</code>; <code>tgl_pengambilan</code>, <code>jam_pengambilan</code>, <code>tgl_serah_terima</code>, <code>jam_serah_terima</code>, <code>id_asset_lokasi_m_tujuan</code>, <code>parent_id</code> boleh NULL.</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Mobile</th>
+<th>Backend</th>
+<th>Database</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>id_asset_lokasi_m</code></td>
+<td>Dropdown PIC</td>
+<td>PIC ruangan aktif</td>
+<td>FK <code>asset_lokasi_m</code></td>
+</tr>
+<tr>
+<td><code>id_asset_data</code></td>
+<td>Dari picker</td>
+<td>milik ruangan, <code>terpakai</code>, bebas flow lain</td>
+<td>FK <code>asset_data</code></td>
+</tr>
+<tr>
+<td><code>alasan_retur</code></td>
+<td>Wajib</td>
+<td>in 3 nilai</td>
+<td>enum</td>
+</tr>
+<tr>
+<td><code>rusak_dengan_pengganti</code></td>
+<td>Wajib bila rusak</td>
+<td>1/2 bila rusak, 0 lainnya</td>
+<td>int(1)</td>
+</tr>
+<tr>
+<td><code>ket_retur</code></td>
+<td>Wajib rusak/tukar unit</td>
+<td>wajib rusak/tukar unit, ≤ 255</td>
+<td>varchar(255)</td>
+</tr>
+<tr>
+<td><code>id_asset_pengganti</code></td>
+<td>Wajib bila perlu</td>
+<td>wajib/dilarang sesuai alasan, <code>tersedia</code> @gudang, unik</td>
+<td>item pengganti</td>
+</tr>
+<tr>
+<td>jadwal</td>
+<td>Wajib bila dijadwalkan</td>
+<td>wajib bila dijadwalkan, ≥ <code>tgl_pengajuan</code></td>
+<td>date/time NULL</td>
+</tr>
+<tr>
+<td>gudang per asset</td>
+<td>Wajib semua</td>
+<td>tepat satu per item, bertipe gudang, satu company</td>
+<td>FK <code>asset_lokasi_m</code></td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="s32"><span class="sec-no">32</span>Error Handling</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Kondisi</th>
+<th style="text-align: right;">HTTP</th>
+<th>Kode</th>
+<th>Pesan</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Field tidak valid</td>
+<td style="text-align: right;">422</td>
+<td><code>VALIDATION_ERROR</code></td>
+<td>Pesan per field + pesan umum §24</td>
+</tr>
+<tr>
+<td>Tanpa token</td>
+<td style="text-align: right;">401</td>
+<td><code>UNAUTHORIZED</code></td>
+<td>–</td>
+</tr>
+<tr>
+<td>Bukan admin (endpoint admin)</td>
+<td style="text-align: right;">403</td>
+<td><code>FORBIDDEN</code></td>
+<td>Pengguna tidak memiliki akses admin asset.</td>
+</tr>
+<tr>
+<td>Opsi: bukan PIC / ruangan nonaktif / lokasi gudang</td>
+<td style="text-align: right;">403</td>
+<td><code>FORBIDDEN</code></td>
+<td>Ruangan tidak ditemukan, tidak aktif, atau Anda bukan PIC ruangan ini.</td>
+</tr>
+<tr>
+<td>Ajukan: bukan PIC ruangan</td>
+<td style="text-align: right;">422</td>
+<td><code>BUSINESS_RULE_VIOLATION</code></td>
+<td>Ruangan tidak ditemukan, tidak aktif, atau Anda bukan PIC ruangan ini.</td>
+</tr>
+<tr>
+<td>Ajukan: asset bukan milik ruangan</td>
+<td style="text-align: right;">422</td>
+<td><code>BUSINESS_RULE_VIOLATION</code></td>
+<td>Satu atau beberapa asset bukan milik ruangan atau sudah tidak dapat diretur.</td>
+</tr>
+<tr>
+<td>Ajukan: asset di flow lain</td>
+<td style="text-align: right;">422</td>
+<td><code>BUSINESS_RULE_VIOLATION</code></td>
+<td>…sedang diproses pada retur lain. / …pada onboarding ruangan. / …pada penambahan asset ruangan.</td>
+</tr>
+<tr>
+<td>Ajukan: asset tidak <code>terpakai</code></td>
+<td style="text-align: right;">422</td>
+<td><code>BUSINESS_RULE_VIOLATION</code></td>
+<td>Satu atau beberapa asset tidak berstatus terpakai dan tidak dapat diretur.</td>
+</tr>
+<tr>
+<td>Detail bukan milik PIC / tidak ada</td>
+<td style="text-align: right;">404</td>
+<td><code>NOT_FOUND</code></td>
+<td>Retur asset ruangan tidak ditemukan.</td>
+</tr>
+<tr>
+<td>Konfirmasi: sudah diputuskan</td>
+<td style="text-align: right;">422</td>
+<td><code>BUSINESS_RULE_VIOLATION</code></td>
+<td>Retur asset sudah tidak menunggu konfirmasi.</td>
+</tr>
+<tr>
+<td>Konfirmasi: tidak lengkap</td>
+<td style="text-align: right;">422</td>
+<td><code>BUSINESS_RULE_VIOLATION</code></td>
+<td>Seluruh asset retur wajib dikonfirmasi.</td>
+</tr>
+<tr>
+<td>Konfirmasi/Terima: asset pindah tangan</td>
+<td style="text-align: right;">422</td>
+<td><code>BUSINESS_RULE_VIOLATION</code></td>
+<td>Satu atau beberapa asset sudah tidak dipegang oleh ruangan.</td>
+</tr>
+<tr>
+<td>Konfirmasi: pengganti</td>
+<td style="text-align: right;">422</td>
+<td><code>BUSINESS_RULE_VIOLATION</code></td>
+<td>Asset pengganti wajib dipilih untuk retur ini. / Alasan retur ini tidak memerlukan asset pengganti. / Asset yang ditolak tidak boleh memiliki asset pengganti. / Satu atau beberapa asset pengganti tidak tersedia.</td>
+</tr>
+<tr>
+<td>Konfirmasi: jadwal</td>
+<td style="text-align: right;">422</td>
+<td><code>BUSINESS_RULE_VIOLATION</code></td>
+<td>Metode serah terima retur tidak valid. / Tanggal dan jam serah terima wajib diisi. / Format jadwal serah terima tidak valid. / Tanggal serah terima tidak boleh sebelum tanggal pengajuan.</td>
+</tr>
+<tr>
+<td>Terima: belum dikonfirmasi / sudah selesai</td>
+<td style="text-align: right;">422</td>
+<td><code>BUSINESS_RULE_VIOLATION</code></td>
+<td>Retur asset belum dikonfirmasi atau sudah selesai.</td>
+</tr>
+<tr>
+<td>Terima: gudang</td>
+<td style="text-align: right;">422</td>
+<td><code>BUSINESS_RULE_VIOLATION</code></td>
+<td>Lokasi gudang tujuan setiap asset wajib dipilih. / Lokasi gudang tujuan tidak valid. / Lokasi gudang tujuan asset tidak sesuai.</td>
+</tr>
+<tr>
+<td>Terima: pengganti tidak siap</td>
+<td style="text-align: right;">422</td>
+<td><code>BUSINESS_RULE_VIOLATION</code></td>
+<td>Asset pengganti sudah tidak siap diserahterimakan.</td>
+</tr>
+<tr>
+<td>Kesalahan sistem</td>
+<td style="text-align: right;">500</td>
+<td><code>SYSTEM_ERROR</code></td>
+<td>Terjadi kesalahan saat menyimpan / mengonfirmasi / menerima retur asset ruangan. (detail di log)</td>
+</tr>
+<tr>
+<td>Timeout (mobile)</td>
+<td style="text-align: right;">–</td>
+<td>–</td>
+<td>"Tidak dapat terhubung ke server. Periksa koneksi Anda."</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="s33"><span class="sec-no">33</span>Audit Trail</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Data</th>
+<th style="text-align: center;">Disimpan?</th>
+<th>Lokasi</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Pengaju dan waktu</td>
+<td style="text-align: center;">✅</td>
+<td><code>user_input</code>, <code>tgl_input</code>, <code>tgl_pengajuan</code>, snapshot PIC</td>
+</tr>
+<tr>
+<td>Admin/HR pemutus</td>
+<td style="text-align: center;">✅</td>
+<td><code>user_approval</code>, <code>tgl_approval</code></td>
+</tr>
+<tr>
+<td>Keputusan dan alasan per asset</td>
+<td style="text-align: center;">✅</td>
+<td>item <code>status_approval</code>, <code>ket_tolak</code></td>
+</tr>
+<tr>
+<td>Asset pengganti</td>
+<td style="text-align: center;">✅</td>
+<td>item anak (<code>parent_id</code>, <code>user_input</code> = Admin/HR)</td>
+</tr>
+<tr>
+<td>Pelaku dan waktu Terima Asset</td>
+<td style="text-align: center;">✅</td>
+<td><code>user_update</code>, <code>tgl_serah_terima</code>, <code>jam_serah_terima</code></td>
+</tr>
+<tr>
+<td>Gudang tujuan per asset</td>
+<td style="text-align: center;">✅</td>
+<td>item <code>id_asset_lokasi_m_tujuan</code></td>
+</tr>
+<tr>
+<td>Perubahan asset</td>
+<td style="text-align: center;">✅</td>
+<td><code>asset_trx_log</code> <code>jenis_log='retur_ruangan'</code> (asal dan pengganti; <code>id_transaksi</code> = id header, <code>nama_tabel_transaksi='asset_trx_retur_ruangan'</code>)</td>
+</tr>
+<tr>
+<td>Histori status</td>
+<td style="text-align: center;">❌</td>
+<td>⚠️ Belum ditemukan</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="s34"><span class="sec-no">34</span>Notification</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Event</th>
+<th>Trigger</th>
+<th>Penerima</th>
+<th>Rute di aplikasi</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>retur_ruangan.diajukan</code></td>
+<td>Ajukan retur</td>
+<td>Semua Admin/HR</td>
+<td><code>asset_admin_detail_retur_ruangan</code></td>
+</tr>
+<tr>
+<td><code>retur_ruangan.dikonfirmasi</code></td>
+<td>Konfirmasi, ≥ 1 disetujui</td>
+<td>PIC pengaju</td>
+<td><code>asset_pic_ruangan_retur</code></td>
+</tr>
+<tr>
+<td><code>retur_ruangan.ditolak</code></td>
+<td>Konfirmasi, semua ditolak</td>
+<td>PIC pengaju</td>
+<td><code>asset_pic_ruangan_retur</code></td>
+</tr>
+<tr>
+<td><code>retur_ruangan.diterima_admin</code></td>
+<td>Terima Asset</td>
+<td>PIC pengaju</td>
+<td><code>asset_pic_ruangan_retur</code></td>
+</tr>
+</tbody>
+</table></div>
+<p>Judul/isi dua bahasa: mis. "Pengajuan Retur Asset Ruangan — {pic} mengajukan retur asset untuk {ruangan} ({no_trx})." Penerima PIC diambil dari snapshot <code>id_karyawan_pic</code> pada header (lihat RISK-005). Notifikasi dibuat setelah transaksi database sukses; kegagalan kirim tidak membatalkan transaksi. Rute <code>/asset_pic_ruangan_retur</code> dari notifikasi membawa id sehingga langsung membuka detail; ketiga rute terdaftar di <code>assetNotifRoutes</code>.</p>
+<h2 id="s35"><span class="sec-no">35</span>Security</h2>
+<ul>
+<li>JWT wajib; <code>ctx</code> memuat <code>id_company</code> dan <code>id_karyawan</code>. Seluruh query dibatasi <code>id_company</code>.</li>
+<li>Aksi admin memeriksa keanggotaan <code>asset_admin</code> di controller (<code>accessError</code>) dan di model (<code>findAssetAdmin</code>). ⚠️ Pada <code>konfirmasi</code> dan <code>terima</code>, validasi input dijalankan <strong>sebelum</strong> pemeriksaan admin, sehingga non-admin dengan payload tidak valid menerima 422 alih-alih 403 (pola yang sama dengan KRY04).</li>
+<li>PIC hanya melihat dan mengajukan untuk ruangan yang dipegangnya; detail milik ruangan lain menghasilkan 404, bukan 403.</li>
+<li>Company dikunci per transaksi dan asset dikunci <code>FOR UPDATE</code> untuk mencegah nomor ganda dan keputusan ganda; kepemilikan asset dicek ulang saat konfirmasi dan terima.</li>
+<li>Gudang tujuan divalidasi bertipe <code>gudang</code> dan satu company; tidak ada query mentah dari input pengguna.</li>
+<li>Foto/berkas: tidak dipakai di alur ini.</li>
+</ul>
+<div class="group-divider" id="g6"><span>Manual Book</span></div>
+<h2 id="s36"><span class="sec-no">36</span>Manual Book User/Admin</h2>
+<blockquote>
+<p>Label dari <code>assets/id/asset.json</code> (grup <code>menu_asset.pic_ruangan</code>) dan teks retur karyawan yang dipakai bersama. ⚠️ Screenshot menyusul.</p>
+</blockquote>
+<p><strong>A. PIC Ruangan: mengajukan retur</strong></p>
+<ol>
+<li>Buka <strong>Asset → PIC Ruangan</strong>, ketuk <strong>Retur Asset</strong> (daftar retur), lalu <strong>+</strong> (<strong>Ajukan Retur Asset Ruangan</strong>).</li>
+<li>Pilih <strong>Ruangan</strong> (bila hanya satu, sudah terpilih otomatis).</li>
+<li>Ketuk <strong>Tambah Retur Asset</strong>, pilih asset ruangan, ketuk <strong>Pilih</strong>. Asset yang sedang diproses di retur lain, onboarding, atau penambahan ruangan tidak tampil.</li>
+<li>Untuk setiap asset pilih <strong>Alasan Retur Asset</strong>:<ul>
+<li><strong>Asset Rusak</strong>: pilih <strong>Tanpa Pengganti</strong> atau <strong>Dengan Pengganti</strong>, isi <strong>Keterangan Kerusakan</strong>.</li>
+<li><strong>Asset Tidak Digunakan</strong>: keterangan opsional.</li>
+<li><strong>Tukar Unit</strong>: isi alasan.</li>
+</ul>
+</li>
+<li>Isi <strong>Catatan Tambahan</strong> bila perlu, ketuk <strong>Ajukan Retur</strong>.</li>
+</ol>
+<p><strong>B. PIC Ruangan: memantau</strong></p>
+<ol>
+<li>Status tampil sebagai banner di halaman <strong>PIC Ruangan</strong> ("Menunggu konfirmasi Admin/HR", lalu jumlah asset dan jadwal serah terima) dan di daftar retur (tab <strong>Pengajuan</strong>, <strong>Dikonfirmasi</strong>, <strong>Diterima</strong>).</li>
+<li>Setelah dikonfirmasi, serahkan asset kepada Admin/HR sesuai jadwal atau langsung, dan terima unit pengganti bila ada. <strong>PIC tidak menekan tombol terima</strong>; Admin/HR yang menyelesaikan.</li>
+<li>Bila ditolak, alasan penolakan terlihat di detail.</li>
+</ol>
+<p><strong>C. Admin/HR: meninjau retur</strong></p>
+<ol>
+<li>Buka <strong>Asset → Ruangan → Retur</strong>, tab <strong>Pengajuan</strong>, pilih transaksi.</li>
+<li>Per asset: <strong>Tolak</strong> (isi <strong>Alasan Penolakan</strong>), <strong>Setujui</strong>, atau <strong>Ganti Asset</strong> (pilih pengganti dari gudang) untuk tukar unit dan rusak dengan pengganti.</li>
+<li>Ketuk <strong>Konfirmasi Asset</strong>, pilih <strong>Metode Serah Terima</strong>: <strong>Dijadwalkan</strong> (tanggal + jam) atau <strong>Serahkan Langsung</strong>, isi catatan, <strong>Submit</strong>.</li>
+</ol>
+<p><strong>D. Admin/HR: menerima asset</strong></p>
+<ol>
+<li>Setelah serah terima fisik, buka transaksi di tab <strong>Dikonfirmasi</strong>, ketuk <strong>Terima Asset</strong>.</li>
+<li>Pada dialog <strong>Lokasi Tujuan Asset</strong>, pilih gudang untuk <strong>setiap asset</strong>, lalu ketuk <strong>Terima Asset</strong>.</li>
+<li>Asset lama masuk gudang yang dipilih (tersedia atau rusak), asset pengganti tercatat milik ruangan, status menjadi <strong>Diterima</strong>.</li>
+</ol>
+<h2 id="s37"><span class="sec-no">37</span>Kondisi Button</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Tombol</th>
+<th>Peran</th>
+<th>Halaman</th>
+<th>Tampil bila</th>
+<th>Aktif bila</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Retur Asset</td>
+<td>PIC</td>
+<td>PIC Ruangan</td>
+<td>PIC memegang ruangan <strong>atau</strong> ada retur berjalan</td>
+<td>selalu</td>
+</tr>
+<tr>
+<td>+ (Ajukan Retur Asset Ruangan)</td>
+<td>PIC</td>
+<td>Daftar retur</td>
+<td>selalu</td>
+<td>selalu</td>
+</tr>
+<tr>
+<td>Ajukan Retur</td>
+<td>PIC</td>
+<td>Form</td>
+<td>di form</td>
+<td>tidak sedang mengirim; isian kosong menampilkan error</td>
+</tr>
+<tr>
+<td>Tambah Retur Asset (picker)</td>
+<td>PIC</td>
+<td>Form</td>
+<td>di form</td>
+<td>form aktif dan ada asset pada ruangan terpilih</td>
+</tr>
+<tr>
+<td>Tolak / Setujui / Ganti Asset</td>
+<td>Admin/HR</td>
+<td>Detail</td>
+<td><code>status_approval = pengajuan</code></td>
+<td>tidak sedang mengirim</td>
+</tr>
+<tr>
+<td>Konfirmasi Asset</td>
+<td>Admin/HR</td>
+<td>Detail</td>
+<td><code>status_approval = pengajuan</code></td>
+<td>tidak sedang mengirim; sheet menolak data tidak lengkap</td>
+</tr>
+<tr>
+<td>Terima Asset</td>
+<td>Admin/HR</td>
+<td>Detail</td>
+<td><code>disetujui</code> dan <code>proses</code></td>
+<td>dialog aktif setelah semua asset punya gudang</td>
+</tr>
+<tr>
+<td>Terima / Edit / Batal</td>
+<td>PIC</td>
+<td>–</td>
+<td>⚠️ Belum ditemukan</td>
+<td>–</td>
+</tr>
+</tbody>
+</table></div>
+<div class="group-divider" id="g7"><span>QA &amp; Risiko</span></div>
+<h2 id="s38"><span class="sec-no">38</span>Testing Scenario</h2>
+<p>Hasil terakhir (dijalankan 15 Oktober 2026): API <code>AssetReturRuanganTest</code> 16 test (269 assertion) lolos; seluruh <code>tests/Asset</code> 224 test (2697 assertion) lolos; <code>tests/Routing</code> 4 test gagal (assertion jumlah route 506, sedangkan hasil nyata 537). Mobile <code>asset_retur_ruangan_test.dart</code> 25 test lolos; <code>flutter test test/asset</code> +338 -5 (5 kegagalan, semuanya di <code>asset_onboarding_widget_test</code> dan <code>asset_peminjaman_test</code>, bukan berkas retur ruangan). Belum diuji di server, emulator, atau MariaDB nyata.</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>ID</th>
+<th>Skenario</th>
+<th>Hasil yang diharapkan</th>
+<th>Otomatis</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>TC-01</td>
+<td>Opsi PIC</td>
+<td>Hanya asset ruangan itu, <code>terpakai</code>, tidak terkunci; bukan PIC / ruangan nonaktif / gudang → null</td>
+<td>✔ API</td>
+</tr>
+<tr>
+<td>TC-02</td>
+<td>Ajukan dengan tiga alasan</td>
+<td><code>RGN06-</code> + snapshot ruangan/PIC; jadwal NULL; flag pengganti dipaksa 0 selain rusak; asset tetap <code>terpakai</code></td>
+<td>✔ API</td>
+</tr>
+<tr>
+<td>TC-03</td>
+<td>Validasi alasan</td>
+<td>Rusak tanpa pilihan pengganti, rusak tanpa keterangan, tukar unit tanpa alasan, alasan tidak dikenal, daftar kosong, dan asset ganda ditolak; tidak digunakan tanpa keterangan diterima</td>
+<td>✔ API</td>
+</tr>
+<tr>
+<td>TC-04</td>
+<td>Bukan PIC ruangan / asset ruangan lain / gudang</td>
+<td>422, tidak ada baris tersimpan</td>
+<td>✔ API</td>
+</tr>
+<tr>
+<td>TC-05</td>
+<td>Asset terkunci flow lain</td>
+<td>Retur lain, onboarding, penambahan ruangan, status ≠ <code>terpakai</code> ditolak; opsi menyaring asset terkunci; retur ditolak seluruhnya melepas kunci</td>
+<td>✔ API</td>
+</tr>
+<tr>
+<td>TC-06</td>
+<td>Semua asset ditolak</td>
+<td><code>ditolak</code>/<code>selesai</code>; asset tidak berubah</td>
+<td>✔ API</td>
+</tr>
+<tr>
+<td>TC-07</td>
+<td>Pengganti wajib/dilarang</td>
+<td>Tukar unit dan rusak-dengan-pengganti wajib pengganti; selain itu dilarang</td>
+<td>✔ API</td>
+</tr>
+<tr>
+<td>TC-08</td>
+<td>Konfirmasi dengan pengganti + jadwal</td>
+<td>Pengganti <code>proses</code>; jadwal tersimpan; item pengganti <code>parent_id</code></td>
+<td>✔ API</td>
+</tr>
+<tr>
+<td>TC-09</td>
+<td>Serah langsung</td>
+<td>Jadwal tetap NULL; <code>flag_jadwalkan='0'</code></td>
+<td>✔ API</td>
+</tr>
+<tr>
+<td>TC-10</td>
+<td>Terima Asset</td>
+<td>Gudang per asset, <code>tersedia</code>/<code>rusak</code>+<code>ket_rusak</code>, pengganti <code>terpakai</code> @ruangan, ditolak tetap di ruangan, 5 baris <code>asset_trx_log</code> pada skenario uji, tidak bisa diterima dua kali</td>
+<td>✔ API</td>
+</tr>
+<tr>
+<td>TC-11</td>
+<td>Asset pindah tangan sebelum Terima</td>
+<td>422; header tetap <code>proses</code>; tanpa log</td>
+<td>✔ API</td>
+</tr>
+<tr>
+<td>TC-12</td>
+<td>Konfirmasi oleh non-admin</td>
+<td>Ditolak "Pengguna tidak terdaftar sebagai admin asset."; header tetap <code>pengajuan</code></td>
+<td>✔ API</td>
+</tr>
+<tr>
+<td>TC-13</td>
+<td>Daftar/detail PIC</td>
+<td>Hanya ruangan yang dipegang PIC; paginasi; PIC lain 404</td>
+<td>✔ API</td>
+</tr>
+<tr>
+<td>TC-14</td>
+<td>Beranda PIC dan summary admin</td>
+<td><code>retur_ruangan</code>, <code>ruangan_retur_*</code> terisi dan kosong setelah selesai</td>
+<td>✔ API</td>
+</tr>
+<tr>
+<td>TC-15</td>
+<td>Endpoint dan notifikasi</td>
+<td>403/422/201/404 sesuai peran; notif admin lalu PIC; terima ganda 422</td>
+<td>✔ API</td>
+</tr>
+<tr>
+<td>TC-16</td>
+<td>Semua ditolak mengirim event penolakan</td>
+<td>Notifikasi <code>retur_ruangan.ditolak</code></td>
+<td>✔ API</td>
+</tr>
+<tr>
+<td>TC-17</td>
+<td>Model mobile</td>
+<td>Parsing ruangan/PIC, fase, opsi, daftar ruangan, request, beranda, summary, basis API</td>
+<td>✔ Mobile</td>
+</tr>
+<tr>
+<td>TC-18</td>
+<td>Bloc</td>
+<td>Memuat ruangan PIC lalu opsi ruangan; opsi tanpa ruangan memakai endpoint karyawan</td>
+<td>✔ Mobile</td>
+</tr>
+<tr>
+<td>TC-19</td>
+<td>Layar PIC</td>
+<td>Daftar, tombol +, form butuh ruangan dulu, satu ruangan otomatis, tanpa ruangan, detail hanya-baca, beranda dengan/tanpa <code>retur_ruangan</code></td>
+<td>✔ Mobile</td>
+</tr>
+<tr>
+<td>TC-20</td>
+<td>Layar Admin</td>
+<td>Daftar, keputusan per asset, tolak wajib alasan, Terima Asset memilih gudang, detail karyawan tidak berubah, dashboard Ruangan dengan/tanpa <code>ruangan_retur</code></td>
+<td>✔ Mobile</td>
+</tr>
+<tr>
+<td>TC-21</td>
+<td>Push notifikasi end-to-end</td>
+<td>Notifikasi tiba dan membuka rute yang benar</td>
+<td>✘ manual</td>
+</tr>
+<tr>
+<td>TC-22</td>
+<td>Alur penuh di server/emulator dengan MariaDB nyata</td>
+<td>Pengajuan sampai Terima Asset</td>
+<td>✘ manual</td>
+</tr>
+<tr>
+<td>TC-23</td>
+<td>Skema: unique per company</td>
+<td>Dua company dapat memakai <code>no_trx</code> sama</td>
+<td>✘ manual (SQL perlu dijalankan)</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="s39"><span class="sec-no">39</span>Temuan Ketidaksesuaian</h2>
+<p>⚠️ <strong>Tidak ada dokumen bisnis sumber</strong> untuk RGN06; persyaratan = "alur sama dengan KRY04". Tabel berikut membandingkan implementasi RGN06 dengan KRY04.</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>ID</th>
+<th>KRY04 (acuan)</th>
+<th>RGN06 (implementasi)</th>
+<th>Dampak</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>INC-01</td>
+<td>Pemilik asset karyawan</td>
+<td>Pemilik asset ruangan; pengaju PIC Ruangan; asset harus <code>pemegang_asset='ruangan'</code> di ruangan itu</td>
+<td>Wajib memilih ruangan di form</td>
+</tr>
+<tr>
+<td>INC-02</td>
+<td>Pengaju hanya melihat miliknya (<code>id_karyawan</code>)</td>
+<td>Daftar/detail PIC mengikuti PIC ruangan <strong>saat ini</strong> (join <code>asset_lokasi_pic_m</code>); notifikasi mengikuti snapshot pengaju</td>
+<td>RISK-005</td>
+</tr>
+<tr>
+<td>INC-03</td>
+<td>Tanggal/jam jadwal dan serah terima <code>0000-00-00</code></td>
+<td>NULL; API mengembalikan <code>""</code></td>
+<td>Aman untuk strict mode</td>
+</tr>
+<tr>
+<td>INC-04</td>
+<td><code>id_asset_lokasi_m_tujuan</code> kosong sampai diterima (lihat dokumen KRY04)</td>
+<td>NULL sebelum diterima (kolom FK)</td>
+<td>Tampil <code>""</code> di API</td>
+</tr>
+<tr>
+<td>INC-05</td>
+<td>Opsi: <code>alasan_retur</code> + <code>assets</code></td>
+<td>Opsi PIC: <code>ruangan</code> + <code>assets</code> + <code>alasan</code> (key <code>alasan</code>)</td>
+<td>Mobile membaca ketiga key</td>
+</tr>
+<tr>
+<td>INC-06</td>
+<td>Cek asset pinjaman, offboarding, pemeliharaan, upgrade, kerusakan</td>
+<td>Cek retur ruangan lain, onboarding ruangan, penambahan ruangan; kerusakan/pemeliharaan ruangan belum ada</td>
+<td>RISK-006</td>
+</tr>
+<tr>
+<td>INC-07</td>
+<td><code>asset_data.id_asset_lokasi_m</code> pengganti diset NULL</td>
+<td>Pengganti: lokasi = id ruangan</td>
+<td>Konsisten dengan RGN01/RGN04</td>
+</tr>
+<tr>
+<td>INC-08</td>
+<td>Gudang default per cabang karyawan (<code>karyawan.id_cabang</code>)</td>
+<td><code>ruangan.id_cabang</code> tidak dikirim API sehingga tidak ada default</td>
+<td>RISK-003</td>
+</tr>
+<tr>
+<td>INC-09</td>
+<td>Mobile: PIC/karyawan memiliki halaman sendiri</td>
+<td>Halaman dipakai ulang lewat <code>untukRuangan</code>; PIC tanpa aksi terima</td>
+<td>Perilaku seragam</td>
+</tr>
+<tr>
+<td>INC-10</td>
+<td>Dokumen KRY04 menyebut log di <code>asset_log</code></td>
+<td>Kode KRY04 dan RGN06 sama-sama menulis <code>asset_trx_log</code></td>
+<td>⚠️ Dokumen KRY04 perlu diselaraskan</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="s40"><span class="sec-no">40</span>Edge Case</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Kasus</th>
+<th>Perilaku</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Satu PIC memegang beberapa ruangan</td>
+<td>Form memilih ruangan; mengganti ruangan membuang asset terpilih dan memuat ulang opsi.</td>
+</tr>
+<tr>
+<td>PIC dengan satu ruangan</td>
+<td>Dipilih otomatis; bila opsi gagal dimuat tidak ada retry (RISK-001).</td>
+</tr>
+<tr>
+<td>Ganti ruangan cepat berturut-turut</td>
+<td>Respons opsi bisa tiba tidak berurutan; API menolak asset yang tidak cocok (RISK-002).</td>
+</tr>
+<tr>
+<td>Asset yang sama diajukan dua kali</td>
+<td>Ditolak "sedang diproses pada retur lain" selama retur belum <code>ditolak</code> atau selesai.</td>
+</tr>
+<tr>
+<td>Retur ditolak seluruhnya</td>
+<td>Asset bebas lagi dan dapat diajukan ulang.</td>
+</tr>
+<tr>
+<td>Sebagian asset ditolak</td>
+<td>Yang ditolak tetap di ruangan; hanya yang disetujui diterima dan diberi gudang.</td>
+</tr>
+<tr>
+<td>Asset pengganti dipakai flow lain sebelum Terima</td>
+<td>Pengganti <code>proses</code>; Terima gagal "Asset pengganti sudah tidak siap diserahterimakan." bila status berubah.</td>
+</tr>
+<tr>
+<td>Asset pindah tangan sebelum Terima</td>
+<td>422; transaksi tetap <code>proses</code>; tidak ada log.</td>
+</tr>
+<tr>
+<td>Admin Terima dua kali / dua admin bersamaan</td>
+<td>Header dikunci; yang kedua "Retur asset belum dikonfirmasi atau sudah selesai."</td>
+</tr>
+<tr>
+<td>Alasan rusak lalu diterima</td>
+<td>Asset asal <code>rusak</code> + <code>ket_rusak</code> dari keterangan retur; berbeda dari alasan lain (<code>tersedia</code>, <code>ket_rusak</code> kosong).</td>
+</tr>
+<tr>
+<td>Rusak "tanpa pengganti"</td>
+<td>Tidak ada pengganti; asset ruangan berkurang.</td>
+</tr>
+<tr>
+<td>PIC ruangan diganti saat transaksi berjalan</td>
+<td>Daftar/detail pindah ke PIC baru; notifikasi tetap ke PIC pengaju (RISK-005).</td>
+</tr>
+<tr>
+<td>Ruangan dinonaktifkan setelah pengajuan</td>
+<td>Konfirmasi dan Terima tidak memeriksa status ruangan; ⚠️ Asumsi perilaku dibiarkan.</td>
+</tr>
+<tr>
+<td>Daftar kosong</td>
+<td>Teks "Belum ada data retur asset."</td>
+</tr>
+<tr>
+<td>Ruangan tanpa asset yang dapat diretur</td>
+<td>Form menampilkan "Ruangan ini belum memiliki asset yang dapat diretur."</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="s41"><span class="sec-no">41</span>Potential Bug / Technical Risk</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>ID</th>
+<th>Tingkat</th>
+<th>Risiko</th>
+<th>Saran</th>
+<th>Status</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>RISK-001</td>
+<td>RENDAH</td>
+<td>Form PIC dengan satu ruangan buntu bila <code>GET options</code> gagal: tidak ada tombol coba lagi (<code>HalamanTambahAssetRetur.dart</code> ±122–129, 403–416).</td>
+<td>Tambahkan retry untuk opsi ruangan terpilih.</td>
+<td>Terbuka / dibiarkan</td>
+</tr>
+<tr>
+<td>RISK-002</td>
+<td>RENDAH</td>
+<td>Balapan respons saat ganti ruangan cepat (<code>LoadAssetReturOptions</code> konkuren di <code>AssetReturBloc</code>). API menolak asset yang tidak cocok, tidak ada risiko data.</td>
+<td>Gunakan <code>restartable()</code> atau abaikan respons lama.</td>
+<td>Terbuka / dibiarkan</td>
+</tr>
+<tr>
+<td>RISK-003</td>
+<td>RENDAH</td>
+<td>Payload <code>ruangan</code> tidak memuat <code>id_cabang</code>, sehingga gudang default per cabang tidak pernah terpilih pada Terima Asset (beda dari KRY04).</td>
+<td>Sertakan <code>id_cabang</code> pada <code>ruanganPayload</code> atau gunakan join cabang.</td>
+<td>Terbuka / dibiarkan</td>
+</tr>
+<tr>
+<td>RISK-004</td>
+<td>RENDAH</td>
+<td>Riwayat log asset belum mengenali <code>jenis_log = retur_ruangan</code> (<code>AssetAdmin_m::LOG_TRANSAKSI_TABLES</code>, <code>HalamanAssetAdminData._logJenisLabel</code>). Pola sama dengan onboarding/request ruangan.</td>
+<td>Daftarkan tabel dan label jenis log.</td>
+<td>Terbuka / dibiarkan</td>
+</tr>
+<tr>
+<td>RISK-005</td>
+<td>RENDAH</td>
+<td>Notifikasi hanya ke PIC pengaju (snapshot <code>id_karyawan_pic</code>), sedangkan akses daftar/detail memakai PIC ruangan saat ini.</td>
+<td>Kirim ke PIC ruangan saat ini atau semua PIC.</td>
+<td>Terbuka / dibiarkan</td>
+</tr>
+<tr>
+<td>RISK-006</td>
+<td>RENDAH</td>
+<td>Tidak ada jalur batal/edit setelah diajukan atau disetujui (sama dengan KRY04). Pengganti hanya divalidasi <code>tersedia</code> @gudang tanpa cek kunci flow lain (sama dengan KRY04).</td>
+<td>Tambahkan aksi batal dan cek kunci pengganti bila diperlukan.</td>
+<td>Terbuka / dibiarkan</td>
+</tr>
+<tr>
+<td>RISK-007</td>
+<td>RENDAH</td>
+<td>RGN04 masih memakai unique global <code>uq_req_rgn_no_trx</code> (risiko serupa, di luar cakupan RGN06).</td>
+<td>Selaraskan menjadi per company.</td>
+<td>Terbuka / di luar cakupan</td>
+</tr>
+<tr>
+<td>RISK-008</td>
+<td>RENDAH</td>
+<td>Retur ruangan tidak memeriksa kunci dari flow karyawan lain dan sebaliknya hanya lewat <code>hasActiveReturRuanganAsset</code>; kerusakan/pemeliharaan ruangan belum ada model/API sehingga belum dicek.</td>
+<td>Tambahkan pengecekan saat modul tersebut dibuat.</td>
+<td>Terbuka / dibiarkan</td>
+</tr>
+<tr>
+<td>RISK-009</td>
+<td>SEDANG</td>
+<td>⚠️ Skrip <code>sql-alk-rgn06-no-trx-unik-per-company.sql</code> <strong>belum dikonfirmasi dijalankan</strong>. Selama unique global <code>uq_retur_rgn_no_trx</code> masih ada, dua company dengan urutan sama pada bulan yang sama gagal menyimpan.</td>
+<td>Jalankan skrip dan verifikasi <code>SHOW INDEX</code>.</td>
+<td>Perlu dikonfirmasi</td>
+</tr>
+<tr>
+<td>RISK-010</td>
+<td>SEDANG</td>
+<td>Belum diuji di server, emulator, atau MariaDB nyata, termasuk push notifikasi dan rute notifikasi.</td>
+<td>Uji alur penuh PIC → Admin/HR.</td>
+<td>Terbuka</td>
+</tr>
+</tbody>
+</table></div>
+<div class="group-divider" id="g8"><span>Referensi Developer</span></div>
+<h2 id="s42"><span class="sec-no">42</span>Dependency</h2>
+<ul>
+<li><strong>Data master</strong>: <code>asset_lokasi_m</code> (tipe <code>ruangan</code> dan <code>gudang</code>, <code>status_aktif</code>), <code>asset_lokasi_pic_m</code>, <code>master_cabang</code>, <code>master_departemen</code>, <code>data_karyawan</code>, <code>asset_admin</code>, <code>asset_kategori_m</code>.</li>
+<li><strong>Modul lain</strong>: <code>asset_data</code>, <code>asset_trx_log</code>, notifikasi (<code>notif_data</code>, FCM); pengecekan kunci terhadap Onboarding Ruangan (RGN01) dan Penambahan Asset Ruangan (RGN04); opsi pengganti dari <code>AssetReturKaryawan_m::getAdminOptions</code> (KRY04).</li>
+<li><strong>Berbagi komponen mobile</strong>: halaman retur karyawan (<code>untukRuangan</code>), <code>AssetReturAdminConfirmationSheet</code>, dialog Lokasi Tujuan Asset, <code>AssetAlurStepper.retur</code>, <code>AssetReturTimelineCards</code>.</li>
+<li><strong>SQL manual</strong>: urutan setelah <code>sql-pml04-disposal.sql</code> (enum <code>jenis_log</code> mengasumsikan sampai <code>disposal_gudang</code>).</li>
+</ul>
+<h2 id="s43"><span class="sec-no">43</span>Source Code Reference</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Area</th>
+<th>File</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Model API</td>
+<td><code>API/app/Models/Asset/AssetReturRuangan_m.php</code></td>
+</tr>
+<tr>
+<td>Controller</td>
+<td><code>API/app/Http/Controllers/Asset/Admin/AssetAdminReturRuangan_c.php</code>, <code>.../Karyawan/AssetKaryawanReturRuangan_c.php</code></td>
+</tr>
+<tr>
+<td>Route</td>
+<td><code>API/routes/modules/asset/RouteAsset.php</code></td>
+</tr>
+<tr>
+<td>Notifikasi</td>
+<td><code>API/app/Support/Asset/AssetNotification.php</code></td>
+</tr>
+<tr>
+<td>Ringkasan</td>
+<td><code>API/app/Models/Asset/AssetAdmin_m.php</code>, <code>AssetLokasiPic_m.php</code></td>
+</tr>
+<tr>
+<td>Skema</td>
+<td><code>API/diagram-asset.dbml</code>, <code>Claude outputs/sql-alk-rgn06-retur-ruangan.sql</code>, <code>Claude outputs/sql-alk-rgn06-no-trx-unik-per-company.sql</code></td>
+</tr>
+<tr>
+<td>Test API</td>
+<td><code>API/tests/Asset/AssetReturRuanganTest.php</code></td>
+</tr>
+<tr>
+<td>Mobile model</td>
+<td><code>MOBILE/lib/Repository/Model/Asset/mAssetRetur.dart</code>, <code>mAssetSummary.dart</code>, <code>mAssetPicRuangan.dart</code></td>
+</tr>
+<tr>
+<td>Mobile API</td>
+<td><code>MOBILE/lib/Repository/Service/assetReturApi.dart</code>, <code>assetReturAdminApi.dart</code></td>
+</tr>
+<tr>
+<td>Mobile bloc</td>
+<td><code>MOBILE/lib/Bloc/Asset/AssetReturBloc.dart</code> (admin: <code>AssetReturAdminBloc.dart</code>)</td>
+</tr>
+<tr>
+<td>Mobile UI</td>
+<td><code>MOBILE/lib/UI/Modul/Asset/AssetSaya/Retur/*</code>, <code>.../AssetAdmin/AssetAdminKaryawan/Retur/*</code>, <code>.../Shared/Widgets/AssetReturRuanganCard.dart</code>, <code>.../PicRuangan/HalamanAssetPicRuangan.dart</code>, <code>.../AssetAdmin/AssetAdminRuangan/HalamanAssetAdminRuangan.dart</code></td>
+</tr>
+<tr>
+<td>Navigasi</td>
+<td><code>MOBILE/lib/Bloc/NavigatorBloc.dart</code>, <code>MOBILE/lib/Setting/router.dart</code> (rute retur ruangan + <code>assetNotifRoutes</code>)</td>
+</tr>
+<tr>
+<td>Teks</td>
+<td><code>MOBILE/assets/id/asset.json</code>, <code>assets/en/asset.json</code> (grup <code>menu_asset.pic_ruangan</code>, key <code>retur_*</code> dan <code>adm_retur_*</code>)</td>
+</tr>
+<tr>
+<td>Test mobile</td>
+<td><code>MOBILE/test/asset/asset_retur_ruangan_test.dart</code></td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="s44"><span class="sec-no">44</span>Developer Notes</h2>
+<ul>
+<li>Alur dan kontrak sengaja dibuat sama dengan KRY04 supaya halaman mobile dapat dipakai ulang; perbedaan utama ada di §39.</li>
+<li>Tanggal/jam NULL (bukan <code>0000-00-00</code>); <code>nullableDateValue</code>/<code>nullableTimeValue</code> mengubah NULL dan nilai nol menjadi <code>""</code> untuk mobile.</li>
+<li><code>id_asset_lokasi_m_tujuan</code> dan <code>parent_id</code> NULL pada item asal; kode memeriksa <code>parent_id</code> NULL <strong>atau</strong> <code>''</code> untuk keamanan.</li>
+<li><code>asset_data</code> tidak dikunci saat pengajuan; konsistensi dijaga lewat <code>hasActiveReturRuanganAsset</code> dan penyaringan opsi. Flow lain yang ingin menghormati retur ruangan harus memanggil helper tersebut.</li>
+<li>Log memakai <code>asset_trx_log</code> (<code>jenis_log='retur_ruangan'</code>). Dokumen KRY04 menulis <code>asset_log</code>; kode KRY04 menulis <code>asset_trx_log</code>.</li>
+<li>Mengubah enum <code>jenis_log</code> harus mempertahankan seluruh nilai lama (lihat blok 3 SQL).</li>
+<li><code>tests/Routing</code> memuat angka jumlah route yang ditulis keras (506); hasil nyata 537 sehingga 4 test gagal. Penyebab selisih tidak diselidiki di sini.</li>
+<li>Pemformatan: hanya <code>dart format</code> pada file Dart yang diubah.</li>
+</ul>
+<h2 id="s45"><span class="sec-no">45</span>End-to-End Traceability</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Kebutuhan</th>
+<th>Aturan</th>
+<th>API</th>
+<th>Mobile</th>
+<th>Test</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>PIC mengajukan retur asset ruangan</td>
+<td>BR-01 sampai BR-07</td>
+<td>API-06, API-08</td>
+<td>Form Ajukan Retur</td>
+<td>TC-01 sampai TC-05, TC-19</td>
+</tr>
+<tr>
+<td>Admin memutuskan per asset</td>
+<td>BR-08, BR-12</td>
+<td>API-04</td>
+<td>Detail Admin + sheet konfirmasi</td>
+<td>TC-06, TC-12, TC-20</td>
+</tr>
+<tr>
+<td>Asset pengganti</td>
+<td>BR-10</td>
+<td>API-01, API-04</td>
+<td>Ganti Asset</td>
+<td>TC-07, TC-08</td>
+</tr>
+<tr>
+<td>Metode serah terima</td>
+<td>BR-11</td>
+<td>API-04</td>
+<td>Sheet konfirmasi</td>
+<td>TC-08, TC-09</td>
+</tr>
+<tr>
+<td>Terima Asset + gudang per asset</td>
+<td>BR-09, BR-13, BR-14</td>
+<td>API-05</td>
+<td>Dialog Lokasi Tujuan Asset</td>
+<td>TC-10, TC-11, TC-20</td>
+</tr>
+<tr>
+<td>PIC memantau</td>
+<td>BR-16</td>
+<td>API-07, API-09</td>
+<td>Daftar, detail, banner</td>
+<td>TC-13, TC-14, TC-19</td>
+</tr>
+<tr>
+<td>Notifikasi</td>
+<td>–</td>
+<td>semua</td>
+<td>Rute notifikasi</td>
+<td>TC-15, TC-16, TC-21</td>
+</tr>
+<tr>
+<td>Keunikan nomor transaksi per company</td>
+<td>BR-15</td>
+<td>API-08</td>
+<td>–</td>
+<td>TC-02, TC-23</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="s46"><span class="sec-no">46</span>Ringkasan Database Impact</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Tabel</th>
+<th>Operasi</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>asset_trx_retur_ruangan</code></td>
+<td>INSERT (ajukan), UPDATE (konfirmasi: jadwal, status, approval; terima: <code>tgl/jam_serah_terima</code>, <code>status_transaksi</code>)</td>
+</tr>
+<tr>
+<td><code>asset_trx_retur_ruangan_item</code></td>
+<td>INSERT (item asal, item pengganti), UPDATE (<code>status_approval</code>, <code>ket_tolak</code>, <code>id_asset_lokasi_m_tujuan</code>)</td>
+</tr>
+<tr>
+<td><code>asset_data</code></td>
+<td>UPDATE saat konfirmasi (pengganti → <code>proses</code>) dan Terima Asset (asal → gudang, pengganti → ruangan)</td>
+</tr>
+<tr>
+<td><code>asset_trx_log</code></td>
+<td>INSERT saat Terima Asset; enum <code>jenis_log</code> + <code>retur_ruangan</code></td>
+</tr>
+<tr>
+<td><code>notif_data</code></td>
+<td>INSERT per notifikasi</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="s47"><span class="sec-no">47</span>Checklist Implementasi</h2>
+<ul>
+<li class="task done">DBML diperbarui (<code>[NEW ALK-RGN06]</code>)</li>
+<li class="task done">SQL manual dibuat (<code>sql-alk-rgn06-retur-ruangan.sql</code>) dan sudah dijalankan pengguna</li>
+<li class="task">SQL <code>sql-alk-rgn06-no-trx-unik-per-company.sql</code> dijalankan dan diverifikasi (<strong>perlu dikonfirmasi</strong>)</li>
+<li class="task done">Model, controller, route, notifikasi API</li>
+<li class="task done">Ringkasan admin dan beranda PIC (<code>ruangan_retur_*</code>, <code>retur_ruangan</code>)</li>
+<li class="task done">Test API (16) lolos dan seluruh <code>tests/Asset</code> (224) lolos</li>
+<li class="task done">Model, API client, bloc, halaman, route, teks mobile</li>
+<li class="task done">Test mobile retur ruangan (25) lolos</li>
+<li class="task">Uji di server/emulator dan MariaDB nyata, termasuk push notifikasi</li>
+<li class="task">Jalur batal/edit pengajuan (belum ada)</li>
+<li class="task">Pengenalan <code>retur_ruangan</code> pada riwayat log asset (belum ada)</li>
+</ul>
+<h2 id="s48"><span class="sec-no">48</span>Changelog</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Versi</th>
+<th>Tanggal</th>
+<th>Perubahan</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1.0</td>
+<td>15 Oktober 2026</td>
+<td>Dokumen awal ALK-RGN06: skema 2 tabel, API admin (5) dan PIC (4), mobile (pemakaian ulang halaman KRY04), notifikasi, ringkasan admin dan beranda PIC, test.</td>
+</tr>
+</tbody>
+</table></div>
+    </article>
+
+    <footer>Dokumentasi Retur Asset Ruangan (ALK-RGN06) v1.0 · 15 Oktober 2026 · Disusun dari source lokal API (Lumen) &amp; MOBILE (Flutter). Contoh ID dan nama pada payload adalah data sintetis.</footer>
+  </main>
+</div>
+<button class="to-top" id="to-top" type="button" aria-label="Kembali ke atas">↑</button>
+
+<script>
+(function(){
+  var search=document.getElementById('nav-search');
+  var navs=document.querySelectorAll('.nav');
+  search.addEventListener('input',function(){
+    var q=search.value.trim().toLowerCase();
+    navs.forEach(function(nav){
+      nav.querySelectorAll('.nav-group').forEach(function(g){
+        var any=false;
+        g.querySelectorAll('a').forEach(function(a){
+          var hit=!q||a.textContent.toLowerCase().indexOf(q)>-1;
+          a.hidden=!hit; if(hit) any=true;
+        });
+        g.hidden=!any;
+      });
+    });
+  });
+  var links={};
+  document.querySelectorAll('#nav a').forEach(function(a){links[a.dataset.sec]=a;});
+  var current=null;
+  if('IntersectionObserver' in window){
+    var io=new IntersectionObserver(function(entries){
+      entries.forEach(function(e){
+        if(e.isIntersecting){
+          if(current) current.classList.remove('active');
+          current=links[e.target.id];
+          if(current){current.classList.add('active');var nav=current.closest('.nav');var top=current.offsetTop-nav.offsetTop;if(top<nav.scrollTop||top>nav.scrollTop+nav.clientHeight-30){nav.scrollTop=top-nav.clientHeight/2;}}
+        }
+      });
+    },{rootMargin:'0px 0px -75% 0px'});
+    document.querySelectorAll('.doc h2[id]').forEach(function(h){io.observe(h);});
+  }
+  document.querySelectorAll('.mobile-toc a').forEach(function(a){
+    a.addEventListener('click',function(){a.closest('details').open=false;});
+  });
+  document.getElementById('to-top').addEventListener('click',function(){window.scrollTo({top:0});});
+})();
+</script>
+<script type="module">
+// Fallback renderer: hanya jalan bila viewer belum merender diagram (mis. file dibuka langsung).
+const blocks=[...document.querySelectorAll('pre.mermaid')].filter(function(el){return !el.hasAttribute('data-claude-mermaid-claimed');});
+if(blocks.length){
+  blocks.forEach(function(el){el.setAttribute('data-claude-mermaid-claimed','1');el.dataset.src=el.textContent;});
+  const {default:mermaid}=await import("https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs");
+  const media=window.matchMedia('(prefers-color-scheme: dark)');
+  const render=async function(){
+    const css=getComputedStyle(document.documentElement);
+    const v=function(n){return css.getPropertyValue(n).trim();};
+    mermaid.initialize({startOnLoad:false,securityLevel:'strict',theme:'base',fontFamily:'inherit',
+      themeVariables:{background:v('--surface'),primaryColor:v('--accent-soft'),primaryTextColor:v('--ink'),
+        primaryBorderColor:v('--accent'),lineColor:v('--muted'),secondaryColor:v('--surface-2'),tertiaryColor:v('--surface'),
+        textColor:v('--ink'),mainBkg:v('--accent-soft'),nodeBorder:v('--accent'),clusterBkg:v('--surface-2'),
+        noteBkgColor:v('--surface-2'),noteTextColor:v('--ink'),noteBorderColor:v('--line'),
+        actorBkg:v('--accent-soft'),actorBorder:v('--accent'),actorTextColor:v('--ink'),actorLineColor:v('--muted'),
+        signalColor:v('--ink-2'),signalTextColor:v('--ink'),labelBoxBkgColor:v('--surface-2'),labelTextColor:v('--ink'),
+        edgeLabelBackground:v('--surface'),attributeBackgroundColorOdd:v('--surface'),attributeBackgroundColorEven:v('--surface-2')}});
+    blocks.forEach(function(el){el.removeAttribute('data-processed');el.textContent=el.dataset.src;});
+    try{await mermaid.run({nodes:blocks});}catch(e){console.error(e);}
+  };
+  render();
+  if(media.addEventListener) media.addEventListener('change',render);
+}
+</script>
+<script>
+// Kembali ke index lokal bila dibuka dari komputer, ke index artifact bila dibuka dari claude.ai.
+(function(){var h=location.hostname;var art=location.protocol!=='file:'&&/claude/i.test(h);
+if(art){document.querySelectorAll('a.back').forEach(function(a){a.href='https://claude.ai/artifact/X39UeaJRpBKwqFjswGNqip';a.target='_blank';a.rel='noopener';});
+document.querySelectorAll('.dl').forEach(function(d){d.hidden=true;});}})();
+</script>

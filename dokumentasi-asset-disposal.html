@@ -1,0 +1,1501 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Disposal Asset</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap">
+<style>
+:root{
+  --ground:#F3F5F9; --surface:#FFFFFF; --surface-2:#EAEEF5; --ink:#162033; --ink-2:#3A4559; --muted:#657089;
+  --line:#D9DFEA; --accent:#1F5AA6; --accent-soft:#E3ECF8; --accent-ink:#163F75;
+  --wait:#B45F00; --wait-bg:#FFE9C7; --draft:#0078A8; --draft-bg:#D6F1FA;
+  --bad:#C22F2F; --bad-bg:#FDE1E1; --done:#157A41; --done-bg:#D9F2E3; --neutral:#4E5A70; --neutral-bg:#E6EAF1;
+  --code-bg:#0F1A2C; --code-ink:#DCE6F5; --code-muted:#8FA3C2;
+  --shadow:0 1px 2px rgba(22,32,51,.06),0 8px 24px rgba(22,32,51,.06);
+  --font:"Plus Jakarta Sans",ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  color-scheme:dark;
+  --ground:#0E1420; --surface:#151D2C; --surface-2:#1C2638; --ink:#E7ECF5; --ink-2:#C3CBDA; --muted:#8E99AF;
+  --line:#28334A; --accent:#7FAEF0; --accent-soft:#1B2A45; --accent-ink:#B8D2F7;
+  --wait:#FFB861; --wait-bg:#3A2A12; --draft:#6CD3F5; --draft-bg:#113442; --bad:#FF8A8A; --bad-bg:#3D1C1F;
+  --done:#6FD69C; --done-bg:#15321F; --neutral:#B7C1D3; --neutral-bg:#243047;
+  --code-bg:#0A101B; --code-ink:#DCE6F5; --code-muted:#7F93B3; --shadow:0 1px 2px rgba(0,0,0,.3),0 8px 24px rgba(0,0,0,.25);
+}}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --ground:#0E1420; --surface:#151D2C; --surface-2:#1C2638; --ink:#E7ECF5; --ink-2:#C3CBDA; --muted:#8E99AF;
+  --line:#28334A; --accent:#7FAEF0; --accent-soft:#1B2A45; --accent-ink:#B8D2F7;
+  --wait:#FFB861; --wait-bg:#3A2A12; --draft:#6CD3F5; --draft-bg:#113442; --bad:#FF8A8A; --bad-bg:#3D1C1F;
+  --done:#6FD69C; --done-bg:#15321F; --neutral:#B7C1D3; --neutral-bg:#243047;
+  --code-bg:#0A101B; --code-ink:#DCE6F5; --code-muted:#7F93B3; --shadow:0 1px 2px rgba(0,0,0,.3),0 8px 24px rgba(0,0,0,.25);
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth;scroll-padding-top:24px}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+body{background:var(--ground);color:var(--ink);font-family:var(--font);font-size:15px;line-height:1.65;padding-inline:16px}
+a{color:var(--accent)}
+a:focus-visible,button:focus-visible,input:focus-visible,summary:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:4px}
+
+.shell{max-width:1320px;margin:0 auto;display:grid;grid-template-columns:270px minmax(0,1fr);gap:40px;padding-block:28px 80px}
+@media (max-width:960px){.shell{grid-template-columns:minmax(0,1fr);gap:20px}}
+
+/* Navigasi */
+.sidebar{position:sticky;top:calc(env(safe-area-inset-top,0px) + 16px);align-self:start;max-height:calc(100vh - 32px);display:flex;flex-direction:column;gap:12px}
+@media (max-width:960px){.sidebar{display:none}}
+.back{font-size:13px;font-weight:600;text-decoration:none}
+.back-mobile{display:none;margin:0 0 8px}
+@media (max-width:960px){.back-mobile{display:block}}
+.brand{display:flex;align-items:center;gap:10px;font-weight:700;font-size:14px}
+.brand-mark{height:30px;padding-inline:8px;border-radius:8px;background:var(--accent);color:var(--surface);display:grid;place-items:center;font-family:var(--mono);font-size:12px;font-weight:600}
+.search{width:100%;padding:9px 12px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--ink);font:inherit;font-size:13.5px}
+.nav{overflow-y:auto;padding-right:6px;display:flex;flex-direction:column;gap:14px}
+.nav-group p{margin:0 0 4px;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:700}
+.nav a{display:flex;gap:10px;padding:4px 8px;border-radius:6px;text-decoration:none;color:var(--ink-2);font-size:13.5px;line-height:1.4}
+.nav a span{font-family:var(--mono);font-size:11.5px;color:var(--muted);padding-top:1px;min-width:18px}
+.nav a:hover{background:var(--surface-2)}
+.nav a.active{background:var(--accent-soft);color:var(--accent-ink);font-weight:600}
+.nav a.active span{color:var(--accent)}
+.mobile-toc{display:none;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px 14px}
+.mobile-toc summary{font-weight:700;cursor:pointer}
+.mobile-toc .nav{max-height:60vh;margin-top:10px}
+@media (max-width:960px){.mobile-toc{display:block}}
+
+main{min-width:0}
+
+/* Header bergaya label asset */
+.hero{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:28px;align-items:end;padding-block:8px 28px;border-bottom:1px solid var(--line)}
+@media (max-width:760px){.hero{grid-template-columns:minmax(0,1fr)}}
+.eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:.06em;color:var(--accent);text-transform:uppercase;margin:0 0 8px}
+.hero h1{font-size:clamp(30px,5vw,46px);line-height:1.08;letter-spacing:-.02em;margin:0 0 12px;font-weight:800;text-wrap:balance}
+.hero .lede{max-width:62ch;color:var(--ink-2);margin:0;font-size:16px}
+.hero .lede code{font-family:var(--mono);font-size:.86em;background:var(--surface-2);padding:1px 5px;border-radius:5px}
+.tag{background:var(--surface);border:1px dashed var(--muted);border-radius:12px;padding:14px 16px;min-width:250px;font-family:var(--mono);font-size:12px;box-shadow:var(--shadow);position:relative}
+@media (max-width:760px){.tag{min-width:0}}
+.tag::before{content:"";position:absolute;left:14px;top:-7px;width:12px;height:12px;border-radius:50%;background:var(--ground);border:1px dashed var(--muted)}
+.tag dl{display:grid;grid-template-columns:auto 1fr;gap:4px 14px;margin:0}
+.tag dt{color:var(--muted)}
+.tag dd{margin:0;color:var(--ink);font-weight:500}
+.barcode{height:26px;margin-top:10px;background:repeating-linear-gradient(90deg,var(--ink) 0 2px,transparent 2px 4px,var(--ink) 4px 5px,transparent 5px 8px,var(--ink) 8px 11px,transparent 11px 12px);opacity:.75;border-radius:2px}
+.tag .trx{margin-top:4px;text-align:center;letter-spacing:.2em;font-size:11px;color:var(--ink-2)}
+
+/* Panel ringkas */
+.overview{display:grid;gap:18px;padding-block:28px 8px}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:22px}
+.panel h3{margin:0 0 4px;font-size:18px}
+.panel .sub{margin:0 0 18px;color:var(--muted);font-size:14px}
+.panel code{font-family:var(--mono);font-size:.86em;background:var(--surface-2);padding:1px 5px;border-radius:5px;overflow-wrap:anywhere}
+.three{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
+@media (max-width:760px){.three{grid-template-columns:minmax(0,1fr)}}
+.fact{border-left:3px solid var(--accent);padding:2px 0 2px 14px}
+.fact b{display:block;font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.fact p{margin:4px 0 0;font-size:14.5px}
+
+/* Lifecycle */
+.flow{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;align-items:stretch}
+@media (max-width:760px){.flow{grid-template-columns:minmax(0,1fr)}}
+.step{border:1px solid var(--line);border-radius:12px;padding:14px;background:var(--surface);display:flex;flex-direction:column;gap:6px}
+.step .who{font-size:11.5px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.06em}
+.step p{margin:0;font-size:13.5px;color:var(--ink-2)}
+.step .db{font-family:var(--mono);font-size:11.5px;color:var(--muted);margin-top:auto;padding-top:8px;border-top:1px dashed var(--line)}
+.loop{margin-top:12px;display:flex;flex-wrap:wrap;gap:10px;align-items:center;padding:12px 14px;border-radius:12px;background:var(--bad-bg);color:var(--ink);font-size:13.5px}
+.loop strong{color:var(--bad)}
+
+.badge{display:inline-flex;align-items:center;gap:6px;padding:3px 10px;border-radius:999px;font-size:12.5px;font-weight:700;width:max-content}
+.badge::before{content:"";width:7px;height:7px;border-radius:50%;background:currentColor}
+.b-draft{background:var(--draft-bg);color:var(--draft)}
+.b-wait{background:var(--wait-bg);color:var(--wait)}
+.b-bad{background:var(--bad-bg);color:var(--bad)}
+.b-done{background:var(--done-bg);color:var(--done)}
+
+/* Peran */
+.roles{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+@media (max-width:900px){.roles{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:520px){.roles{grid-template-columns:minmax(0,1fr)}}
+.role{border:1px solid var(--line);border-radius:12px;padding:14px 16px;background:var(--surface);display:flex;flex-direction:column;gap:8px}
+.role h4{margin:0;font-size:14.5px}
+.role p{margin:0;font-size:13px;color:var(--muted)}
+.role .links{display:flex;flex-wrap:wrap;gap:6px;margin-top:auto}
+.role .links a{font-family:var(--mono);font-size:11.5px;text-decoration:none;padding:2px 8px;border-radius:6px;background:var(--accent-soft);color:var(--accent-ink)}
+.role .links a:hover{background:var(--accent);color:var(--surface)}
+
+.attention{list-style:none;margin:0;padding:0;display:grid;gap:10px}
+.attention li{display:grid;grid-template-columns:72px minmax(0,1fr);gap:12px;align-items:start;font-size:14px}
+.sev{font-family:var(--mono);font-size:11px;font-weight:600;padding:2px 8px;border-radius:6px;margin-top:2px;text-align:center}
+.sev-h{background:var(--bad-bg);color:var(--bad)}
+.sev-m{background:var(--wait-bg);color:var(--wait)}
+
+/* Konten dokumen */
+.doc{padding-top:8px}
+.group-divider{margin:64px 0 0;display:flex;align-items:center;gap:14px;color:var(--accent);font-size:12px;font-weight:800;letter-spacing:.12em;text-transform:uppercase}
+.group-divider::after{content:"";flex:1;height:2px;background:var(--accent);opacity:.25}
+.doc h2{font-size:clamp(22px,3vw,27px);line-height:1.2;letter-spacing:-.01em;margin:40px 0 14px;display:flex;align-items:baseline;gap:14px;text-wrap:balance}
+.sec-no{font-family:var(--mono);font-size:14px;color:var(--accent);font-weight:600;padding:3px 8px;border:1px solid var(--accent);border-radius:6px;flex:none;transform:translateY(-3px)}
+.doc h3{font-size:18px;margin:30px 0 10px;text-wrap:balance}
+.doc h4{font-size:15.5px;margin:22px 0 8px}
+.doc p,.doc li{max-width:78ch;color:var(--ink-2)}
+.doc strong{color:var(--ink)}
+.doc hr{display:none}
+.doc code{font-family:var(--mono);font-size:.86em;background:var(--surface-2);padding:1px 5px;border-radius:5px;color:var(--ink);overflow-wrap:anywhere}
+.doc .chip{font-weight:600;border-radius:999px;padding:1px 8px}
+.doc .chip-draft{background:var(--draft-bg);color:var(--draft)}
+.doc .chip-wait{background:var(--wait-bg);color:var(--wait)}
+.doc .chip-bad{background:var(--bad-bg);color:var(--bad)}
+.doc .chip-done{background:var(--done-bg);color:var(--done)}
+.doc .chip-neutral{background:var(--neutral-bg);color:var(--neutral)}
+
+.table-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:12px;background:var(--surface);margin:14px 0 20px}
+table{border-collapse:collapse;width:100%;font-size:13.5px;font-variant-numeric:tabular-nums}
+th{text-align:left;background:var(--surface-2);color:var(--ink);font-weight:700;font-size:12.5px;letter-spacing:.02em;padding:10px 12px;border-bottom:1px solid var(--line);white-space:nowrap}
+td{padding:9px 12px;border-bottom:1px solid var(--line);vertical-align:top;color:var(--ink-2);min-width:90px}
+tr:last-child td{border-bottom:0}
+tbody tr:hover td{background:var(--accent-soft)}
+
+.code{position:relative;margin:14px 0 20px}
+.code-lang{position:absolute;top:8px;right:12px;font-family:var(--mono);font-size:10.5px;color:var(--code-muted);letter-spacing:.08em;text-transform:uppercase}
+.doc .code pre{background:var(--code-bg);color:var(--code-ink);border-radius:12px;padding:18px;overflow-x:auto;margin:0;font-size:12.8px;line-height:1.6}
+.doc .code pre code{background:none;color:inherit;padding:0;font-size:inherit;overflow-wrap:normal}
+.diagram{overflow-x:auto;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:18px;margin:14px 0 20px}
+.diagram pre{margin:0}
+.diagram pre.mermaid{font-family:var(--mono);font-size:12px;color:var(--muted);white-space:pre;text-align:center}
+.diagram pre.mermaid[data-processed]{color:inherit;white-space:normal}
+.diagram svg{max-width:100%;height:auto}
+
+.callout{border-radius:12px;padding:12px 16px;margin:14px 0;border:1px solid var(--line);background:var(--surface)}
+.callout p{margin:4px 0}
+.callout-warn{background:var(--wait-bg);border-color:transparent}
+.doc .callout-warn p,.doc .callout-warn strong{color:var(--ink)}
+.callout-note{border-left:3px solid var(--accent)}
+
+.doc .task{list-style:none;padding-left:4px}
+.task::before{content:"";display:inline-block;width:14px;height:14px;border:1.5px solid var(--muted);border-radius:4px;margin-right:10px;vertical-align:-2px}
+.task.done::before{background:var(--done);border-color:var(--done);box-shadow:inset 0 0 0 2px var(--surface)}
+footer{margin-top:64px;padding-top:18px;border-top:1px solid var(--line);color:var(--muted);font-size:13px}
+.to-top{position:fixed;right:16px;bottom:calc(env(safe-area-inset-bottom,0px) + 16px);width:40px;height:40px;border-radius:50%;border:1px solid var(--line);background:var(--surface);color:var(--ink);box-shadow:var(--shadow);cursor:pointer;font-size:16px}
+.dl{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0 12px}.dl a{font-size:12px;font-weight:600;text-decoration:none;border:1px solid var(--line);border-radius:999px;padding:3px 10px;color:var(--ink);background:var(--surface)}.dl a:hover{border-color:var(--accent);color:var(--accent)}.dl[hidden]{display:none}
+</style>
+
+<div class="shell">
+  <aside class="sidebar" aria-label="Daftar isi">
+    <a class="back" href="index.html">← Semua dokumen</a>
+    <div class="dl" aria-label="Unduh dokumen"><a href="dokumentasi-asset-disposal.html" download>⬇ HTML</a><a href="dokumentasi-asset-disposal.md" download>⬇ Markdown</a></div>
+    <div class="brand"><span class="brand-mark">PML04</span>Disposal Asset</div>
+    <input class="search" id="nav-search" type="search" placeholder="Cari bagian… (mis. API, status)" aria-label="Cari bagian">
+    <nav class="nav" id="nav"><div class="nav-group"><p>Gambaran & Bisnis</p><a href="#s1" data-sec="s1"><span>01</span>Informasi Dokumen</a><a href="#s3" data-sec="s3"><span>03</span>Quick Overview</a><a href="#s4" data-sec="s4"><span>04</span>Ringkasan Fitur</a><a href="#s5" data-sec="s5"><span>05</span>Tujuan Fitur</a><a href="#s6" data-sec="s6"><span>06</span>Aktor</a><a href="#s7" data-sec="s7"><span>07</span>Hak Akses</a><a href="#s8" data-sec="s8"><span>08</span>Terminologi</a><a href="#s9" data-sec="s9"><span>09</span>Business Rules</a><a href="#s10" data-sec="s10"><span>10</span>Business Flow</a><a href="#s11" data-sec="s11"><span>11</span>Flow Berdasarkan Role</a><a href="#s12" data-sec="s12"><span>12</span>Flow Diagram</a><a href="#s13" data-sec="s13"><span>13</span>Sequence Diagram</a><a href="#s14" data-sec="s14"><span>14</span>Status Transaksi</a><a href="#s15" data-sec="s15"><span>15</span>State Transition</a></div><div class="nav-group"><p>Database</p><a href="#s16" data-sec="s16"><span>16</span>Struktur Database</a><a href="#s17" data-sec="s17"><span>17</span>Relasi Database</a><a href="#s18" data-sec="s18"><span>18</span>Data Dictionary</a><a href="#s19" data-sec="s19"><span>19</span>Database Index</a></div><div class="nav-group"><p>Backend & API</p><a href="#s20" data-sec="s20"><span>20</span>Backend Architecture</a><a href="#s21" data-sec="s21"><span>21</span>Backend Business Logic</a><a href="#s22" data-sec="s22"><span>22</span>Dampak terhadap asset_data</a><a href="#s23" data-sec="s23"><span>23</span>API Documentation</a><a href="#s24" data-sec="s24"><span>24</span>Detail Setiap API</a></div><div class="nav-group"><p>Mobile</p><a href="#s25" data-sec="s25"><span>25</span>Mobile Architecture</a><a href="#s26" data-sec="s26"><span>26</span>Mobile Screen</a><a href="#s27" data-sec="s27"><span>27</span>Mobile → API</a><a href="#s28" data-sec="s28"><span>28</span>API → Mobile</a><a href="#s29" data-sec="s29"><span>29</span>Mapping Mobile → API → Database</a><a href="#s30" data-sec="s30"><span>30</span>Mapping Database → API → Mobile</a></div><div class="nav-group"><p>Validasi, Error & Keamanan</p><a href="#s31" data-sec="s31"><span>31</span>Validation</a><a href="#s32" data-sec="s32"><span>32</span>Error Handling</a><a href="#s33" data-sec="s33"><span>33</span>Audit Trail</a><a href="#s34" data-sec="s34"><span>34</span>Notification</a><a href="#s35" data-sec="s35"><span>35</span>Security</a></div><div class="nav-group"><p>Manual Book</p><a href="#s36" data-sec="s36"><span>36</span>Manual Book User/Admin</a><a href="#s37" data-sec="s37"><span>37</span>Kondisi Button</a></div><div class="nav-group"><p>QA & Risiko</p><a href="#s38" data-sec="s38"><span>38</span>Testing Scenario</a><a href="#s39" data-sec="s39"><span>39</span>Temuan Ketidaksesuaian</a><a href="#s40" data-sec="s40"><span>40</span>Edge Case</a><a href="#s41" data-sec="s41"><span>41</span>Potential Bug / Technical Risk</a></div><div class="nav-group"><p>Referensi Developer</p><a href="#s42" data-sec="s42"><span>42</span>Dependency</a><a href="#s43" data-sec="s43"><span>43</span>Source Code Reference</a><a href="#s44" data-sec="s44"><span>44</span>Developer Notes</a><a href="#s45" data-sec="s45"><span>45</span>End-to-End Traceability</a><a href="#s46" data-sec="s46"><span>46</span>Ringkasan Database Impact</a><a href="#s47" data-sec="s47"><span>47</span>Checklist Implementasi</a><a href="#s48" data-sec="s48"><span>48</span>Changelog</a></div></nav>
+  </aside>
+
+  <main>
+    <p class="back-mobile"><a class="back" href="index.html">← Semua dokumen</a> <div class="dl" aria-label="Unduh dokumen"><a href="dokumentasi-asset-disposal.html" download>⬇ HTML</a><a href="dokumentasi-asset-disposal.md" download>⬇ Markdown</a></div></p>
+    <header class="hero">
+      <div>
+        <p class="eyebrow">Asset Management · Dokumentasi Teknis &amp; Manual Book</p>
+        <h1>Disposal Asset (PML04)</h1>
+        <p class="lede">Aset gudang yang rusak dan tidak layak dipertahankan dihapus dari daftar aktif oleh admin: keputusan dengan riwayat aset, pencatatan pelaksanaan menurut metode (lelang/jual, donasi, pemusnahan) dengan bukti wajib, lalu penyelesaian. Data tetap diarsipkan. Seluruh isi diturunkan dari source code <code>API</code> (Lumen) dan <code>MOBILE</code> (Flutter).</p>
+      </div>
+      <div class="tag" aria-label="Identitas dokumen">
+        <dl>
+          <dt>Kode</dt><dd>PML04</dd><dt>Modul</dt><dd>Pemeliharaan Aset</dd><dt>Versi</dt><dd>1.1 · 12 Okt 2026</dd><dt>Stack</dt><dd>Lumen 10 · Flutter</dd><dt>API</dt><dd>6 endpoint</dd>
+        </dl>
+        <div class="barcode" aria-hidden="true"></div>
+        <div class="trx">PML04-YYYYMMNNN</div>
+      </div>
+    </header>
+
+    <details class="mobile-toc">
+      <summary>Daftar isi</summary>
+      <nav class="nav"><div class="nav-group"><p>Gambaran & Bisnis</p><a href="#s1" data-sec="s1"><span>01</span>Informasi Dokumen</a><a href="#s3" data-sec="s3"><span>03</span>Quick Overview</a><a href="#s4" data-sec="s4"><span>04</span>Ringkasan Fitur</a><a href="#s5" data-sec="s5"><span>05</span>Tujuan Fitur</a><a href="#s6" data-sec="s6"><span>06</span>Aktor</a><a href="#s7" data-sec="s7"><span>07</span>Hak Akses</a><a href="#s8" data-sec="s8"><span>08</span>Terminologi</a><a href="#s9" data-sec="s9"><span>09</span>Business Rules</a><a href="#s10" data-sec="s10"><span>10</span>Business Flow</a><a href="#s11" data-sec="s11"><span>11</span>Flow Berdasarkan Role</a><a href="#s12" data-sec="s12"><span>12</span>Flow Diagram</a><a href="#s13" data-sec="s13"><span>13</span>Sequence Diagram</a><a href="#s14" data-sec="s14"><span>14</span>Status Transaksi</a><a href="#s15" data-sec="s15"><span>15</span>State Transition</a></div><div class="nav-group"><p>Database</p><a href="#s16" data-sec="s16"><span>16</span>Struktur Database</a><a href="#s17" data-sec="s17"><span>17</span>Relasi Database</a><a href="#s18" data-sec="s18"><span>18</span>Data Dictionary</a><a href="#s19" data-sec="s19"><span>19</span>Database Index</a></div><div class="nav-group"><p>Backend & API</p><a href="#s20" data-sec="s20"><span>20</span>Backend Architecture</a><a href="#s21" data-sec="s21"><span>21</span>Backend Business Logic</a><a href="#s22" data-sec="s22"><span>22</span>Dampak terhadap asset_data</a><a href="#s23" data-sec="s23"><span>23</span>API Documentation</a><a href="#s24" data-sec="s24"><span>24</span>Detail Setiap API</a></div><div class="nav-group"><p>Mobile</p><a href="#s25" data-sec="s25"><span>25</span>Mobile Architecture</a><a href="#s26" data-sec="s26"><span>26</span>Mobile Screen</a><a href="#s27" data-sec="s27"><span>27</span>Mobile → API</a><a href="#s28" data-sec="s28"><span>28</span>API → Mobile</a><a href="#s29" data-sec="s29"><span>29</span>Mapping Mobile → API → Database</a><a href="#s30" data-sec="s30"><span>30</span>Mapping Database → API → Mobile</a></div><div class="nav-group"><p>Validasi, Error & Keamanan</p><a href="#s31" data-sec="s31"><span>31</span>Validation</a><a href="#s32" data-sec="s32"><span>32</span>Error Handling</a><a href="#s33" data-sec="s33"><span>33</span>Audit Trail</a><a href="#s34" data-sec="s34"><span>34</span>Notification</a><a href="#s35" data-sec="s35"><span>35</span>Security</a></div><div class="nav-group"><p>Manual Book</p><a href="#s36" data-sec="s36"><span>36</span>Manual Book User/Admin</a><a href="#s37" data-sec="s37"><span>37</span>Kondisi Button</a></div><div class="nav-group"><p>QA & Risiko</p><a href="#s38" data-sec="s38"><span>38</span>Testing Scenario</a><a href="#s39" data-sec="s39"><span>39</span>Temuan Ketidaksesuaian</a><a href="#s40" data-sec="s40"><span>40</span>Edge Case</a><a href="#s41" data-sec="s41"><span>41</span>Potential Bug / Technical Risk</a></div><div class="nav-group"><p>Referensi Developer</p><a href="#s42" data-sec="s42"><span>42</span>Dependency</a><a href="#s43" data-sec="s43"><span>43</span>Source Code Reference</a><a href="#s44" data-sec="s44"><span>44</span>Developer Notes</a><a href="#s45" data-sec="s45"><span>45</span>End-to-End Traceability</a><a href="#s46" data-sec="s46"><span>46</span>Ringkasan Database Impact</a><a href="#s47" data-sec="s47"><span>47</span>Checklist Implementasi</a><a href="#s48" data-sec="s48"><span>48</span>Changelog</a></div></nav>
+    </details>
+
+    <section class="overview" aria-label="Ringkasan">
+      <div class="panel">
+        <h3>Ringkasan dalam 1 menit: tiga langkah disposal</h3>
+        <p class="sub">Admin/HR saja, tanpa approval. Satu transaksi = satu aset.</p>
+        <div class="three">
+          <div class="fact"><b>Keputusan</b><p>Alasan, metode, nilai sisa, catatan setelah meninjau usia, harga perolehan, dan jumlah perbaikan/klaim. Aset → <code>menunggu_disposal</code>.</p></div>
+          <div class="fact"><b>Pelaksanaan</b><p>Fisik di luar sistem. Catat pembeli+harga, penerima donasi, atau cara pemusnahan, plus tanggal dan <strong>bukti wajib</strong>.</p></div>
+          <div class="fact"><b>Penyelesaian</b><p>Selesaikan Disposal → aset <code>disposed</code>, keluar dari daftar aktif; data tetap diarsipkan.</p></div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h3>Siklus disposal</h3>
+        <p class="sub">Status transaksi dan dampaknya ke asset.</p>
+        <div class="flow">
+          <div class="step"><span class="badge b-wait">Menunggu Disposal</span><span class="who">Admin: Submit Keputusan</span><p>Aset rusak di gudang dipilih beserta metode.</p><span class="db">asset → menunggu_disposal</span></div>
+          <div class="step"><span class="badge b-draft">Siap Diselesaikan</span><span class="who">Admin: Catat Pelaksanaan</span><p>Field per metode, tanggal, bukti; dapat diperbarui.</p><span class="db">tgl_pelaksanaan terisi</span></div>
+          <div class="step"><span class="badge b-done">Dihapus (Disposed)</span><span class="who">Admin: Selesaikan Disposal</span><p>Dengan dialog konfirmasi; tidak dapat dibatalkan.</p><span class="db">asset → disposed · asset_log · notifikasi</span></div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h3>Mulai dari sini sesuai peran</h3>
+        <p class="sub">Lompat langsung ke bagian yang paling relevan.</p>
+        <div class="roles">
+          <div class="role"><h4>Business Analyst / PM</h4><p>Aturan bisnis, status, perbedaan dengan dokumen bisnis.</p><div class="links"><a href="#s3">§3</a><a href="#s9">§9 Rules</a><a href="#s14">§14 Status</a><a href="#s39">§39 INC</a></div></div>
+          <div class="role"><h4>Backend Developer</h4><p>Logika, dampak ke asset_data, kontrak API.</p><div class="links"><a href="#s21">§21 Logic</a><a href="#s22">§22 asset_data</a><a href="#s24">§24 API</a></div></div>
+          <div class="role"><h4>Mobile Developer</h4><p>Bloc, route, layar, objek aksi.</p><div class="links"><a href="#s25">§25</a><a href="#s26">§26 Screen</a><a href="#s29">§29 Mapping</a></div></div>
+          <div class="role"><h4>QA / Tester</h4><p>7 test API, 13 test mobile, skenario, edge case, risiko.</p><div class="links"><a href="#s38">§38 Test</a><a href="#s40">§40 Edge</a><a href="#s41">§41 Risk</a></div></div>
+          <div class="role"><h4>Technical Support</h4><p>Pesan error, audit trail, notifikasi.</p><div class="links"><a href="#s32">§32 Error</a><a href="#s33">§33 Audit</a><a href="#s34">§34 Notif</a></div></div>
+          <div class="role"><h4>User / Admin Asset</h4><p>Langkah operasional dan kondisi tombol.</p><div class="links"><a href="#s36">§36 Manual Book</a><a href="#s37">§37 Tombol</a></div></div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h3>Perlu perhatian</h3>
+        <p class="sub">Temuan terpenting. Detail di <a href="#s39">§39</a> dan <a href="#s41">§41</a>.</p>
+        <ul class="attention">
+          <li><span class="sev sev-h">TINGGI</span><span>SQL manual belum dijalankan; jalankan setelah SQL PML01 gudang, PML03, PML02. <a href="#s41">RISK-001</a></span></li>
+          <li><span class="sev sev-m">SEDANG</span><span>PML01/02/03 hanya mencatat nama tabel disposal; <strong>disposal tidak dibuat otomatis</strong>. <a href="#s39">INC-04</a></span></li>
+          <li><span class="sev sev-m">SEDANG</span><span>Tidak ada pembatalan disposal. <a href="#s39">INC-05</a></span></li>
+        </ul>
+      </div>
+    </section>
+
+    <article class="doc">
+<div class="group-divider" id="g1"><span>Gambaran &amp; Bisnis</span></div><h2 id="s1"><span class="sec-no">01</span>Informasi Dokumen</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Informasi</th>
+<th>Nilai</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Nama Fitur</td>
+<td>Disposal Asset (penghapusan aset dari registri aktif)</td>
+</tr>
+<tr>
+<td>Kode Fitur</td>
+<td><strong>PML04</strong> (nomor transaksi <code>PML04-YYYYMMNNN</code>)</td>
+</tr>
+<tr>
+<td>Modul</td>
+<td>Asset Management — Pemeliharaan Aset</td>
+</tr>
+<tr>
+<td>Backend</td>
+<td>Laravel <strong>Lumen ^10.0</strong>, PHP ^8.1, JWT, Query Builder</td>
+</tr>
+<tr>
+<td>Database</td>
+<td><code>API/diagram-asset.dbml</code> (tanda <code>[REVISI PML04]</code> / <code>[NEW PML04]</code>) + SQL manual <code>Claude outputs/sql-pml04-disposal.sql</code>. ⚠️ SQL harus dijalankan manual (belum dijalankan saat dokumen ditulis)</td>
+</tr>
+<tr>
+<td>Mobile</td>
+<td>Flutter (<code>professional_flutter_3_35</code>), <code>flutter_bloc</code>, <code>dio</code>, <code>image_picker</code></td>
+</tr>
+<tr>
+<td>Web</td>
+<td>⚠️ Belum ditemukan: tidak ada source web di workspace</td>
+</tr>
+<tr>
+<td>Test otomatis</td>
+<td>API <code>tests/Asset/AssetDisposalTest.php</code> (7 test) · Mobile <code>test/asset/asset_disposal_test.dart</code> (13 test)</td>
+</tr>
+<tr>
+<td>Versi dokumen</td>
+<td>1.1 — 12 Oktober 2026</td>
+</tr>
+<tr>
+<td>Dokumen terkait</td>
+<td>Perbaikan (PML02), Klaim Garansi (PML03), Pemeliharaan (PML01)</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="s3"><span class="sec-no">03</span>Quick Overview</h2>
+<p>Aset gudang yang rusak dan tidak layak dipertahankan dihapus dari daftar aset aktif lewat tiga langkah. <strong>Fase 1</strong>: admin meninjau riwayat aset (usia, harga perolehan, jumlah perbaikan dan klaim garansi) lalu menyubmit keputusan: alasan, <strong>metode</strong> (lelang/jual, donasi, pemusnahan), nilai sisa, catatan; aset menjadi <code>menunggu_disposal</code>. <strong>Fase 2</strong>: disposal fisik terjadi di luar sistem; admin mencatat hasilnya (pembeli dan harga, penerima donasi, atau cara pemusnahan) beserta <strong>bukti wajib</strong>. <strong>Fase 3</strong>: admin menekan <strong>Selesaikan Disposal</strong>; aset menjadi <code>disposed</code> dan tidak muncul lagi di daftar aktif, sementara datanya tetap tersimpan sebagai arsip audit.</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Aspek</th>
+<th>Ringkasan</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Aktor</td>
+<td>Admin/HR saja (tanpa approval)</td>
+</tr>
+<tr>
+<td>Status transaksi</td>
+<td><code>proses</code> (menunggu disposal) → <code>selesai</code> (dihapus/disposed)</td>
+</tr>
+<tr>
+<td>Status asset</td>
+<td><code>rusak</code> → <code>menunggu_disposal</code> → <code>disposed</code></td>
+</tr>
+<tr>
+<td>Metode</td>
+<td><code>lelang_jual</code>, <code>donasi</code>, <code>pemusnahan</code></td>
+</tr>
+<tr>
+<td>Endpoint</td>
+<td>6 (semua admin)</td>
+</tr>
+<tr>
+<td>Notifikasi</td>
+<td>1 event (<code>disposal.selesai</code>) ke admin</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="s4"><span class="sec-no">04</span>Ringkasan Fitur</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>No</th>
+<th>Fitur</th>
+<th>Aktor</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>Pilih aset gudang rusak dengan riwayatnya</td>
+<td>Admin</td>
+</tr>
+<tr>
+<td>2</td>
+<td>Submit keputusan disposal</td>
+<td>Admin</td>
+</tr>
+<tr>
+<td>3</td>
+<td>Catat pelaksanaan sesuai metode + bukti (dapat diperbarui)</td>
+<td>Admin</td>
+</tr>
+<tr>
+<td>4</td>
+<td>Selesaikan disposal (dengan konfirmasi)</td>
+<td>Admin</td>
+</tr>
+<tr>
+<td>5</td>
+<td>Daftar (Menunggu/Selesai) dan detail</td>
+<td>Admin</td>
+</tr>
+<tr>
+<td>6</td>
+<td>Kartu "perlu diproses" di beranda admin</td>
+<td>Admin</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="s5"><span class="sec-no">05</span>Tujuan Fitur</h2>
+<h3>5.1 Tujuan Bisnis (dari dokumen bisnis dan kode)</h3>
+<ul>
+<li>Penghapusan aset punya keputusan, alasan, dan bukti yang dapat diaudit.</li>
+<li>Status perantara <code>menunggu_disposal</code> mencegah penghapusan tanpa bukti pelaksanaan.</li>
+<li>Data historis aset tidak dihapus, hanya dikeluarkan dari daftar aktif.</li>
+</ul>
+<h3>5.2 Tujuan Sistem</h3>
+<ul>
+<li>Menjaga aset yang sedang di-disposal tidak bisa dipakai alur lain.</li>
+<li>Memvalidasi field wajib per metode dan bukti.</li>
+<li>Mencatat pelaksana, waktu, <code>asset_log</code>, dan notifikasi penyelesaian.</li>
+</ul>
+<h2 id="s6"><span class="sec-no">06</span>Aktor</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Aktor</th>
+<th>Peran</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Admin/HR (admin asset)</td>
+<td>Memutuskan, memilih metode, mencatat pelaksanaan, menyelesaikan</td>
+</tr>
+<tr>
+<td>Sistem</td>
+<td>Mengunci status aset, memvalidasi, menulis log dan notifikasi</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="s7"><span class="sec-no">07</span>Hak Akses</h2>
+<p>Seluruh endpoint hanya untuk admin asset (<code>Asset_m::isAdmin</code>). Non-admin menerima 403. Tidak ada endpoint karyawan/PIC.</p>
+<h2 id="s8"><span class="sec-no">08</span>Terminologi</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Istilah</th>
+<th>Arti</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Disposal</td>
+<td>Penghapusan aset dari registri aktif</td>
+</tr>
+<tr>
+<td>MENUNGGU DISPOSAL</td>
+<td>Keputusan sudah disubmit, penyelesaian belum dilakukan (<code>status = proses</code>, aset <code>menunggu_disposal</code>)</td>
+</tr>
+<tr>
+<td>DIHAPUS (DISPOSED)</td>
+<td>Disposal selesai (<code>status = selesai</code>, aset <code>disposed</code>)</td>
+</tr>
+<tr>
+<td>Nilai sisa</td>
+<td>Book value aset (opsional)</td>
+</tr>
+<tr>
+<td>Bukti</td>
+<td>Satu foto/scan kwitansi, berita acara, atau foto pemusnahan</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="s9"><span class="sec-no">09</span>Business Rules</h2>
+<h3>BR-001 — Aset yang boleh di-disposal</h3>
+<p>Hanya <code>pemegang_asset = gudang</code> dan <code>status_asset = rusak</code>. Karena proses lain mengubah status (<code>dalam_perbaikan</code>, <code>dalam_proses_klaim</code>, menunggu serah terima), syarat "tidak ada proses aktif" terpenuhi otomatis. Tidak boleh masih dalam onboarding aktif. Pesan: <em>"Hanya asset rusak di gudang yang dapat di-disposal."</em></p>
+<h3>BR-002 — Keputusan</h3>
+<p><code>alasan_disposal</code> wajib; <code>metode_disposal</code> ∈ tiga nilai; <code>nilai_sisa</code> opsional dan tidak negatif; catatan opsional.</p>
+<h3>BR-003 — Status perantara</h3>
+<p>Setelah keputusan, aset menjadi <code>menunggu_disposal</code> dan keluar dari daftar pilihan aset gudang rusak (tidak bisa diajukan dua kali).</p>
+<h3>BR-004 — Pelaksanaan menurut metode</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Metode</th>
+<th>Field wajib</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>lelang_jual</code></td>
+<td><code>pembeli</code>, <code>harga_jual</code>, <code>tgl_pelaksanaan</code>, bukti</td>
+</tr>
+<tr>
+<td><code>donasi</code></td>
+<td><code>penerima_donasi</code>, <code>tgl_pelaksanaan</code>, bukti</td>
+</tr>
+<tr>
+<td><code>pemusnahan</code></td>
+<td><code>metode_pemusnahan</code>, <code>tgl_pelaksanaan</code>, bukti</td>
+</tr>
+</tbody>
+</table></div>
+<p>Tanggal pelaksanaan tidak boleh setelah hari ini. Field milik metode lain dikosongkan.</p>
+<h3>BR-005 — Bukti wajib</h3>
+<p>Semua metode wajib bukti. Pembaruan tanpa bukti baru mempertahankan bukti lama; bila belum pernah ada bukti, ditolak.</p>
+<h3>BR-006 — Pelaksanaan dapat diperbarui</h3>
+<p>Selama <code>status = proses</code>, admin boleh memperbarui data pelaksanaan. Setelah <code>selesai</code>, tidak dapat diubah.</p>
+<h3>BR-007 — Penyelesaian</h3>
+<p>Hanya bila pelaksanaan sudah dicatat (<code>tgl_pelaksanaan</code> terisi) dan data masih lengkap sesuai metode. Aset harus masih di gudang dengan status <code>menunggu_disposal</code>. Hasil: aset <code>disposed</code>, transaksi <code>selesai</code>, <code>asset_log</code> <code>disposal_gudang</code>.</p>
+<h3>BR-008 — Arsip, bukan hapus</h3>
+<p>Baris transaksi dan baris <code>asset_data</code> (status <code>disposed</code>) tetap ada. Daftar aset admin dan total ringkasan mengecualikan <code>disposed</code> bila filter status kosong; filter status <code>disposed</code> eksplisit tetap menampilkannya.</p>
+<h3>BR-009 — Penomoran</h3>
+<p><code>id</code> = <code>id_company</code> + <code>YYYYMM</code> + 3 digit; <code>no_trx</code> = <code>PML04-YYYYMMNNN</code>; maksimum 999 per bulan per perusahaan.</p>
+<h3>BR-010 — Skema harus sudah diterapkan</h3>
+<p><code>skemaSiap()</code> menjaga dashboard tetap berjalan sebelum SQL diterapkan.</p>
+<h2 id="s10"><span class="sec-no">10</span>Business Flow</h2>
+<ol>
+<li>Admin membuka Disposal → <strong>+</strong> → memilih satu aset gudang rusak dan meninjau riwayatnya.</li>
+<li>Admin mengisi alasan, metode, nilai sisa, catatan → <strong>Submit Keputusan</strong>. Aset <code>menunggu_disposal</code>.</li>
+<li>Disposal fisik dilakukan di luar sistem.</li>
+<li>Admin membuka detail → <strong>Catat Pelaksanaan</strong> (field sesuai metode + tanggal + bukti).</li>
+<li>Admin menekan <strong>Selesaikan Disposal</strong> dan mengonfirmasi.</li>
+<li>Aset <code>disposed</code>; notifikasi ringkasan dikirim ke admin.</li>
+</ol>
+<h2 id="s11"><span class="sec-no">11</span>Flow Berdasarkan Role</h2>
+<h3>11.1 Admin/HR</h3>
+<p>Seluruh alur di atas.</p>
+<h3>11.2 System</h3>
+<p>Validasi, kunci status, log, notifikasi, penyaringan daftar aktif.</p>
+<h2 id="s12"><span class="sec-no">12</span>Flow Diagram</h2>
+<div class="diagram"><pre class="mermaid">flowchart TD
+    A[Aset gudang rusak] --&gt; B[Admin tinjau riwayat]
+    B --&gt; C[Submit keputusan&lt;br/&gt;alasan, metode, nilai sisa]
+    C --&gt; D[status proses&lt;br/&gt;asset menunggu_disposal]
+    D --&gt; E[Disposal fisik di luar sistem]
+    E --&gt; F{Metode}
+    F -- lelang_jual --&gt; G[Pembeli, harga, tanggal, bukti]
+    F -- donasi --&gt; H[Penerima, tanggal, bukti]
+    F -- pemusnahan --&gt; I[Cara, tanggal, bukti]
+    G --&gt; J[Pelaksanaan tercatat]
+    H --&gt; J
+    I --&gt; J
+    J --&gt; K[Selesaikan Disposal]
+    K --&gt; L[status selesai&lt;br/&gt;asset disposed, data diarsipkan]
+</pre></div>
+<h2 id="s13"><span class="sec-no">13</span>Sequence Diagram</h2>
+<div class="diagram"><pre class="mermaid">sequenceDiagram
+    actor Admin
+    participant App as Mobile
+    participant API
+    participant DB
+    Admin-&gt;&gt;App: Pilih aset + isi keputusan
+    App-&gt;&gt;API: POST asset/disposal
+    API-&gt;&gt;DB: insert trx (proses), asset menunggu_disposal
+    Admin-&gt;&gt;App: Catat pelaksanaan + foto bukti
+    App-&gt;&gt;API: POST asset/disposal/{id}/pelaksanaan
+    API-&gt;&gt;DB: simpan pelaksanaan + file_bukti
+    Admin-&gt;&gt;App: Selesaikan Disposal (konfirmasi)
+    App-&gt;&gt;API: POST asset/disposal/{id}/selesai
+    API-&gt;&gt;DB: trx selesai, asset disposed, asset_log
+    API--&gt;&gt;Admin: Notifikasi disposal.selesai
+</pre></div>
+<h2 id="s14"><span class="sec-no">14</span>Status Transaksi</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th><code>status</code></th>
+<th>Kondisi</th>
+<th>Label di aplikasi</th>
+<th>Tab</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>proses</code></td>
+<td><code>tgl_pelaksanaan</code> kosong</td>
+<td>Menunggu Disposal</td>
+<td>Menunggu</td>
+</tr>
+<tr>
+<td><code>proses</code></td>
+<td><code>tgl_pelaksanaan</code> terisi</td>
+<td>Siap Diselesaikan</td>
+<td>Menunggu</td>
+</tr>
+<tr>
+<td><code>selesai</code></td>
+<td>—</td>
+<td>Dihapus (Disposed)</td>
+<td>Selesai</td>
+</tr>
+</tbody>
+</table></div>
+<p>Tidak ada kolom fase terpisah; tahap pelaksanaan ditandai terisinya <code>tgl_pelaksanaan</code>.</p>
+<h2 id="s15"><span class="sec-no">15</span>State Transition</h2>
+<div class="diagram"><pre class="mermaid">stateDiagram-v2
+    [*] --&gt; MenungguDisposal: Submit keputusan
+    MenungguDisposal --&gt; SiapDiselesaikan: Catat pelaksanaan
+    SiapDiselesaikan --&gt; SiapDiselesaikan: Perbarui pelaksanaan
+    SiapDiselesaikan --&gt; Dihapus: Selesaikan Disposal
+    Dihapus --&gt; [*]
+</pre></div>
+<div class="group-divider" id="g2"><span>Database</span></div><h2 id="s16"><span class="sec-no">16</span>Struktur Database</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Tabel</th>
+<th>Fungsi</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>asset_trx_disposal</code></td>
+<td>Satu baris per disposal (keputusan, pelaksanaan, penyelesaian)</td>
+</tr>
+<tr>
+<td><code>asset_data</code></td>
+<td>Status aset (<code>menunggu_disposal</code>, <code>disposed</code>)</td>
+</tr>
+<tr>
+<td><code>asset_log</code></td>
+<td>Jejak <code>disposal_gudang</code></td>
+</tr>
+</tbody>
+</table></div>
+<p>Tabel lama <code>asset_trx_disposal_item</code> dan kolom approval dihapus (struktur lama berbasis approval, belum dipakai API).</p>
+<h2 id="s17"><span class="sec-no">17</span>Relasi Database</h2>
+<div class="diagram"><pre class="mermaid">erDiagram
+    asset_trx_disposal }o--|| asset_data : &quot;asset&quot;
+    asset_trx_disposal }o--o| asset_lokasi_m : &quot;gudang asal&quot;
+    asset_data ||--o{ asset_log : &quot;jejak&quot;
+</pre></div>
+<h2 id="s18"><span class="sec-no">18</span>Data Dictionary</h2>
+<h3>18.1 asset_trx_disposal</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Kolom</th>
+<th>Tipe</th>
+<th>Keterangan</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>id_asset_trx_disposal</code></td>
+<td>varchar(50) PK</td>
+<td><code>id_company</code>+<code>YYYYMM</code>+3 digit</td>
+</tr>
+<tr>
+<td><code>no_trx</code></td>
+<td>varchar(50)</td>
+<td><code>PML04-YYYYMMNNN</code></td>
+</tr>
+<tr>
+<td><code>id_asset_data</code></td>
+<td>varchar(50) FK</td>
+<td>Aset</td>
+</tr>
+<tr>
+<td><code>nama_asset</code>, <code>deskripsi_asset</code>, <code>kategori_asset</code></td>
+<td>varchar</td>
+<td>Snapshot saat keputusan</td>
+</tr>
+<tr>
+<td><code>id_asset_lokasi_m_asal</code></td>
+<td>varchar(50) FK null</td>
+<td>Gudang asal</td>
+</tr>
+<tr>
+<td><code>alasan_disposal</code></td>
+<td>varchar(255)</td>
+<td>Wajib</td>
+</tr>
+<tr>
+<td><code>metode_disposal</code></td>
+<td>enum</td>
+<td><code>lelang_jual</code>, <code>donasi</code>, <code>pemusnahan</code></td>
+</tr>
+<tr>
+<td><code>nilai_sisa</code></td>
+<td>decimal(18,2) null</td>
+<td>Book value, opsional</td>
+</tr>
+<tr>
+<td><code>catatan</code></td>
+<td>text null</td>
+<td>Opsional</td>
+</tr>
+<tr>
+<td><code>tgl_pelaksanaan</code></td>
+<td>date null</td>
+<td>NULL = pelaksanaan belum dicatat</td>
+</tr>
+<tr>
+<td><code>pembeli</code>, <code>harga_jual</code></td>
+<td>varchar, decimal(18,2)</td>
+<td>Metode lelang/jual</td>
+</tr>
+<tr>
+<td><code>penerima_donasi</code></td>
+<td>varchar(255)</td>
+<td>Metode donasi</td>
+</tr>
+<tr>
+<td><code>metode_pemusnahan</code></td>
+<td>varchar(255)</td>
+<td>Metode pemusnahan</td>
+</tr>
+<tr>
+<td><code>file_bukti</code></td>
+<td>varchar(255)</td>
+<td>Key object bukti (wajib semua metode)</td>
+</tr>
+<tr>
+<td><code>tgl_selesai</code>, <code>user_selesai</code></td>
+<td>timestamp, varchar</td>
+<td>Klik Selesaikan Disposal</td>
+</tr>
+<tr>
+<td><code>status</code></td>
+<td>enum proses/selesai</td>
+<td>Status transaksi</td>
+</tr>
+<tr>
+<td><code>id_company</code>, <code>tgl_input</code>, <code>user_input</code>, <code>tgl_update</code>, <code>user_update</code></td>
+<td></td>
+<td>Audit; <code>tgl_input</code>/<code>user_input</code> = keputusan</td>
+</tr>
+</tbody>
+</table></div>
+<h3>18.2 asset_log (<code>jenis_log = disposal_gudang</code>)</h3>
+<p>Ditulis saat penyelesaian: posisi gudang → gudang, <code>kondisi_awal</code>/<code>kondisi_akhir</code> = kondisi aset, <code>user_input</code> = pelaksana.</p>
+<h2 id="s19"><span class="sec-no">19</span>Database Index</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Index</th>
+<th>Kolom</th>
+<th>Fungsi</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>atd_company_status_idx</code></td>
+<td><code>id_company, status, tgl_input, id</code></td>
+<td>Daftar per tab</td>
+</tr>
+<tr>
+<td><code>atd_company_asset_status_idx</code></td>
+<td><code>id_company, id_asset_data, status</code></td>
+<td>Cek disposal aktif dan riwayat per aset</td>
+</tr>
+<tr>
+<td>FK</td>
+<td><code>id_asset_data</code>, <code>id_asset_lokasi_m_asal</code></td>
+<td>Integritas</td>
+</tr>
+</tbody>
+</table></div>
+<div class="group-divider" id="g3"><span>Backend &amp; API</span></div><h2 id="s20"><span class="sec-no">20</span>Backend Architecture</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Lapisan</th>
+<th>File</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Route</td>
+<td><code>RouteAsset.php</code> (<code>disposal/*</code>)</td>
+</tr>
+<tr>
+<td>Controller</td>
+<td><code>Asset/Admin/AssetAdminDisposal_c.php</code></td>
+</tr>
+<tr>
+<td>Model</td>
+<td><code>Models/Asset/AssetDisposal_m.php</code></td>
+</tr>
+<tr>
+<td>Notifikasi</td>
+<td><code>Support/Asset/AssetNotification.php</code> (<code>disposal.selesai</code>, placeholder <code>{aset}</code>, <code>{metode}</code>)</td>
+</tr>
+<tr>
+<td>Pendukung</td>
+<td><code>Asset_c::mutateAssetTrx</code> (event <code>null</code> = tanpa notifikasi), <code>Asset_c::uploadAssetImage</code> + <code>AssetImageStorage</code> (object storage)</td>
+</tr>
+<tr>
+<td>Dashboard</td>
+<td><code>AssetAdmin_m</code> (<code>disposal_perlu_proses</code>, <code>disposal_pending</code>; pengecualian <code>disposed</code>)</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="s21"><span class="sec-no">21</span>Backend Business Logic</h2>
+<h3>21.1 Keputusan — <code>store</code></h3>
+<p>Kunci perusahaan; validasi alasan, metode, nilai sisa; kunci aset (<code>lockForUpdate</code>), cek BR-001; nomor urut; insert transaksi (snapshot aset dan gudang asal); aset → <code>menunggu_disposal</code>.</p>
+<h3>21.2 Pelaksanaan — <code>pelaksanaan</code></h3>
+<p>Hanya <code>status = proses</code>. <code>pelaksanaanFields</code> memvalidasi tanggal, bukti, dan field sesuai metode; kolom metode lain dikosongkan; <code>harga_jual</code> dinormalisasi.</p>
+<h3>21.3 Penyelesaian — <code>selesai</code></h3>
+<p>Validasi ulang kelengkapan pelaksanaan, cek aset masih <code>menunggu_disposal</code> di gudang; aset → <code>disposed</code>; <code>asset_log</code>; transaksi <code>selesai</code> dengan <code>tgl_selesai</code>/<code>user_selesai</code>.</p>
+<h3>21.4 Query baca</h3>
+<p><code>getPage</code> (tab <code>proses|selesai</code>, paginasi limit+1), <code>getDetail</code> (aset + riwayat, keputusan, pelaksanaan, penyelesaian, <code>aksi</code>), <code>getAdminOptions</code> (aset gudang rusak + metode), <code>getPendingForAdmin</code>, <code>countPendingForAdmin</code>.</p>
+<h3>21.5 Riwayat aset</h3>
+<p><code>riwayat()</code> menghitung usia (bulan) dari <code>tgl_perolehan</code>, <code>harga_perolehan</code>, serta jumlah baris di <code>asset_trx_perbaikan_item</code> dan <code>asset_trx_garansi_item</code> untuk aset tersebut (0 bila tabel belum ada). Biaya perbaikan tidak dicatat sistem.</p>
+<h2 id="s22"><span class="sec-no">22</span>Dampak terhadap asset_data</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Kejadian</th>
+<th><code>status_asset</code></th>
+<th>Kolom lain</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Keputusan disubmit</td>
+<td><code>rusak</code> → <code>menunggu_disposal</code></td>
+<td>—</td>
+</tr>
+<tr>
+<td>Disposal selesai</td>
+<td>→ <code>disposed</code></td>
+<td><code>tgl_update</code>, <code>user_update</code></td>
+</tr>
+</tbody>
+</table></div>
+<p>Aset <code>disposed</code> tidak muncul di daftar aset admin bawaan dan tidak dihitung pada <code>total_asset</code>.</p>
+<h2 id="s23"><span class="sec-no">23</span>API Documentation</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Kode</th>
+<th>Method</th>
+<th>Path</th>
+<th>Fungsi</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>API-001</td>
+<td>GET</td>
+<td><code>asset/disposal/options</code></td>
+<td>Aset gudang rusak + metode</td>
+</tr>
+<tr>
+<td>API-002</td>
+<td>GET</td>
+<td><code>asset/disposal</code></td>
+<td>Daftar</td>
+</tr>
+<tr>
+<td>API-003</td>
+<td>POST</td>
+<td><code>asset/disposal</code></td>
+<td>Submit keputusan</td>
+</tr>
+<tr>
+<td>API-004</td>
+<td>POST</td>
+<td><code>asset/disposal/{id}/pelaksanaan</code></td>
+<td>Catat/perbarui pelaksanaan</td>
+</tr>
+<tr>
+<td>API-005</td>
+<td>POST</td>
+<td><code>asset/disposal/{id}/selesai</code></td>
+<td>Selesaikan disposal</td>
+</tr>
+<tr>
+<td>API-006</td>
+<td>GET</td>
+<td><code>asset/disposal/{id}</code></td>
+<td>Detail</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="s24"><span class="sec-no">24</span>Detail Setiap API</h2>
+<h3>API-001 — Opsi</h3>
+<pre><code class="language-json">{&quot;asset&quot;: [{&quot;id_asset_data&quot;: &quot;LP-1&quot;, &quot;kode_asset&quot;: &quot;KD-LP-1&quot;, &quot;nama_asset&quot;: &quot;Laptop Lama&quot;,
+  &quot;kategori_asset&quot;: &quot;Laptop&quot;, &quot;merek&quot;: &quot;&quot;, &quot;keterangan_rusak&quot;: &quot;Mati total&quot;, &quot;lokasi_gudang&quot;: &quot;Gudang Utama&quot;,
+  &quot;riwayat&quot;: {&quot;tgl_perolehan&quot;: &quot;2019-10-01&quot;, &quot;usia_bulan&quot;: 85, &quot;harga_perolehan&quot;: 15000000,
+              &quot;jumlah_perbaikan&quot;: 2, &quot;jumlah_klaim_garansi&quot;: 1}}],
+ &quot;metode&quot;: [{&quot;value&quot;: &quot;lelang_jual&quot;, &quot;label&quot;: &quot;Lelang / Jual&quot;}]}
+</code></pre>
+<h3>API-002 — Daftar</h3>
+<p>Query <code>tab</code> (<code>proses|selesai</code>), <code>limit</code> (1–50, default 20), <code>offset</code>. Respons <code>{filters, records[], pagination}</code>; record: <code>id</code>, <code>no_trx</code>, <code>status</code>, <code>status_label</code>, <code>tab</code>, <code>id_asset_data</code>, <code>nama_asset</code>, <code>kategori_asset</code>, <code>metode_disposal</code>, <code>metode_label</code>, <code>alasan_disposal</code>, <code>pelaksanaan_tercatat</code>, <code>tgl_input</code>.</p>
+<h3>API-003 — Keputusan</h3>
+<pre><code class="language-json">{&quot;id_asset_data&quot;: &quot;LP-1&quot;, &quot;alasan_disposal&quot;: &quot;Motherboard rusak total&quot;,
+ &quot;metode_disposal&quot;: &quot;donasi&quot;, &quot;nilai_sisa&quot;: 250000, &quot;catatan&quot;: &quot;Data sudah dihapus&quot;}
+</code></pre>
+<p>Respons <code>CREATED</code> <code>{id, no_trx, status, status_label, tab}</code>.</p>
+<h3>API-004 — Pelaksanaan</h3>
+<pre><code class="language-json">{&quot;tgl_pelaksanaan&quot;: &quot;2026-10-09&quot;, &quot;pembeli&quot;: &quot;PT Pembeli&quot;, &quot;harga_jual&quot;: 1500000,
+ &quot;penerima_donasi&quot;: &quot;&quot;, &quot;metode_pemusnahan&quot;: &quot;&quot;, &quot;file_bukti&quot;: &quot;&lt;base64 atau file multipart&gt;&quot;}
+</code></pre>
+<p>Hanya field milik metode transaksi yang dipakai. <code>file_bukti</code> kosong = bukti lama dipertahankan. Bukti disimpan di object storage dengan key <code>&lt;company&gt;/asset/disposal/&lt;id_karyawan&gt;/&lt;hex&gt;.&lt;ext&gt;</code>; kolom <code>file_bukti</code> menyimpan key tersebut.</p>
+<h3>API-005 — Selesai</h3>
+<p>Tanpa body. Respons <code>{id, no_trx, status: "selesai", status_label: "Dihapus (Disposed)"}</code>.</p>
+<h3>API-006 — Detail</h3>
+<p>Grup <code>asset</code> (dengan <code>riwayat</code>), <code>keputusan</code>, <code>pelaksanaan</code> (<code>tercatat</code>, <code>file_bukti_url</code>), <code>penyelesaian</code>, dan <code>aksi: {pelaksanaan, selesai}</code>.</p>
+<div class="group-divider" id="g4"><span>Mobile</span></div><h2 id="s25"><span class="sec-no">25</span>Mobile Architecture</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Lapisan</th>
+<th>File</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Model</td>
+<td><code>lib/Repository/Model/Asset/mAssetDisposal.dart</code></td>
+</tr>
+<tr>
+<td>API client</td>
+<td><code>lib/Repository/Service/assetDisposalApi.dart</code></td>
+</tr>
+<tr>
+<td>Bloc</td>
+<td><code>lib/Bloc/Asset/AssetDisposalBloc.dart</code></td>
+</tr>
+<tr>
+<td>UI</td>
+<td><code>lib/UI/Modul/Asset/Pemeliharaan/Disposal/*</code> (termasuk <code>AssetDisposalProsesWidgets</code>; pratinjau foto layar penuh memakai <code>Pemeliharaan/AssetFotoPreview.dart</code>)</td>
+</tr>
+<tr>
+<td>Teks</td>
+<td>grup <code>disposal</code> di <code>assets/{id,en}/asset.json</code> (81 kunci)</td>
+</tr>
+<tr>
+<td>Navigasi</td>
+<td><code>NavigatorBloc</code> (<code>NavigateToAssetAdminDisposal</code>, <code>…DetailDisposal</code>, <code>…BuatDisposal</code>), <code>router.dart</code></td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="s26"><span class="sec-no">26</span>Mobile Screen</h2>
+<h3>26.1 Daftar — <code>HalamanAssetDisposal</code></h3>
+<p>Tab Menunggu/Selesai, <code>AssetDisposalRecordCard</code>, tombol <strong>+</strong>.</p>
+<h3>26.2 Buat — <code>HalamanBuatDisposal</code></h3>
+<p>Pilih satu aset (radio); aset terpilih menampilkan kartu riwayat; <strong>Lanjut</strong> membuka sheet keputusan (alasan, metode chip, nilai sisa, catatan).</p>
+<h3>26.3 Detail — <code>HalamanDetailAssetDisposal</code></h3>
+<p>Kartu status, petunjuk langkah berikutnya, aset + riwayat, keputusan, pelaksanaan (dengan foto bukti), penyelesaian. Tombol bawah: <strong>Catat/Ubah Data Pelaksanaan</strong> dan <strong>Selesaikan Disposal</strong> (dialog konfirmasi).</p>
+<h3>26.4 Sheet pelaksanaan</h3>
+<p>Field mengikuti metode, picker tanggal (tidak boleh melewati hari ini), foto bukti dari kamera/galeri.</p>
+<h3>26.5 Entry point</h3>
+<p>Beranda admin: menu <strong>Disposal</strong> dan kartu "perlu diproses" (langkah berikutnya: Catat pelaksanaan / Selesaikan disposal). Notifikasi membuka <code>asset_admin_detail_disposal</code>.</p>
+<h2 id="s27"><span class="sec-no">27</span>Mobile → API</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Aksi UI</th>
+<th>Method</th>
+<th>Endpoint</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Muat daftar</td>
+<td>GET</td>
+<td><code>asset/disposal?tab=</code></td>
+</tr>
+<tr>
+<td>Muat opsi</td>
+<td>GET</td>
+<td><code>asset/disposal/options</code></td>
+</tr>
+<tr>
+<td>Muat detail</td>
+<td>GET</td>
+<td><code>asset/disposal/{id}</code></td>
+</tr>
+<tr>
+<td>Submit keputusan</td>
+<td>POST</td>
+<td><code>asset/disposal</code></td>
+</tr>
+<tr>
+<td>Simpan pelaksanaan</td>
+<td>POST</td>
+<td><code>asset/disposal/{id}/pelaksanaan</code></td>
+</tr>
+<tr>
+<td>Selesaikan</td>
+<td>POST</td>
+<td><code>asset/disposal/{id}/selesai</code></td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="s28"><span class="sec-no">28</span>API → Mobile</h2>
+<p>Respons dipetakan ke <code>AssetDisposalRecord</code>, <code>Page</code>, <code>Options</code>. Daftar mengirim data datar, detail mengirim grup; model menangani keduanya. 422 tampil snackbar warning, lainnya error; sukses menutup halaman dengan pesan dan memuat ulang daftar/ringkasan.</p>
+<h2 id="s29"><span class="sec-no">29</span>Mapping Mobile → API → Database</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Field UI</th>
+<th>Field API</th>
+<th>Kolom DB</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Aset terpilih</td>
+<td><code>id_asset_data</code></td>
+<td><code>id_asset_data</code></td>
+</tr>
+<tr>
+<td>Alasan</td>
+<td><code>alasan_disposal</code></td>
+<td><code>alasan_disposal</code></td>
+</tr>
+<tr>
+<td>Metode</td>
+<td><code>metode_disposal</code></td>
+<td><code>metode_disposal</code></td>
+</tr>
+<tr>
+<td>Nilai sisa</td>
+<td><code>nilai_sisa</code></td>
+<td><code>nilai_sisa</code></td>
+</tr>
+<tr>
+<td>Tanggal pelaksanaan</td>
+<td><code>tgl_pelaksanaan</code></td>
+<td><code>tgl_pelaksanaan</code></td>
+</tr>
+<tr>
+<td>Pembeli / Harga jual</td>
+<td><code>pembeli</code> / <code>harga_jual</code></td>
+<td><code>pembeli</code> / <code>harga_jual</code></td>
+</tr>
+<tr>
+<td>Penerima donasi</td>
+<td><code>penerima_donasi</code></td>
+<td><code>penerima_donasi</code></td>
+</tr>
+<tr>
+<td>Cara pemusnahan</td>
+<td><code>metode_pemusnahan</code></td>
+<td><code>metode_pemusnahan</code></td>
+</tr>
+<tr>
+<td>Foto bukti</td>
+<td><code>file_bukti</code></td>
+<td><code>file_bukti</code> (key object)</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="s30"><span class="sec-no">30</span>Mapping Database → API → Mobile</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Kolom DB</th>
+<th>Field API</th>
+<th>Tampil di</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>status</code>, <code>tgl_pelaksanaan</code></td>
+<td><code>status</code>, <code>pelaksanaan_tercatat</code></td>
+<td>Badge fase</td>
+</tr>
+<tr>
+<td><code>file_bukti</code></td>
+<td><code>pelaksanaan.file_bukti_url</code></td>
+<td>Gambar bukti di detail</td>
+</tr>
+<tr>
+<td><code>user_selesai</code>, <code>tgl_selesai</code></td>
+<td><code>penyelesaian.*</code></td>
+<td>Bagian penyelesaian</td>
+</tr>
+<tr>
+<td><code>harga_perolehan</code>, <code>tgl_perolehan</code></td>
+<td><code>asset.riwayat.*</code></td>
+<td>Kartu riwayat</td>
+</tr>
+</tbody>
+</table></div>
+<div class="group-divider" id="g5"><span>Validasi, Error &amp; Keamanan</span></div><h2 id="s31"><span class="sec-no">31</span>Validation</h2>
+<h3>31.1 Mobile</h3>
+<p>Alasan dan metode wajib; nilai sisa angka tidak negatif; pada pelaksanaan: field metode, tanggal, dan bukti wajib.</p>
+<h3>31.2 Backend</h3>
+<p>Aturan Laravel: <code>id_asset_data</code> wajib, <code>alasan_disposal</code> wajib ≤255, <code>metode_disposal</code> ∈ tiga nilai, <code>nilai_sisa</code> numerik ≥ 0, <code>tgl_pelaksanaan</code> <code>Y-m-d</code>, <code>harga_jual</code> numerik ≥ 0. Aturan bisnis di model (§9).</p>
+<h3>31.3 Database</h3>
+<p>Enum <code>metode_disposal</code>, <code>status</code>; FK aset dan gudang.</p>
+<h2 id="s32"><span class="sec-no">32</span>Error Handling</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Kondisi</th>
+<th>Kode</th>
+<th>Contoh pesan</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Validasi request</td>
+<td>422</td>
+<td>"Alasan disposal wajib diisi."</td>
+</tr>
+<tr>
+<td>Aturan bisnis</td>
+<td>422 <code>BUSINESS_RULE_VIOLATION</code></td>
+<td>"Data pelaksanaan disposal belum dicatat."</td>
+</tr>
+<tr>
+<td>Bukan admin</td>
+<td>403</td>
+<td>"Pengguna tidak memiliki akses admin asset."</td>
+</tr>
+<tr>
+<td>Tidak ditemukan</td>
+<td>404</td>
+<td>"Disposal tidak ditemukan."</td>
+</tr>
+<tr>
+<td>Sistem</td>
+<td>500 <code>SYSTEM_ERROR</code></td>
+<td>Pesan umum</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="s33"><span class="sec-no">33</span>Audit Trail</h2>
+<p><code>user_input</code>/<code>tgl_input</code> = keputusan, <code>user_update</code>/<code>tgl_update</code> = pelaksanaan terakhir, <code>user_selesai</code>/<code>tgl_selesai</code> = penyelesaian (format <code>nik - nama</code>). <code>asset_log</code> <code>disposal_gudang</code> saat selesai.</p>
+<h2 id="s34"><span class="sec-no">34</span>Notification</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Event</th>
+<th>Penerima</th>
+<th>Isi</th>
+<th>Rute mobile</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>disposal.selesai</code></td>
+<td>Seluruh admin asset</td>
+<td>"Disposal {no_trx} selesai: {aset} ({metode}) telah dihapus dari daftar asset aktif."</td>
+<td><code>asset_admin_detail_disposal</code></td>
+</tr>
+</tbody>
+</table></div>
+<p>Pencatatan pelaksanaan tidak mengirim notifikasi. Notifikasi dikirim setelah transaksi commit.</p>
+<h2 id="s35"><span class="sec-no">35</span>Security</h2>
+<p>JWT; semua endpoint admin-only; filter <code>id_company</code>; transaksi + <code>lockForUpdate</code>; bukti diunggah ke bucket MinIO privat lewat <code>Asset_c::uploadAssetImage</code> (<code>AssetImageStorage</code>): hanya JPEG/PNG/WebP valid, maks 5 MB dan 25 megapiksel; key memuat <code>id_company</code> dan <code>id_karyawan</code> dari JWT; URL bukti berupa presigned URL berumur singkat (lihat <code>dokumentasi-minio-object-storage.md</code>).</p>
+<div class="group-divider" id="g6"><span>Manual Book</span></div><h2 id="s36"><span class="sec-no">36</span>Manual Book User/Admin</h2>
+<h3>A. Membuat keputusan disposal</h3>
+<ol>
+<li>Beranda Asset → <strong>Disposal</strong> → tombol <strong>+</strong>.</li>
+<li>Pilih aset; tinjau usia, harga perolehan, jumlah perbaikan dan klaim.</li>
+<li><strong>Lanjut</strong> → isi alasan, pilih metode, (opsional) nilai sisa dan catatan → <strong>Submit Keputusan</strong>.</li>
+</ol>
+<h3>B. Mencatat pelaksanaan</h3>
+<ol>
+<li>Setelah disposal fisik selesai, buka transaksi di tab <strong>Menunggu</strong>.</li>
+<li><strong>Catat Pelaksanaan</strong>: isi field sesuai metode, tanggal, dan foto bukti → <strong>Simpan</strong>.</li>
+<li>Data dapat diubah lagi lewat <strong>Ubah Data Pelaksanaan</strong> sebelum diselesaikan.</li>
+</ol>
+<h3>C. Menyelesaikan disposal</h3>
+<p><strong>Selesaikan Disposal</strong> → baca konfirmasi → konfirmasi. Aset berstatus DIHAPUS dan hilang dari daftar aktif.</p>
+<h2 id="s37"><span class="sec-no">37</span>Kondisi Button</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Tombol</th>
+<th>Syarat</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Catat / Ubah Data Pelaksanaan</td>
+<td><code>status = proses</code> (<code>aksi.pelaksanaan</code>)</td>
+</tr>
+<tr>
+<td>Selesaikan Disposal</td>
+<td><code>status = proses</code> dan pelaksanaan tercatat (<code>aksi.selesai</code>)</td>
+</tr>
+<tr>
+<td>Lanjut (halaman buat)</td>
+<td>Satu aset dipilih</td>
+</tr>
+</tbody>
+</table></div>
+<div class="group-divider" id="g7"><span>QA &amp; Risiko</span></div><h2 id="s38"><span class="sec-no">38</span>Testing Scenario</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>No</th>
+<th>Skenario</th>
+<th>Hasil</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>T-01</td>
+<td>Aset karyawan / tersedia / tidak ada</td>
+<td>Ditolak</td>
+</tr>
+<tr>
+<td>T-02</td>
+<td>Alasan kosong, metode salah, nilai sisa negatif</td>
+<td>Ditolak</td>
+</tr>
+<tr>
+<td>T-03</td>
+<td>Keputusan valid</td>
+<td><code>PML04-…</code>, aset <code>menunggu_disposal</code>, hilang dari opsi</td>
+</tr>
+<tr>
+<td>T-04</td>
+<td>Pelaksanaan tanpa pembeli/harga/penerima/cara/bukti/tanggal</td>
+<td>Ditolak sesuai metode</td>
+</tr>
+<tr>
+<td>T-05</td>
+<td>Tanggal pelaksanaan besok</td>
+<td>Ditolak</td>
+</tr>
+<tr>
+<td>T-06</td>
+<td>Perbarui tanpa bukti baru</td>
+<td>Bukti lama dipertahankan</td>
+</tr>
+<tr>
+<td>T-07</td>
+<td>Field metode lain ikut dikirim</td>
+<td>Dikosongkan</td>
+</tr>
+<tr>
+<td>T-08</td>
+<td>Selesai sebelum pelaksanaan</td>
+<td>Ditolak</td>
+</tr>
+<tr>
+<td>T-09</td>
+<td>Selesai valid</td>
+<td>Aset <code>disposed</code>, <code>asset_log</code>, transaksi <code>selesai</code></td>
+</tr>
+<tr>
+<td>T-10</td>
+<td>Ubah/selesai ulang setelah selesai</td>
+<td>Ditolak</td>
+</tr>
+<tr>
+<td>T-11</td>
+<td>Status aset berubah di luar alur</td>
+<td>Ditolak</td>
+</tr>
+<tr>
+<td>T-12</td>
+<td>Alur penuh via route; non-admin</td>
+<td>200; 403</td>
+</tr>
+</tbody>
+</table></div>
+<p>Cakupan otomatis: API 7 test, mobile 13 test (teks id/en, parsing, payload, bloc, detail 320/400 px, konfirmasi selesai, validasi sheet, alur buat).</p>
+<h2 id="s39"><span class="sec-no">39</span>Temuan Ketidaksesuaian</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>ID</th>
+<th>Temuan</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>INC-01</td>
+<td>Dokumen bisnis tidak menyebut batasan "hanya aset gudang"; implementasi menegakkannya</td>
+</tr>
+<tr>
+<td>INC-02</td>
+<td>Dokumen bisnis menyebut tahap pelaksanaan per metode sebagai langkah; implementasi memakai satu tabel dengan kolom per metode dan penanda <code>tgl_pelaksanaan</code></td>
+</tr>
+<tr>
+<td>INC-03</td>
+<td>Dokumen menyebut "memindahkan data ke arsip"; implementasi mengarsipkan lewat status <code>disposed</code> (tanpa tabel arsip terpisah)</td>
+</tr>
+<tr>
+<td>INC-04</td>
+<td>PML01 (hasil 5), PML02 (tidak bisa diperbaiki/unit lama diganti), dan PML03 (ditolak) hanya mencatat nama tabel <code>asset_trx_disposal</code>; <strong>transaksi disposal tidak dibuat otomatis</strong></td>
+</tr>
+<tr>
+<td>INC-05</td>
+<td>Tidak ada pembatalan disposal dari <code>menunggu_disposal</code></td>
+</tr>
+<tr>
+<td>INC-06</td>
+<td>Bukti hanya gambar; dokumen PDF belum didukung</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="s40"><span class="sec-no">40</span>Edge Case</h2>
+<ul>
+<li>Dua admin memilih aset yang sama: yang kedua gagal karena aset sudah <code>menunggu_disposal</code>.</li>
+<li>Status aset berubah antara keputusan dan penyelesaian: penyelesaian ditolak.</li>
+<li>Harga jual berformat koma (<code>1500,50</code>): dinormalisasi di mobile sebelum dikirim.</li>
+<li>Tabel PML02/PML03 belum ada: riwayat menampilkan 0 tanpa error.</li>
+</ul>
+<h2 id="s41"><span class="sec-no">41</span>Potential Bug / Technical Risk</h2>
+<h3>RISK-001 — Skema dari SQL manual (TINGGI)</h3>
+<p>Endpoint gagal bila <code>sql-pml04-disposal.sql</code> belum dijalankan. Jalankan setelah SQL PML01 gudang, PML03, dan PML02 (blok enum menulis ulang daftar penuh).</p>
+<h3>RISK-002 — Tidak ada pembatalan (SEDANG)</h3>
+<p>Keputusan yang salah mengunci aset di <code>menunggu_disposal</code>; perbaikan membutuhkan intervensi manual di database.</p>
+<h3>RISK-003 — Penyelesaian tidak dapat dibatalkan (SEDANG)</h3>
+<p>Dialog konfirmasi memitigasi di UI; di API tidak ada rollback.</p>
+<h3>RISK-004 — Bukti lama di disk lokal (RENDAH)</h3>
+<p>Bukti baru disimpan di object storage. Bukti lama di <code>UPLOAD_DIR</code> tetap terbaca lewat fallback URL lokal. Object lama tidak dihapus saat bukti diganti; object baru yang yatim dibersihkan otomatis bila transaksi gagal.</p>
+<h3>RISK-005 — Kapasitas penomoran 999/bulan (RENDAH)</h3>
+<p>Batas 999 transaksi per bulan per perusahaan.</p>
+<div class="group-divider" id="g8"><span>Referensi Developer</span></div><h2 id="s42"><span class="sec-no">42</span>Dependency</h2>
+<p><code>Asset_m</code>/<code>Asset_c</code>, <code>AssetImageStorage</code>, <code>AssetNotification</code>, <code>AssetPemeliharaanKaryawan_m</code> (format tanggal), tabel <code>asset_data</code>, <code>asset_kategori_m</code>, <code>asset_lokasi_m</code>, <code>asset_log</code>; <code>asset_trx_perbaikan_item</code> dan <code>asset_trx_garansi_item</code> (riwayat, opsional).</p>
+<h2 id="s43"><span class="sec-no">43</span>Source Code Reference</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Area</th>
+<th>Lokasi</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Model</td>
+<td><code>API/app/Models/Asset/AssetDisposal_m.php</code></td>
+</tr>
+<tr>
+<td>Controller</td>
+<td><code>API/app/Http/Controllers/Asset/Admin/AssetAdminDisposal_c.php</code></td>
+</tr>
+<tr>
+<td>Route</td>
+<td><code>API/routes/modules/asset/RouteAsset.php</code></td>
+</tr>
+<tr>
+<td>SQL</td>
+<td><code>Claude outputs/sql-pml04-disposal.sql</code></td>
+</tr>
+<tr>
+<td>Test API</td>
+<td><code>API/tests/Asset/AssetDisposalTest.php</code></td>
+</tr>
+<tr>
+<td>Mobile UI</td>
+<td><code>MOBILE/lib/UI/Modul/Asset/Pemeliharaan/Disposal/</code></td>
+</tr>
+<tr>
+<td>Test mobile</td>
+<td><code>MOBILE/test/asset/asset_disposal_test.dart</code></td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="s44"><span class="sec-no">44</span>Developer Notes</h2>
+<ul>
+<li>Desain disederhanakan dari struktur header+item: satu aset per transaksi, satu tabel.</li>
+<li><code>mutateAssetTrx</code> menerima event <code>null</code> untuk langkah tanpa notifikasi.</li>
+<li><code>pelaksanaanFields</code> dipakai ulang oleh <code>selesai</code> untuk memastikan data tetap lengkap.</li>
+<li>Teks UI memakai <code>AssetDisposalText.t(key)</code>; kunci dinamis: <code>fase_*</code>, <code>hint_*</code>, <code>metode_*</code>, <code>bukti_*</code>, <code>tgl_pelaksanaan_*</code>, <code>aksi_*</code>.</li>
+</ul>
+<h2 id="s45"><span class="sec-no">45</span>End-to-End Traceability</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Kebutuhan</th>
+<th>Rule</th>
+<th>API</th>
+<th>Mobile</th>
+<th>DB</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Hanya aset rusak di gudang</td>
+<td>BR-001</td>
+<td>API-003</td>
+<td>Halaman buat</td>
+<td><code>asset_data.status_asset</code>, <code>pemegang_asset</code></td>
+</tr>
+<tr>
+<td>Bukti wajib</td>
+<td>BR-005</td>
+<td>API-004</td>
+<td>Sheet pelaksanaan</td>
+<td><code>file_bukti</code></td>
+</tr>
+<tr>
+<td>Status perantara</td>
+<td>BR-003</td>
+<td>API-003</td>
+<td>Badge Menunggu</td>
+<td><code>asset_data.status_asset = menunggu_disposal</code></td>
+</tr>
+<tr>
+<td>Arsip bukan hapus</td>
+<td>BR-008</td>
+<td>API-005</td>
+<td>Tab Selesai</td>
+<td><code>status = selesai</code>, <code>disposed</code></td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="s46"><span class="sec-no">46</span>Ringkasan Database Impact</h2>
+<p>Tabel <code>asset_trx_disposal</code> dibuat ulang (tabel lama <code>asset_trx_disposal</code> dan <code>_item</code> di-drop bila kosong). <code>asset_data.status_asset</code> +<code>menunggu_disposal</code>; <code>asset_log.jenis_log</code> +<code>disposal_gudang</code>.</p>
+<h2 id="s47"><span class="sec-no">47</span>Checklist Implementasi</h2>
+<h3>Database</h3>
+<ul>
+<li class="task done">DBML diperbarui</li>
+<li class="task done">SQL manual + guard + rollback</li>
+<li class="task">SQL dijalankan di setiap environment</li>
+</ul>
+<h3>Backend</h3>
+<ul>
+<li class="task done">Model, controller, route, notifikasi, pengecualian aset <code>disposed</code></li>
+<li class="task done">Test otomatis</li>
+</ul>
+<h3>Mobile</h3>
+<ul>
+<li class="task done">Daftar, buat, detail, sheet keputusan dan pelaksanaan</li>
+<li class="task done">Kartu beranda admin, rute notifikasi, teks id/en</li>
+<li class="task done">Test otomatis</li>
+</ul>
+<h3>Documentation</h3>
+<ul>
+<li class="task done">Dokumen ini</li>
+</ul>
+<h2 id="s48"><span class="sec-no">48</span>Changelog</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Versi</th>
+<th>Tanggal</th>
+<th>Perubahan</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1.0</td>
+<td>8 Okt 2026</td>
+<td>Dokumen awal PML04</td>
+</tr>
+<tr>
+<td>1.1</td>
+<td>12 Okt 2026</td>
+<td>Sinkronisasi dengan kode: bukti kini disimpan di object storage MinIO (RISK-004 diturunkan ke RENDAH); path UI/model mobile mengikuti struktur folder baru; berkas <code>AssetDisposalProsesWidgets</code> dan <code>AssetFotoPreview</code> dicatat. Perbaikan 422 vs 500 pada controller Asset (import <code>InvalidArgumentException</code>/<code>Throwable</code>) tidak mengubah kontrak API</td>
+</tr>
+</tbody>
+</table></div>
+    </article>
+
+    <footer>Dokumentasi Disposal Asset v1.0 · 8 Oktober 2026 · Disusun dari source lokal API (Lumen) &amp; MOBILE (Flutter). Contoh ID dan nama pada payload adalah data sintetis.</footer>
+  </main>
+</div>
+<button class="to-top" id="to-top" type="button" aria-label="Kembali ke atas">↑</button>
+
+<script>
+(function(){
+  var search=document.getElementById('nav-search');
+  var navs=document.querySelectorAll('.nav');
+  search.addEventListener('input',function(){
+    var q=search.value.trim().toLowerCase();
+    navs.forEach(function(nav){
+      nav.querySelectorAll('.nav-group').forEach(function(g){
+        var any=false;
+        g.querySelectorAll('a').forEach(function(a){
+          var hit=!q||a.textContent.toLowerCase().indexOf(q)>-1;
+          a.hidden=!hit; if(hit) any=true;
+        });
+        g.hidden=!any;
+      });
+    });
+  });
+  var links={};
+  document.querySelectorAll('#nav a').forEach(function(a){links[a.dataset.sec]=a;});
+  var current=null;
+  if('IntersectionObserver' in window){
+    var io=new IntersectionObserver(function(entries){
+      entries.forEach(function(e){
+        if(e.isIntersecting){
+          if(current) current.classList.remove('active');
+          current=links[e.target.id];
+          if(current){current.classList.add('active');var nav=current.closest('.nav');var top=current.offsetTop-nav.offsetTop;if(top<nav.scrollTop||top>nav.scrollTop+nav.clientHeight-30){nav.scrollTop=top-nav.clientHeight/2;}}
+        }
+      });
+    },{rootMargin:'0px 0px -75% 0px'});
+    document.querySelectorAll('.doc h2[id]').forEach(function(h){io.observe(h);});
+  }
+  document.querySelectorAll('.mobile-toc a').forEach(function(a){
+    a.addEventListener('click',function(){a.closest('details').open=false;});
+  });
+  document.getElementById('to-top').addEventListener('click',function(){window.scrollTo({top:0});});
+})();
+</script>
+<script type="module">
+// Fallback renderer: hanya jalan bila viewer belum merender diagram (mis. file dibuka langsung).
+const blocks=[...document.querySelectorAll('pre.mermaid')].filter(function(el){return !el.hasAttribute('data-claude-mermaid-claimed');});
+if(blocks.length){
+  blocks.forEach(function(el){el.setAttribute('data-claude-mermaid-claimed','1');el.dataset.src=el.textContent;});
+  const {default:mermaid}=await import("https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs");
+  const media=window.matchMedia('(prefers-color-scheme: dark)');
+  const render=async function(){
+    const css=getComputedStyle(document.documentElement);
+    const v=function(n){return css.getPropertyValue(n).trim();};
+    mermaid.initialize({startOnLoad:false,securityLevel:'strict',theme:'base',fontFamily:'inherit',
+      themeVariables:{background:v('--surface'),primaryColor:v('--accent-soft'),primaryTextColor:v('--ink'),
+        primaryBorderColor:v('--accent'),lineColor:v('--muted'),secondaryColor:v('--surface-2'),tertiaryColor:v('--surface'),
+        textColor:v('--ink'),mainBkg:v('--accent-soft'),nodeBorder:v('--accent'),clusterBkg:v('--surface-2'),
+        noteBkgColor:v('--surface-2'),noteTextColor:v('--ink'),noteBorderColor:v('--line'),
+        actorBkg:v('--accent-soft'),actorBorder:v('--accent'),actorTextColor:v('--ink'),actorLineColor:v('--muted'),
+        signalColor:v('--ink-2'),signalTextColor:v('--ink'),labelBoxBkgColor:v('--surface-2'),labelTextColor:v('--ink'),
+        edgeLabelBackground:v('--surface'),attributeBackgroundColorOdd:v('--surface'),attributeBackgroundColorEven:v('--surface-2')}});
+    blocks.forEach(function(el){el.removeAttribute('data-processed');el.textContent=el.dataset.src;});
+    try{await mermaid.run({nodes:blocks});}catch(e){console.error(e);}
+  };
+  render();
+  if(media.addEventListener) media.addEventListener('change',render);
+}
+</script>
+<script>
+// Kembali ke index lokal bila dibuka dari komputer, ke index artifact bila dibuka dari claude.ai.
+(function(){var h=location.hostname;var art=location.protocol!=='file:'&&/claude/i.test(h);
+if(art){document.querySelectorAll('a.back').forEach(function(a){a.href='https://claude.ai/artifact/X39UeaJRpBKwqFjswGNqip';a.target='_blank';a.rel='noopener';});
+document.querySelectorAll('.dl').forEach(function(d){d.hidden=true;});}})();
+</script>

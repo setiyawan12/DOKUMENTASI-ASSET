@@ -1,0 +1,1531 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>MinIO Object Storage</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap">
+<style>
+:root{
+  --ground:#F3F5F9; --surface:#FFFFFF; --surface-2:#EAEEF5; --ink:#162033; --ink-2:#3A4559; --muted:#657089;
+  --line:#D9DFEA; --accent:#1F5AA6; --accent-soft:#E3ECF8; --accent-ink:#163F75;
+  --wait:#B45F00; --wait-bg:#FFE9C7; --draft:#0078A8; --draft-bg:#D6F1FA;
+  --bad:#C22F2F; --bad-bg:#FDE1E1; --done:#157A41; --done-bg:#D9F2E3; --neutral:#4E5A70; --neutral-bg:#E6EAF1;
+  --code-bg:#0F1A2C; --code-ink:#DCE6F5; --code-muted:#8FA3C2;
+  --shadow:0 1px 2px rgba(22,32,51,.06),0 8px 24px rgba(22,32,51,.06);
+  --font:"Plus Jakarta Sans",ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;
+  --mono:"JetBrains Mono",ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  color-scheme:dark;
+  --ground:#0E1420; --surface:#151D2C; --surface-2:#1C2638; --ink:#E7ECF5; --ink-2:#C3CBDA; --muted:#8E99AF;
+  --line:#28334A; --accent:#7FAEF0; --accent-soft:#1B2A45; --accent-ink:#B8D2F7;
+  --wait:#FFB861; --wait-bg:#3A2A12; --draft:#6CD3F5; --draft-bg:#113442; --bad:#FF8A8A; --bad-bg:#3D1C1F;
+  --done:#6FD69C; --done-bg:#15321F; --neutral:#B7C1D3; --neutral-bg:#243047;
+  --code-bg:#0A101B; --code-ink:#DCE6F5; --code-muted:#7F93B3; --shadow:0 1px 2px rgba(0,0,0,.3),0 8px 24px rgba(0,0,0,.25);
+}}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --ground:#0E1420; --surface:#151D2C; --surface-2:#1C2638; --ink:#E7ECF5; --ink-2:#C3CBDA; --muted:#8E99AF;
+  --line:#28334A; --accent:#7FAEF0; --accent-soft:#1B2A45; --accent-ink:#B8D2F7;
+  --wait:#FFB861; --wait-bg:#3A2A12; --draft:#6CD3F5; --draft-bg:#113442; --bad:#FF8A8A; --bad-bg:#3D1C1F;
+  --done:#6FD69C; --done-bg:#15321F; --neutral:#B7C1D3; --neutral-bg:#243047;
+  --code-bg:#0A101B; --code-ink:#DCE6F5; --code-muted:#7F93B3; --shadow:0 1px 2px rgba(0,0,0,.3),0 8px 24px rgba(0,0,0,.25);
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth;scroll-padding-top:24px}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+body{background:var(--ground);color:var(--ink);font-family:var(--font);font-size:15px;line-height:1.65;padding-inline:16px}
+a{color:var(--accent)}
+a:focus-visible,button:focus-visible,input:focus-visible,summary:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:4px}
+
+.shell{max-width:1320px;margin:0 auto;display:grid;grid-template-columns:270px minmax(0,1fr);gap:40px;padding-block:28px 80px}
+@media (max-width:960px){.shell{grid-template-columns:minmax(0,1fr);gap:20px}}
+
+/* Navigasi */
+.sidebar{position:sticky;top:calc(env(safe-area-inset-top,0px) + 16px);align-self:start;max-height:calc(100vh - 32px);display:flex;flex-direction:column;gap:12px}
+@media (max-width:960px){.sidebar{display:none}}
+.back{font-size:13px;font-weight:600;text-decoration:none}
+.back-mobile{display:none;margin:0 0 8px}
+@media (max-width:960px){.back-mobile{display:block}}
+.brand{display:flex;align-items:center;gap:10px;font-weight:700;font-size:14px}
+.brand-mark{height:30px;padding-inline:8px;border-radius:8px;background:var(--accent);color:var(--surface);display:grid;place-items:center;font-family:var(--mono);font-size:12px;font-weight:600}
+.search{width:100%;padding:9px 12px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--ink);font:inherit;font-size:13.5px}
+.nav{overflow-y:auto;padding-right:6px;display:flex;flex-direction:column;gap:14px}
+.nav-group p{margin:0 0 4px;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:700}
+.nav a{display:flex;gap:10px;padding:4px 8px;border-radius:6px;text-decoration:none;color:var(--ink-2);font-size:13.5px;line-height:1.4}
+.nav a span{font-family:var(--mono);font-size:11.5px;color:var(--muted);padding-top:1px;min-width:18px}
+.nav a:hover{background:var(--surface-2)}
+.nav a.active{background:var(--accent-soft);color:var(--accent-ink);font-weight:600}
+.nav a.active span{color:var(--accent)}
+.mobile-toc{display:none;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px 14px}
+.mobile-toc summary{font-weight:700;cursor:pointer}
+.mobile-toc .nav{max-height:60vh;margin-top:10px}
+@media (max-width:960px){.mobile-toc{display:block}}
+
+main{min-width:0}
+
+/* Header bergaya label asset */
+.hero{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:28px;align-items:end;padding-block:8px 28px;border-bottom:1px solid var(--line)}
+@media (max-width:760px){.hero{grid-template-columns:minmax(0,1fr)}}
+.eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:.06em;color:var(--accent);text-transform:uppercase;margin:0 0 8px}
+.hero h1{font-size:clamp(30px,5vw,46px);line-height:1.08;letter-spacing:-.02em;margin:0 0 12px;font-weight:800;text-wrap:balance}
+.hero .lede{max-width:62ch;color:var(--ink-2);margin:0;font-size:16px}
+.hero .lede code{font-family:var(--mono);font-size:.86em;background:var(--surface-2);padding:1px 5px;border-radius:5px}
+.tag{background:var(--surface);border:1px dashed var(--muted);border-radius:12px;padding:14px 16px;min-width:250px;font-family:var(--mono);font-size:12px;box-shadow:var(--shadow);position:relative}
+@media (max-width:760px){.tag{min-width:0}}
+.tag::before{content:"";position:absolute;left:14px;top:-7px;width:12px;height:12px;border-radius:50%;background:var(--ground);border:1px dashed var(--muted)}
+.tag dl{display:grid;grid-template-columns:auto 1fr;gap:4px 14px;margin:0}
+.tag dt{color:var(--muted)}
+.tag dd{margin:0;color:var(--ink);font-weight:500}
+.barcode{height:26px;margin-top:10px;background:repeating-linear-gradient(90deg,var(--ink) 0 2px,transparent 2px 4px,var(--ink) 4px 5px,transparent 5px 8px,var(--ink) 8px 11px,transparent 11px 12px);opacity:.75;border-radius:2px}
+.tag .trx{margin-top:4px;text-align:center;letter-spacing:.2em;font-size:11px;color:var(--ink-2)}
+
+/* Panel ringkas */
+.overview{display:grid;gap:18px;padding-block:28px 8px}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:22px}
+.panel h3{margin:0 0 4px;font-size:18px}
+.panel .sub{margin:0 0 18px;color:var(--muted);font-size:14px}
+.panel code{font-family:var(--mono);font-size:.86em;background:var(--surface-2);padding:1px 5px;border-radius:5px;overflow-wrap:anywhere}
+.three{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
+@media (max-width:760px){.three{grid-template-columns:minmax(0,1fr)}}
+.fact{border-left:3px solid var(--accent);padding:2px 0 2px 14px}
+.fact b{display:block;font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.fact p{margin:4px 0 0;font-size:14.5px}
+
+/* Lifecycle */
+.flow{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;align-items:stretch}
+@media (max-width:760px){.flow{grid-template-columns:minmax(0,1fr)}}
+.step{border:1px solid var(--line);border-radius:12px;padding:14px;background:var(--surface);display:flex;flex-direction:column;gap:6px}
+.step .who{font-size:11.5px;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.06em}
+.step p{margin:0;font-size:13.5px;color:var(--ink-2)}
+.step .db{font-family:var(--mono);font-size:11.5px;color:var(--muted);margin-top:auto;padding-top:8px;border-top:1px dashed var(--line)}
+.loop{margin-top:12px;display:flex;flex-wrap:wrap;gap:10px;align-items:center;padding:12px 14px;border-radius:12px;background:var(--bad-bg);color:var(--ink);font-size:13.5px}
+.loop strong{color:var(--bad)}
+
+.badge{display:inline-flex;align-items:center;gap:6px;padding:3px 10px;border-radius:999px;font-size:12.5px;font-weight:700;width:max-content}
+.badge::before{content:"";width:7px;height:7px;border-radius:50%;background:currentColor}
+.b-draft{background:var(--draft-bg);color:var(--draft)}
+.b-wait{background:var(--wait-bg);color:var(--wait)}
+.b-bad{background:var(--bad-bg);color:var(--bad)}
+.b-done{background:var(--done-bg);color:var(--done)}
+
+/* Peran */
+.roles{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+@media (max-width:900px){.roles{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media (max-width:520px){.roles{grid-template-columns:minmax(0,1fr)}}
+.role{border:1px solid var(--line);border-radius:12px;padding:14px 16px;background:var(--surface);display:flex;flex-direction:column;gap:8px}
+.role h4{margin:0;font-size:14.5px}
+.role p{margin:0;font-size:13px;color:var(--muted)}
+.role .links{display:flex;flex-wrap:wrap;gap:6px;margin-top:auto}
+.role .links a{font-family:var(--mono);font-size:11.5px;text-decoration:none;padding:2px 8px;border-radius:6px;background:var(--accent-soft);color:var(--accent-ink)}
+.role .links a:hover{background:var(--accent);color:var(--surface)}
+
+.attention{list-style:none;margin:0;padding:0;display:grid;gap:10px}
+.attention li{display:grid;grid-template-columns:72px minmax(0,1fr);gap:12px;align-items:start;font-size:14px}
+.sev{font-family:var(--mono);font-size:11px;font-weight:600;padding:2px 8px;border-radius:6px;margin-top:2px;text-align:center}
+.sev-h{background:var(--bad-bg);color:var(--bad)}
+.sev-m{background:var(--wait-bg);color:var(--wait)}
+
+/* Konten dokumen */
+.doc{padding-top:8px}
+.group-divider{margin:64px 0 0;display:flex;align-items:center;gap:14px;color:var(--accent);font-size:12px;font-weight:800;letter-spacing:.12em;text-transform:uppercase}
+.group-divider::after{content:"";flex:1;height:2px;background:var(--accent);opacity:.25}
+.doc h2{font-size:clamp(22px,3vw,27px);line-height:1.2;letter-spacing:-.01em;margin:40px 0 14px;display:flex;align-items:baseline;gap:14px;text-wrap:balance}
+.sec-no{font-family:var(--mono);font-size:14px;color:var(--accent);font-weight:600;padding:3px 8px;border:1px solid var(--accent);border-radius:6px;flex:none;transform:translateY(-3px)}
+.doc h3{font-size:18px;margin:30px 0 10px;text-wrap:balance}
+.doc h4{font-size:15.5px;margin:22px 0 8px}
+.doc p,.doc li{max-width:78ch;color:var(--ink-2)}
+.doc strong{color:var(--ink)}
+.doc hr{display:none}
+.doc code{font-family:var(--mono);font-size:.86em;background:var(--surface-2);padding:1px 5px;border-radius:5px;color:var(--ink);overflow-wrap:anywhere}
+.doc .chip{font-weight:600;border-radius:999px;padding:1px 8px}
+.doc .chip-draft{background:var(--draft-bg);color:var(--draft)}
+.doc .chip-wait{background:var(--wait-bg);color:var(--wait)}
+.doc .chip-bad{background:var(--bad-bg);color:var(--bad)}
+.doc .chip-done{background:var(--done-bg);color:var(--done)}
+.doc .chip-neutral{background:var(--neutral-bg);color:var(--neutral)}
+
+.table-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:12px;background:var(--surface);margin:14px 0 20px}
+table{border-collapse:collapse;width:100%;font-size:13.5px;font-variant-numeric:tabular-nums}
+th{text-align:left;background:var(--surface-2);color:var(--ink);font-weight:700;font-size:12.5px;letter-spacing:.02em;padding:10px 12px;border-bottom:1px solid var(--line);white-space:nowrap}
+td{padding:9px 12px;border-bottom:1px solid var(--line);vertical-align:top;color:var(--ink-2);min-width:90px}
+tr:last-child td{border-bottom:0}
+tbody tr:hover td{background:var(--accent-soft)}
+
+.code{position:relative;margin:14px 0 20px}
+.code-lang{position:absolute;top:8px;right:12px;font-family:var(--mono);font-size:10.5px;color:var(--code-muted);letter-spacing:.08em;text-transform:uppercase}
+.doc .code pre{background:var(--code-bg);color:var(--code-ink);border-radius:12px;padding:18px;overflow-x:auto;margin:0;font-size:12.8px;line-height:1.6}
+.doc .code pre code{background:none;color:inherit;padding:0;font-size:inherit;overflow-wrap:normal}
+.diagram{overflow-x:auto;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:18px;margin:14px 0 20px}
+.diagram pre{margin:0}
+.diagram pre.mermaid{font-family:var(--mono);font-size:12px;color:var(--muted);white-space:pre;text-align:center}
+.diagram pre.mermaid[data-processed]{color:inherit;white-space:normal}
+.diagram svg{max-width:100%;height:auto}
+
+.callout{border-radius:12px;padding:12px 16px;margin:14px 0;border:1px solid var(--line);background:var(--surface)}
+.callout p{margin:4px 0}
+.callout-warn{background:var(--wait-bg);border-color:transparent}
+.doc .callout-warn p,.doc .callout-warn strong{color:var(--ink)}
+.callout-note{border-left:3px solid var(--accent)}
+
+.doc .task{list-style:none;padding-left:4px}
+.task::before{content:"";display:inline-block;width:14px;height:14px;border:1.5px solid var(--muted);border-radius:4px;margin-right:10px;vertical-align:-2px}
+.task.done::before{background:var(--done);border-color:var(--done);box-shadow:inset 0 0 0 2px var(--surface)}
+footer{margin-top:64px;padding-top:18px;border-top:1px solid var(--line);color:var(--muted);font-size:13px}
+.to-top{position:fixed;right:16px;bottom:calc(env(safe-area-inset-bottom,0px) + 16px);width:40px;height:40px;border-radius:50%;border:1px solid var(--line);background:var(--surface);color:var(--ink);box-shadow:var(--shadow);cursor:pointer;font-size:16px}
+.doc pre{overflow-x:auto;background:var(--surface-2);border:1px solid var(--line);border-radius:10px;padding:14px 16px;margin:12px 0 18px;line-height:1.55}
+.doc pre code{background:none;padding:0;border-radius:0;font-size:12.5px;white-space:pre;overflow-wrap:normal}
+.sev-l{background:var(--draft-bg);color:var(--draft)}
+.three{grid-template-columns:repeat(auto-fit,minmax(200px,1fr))!important}
+.dl{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0 12px}.dl a{font-size:12px;font-weight:600;text-decoration:none;border:1px solid var(--line);border-radius:999px;padding:3px 10px;color:var(--ink);background:var(--surface)}.dl a:hover{border-color:var(--accent);color:var(--accent)}.dl[hidden]{display:none}
+</style>
+
+<div class="shell">
+  <aside class="sidebar" aria-label="Daftar isi">
+    <a class="back" href="index.html">← Semua dokumen</a>
+    <div class="dl" aria-label="Unduh dokumen"><a href="dokumentasi-minio-object-storage.html" download>⬇ HTML</a><a href="dokumentasi-minio-object-storage.md" download>⬇ Markdown</a></div>
+    <div class="brand"><span class="brand-mark">API</span>MinIO Object Storage</div>
+    <input class="search" id="nav-search" type="search" placeholder="Cari bagian… (mis. API, status)" aria-label="Cari bagian">
+    <nav class="nav" id="nav"><div class="nav-group"><p>Gambaran &amp; Konfigurasi</p><a href="#s1" data-sec="s1"><span>01</span>Informasi Dokumen</a><a href="#s2" data-sec="s2"><span>02</span>Quick Overview</a><a href="#s3" data-sec="s3"><span>03</span>Arsitektur</a><a href="#s4" data-sec="s4"><span>04</span>Konfigurasi</a></div><div class="nav-group"><p>Alur &amp; Perilaku</p><a href="#s5" data-sec="s5"><span>05</span>Format Key Object</a><a href="#s6" data-sec="s6"><span>06</span>Alur Upload</a><a href="#s7" data-sec="s7"><span>07</span>Alur Baca (Presigned URL)</a><a href="#s8" data-sec="s8"><span>08</span>Konsistensi Data dan Kompensasi</a><a href="#s9" data-sec="s9"><span>09</span>Penanganan Error</a></div><div class="nav-group"><p>Operasional &amp; Referensi</p><a href="#s10" data-sec="s10"><span>10</span>Keamanan</a><a href="#s11" data-sec="s11"><span>11</span>Panduan Operasional</a><a href="#s12" data-sec="s12"><span>12</span>Pengujian</a><a href="#s13" data-sec="s13"><span>13</span>Batasan dan Hal yang Belum Ada</a><a href="#s14" data-sec="s14"><span>14</span>Referensi Kode</a></div><div class="nav-group"><p>Fitur Baru</p><a href="#s15" data-sec="s15"><span>15</span>Memakai di Fitur Baru</a></div></nav>
+  </aside>
+
+  <main>
+    <p class="back-mobile"><a class="back" href="index.html">← Semua dokumen</a> <div class="dl" aria-label="Unduh dokumen"><a href="dokumentasi-minio-object-storage.html" download>⬇ HTML</a><a href="dokumentasi-minio-object-storage.md" download>⬇ Markdown</a></div></p>
+    <header class="hero">
+      <div>
+        <p class="eyebrow">Infrastruktur API · Dokumentasi Teknis</p>
+        <h1>MinIO Object Storage</h1>
+        <p class="lede">Foto dan bukti asset kini disimpan di bucket MinIO privat dan dibaca lewat presigned URL sementara. Dokumen ini menjelaskan konfigurasi, format key, alur upload dan baca, kompensasi saat gagal, serta panduan operasional. Fitur baru di luar asset cukup mendaftarkan modul di config lalu memanggil satu pintu (<a href="#s15">§15</a>). Seluruh isi diturunkan dari source code <code>API</code> (Lumen).</p>
+      </div>
+      <div class="tag" aria-label="Identitas dokumen">
+        <dl>
+          <dt>Modul</dt><dd>Asset (PML02–04)</dd><dt>Versi</dt><dd>1.0 · 9 Okt 2026</dd><dt>Stack</dt><dd>Lumen 10 · S3 SDK</dd><dt>Bucket</dt><dd>Privat</dd><dt>Test</dt><dd>21 (fake storage)</dd>
+        </dl>
+        <div class="barcode" aria-hidden="true"></div>
+        <div class="trx">asset/object</div>
+      </div>
+    </header>
+
+    <details class="mobile-toc">
+      <summary>Daftar isi</summary>
+      <nav class="nav"><div class="nav-group"><p>Gambaran &amp; Konfigurasi</p><a href="#s1" data-sec="s1"><span>01</span>Informasi Dokumen</a><a href="#s2" data-sec="s2"><span>02</span>Quick Overview</a><a href="#s3" data-sec="s3"><span>03</span>Arsitektur</a><a href="#s4" data-sec="s4"><span>04</span>Konfigurasi</a></div><div class="nav-group"><p>Alur &amp; Perilaku</p><a href="#s5" data-sec="s5"><span>05</span>Format Key Object</a><a href="#s6" data-sec="s6"><span>06</span>Alur Upload</a><a href="#s7" data-sec="s7"><span>07</span>Alur Baca (Presigned URL)</a><a href="#s8" data-sec="s8"><span>08</span>Konsistensi Data dan Kompensasi</a><a href="#s9" data-sec="s9"><span>09</span>Penanganan Error</a></div><div class="nav-group"><p>Operasional &amp; Referensi</p><a href="#s10" data-sec="s10"><span>10</span>Keamanan</a><a href="#s11" data-sec="s11"><span>11</span>Panduan Operasional</a><a href="#s12" data-sec="s12"><span>12</span>Pengujian</a><a href="#s13" data-sec="s13"><span>13</span>Batasan dan Hal yang Belum Ada</a><a href="#s14" data-sec="s14"><span>14</span>Referensi Kode</a></div><div class="nav-group"><p>Fitur Baru</p><a href="#s15" data-sec="s15"><span>15</span>Memakai di Fitur Baru</a></div></nav>
+    </details>
+
+    <section class="overview" aria-label="Ringkasan">
+      <div class="panel">
+        <h3>Ringkasan dalam 1 menit</h3>
+        <p class="sub">Kontrak API tidak berubah; aplikasi mobile tidak perlu diubah.</p>
+        <div class="three">
+          <div class="fact"><b>Upload</b><p>Gambar JPEG/PNG/WebP (base64 atau multipart) divalidasi dari isinya, lalu ditulis ke bucket privat dengan key acak.</p></div>
+          <div class="fact"><b>Simpan</b><p>Database hanya menyimpan <strong>key</strong> relatif. Key dibuat sekali dan dipakai tanpa diubah.</p></div>
+          <div class="fact"><b>Baca</b><p>Detail response berisi presigned URL (default 15 menit) di field <code>*_url</code>. Data lama tetap terbaca.</p></div>
+          <div class="fact"><b>Fitur baru</b><p>Daftarkan modul di config, lalu <code>ObjectStorageManager::for('modul')</code> untuk upload, URL, dan hapus. <a href="#s15">§15</a></p></div>
+        </div>
+      </div>
+      <div class="panel">
+        <h3>Mulai dari sini sesuai peran</h3>
+        <p class="sub">Lompat langsung ke bagian yang paling relevan.</p>
+        <div class="roles">
+          <div class="role"><h4>Developer Fitur Baru</h4><p>Cara memakai MinIO di modul selain asset.</p><div class="links"><a href="#s15">§15 Fitur baru</a><a href="#s3">§3</a><a href="#s4">§4 Modul</a></div></div>
+          <div class="role"><h4>DevOps / Server</h4><p>Variabel env, bucket, hak akses, TLS.</p><div class="links"><a href="#s4">§4 Konfigurasi</a><a href="#s11">§11 Operasional</a></div></div>
+          <div class="role"><h4>Backend Developer</h4><p>Komponen, format key, alur upload dan baca.</p><div class="links"><a href="#s3">§3</a><a href="#s5">§5 Key</a><a href="#s6">§6 Upload</a><a href="#s7">§7 Baca</a></div></div>
+          <div class="role"><h4>QA / Tester</h4><p>Test otomatis dan yang belum terverifikasi.</p><div class="links"><a href="#s9">§9 Error</a><a href="#s12">§12 Test</a><a href="#s13">§13 Batasan</a></div></div>
+          <div class="role"><h4>Technical Support</h4><p>Gejala error dan penyebabnya.</p><div class="links"><a href="#s11">§11 Troubleshooting</a><a href="#s8">§8 Object yatim</a></div></div>
+        </div>
+      </div>
+      <div class="panel">
+        <h3>Perlu perhatian</h3>
+        <p class="sub">Detail di <a href="#s13">§13</a>.</p>
+        <ul class="attention">
+          <li><span class="sev sev-m">SEDANG</span><span>Koneksi MinIO nyata belum diverifikasi otomatis; test memakai fake storage. <a href="#s12">§12</a></span></li>
+          <li><span class="sev sev-m">SEDANG</span><span>Tidak ada pembersihan otomatis object yatim. <a href="#s8">§8</a></span></li>
+          <li><span class="sev sev-l">RENDAH</span><span>Lapisan generik baru mendukung gambar saja (belum PDF/dokumen). <a href="#s13">§13</a></span></li>
+          <li><span class="sev sev-l">RENDAH</span><span><code>.env.example</code> belum memuat variabel MinIO. <a href="#s4">§4</a></span></li>
+        </ul>
+      </div>
+    </section>
+
+    <article class="doc">
+<div class="group-divider" id="g1"><span>Gambaran &amp; Konfigurasi</span></div>
+<h2 id="s1"><span class="sec-no">01</span>Informasi Dokumen</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Informasi</th>
+<th>Nilai</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Nama Fitur</td>
+<td>Penyimpanan file/foto ke MinIO (S3-compatible)</td>
+</tr>
+<tr>
+<td>Modul yang memakai</td>
+<td>Asset: Klaim Garansi (PML03), Perbaikan (PML02), Disposal (PML04)</td>
+</tr>
+<tr>
+<td>Backend</td>
+<td>Lumen ^10, PHP ^8.1</td>
+</tr>
+<tr>
+<td>Library</td>
+<td><code>aws/aws-sdk-php ^3</code>, <code>league/flysystem ^3</code>, <code>league/flysystem-aws-s3-v3 ^3</code></td>
+</tr>
+<tr>
+<td>Konfigurasi</td>
+<td><code>API/config/object_storage.php</code> + variabel <code>.env</code></td>
+</tr>
+<tr>
+<td>Kode utama</td>
+<td><code>app/Support/Storage/*</code> (termasuk <code>ObjectStorageManager</code> dan <code>ModuleImageStorage</code>), <code>app/Traits/TracksObjectUploads.php</code>, <code>app/Support/Asset/AssetImageStorage.php</code>, <code>app/Providers/ObjectStorageServiceProvider.php</code>, <code>app/Http/Controllers/Asset/Asset_c.php</code></td>
+</tr>
+<tr>
+<td>Test otomatis</td>
+<td><code>tests/Asset/AssetObjectStorageTest.php</code> (15 test) dan <code>tests/Storage/ObjectStorageManagerTest.php</code> (6 test); memakai fake storage, tidak butuh MinIO/SQL asli</td>
+</tr>
+<tr>
+<td>Mobile</td>
+<td>Tidak ada perubahan. Kontrak API tetap sama</td>
+</tr>
+<tr>
+<td>Status verifikasi</td>
+<td>⚠️ Koneksi ke MinIO nyata <strong>belum diverifikasi otomatis</strong>; test hanya memakai fake storage dan signing offline</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="s2"><span class="sec-no">02</span>Quick Overview</h2>
+<p>Sebelumnya foto asset disimpan di disk lokal server. Sekarang foto baru diunggah ke <strong>bucket MinIO privat</strong>. Database hanya menyimpan <strong>key object</strong> (path relatif di dalam bucket). Saat detail transaksi dibuka, API membuat <strong>presigned URL</strong> sementara (default 15 menit) dan mengirimkannya di field <code>*_url</code> yang sudah ada, sehingga aplikasi mobile tidak perlu diubah.</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Aspek</th>
+<th>Ringkasan</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Bucket</td>
+<td>Privat; akses baca hanya lewat presigned URL</td>
+</tr>
+<tr>
+<td>Format file</td>
+<td>JPEG, PNG, WebP (dideteksi dari isi file, bukan nama/ekstensi dari client)</td>
+</tr>
+<tr>
+<td>Input upload</td>
+<td>Base64 (mentah atau <code>data:image/...;base64,</code>) atau multipart</td>
+</tr>
+<tr>
+<td>Batas ukuran</td>
+<td>5 MB per gambar (default)</td>
+</tr>
+<tr>
+<td>Batas resolusi</td>
+<td>25.000.000 piksel (lebar × tinggi)</td>
+</tr>
+<tr>
+<td>Masa berlaku URL</td>
+<td>900 detik (default), boleh 1 s.d. 604800 detik</td>
+</tr>
+<tr>
+<td>Data lama</td>
+<td>Tetap terbaca (file lokal lewat URL <code>WEB</code> lama; object lama lewat key aslinya)</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="s3"><span class="sec-no">03</span>Arsitektur</h2>
+<pre><code>Mobile/Web ──(base64 / multipart)──► Controller Asset (Asset_c)
+                                         │  identitas dari JWT (ResolveContext)
+                                         ▼
+                                  AssetImageStorage
+                                  - validasi gambar (ukuran, MIME, piksel)
+                                  - susun key unik
+                                  - lacak key baru untuk kompensasi
+                                         ▼
+                              ObjectStorageService (interface)
+                                         ▼
+                              S3ObjectStorageService ──► MinIO bucket privat
+                                                         (Flysystem + AWS SDK)
+
+Baca:  detail response ─► AssetImageStorage::url() ─► presigned GET URL (offline signing)
+</code></pre>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Komponen</th>
+<th>Peran</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>ObjectStorageService</code></td>
+<td>Interface: <code>keyForUpload</code>, <code>uploadStream</code>, <code>readStream</code>, <code>exists</code>, <code>delete</code>, <code>temporaryUrl</code></td>
+</tr>
+<tr>
+<td><code>S3ObjectStorageService</code></td>
+<td>Implementasi S3/MinIO. Client dibuat <strong>lazy</strong> (hanya saat dipakai pertama kali)</td>
+</tr>
+<tr>
+<td><code>ObjectStorageConfigurationException</code></td>
+<td>Dilempar bila konfigurasi kosong atau tidak valid</td>
+</tr>
+<tr>
+<td><code>ObjectStorageManager</code></td>
+<td><strong>Pintu tunggal untuk fitur mana pun</strong>: <code>-&gt;for('&lt;modul&gt;')</code> mengembalikan layanan gambar milik modul tersebut (bagian 15)</td>
+</tr>
+<tr>
+<td><code>ModuleImageStorage</code></td>
+<td>Validasi gambar, susun key, upload, hapus, dan pembuatan URL untuk satu modul. Dipakai semua modul</td>
+</tr>
+<tr>
+<td><code>TracksObjectUploads</code> (trait)</td>
+<td>Melacak object yang baru diunggah dalam satu request dan menghapusnya bila proses gagal</td>
+</tr>
+<tr>
+<td><code>AssetImageStorage</code></td>
+<td>Modul <code>asset</code> di atas <code>ModuleImageStorage</code>: submodul garansi/perbaikan/disposal, key historis <code>asset/object/...</code>, dan fallback URL file lokal lama</td>
+</tr>
+<tr>
+<td><code>ObjectStorageServiceProvider</code></td>
+<td>Mendaftarkan tiga singleton (service, manager, asset) ke container; dipanggil dari <code>bootstrap/app.php</code></td>
+</tr>
+</tbody>
+</table></div>
+<p>Karena client dibuat lazy, konfigurasi MinIO yang kosong <strong>tidak mengganggu</strong> request non-asset maupun pembacaan data asset lama. Hanya <strong>upload baru</strong> yang gagal.</p>
+<h3>Alur file yang dijalankan</h3>
+<p><strong>A. Saat aplikasi menyala (sekali, tanpa menghubungi MinIO)</strong></p>
+<div class="diagram"><pre class="mermaid">flowchart TD
+    A[&quot;.env&lt;br/&gt;MINIO_* dan NAME_APPLICATION&quot;] --&gt; B[&quot;config/object_storage.php&lt;br/&gt;endpoint, bucket, batas, daftar modul&quot;]
+    C[&quot;bootstrap/app.php&lt;br/&gt;baris 109&quot;] --&gt; D[&quot;ObjectStorageServiceProvider&quot;]
+    B --&gt; D
+    D --&gt; E[&quot;ObjectStorageService&lt;br/&gt;S3ObjectStorageService&quot;]
+    D --&gt; F[&quot;ObjectStorageManager&quot;]
+    D --&gt; G[&quot;AssetImageStorage&quot;]
+    E -. &quot;client S3 baru dibuat saat pertama dipakai&quot; .-&gt; H[&quot;MinIO&quot;]</pre></div>
+<p><strong>B. Upload file</strong> (contoh: ajukan klaim garansi dengan foto tanda terima)</p>
+<div class="diagram"><pre class="mermaid">sequenceDiagram
+    participant C as Mobile/Web
+    participant M as JwtAuth +&lt;br/&gt;ResolveContext
+    participant K as Controller&lt;br/&gt;Asset_c
+    participant T as TracksObject&lt;br/&gt;Uploads
+    participant I as AssetImage&lt;br/&gt;Storage
+    participant S as S3Object&lt;br/&gt;StorageService
+    participant O as MinIO
+    participant D as Model +&lt;br/&gt;database
+
+    C-&gt;&gt;M: POST garansi/id/ajukan&lt;br/&gt;(foto base64 atau multipart)
+    M-&gt;&gt;M: cek JWT, isi ctx.id_company&lt;br/&gt;dan ctx.id_karyawan
+    M-&gt;&gt;K: request + ctx
+    K-&gt;&gt;T: uploadAssetImage lalu&lt;br/&gt;uploadTrackedImage
+    T-&gt;&gt;T: uploadIdentity, validasi&lt;br/&gt;company dan karyawan dari ctx
+    T-&gt;&gt;I: upload(foto, company,&lt;br/&gt;karyawan, track, submodul)
+    I-&gt;&gt;I: cek ukuran, MIME asli,&lt;br/&gt;piksel, ekstensi
+    I-&gt;&gt;S: keyForUpload(company/asset/&lt;br/&gt;submodul/karyawan/hex.ext)
+    S--&gt;&gt;I: key lengkap&lt;br/&gt;(awalan NAME_APPLICATION)
+    I-&gt;&gt;T: track(key), dicatat sebelum upload
+    I-&gt;&gt;S: uploadStream(key, stream, mime)
+    S-&gt;&gt;S: filesystem(), baca config&lt;br/&gt;lalu buat client S3&lt;br/&gt;(Flysystem + AWS SDK)
+    S-&gt;&gt;O: PutObject (bucket privat)
+    O--&gt;&gt;S: OK
+    I--&gt;&gt;K: key
+    K-&gt;&gt;D: simpan key di kolom foto&lt;br/&gt;(dalam transaksi)
+    K-&gt;&gt;T: releaseTrackedObjects (sukses)
+    K--&gt;&gt;C: response sukses</pre></div>
+<p><strong>C. Ambil file (presigned URL)</strong> (contoh: buka detail transaksi)</p>
+<div class="diagram"><pre class="mermaid">sequenceDiagram
+    participant C as Mobile/Web
+    participant K as Controller&lt;br/&gt;Asset_c
+    participant D as Model&lt;br/&gt;fotoUrl
+    participant I as AssetImage&lt;br/&gt;Storage
+    participant S as S3Object&lt;br/&gt;StorageService
+    participant O as MinIO
+
+    C-&gt;&gt;K: GET detail transaksi
+    K-&gt;&gt;D: ambil data + key foto&lt;br/&gt;dari database
+    D-&gt;&gt;I: url(key)
+    I-&gt;&gt;I: isObjectKey(key)?
+    alt key object MinIO
+        I-&gt;&gt;S: temporaryUrl(key, sekarang + TTL)
+        S-&gt;&gt;S: tanda tangan offline,&lt;br/&gt;tanpa request ke MinIO
+        S--&gt;&gt;I: presigned URL
+    else path lokal lama
+        I-&gt;&gt;I: fallback Uploads_c&lt;br/&gt;(file di disk server)
+    end
+    I--&gt;&gt;D: URL
+    D--&gt;&gt;K: data + field *_url
+    K--&gt;&gt;C: response detail
+    C-&gt;&gt;O: GET presigned URL (langsung ke MinIO)
+    O--&gt;&gt;C: file gambar</pre></div>
+<p><strong>D. Hapus file</strong> (hanya kompensasi saat proses gagal, belum ada endpoint hapus untuk pengguna)</p>
+<div class="diagram"><pre class="mermaid">sequenceDiagram
+    participant K as Controller&lt;br/&gt;Asset_c
+    participant T as TracksObject&lt;br/&gt;Uploads
+    participant I as AssetImage&lt;br/&gt;Storage
+    participant S as S3Object&lt;br/&gt;StorageService
+    participant O as MinIO
+
+    K-&gt;&gt;K: upload atau simpan&lt;br/&gt;database gagal (catch)
+    K-&gt;&gt;T: cleanupAssetObjects lalu&lt;br/&gt;cleanupTrackedObjects
+    loop setiap key baru di request ini
+        T-&gt;&gt;I: deleteNew(key)
+        I-&gt;&gt;I: isObjectKey(key)?&lt;br/&gt;key lama atau bersama diabaikan
+        I-&gt;&gt;S: delete(key)
+        S-&gt;&gt;O: DeleteObject
+    end
+    T-&gt;&gt;T: kosongkan daftar pelacakan</pre></div>
+<p>Ringkasan file yang dilewati per langkah:</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Langkah</th>
+<th>Urutan file</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Boot</td>
+<td><code>.env</code> → <code>config/object_storage.php</code> → <code>bootstrap/app.php</code> → <code>ObjectStorageServiceProvider</code></td>
+</tr>
+<tr>
+<td>Upload</td>
+<td>Route → <code>JwtAuth</code> → <code>ResolveContext</code> → Controller (<code>Asset_c</code>) → <code>TracksObjectUploads</code> → <code>AssetImageStorage</code> / <code>ModuleImageStorage</code> → <code>S3ObjectStorageService</code> → Flysystem + AWS SDK → MinIO → Model (simpan key)</td>
+</tr>
+<tr>
+<td>Ambil URL</td>
+<td>Controller → Model (<code>fotoUrl</code>) → <code>AssetImageStorage</code> / <code>ModuleImageStorage</code> → <code>S3ObjectStorageService</code> (tanda tangan offline) → client mengunduh langsung dari MinIO</td>
+</tr>
+<tr>
+<td>Hapus</td>
+<td>Controller (catch) → <code>TracksObjectUploads</code> → <code>AssetImageStorage</code> / <code>ModuleImageStorage</code> → <code>S3ObjectStorageService</code> → MinIO</td>
+</tr>
+</tbody>
+</table></div>
+<p>Untuk fitur baru, alurnya sama. Yang berbeda hanya Controller dan Model milik fitur itu, serta <code>ObjectStorageManager::for('&lt;modul&gt;')</code> yang menggantikan <code>AssetImageStorage</code> sebagai pintu masuk.</p>
+<h2 id="s4"><span class="sec-no">04</span>Konfigurasi</h2>
+<p>Semua nilai dibaca dari <code>.env</code> lewat <code>config/object_storage.php</code>.</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Variabel <code>.env</code></th>
+<th>Key config</th>
+<th>Default</th>
+<th>Fungsi</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>NAME_APPLICATION</code></td>
+<td><code>application_name</code></td>
+<td>kosong</td>
+<td>Segmen folder aplikasi di awal key baru</td>
+</tr>
+<tr>
+<td><code>MINIO_ENDPOINT</code></td>
+<td><code>endpoint</code></td>
+<td>kosong</td>
+<td>URL MinIO yang bisa dijangkau API <strong>dan</strong> client</td>
+</tr>
+<tr>
+<td><code>MINIO_ACCESS_KEY</code></td>
+<td><code>access_key</code></td>
+<td>kosong</td>
+<td>Access key akun layanan</td>
+</tr>
+<tr>
+<td><code>MINIO_SECRET_KEY</code></td>
+<td><code>secret_key</code></td>
+<td>kosong</td>
+<td>Secret key akun layanan</td>
+</tr>
+<tr>
+<td><code>MINIO_BUCKET</code></td>
+<td><code>bucket</code></td>
+<td>kosong</td>
+<td>Nama bucket (harus sudah ada dan privat)</td>
+</tr>
+<tr>
+<td><code>MINIO_REGION</code></td>
+<td><code>region</code></td>
+<td><code>us-east-1</code></td>
+<td>Region untuk signature</td>
+</tr>
+<tr>
+<td><code>MINIO_USE_PATH_STYLE_ENDPOINT</code></td>
+<td><code>path_style</code></td>
+<td><code>true</code></td>
+<td>Path-style addressing (wajib untuk MinIO)</td>
+</tr>
+<tr>
+<td><code>MINIO_URL_TTL_SECONDS</code></td>
+<td><code>ttl</code></td>
+<td><code>900</code></td>
+<td>Masa berlaku presigned URL (1–604800)</td>
+</tr>
+<tr>
+<td><code>MINIO_ASSET_MAX_UPLOAD_BYTES</code></td>
+<td><code>max_bytes</code></td>
+<td><code>5242880</code></td>
+<td>Batas ukuran gambar hasil decode</td>
+</tr>
+<tr>
+<td><code>MINIO_ASSET_MAX_IMAGE_PIXELS</code></td>
+<td><code>max_pixels</code></td>
+<td><code>25000000</code></td>
+<td>Batas lebar × tinggi</td>
+</tr>
+</tbody>
+</table></div>
+<p>Syarat konfigurasi:</p>
+<ul>
+<li><code>endpoint</code>, <code>access_key</code>, <code>secret_key</code>, <code>bucket</code>, <code>region</code> wajib terisi.</li>
+<li><code>endpoint</code> harus <code>http</code>/<code>https</code>, punya host, <strong>tanpa</strong> user/password, query, atau fragment.</li>
+<li>Bucket harus <strong>privat</strong>; jangan aktifkan public policy.</li>
+<li>Akun layanan hanya butuh izin baca, tulis, dan hapus pada prefix yang dipakai.</li>
+<li>Hostname di URL bertanda tangan tidak boleh diubah (mis. oleh proxy), karena signature akan tidak cocok.</li>
+<li>Simpan kredensial di server/secret manager, <strong>jangan di-commit</strong>.</li>
+</ul>
+<p><strong>Modul</strong> didaftarkan di <code>config/object_storage.php</code> pada kunci <code>modules</code>. Menambah fitur baru berarti menambah satu entri di sana, tanpa variabel <code>.env</code> baru:</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Kunci per modul</th>
+<th>Fungsi</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>submodules</code></td>
+<td>Daftar sub-folder yang diizinkan; kosong berarti modul tanpa submodul</td>
+</tr>
+<tr>
+<td><code>max_bytes</code>, <code>max_pixels</code>, <code>ttl</code></td>
+<td>Opsional. Menimpa batas umum di atas untuk modul itu saja</td>
+</tr>
+<tr>
+<td><code>class</code></td>
+<td>Opsional. Kelas khusus bila modul punya aturan sendiri (hanya <code>asset</code>)</td>
+</tr>
+</tbody>
+</table></div>
+<p>⚠️ <strong>Catatan:</strong> <code>API/.env.example</code> saat ini <strong>belum memuat</strong> variabel <code>MINIO_*</code> dan <code>NAME_APPLICATION</code>. Disarankan menambahkannya (dengan nilai placeholder) agar developer baru tahu variabel apa saja yang dibutuhkan.</p>
+<div class="group-divider" id="g2"><span>Alur &amp; Perilaku</span></div>
+<h2 id="s5"><span class="sec-no">05</span>Format Key Object</h2>
+<p>Key baru dibuat sekali, disimpan ke database apa adanya, lalu dipakai tanpa diubah untuk baca/hapus/signing.</p>
+<pre><code>NAME_APPLICATION/id_company/asset/{garansi|perbaikan|disposal}/id_karyawan/&lt;32 hex acak&gt;.&lt;ext&gt;
+</code></pre>
+<p>Contoh sintetis:</p>
+<ul>
+<li><code>profesional_v3/COMP01/asset/garansi/EMP02/0123456789abcdef0123456789abcdef.png</code></li>
+<li><code>profesional_v3/COMP01/asset/perbaikan/EMP02/1123456789abcdef0123456789abcdef.jpg</code></li>
+<li><code>profesional_v3/COMP01/asset/disposal/EMP02/2123456789abcdef0123456789abcdef.webp</code></li>
+</ul>
+<p>Aturan:</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Aturan</th>
+<th>Detail</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>NAME_APPLICATION</code></td>
+<td>Opsional. Bila kosong, segmen ini dihilangkan</td>
+</tr>
+<tr>
+<td>Segmen aplikasi, company, karyawan</td>
+<td>1–128 karakter ASCII huruf/angka/<code>_</code>/<code>-</code>, diawali huruf atau angka. Titik, <code>/</code>, <code>\</code>, spasi, dan karakter kontrol ditolak</td>
+</tr>
+<tr>
+<td><code>id_karyawan</code></td>
+<td><strong>Selalu karyawan yang sedang login (pengunggah)</strong>, termasuk admin. Bukan pemilik asset, PIC, atau <code>users.id_user</code></td>
+</tr>
+<tr>
+<td>Nama file</td>
+<td>16 byte acak (<code>random_bytes</code>) dalam 32 karakter hex huruf kecil</td>
+</tr>
+<tr>
+<td>Ekstensi</td>
+<td><code>jpg</code>, <code>png</code>, <code>webp</code>, ditentukan dari isi file</td>
+</tr>
+<tr>
+<td>Panjang total</td>
+<td>Maksimal <strong>255 karakter</strong> (sesuai kolom database). Bila lebih, upload ditolak sebelum menulis apa pun</td>
+</tr>
+</tbody>
+</table></div>
+<p>Identitas company dan karyawan diambil dari JWT → <code>ResolveContext</code> → <code>ctx.id_company</code> dan <code>ctx.id_karyawan</code>. Nilai dari request body <strong>tidak</strong> dipakai.</p>
+<h2 id="s6"><span class="sec-no">06</span>Alur Upload</h2>
+<p>Dipakai oleh lima endpoint POST yang sudah ada:</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Endpoint</th>
+<th>Field gambar</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>garansi/{id}/ajukan</code> dan <code>karyawan/garansi/{id}/ajukan</code></td>
+<td><code>assets.*.foto_tanda_terima</code></td>
+</tr>
+<tr>
+<td><code>perbaikan/{id}/kirim</code> dan <code>karyawan/perbaikan/{id}/kirim</code></td>
+<td><code>assets.*.foto_tanda_terima</code></td>
+</tr>
+<tr>
+<td><code>disposal/{id}/pelaksanaan</code></td>
+<td><code>file_bukti</code></td>
+</tr>
+</tbody>
+</table></div>
+<p>Langkah di <code>AssetImageStorage::upload()</code>:</p>
+<ol>
+<li>Validasi identitas pengunggah (company dan karyawan).</li>
+<li>Baca gambar: <code>UploadedFile</code> (multipart) atau string base64. Base64 harus ketat; data-URI harus bertipe <code>image/jpeg|png|webp</code> dan cocok dengan isi file.</li>
+<li>Cek ukuran (maks <code>max_bytes</code>) dan tolak file kosong.</li>
+<li>Cek isi sebenarnya dengan <code>getimagesizefromstring</code> dan <code>finfo</code>; MIME harus JPEG/PNG/WebP, dan lebar × tinggi tidak melebihi <code>max_pixels</code>.</li>
+<li>Susun key baru (bagian 5).</li>
+<li><strong>Catat key ke daftar pelacak sebelum upload</strong>, lalu <code>uploadStream</code> dengan <code>visibility: private</code> dan <code>ContentType</code> sesuai MIME.</li>
+</ol>
+<p>Bila input kosong, gambar lama yang sudah tersimpan dipertahankan. Client <strong>tidak bisa</strong> mengirim key atau URL yang sudah ada sebagai upload.</p>
+<h2 id="s7"><span class="sec-no">07</span>Alur Baca (Presigned URL)</h2>
+<p><code>AssetImageStorage::url($path)</code> menentukan perlakuan berdasarkan bentuk key:</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Nilai di database</th>
+<th>Perlakuan</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Key object (layout baru, atau layout lama <code>asset/object/...</code>, dengan/tanpa prefix aplikasi)</td>
+<td>Dibuat presigned GET URL dengan TTL dari config</td>
+</tr>
+<tr>
+<td>Path lokal lama (mis. <code>asset/garansi/COMP01/file.png</code>)</td>
+<td>Tetap memakai URL <code>WEB</code> lama dan pengecekan file lokal; kosong bila file tidak ada</td>
+</tr>
+</tbody>
+</table></div>
+<p>Hal yang perlu diketahui:</p>
+<ul>
+<li>URL dibuat <strong>offline</strong> (tanpa menghubungi MinIO dan tanpa HEAD). Bila object dihapus dari luar, URL tetap terbentuk tetapi client menerima 404.</li>
+<li>Presigned URL adalah <em>bearer capability</em>: siapa pun yang memegangnya bisa mengunduh sampai kedaluwarsa. <strong>Jangan dipublikasikan atau dicatat di log.</strong></li>
+<li>Setelah URL kedaluwarsa, client harus memanggil ulang endpoint detail untuk mendapat URL baru. Tidak ada header otorisasi tambahan.</li>
+<li>Key lama tanpa prefix tetap ditandatangani di key aslinya, dan nama aplikasi lama tetap dikenali walau <code>NAME_APPLICATION</code> berubah.</li>
+</ul>
+<h2 id="s8"><span class="sec-no">08</span>Konsistensi Data dan Kompensasi</h2>
+<p>MinIO dan database <strong>tidak atomik</strong>. Pengamannya:</p>
+<ol>
+<li>Cek aktor/company/status dilakukan di transaksi preflight yang di-lock, <strong>sebelum</strong> upload, lalu dicek ulang di transaksi persistensi.</li>
+<li>Upload <strong>tidak pernah</strong> dijalankan di dalam closure transaksi yang bisa di-retry.</li>
+<li>Hanya key yang <strong>baru dibuat</strong> yang dilacak (termasuk upload yang error di jaringan padahal mungkin sudah diterima server).</li>
+<li>Bila salah satu upload atau penyimpanan DB gagal, <code>cleanupAssetObjects()</code> menghapus key baru tersebut (best-effort).</li>
+<li>Setelah commit sukses, pelacakan dilepas sebelum notifikasi dikirim; gagal notifikasi <strong>tidak</strong> menghapus gambar yang sudah tersimpan.</li>
+<li>File lama atau yang dipakai bersama tidak pernah dihapus (termasuk snapshot <code>asset_data.foto_dokumen_garansi</code> yang masih legacy).</li>
+</ol>
+<p>Risiko tersisa: proses mati mendadak, commit DB yang tidak pasti, atau gagal kompensasi dapat menyisakan <strong>object yatim</strong> di bucket. Log kompensasi hanya memuat key yang dibuat. Tidak ada purge otomatis maupun worker retry, jadi rekonsiliasi manual (cek referensi di database sebelum menghapus) diperlukan.</p>
+<h2 id="s9"><span class="sec-no">09</span>Penanganan Error</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Kondisi</th>
+<th>Respons</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Gambar tidak valid, terlalu besar, atau format salah</td>
+<td><code>BUSINESS_RULE_VIOLATION</code> (422)</td>
+</tr>
+<tr>
+<td>Identitas pengunggah tidak valid/tidak tersedia</td>
+<td><code>BUSINESS_RULE_VIOLATION</code> (422), sebelum ada tulis ke storage atau SQL</td>
+</tr>
+<tr>
+<td>Validasi request biasa</td>
+<td><code>VALIDATION_ERROR</code> (422)</td>
+</tr>
+<tr>
+<td>Konfigurasi MinIO kosong/tidak valid</td>
+<td><code>SYSTEM_ERROR</code> (500) dengan pesan konfigurasi yang aman. <strong>Tidak ada fallback menulis ke disk lokal</strong></td>
+</tr>
+<tr>
+<td>Operasi MinIO gagal</td>
+<td><code>SYSTEM_ERROR</code> (500) pesan umum. URL, signature, dan kredensial SDK tidak dibocorkan ke log (exception dibungkus ulang)</td>
+</tr>
+</tbody>
+</table></div>
+<p>Timeout client S3: connect 5 detik, total 30 detik.</p>
+<div class="group-divider" id="g3"><span>Operasional &amp; Referensi</span></div>
+<h2 id="s10"><span class="sec-no">10</span>Keamanan</h2>
+<ul>
+<li>Bucket privat; objek ditulis dengan <code>visibility: private</code>.</li>
+<li>Tipe file ditentukan dari isi file, bukan dari nama file atau MIME dari client.</li>
+<li>Segmen key divalidasi ketat (anti path traversal); nilai tidak pernah di-trim atau dinormalisasi.</li>
+<li>Kredensial hanya dari environment; log tidak memuat URL bertanda tangan maupun kredensial.</li>
+<li>Akun layanan MinIO sebaiknya dibatasi ke bucket/prefix terkait dengan hak minimal.</li>
+</ul>
+<h2 id="s11"><span class="sec-no">11</span>Panduan Operasional</h2>
+<p><strong>Setup awal (menyiapkan server baru)</strong></p>
+<ol>
+<li>Pastikan bucket sudah dibuat di MinIO dan berstatus privat.</li>
+<li>Buat akun layanan khusus dengan izin baca/tulis/hapus pada bucket.</li>
+<li>Isi variabel <code>MINIO_*</code> dan <code>NAME_APPLICATION</code> di <code>.env</code> server.</li>
+<li>Pastikan <code>MINIO_ENDPOINT</code> dapat dijangkau dari server API <strong>dan</strong> dari perangkat client (DNS dan TLS valid).</li>
+<li>Bila client mengunduh dari browser dan memerlukan CORS, atur CORS di MinIO. ⚠️ Asumsi: aplikasi mobile tidak memerlukannya.</li>
+<li>Uji manual: kirim satu foto lewat salah satu endpoint, lalu buka URL pada response detail.</li>
+</ol>
+<p><strong>Mengganti <code>NAME_APPLICATION</code></strong>: aman. Object lama tetap terbaca di key aslinya; hanya upload baru yang memakai nama baru.</p>
+<p><strong>Mengganti endpoint/bucket</strong>: <strong>bukan</strong> migrasi otomatis. Key di database hanya bermakna di bucket yang sama. Memindahkan object atau menulis ulang key harus lewat migrasi terpisah yang disetujui.</p>
+<p><strong>Troubleshooting</strong></p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Gejala</th>
+<th>Kemungkinan penyebab</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>500 "Penyimpanan object belum dikonfigurasi"</td>
+<td>Salah satu dari endpoint/access key/secret/bucket/region kosong</td>
+</tr>
+<tr>
+<td>500 "Endpoint penyimpanan object tidak valid"</td>
+<td>Endpoint tanpa skema <code>http(s)</code>, atau memuat user/query/fragment</td>
+</tr>
+<tr>
+<td>500 "NAME_APPLICATION ... tidak valid"</td>
+<td>Nilai berisi karakter terlarang atau lebih dari 128 karakter</td>
+</tr>
+<tr>
+<td>422 soal path melebihi 255 karakter</td>
+<td>Kombinasi segmen aplikasi/company/karyawan terlalu panjang</td>
+</tr>
+<tr>
+<td>URL gambar 403 <code>SignatureDoesNotMatch</code></td>
+<td>Hostname/endpoint diubah proxy, atau jam server menyimpang jauh</td>
+</tr>
+<tr>
+<td>URL gambar 403 <code>Request has expired</code></td>
+<td>URL melewati TTL; ambil ulang detail</td>
+</tr>
+<tr>
+<td>URL gambar 404</td>
+<td>Object dihapus di luar aplikasi, atau key/bucket berbeda dari yang tersimpan</td>
+</tr>
+</tbody>
+</table></div>
+<h2 id="s12"><span class="sec-no">12</span>Pengujian</h2>
+<p><code>tests/Asset/AssetObjectStorageTest.php</code> memakai fake storage, validasi gambar, test controller, dan signing S3 offline sehingga tidak butuh <code>.env</code>, MinIO, atau SQL.</p>
+<pre><code class="language-bash">cd API
+vendor/bin/phpunit tests/Asset/AssetObjectStorageTest.php
+</code></pre>
+<p>Test modul generik ada di <code>tests/Storage/ObjectStorageManagerTest.php</code>:</p>
+<pre><code class="language-bash">cd API
+vendor/bin/phpunit tests/Storage tests/Asset/AssetObjectStorageTest.php
+</code></pre>
+<p>Per 9 Oktober 2026, kedua perintah di atas lulus (21 test). Sebelum rilis, perlu diverifikasi manual: koneksi MinIO nyata, kebijakan bucket privat, CORS (bila perlu), serta integrasi end-to-end dengan JWT dan SQL (race pada persistensi). Jangan menjalankan suite integrasi DB yang ada terhadap resource yang belum dikonfirmasi.</p>
+<h2 id="s13"><span class="sec-no">13</span>Batasan dan Hal yang Belum Ada</h2>
+<ul>
+<li>Yang sudah memakai MinIO baru modul <strong>Asset</strong> (garansi, perbaikan, disposal). <code>Uploads_c</code> dan modul lain belum disentuh; fitur baru memakai <code>ObjectStorageManager</code> (bagian 15).</li>
+<li>Lapisan generik saat ini hanya untuk <strong>gambar</strong> (JPEG, PNG, WebP). PDF dan dokumen belum didukung; <code>ObjectStorageService</code> mentah (<code>manager-&gt;raw()</code>) bisa dipakai untuk kebutuhan di luar gambar.</li>
+<li>⚠️ Belum ada pembersihan otomatis object yatim, retry worker, atau migrasi file lokal lama ke MinIO.</li>
+<li>⚠️ <code>.env.example</code> belum memuat variabel MinIO.</li>
+<li>⚠️ Belum ada verifikasi koneksi MinIO nyata dalam pengujian otomatis.</li>
+</ul>
+<h2 id="s14"><span class="sec-no">14</span>Referensi Kode</h2>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>File</th>
+<th>Isi</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>API/config/object_storage.php</code></td>
+<td>Pemetaan variabel <code>.env</code> ke config</td>
+</tr>
+<tr>
+<td><code>API/app/Providers/ObjectStorageServiceProvider.php</code></td>
+<td>Registrasi singleton service (didaftarkan di <code>bootstrap/app.php</code>)</td>
+</tr>
+<tr>
+<td><code>API/app/Support/Storage/ObjectStorageService.php</code></td>
+<td>Interface storage</td>
+</tr>
+<tr>
+<td><code>API/app/Support/Storage/S3ObjectStorageService.php</code></td>
+<td>Implementasi S3/MinIO, validasi konfigurasi, presigned URL</td>
+</tr>
+<tr>
+<td><code>API/app/Support/Storage/ObjectStorageConfigurationException.php</code></td>
+<td>Exception konfigurasi</td>
+</tr>
+<tr>
+<td><code>API/app/Support/Storage/ObjectStorageManager.php</code></td>
+<td>Pintu tunggal: <code>for('&lt;modul&gt;')</code></td>
+</tr>
+<tr>
+<td><code>API/app/Support/Storage/ModuleImageStorage.php</code></td>
+<td>Validasi gambar, key, upload, hapus, URL untuk satu modul</td>
+</tr>
+<tr>
+<td><code>API/app/Traits/TracksObjectUploads.php</code></td>
+<td>Pelacakan dan pembersihan object baru di controller</td>
+</tr>
+<tr>
+<td><code>API/app/Support/Asset/AssetImageStorage.php</code></td>
+<td>Modul asset di atas <code>ModuleImageStorage</code></td>
+</tr>
+<tr>
+<td><code>API/tests/Storage/ObjectStorageManagerTest.php</code></td>
+<td>Test modul generik dan trait</td>
+</tr>
+<tr>
+<td><code>API/app/Http/Controllers/Asset/Asset_c.php</code></td>
+<td><code>uploadAssetImage</code>, <code>assetUploadIdentity</code>, <code>cleanupAssetObjects</code></td>
+</tr>
+<tr>
+<td><code>API/docs/asset-object-storage.md</code></td>
+<td>Catatan teknis asli (Inggris)</td>
+</tr>
+<tr>
+<td><code>API/tests/Asset/AssetObjectStorageTest.php</code></td>
+<td>Test otomatis</td>
+</tr>
+</tbody>
+</table></div>
+<div class="group-divider" id="g4"><span>Fitur Baru</span></div>
+<h2 id="s15"><span class="sec-no">15</span>Memakai di Fitur Baru</h2>
+<p>Panduan ini membangun satu fitur contoh dari nol sampai bisa <strong>upload, ambil URL, ganti, dan hapus</strong> foto. Fitur fiktifnya bernama <strong>Kunjungan</strong> (laporan kunjungan dengan satu foto bukti), modul storage <code>kunjungan</code>. Nama tabel, kolom, dan class di bawah adalah contoh sintetis; ganti dengan milik fitur Anda. Fitur baru <strong>tidak perlu</strong> menyentuh S3, Flysystem, atau kode asset.</p>
+<h3>15.1 Gambaran: apa yang dibuat</h3>
+<div class="diagram"><pre class="mermaid">flowchart LR
+    A[&quot;1. config/object_storage.php&lt;br/&gt;daftarkan modul&quot;] --&gt; B[&quot;2. Database&lt;br/&gt;kolom foto VARCHAR 255&quot;]
+    B --&gt; C[&quot;3. Route&lt;br/&gt;routes/modules/kunjungan&quot;]
+    C --&gt; D[&quot;4. Model&lt;br/&gt;simpan dan baca key&quot;]
+    D --&gt; E[&quot;5. Controller&lt;br/&gt;upload, URL, ganti, hapus&quot;]
+    E --&gt; F[&quot;6. Test&quot;]
+    F --&gt; G[&quot;7. Uji manual ke MinIO&quot;]</pre></div>
+<p>Aturan emas yang dipakai di semua langkah:</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Aturan</th>
+<th>Artinya</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Database menyimpan key, bukan URL</strong></td>
+<td>URL kedaluwarsa (default 15 menit). Key dibentuk sekali saat upload dan tidak pernah diubah</td>
+</tr>
+<tr>
+<td><strong>Identitas dari JWT</strong></td>
+<td>Company dan karyawan diambil dari <code>ctx</code>, bukan dari input request</td>
+</tr>
+<tr>
+<td><strong>Upload dulu, simpan database kemudian</strong></td>
+<td>Upload tidak boleh di dalam <code>DB::transaction</code>. Bila database gagal, object baru dihapus</td>
+</tr>
+<tr>
+<td><strong>Hapus object lama sesudah commit</strong></td>
+<td>Bila gagal menghapus, hanya menyisakan object yatim, data tetap benar</td>
+</tr>
+</tbody>
+</table></div>
+<h3>15.2 Langkah 1: daftarkan modul</h3>
+<p><code>config/object_storage.php</code>, tambah satu entri di <code>modules</code>:</p>
+<pre><code class="language-php">'modules' =&gt; [
+    'asset' =&gt; [ /* sudah ada */ ],
+    'kunjungan' =&gt; [
+        'submodules' =&gt; ['bukti'],      // sub-folder yang diizinkan, [] bila tidak perlu
+        'max_bytes'  =&gt; 3145728,        // opsional: 3 MB, menimpa batas umum (5 MB)
+        // 'max_pixels' =&gt; 12000000,    // opsional
+        // 'ttl' =&gt; 600,                // opsional: masa berlaku URL 10 menit
+    ],
+],
+</code></pre>
+<p>Tidak ada variabel <code>.env</code> baru. Bucket, kredensial, dan <code>NAME_APPLICATION</code> dipakai bersama. Key yang terbentuk:</p>
+<pre><code>NAME_APPLICATION/id_company/kunjungan/bukti/id_karyawan/&lt;32 hex&gt;.&lt;ext&gt;
+</code></pre>
+<h3>15.3 Langkah 2: database</h3>
+<p>Kolom penyimpan foto harus muat <strong>255 karakter</strong> (batas panjang key). Isinya key lengkap seperti di atas. Karena skema proyek diubah lewat SQL manual, siapkan SQL dan jalankan sendiri (contoh, sesuaikan dengan tabel Anda):</p>
+<pre><code class="language-sql">CREATE TABLE kunjungan (
+    id            VARCHAR(36)  NOT NULL PRIMARY KEY,
+    id_company    VARCHAR(50)  NOT NULL,
+    id_karyawan   VARCHAR(50)  NOT NULL,
+    catatan       VARCHAR(255) NULL,
+    foto_bukti    VARCHAR(255) NULL,      -- key object MinIO, BUKAN URL
+    created_at    DATETIME     NOT NULL
+);
+</code></pre>
+<h3>15.4 Langkah 3: route</h3>
+<p>Ikuti pola modul lain (<code>routes/modules/asset/</code>): satu folder per modul dengan <code>_config.php</code> dan file route.</p>
+<p><code>routes/modules/kunjungan/_config.php</code></p>
+<pre><code class="language-php">&lt;?php
+
+return [
+    // namespace tidak perlu: controller berada langsung di App\Http\Controllers
+    'middleware' =&gt; ['jwt.api', 'jwt.ctx'],   // jwt.ctx mengisi ctx.id_company dan ctx.id_karyawan
+];
+</code></pre>
+<p><code>routes/modules/kunjungan/RouteKunjungan.php</code></p>
+<pre><code class="language-php">&lt;?php
+
+use Laravel\Lumen\Routing\Router;
+
+/** @var Router $router */
+
+// Awalan URL otomatis /kunjungan (nama folder modul), jadi path di bawah relatif terhadap itu.
+$router-&gt;post('tambah', 'Kunjungan_c@store');                 // POST   /kunjungan/tambah
+$router-&gt;get('{id}', 'Kunjungan_c@show');                     // GET    /kunjungan/{id}
+$router-&gt;post('{id}/foto', 'Kunjungan_c@gantiFoto');          // POST   /kunjungan/{id}/foto
+$router-&gt;delete('{id}', 'Kunjungan_c@destroy');               // DELETE /kunjungan/{id}
+</code></pre>
+<p>Aturan yang dipakai pemuat route proyek (<code>RouteLoader</code>): awalan URL diambil dari <strong>nama folder</strong> modul, <code>namespace</code> boleh dikosongkan, dan <code>middleware</code> digabung dari <code>routes/modules/_config.php</code> (<code>localization</code>) ditambah milik modul. Modul asset memakai namespace <code>Asset</code> karena controller-nya berada di sub-folder; modul absensi tidak punya <code>_config.php</code> sendiri. ⚠️ Pastikan route muncul pada daftar route dan test route yang menghitung jumlah route (sudah gagal sebelum perubahan ini karena angka 343) diperbarui bila Anda menjaganya.</p>
+<h3>15.5 Langkah 4: model</h3>
+<p><code>app/Models/Kunjungan_m.php</code>. Model hanya menyimpan dan membaca <strong>key</strong>, tidak tahu apa pun soal MinIO.</p>
+<pre><code class="language-php">&lt;?php
+
+namespace App\Models;
+
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
+
+class Kunjungan_m
+{
+    public static function create(string $company, string $karyawan, ?string $catatan, string $fotoKey): object
+    {
+        $id = (string) Str::uuid();
+        DB::transaction(function () use ($id, $company, $karyawan, $catatan, $fotoKey): void {
+            DB::table('kunjungan')-&gt;insert([
+                'id' =&gt; $id, 'id_company' =&gt; $company, 'id_karyawan' =&gt; $karyawan,
+                'catatan' =&gt; $catatan, 'foto_bukti' =&gt; $fotoKey, 'created_at' =&gt; now(),
+            ]);
+        });
+        return self::find($company, $id);
+    }
+
+    public static function find(string $company, string $id): ?object
+    {
+        return DB::table('kunjungan')-&gt;where('id_company', $company)-&gt;where('id', $id)-&gt;first();
+    }
+
+    public static function updateFoto(string $company, string $id, string $fotoKey): void
+    {
+        DB::table('kunjungan')-&gt;where('id_company', $company)-&gt;where('id', $id)-&gt;update(['foto_bukti' =&gt; $fotoKey]);
+    }
+
+    public static function delete(string $company, string $id): void
+    {
+        DB::table('kunjungan')-&gt;where('id_company', $company)-&gt;where('id', $id)-&gt;delete();
+    }
+}
+</code></pre>
+<h3>15.6 Langkah 5: controller (upload, URL, ganti, hapus)</h3>
+<p><code>app/Http/Controllers/Kunjungan_c.php</code></p>
+<pre><code class="language-php">&lt;?php
+
+namespace App\Http\Controllers;
+
+use App\Libraries\ApiResponse;
+use App\Models\Kunjungan_m;
+use App\Support\Storage\ModuleImageStorage;
+use App\Support\Storage\ObjectStorageConfigurationException;
+use App\Support\Storage\ObjectStorageManager;
+use App\Traits\TracksObjectUploads;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
+use InvalidArgumentException;
+use Throwable;
+
+class Kunjungan_c extends BaseController
+{
+    use TracksObjectUploads;
+
+    /** Satu-satunya titik masuk ke storage untuk fitur ini. */
+    private function images(): ModuleImageStorage
+    {
+        return app(ObjectStorageManager::class)-&gt;for('kunjungan');
+    }
+
+    /** Foto dari multipart (file) atau JSON (base64 / data-URI). */
+    private function foto(Request $request)
+    {
+        return $request-&gt;file('foto') ?? $request-&gt;input('foto');
+    }
+
+    /** Ubah key database menjadi URL sementara untuk response. */
+    private function present(object $row): array
+    {
+        return [
+            'id' =&gt; $row-&gt;id,
+            'catatan' =&gt; $row-&gt;catatan,
+            'foto_bukti_url' =&gt; $row-&gt;foto_bukti ? $this-&gt;images()-&gt;url($row-&gt;foto_bukti) : '',
+        ];
+    }
+
+    private function failure(Throwable $e, string $log): JsonResponse
+    {
+        if ($e instanceof InvalidArgumentException) {      // gambar tidak valid, identitas tidak valid
+            return ApiResponse::error('BUSINESS_RULE_VIOLATION', $e-&gt;getMessage());
+        }
+        Log::error($log, ['exception' =&gt; $e]);
+        return ApiResponse::error('SYSTEM_ERROR', $e instanceof ObjectStorageConfigurationException
+            ? $e-&gt;getMessage() : 'Terjadi kesalahan saat memproses kunjungan.');
+    }
+
+    // ---------- UPLOAD: POST kunjungan/tambah ----------
+    public function store(Request $request): JsonResponse
+    {
+        if ($error = $this-&gt;validateRequest($request, ['catatan' =&gt; 'nullable|string|max:255', 'foto' =&gt; 'required'])) {
+            return $error;
+        }
+        $ctx = $request-&gt;attributes-&gt;get('ctx');
+        $images = $this-&gt;images();
+        try {
+            // 1) unggah dulu (di luar transaksi); key baru otomatis dilacak
+            $key = $this-&gt;uploadTrackedImage($images, $this-&gt;foto($request), $request, 'bukti');
+            // 2) simpan key ke database
+            $row = Kunjungan_m::create((string) $ctx-&gt;id_company, (string) $ctx-&gt;id_karyawan, $request-&gt;input('catatan'), $key);
+            // 3) sukses: object baru dipertahankan
+            $this-&gt;releaseTrackedObjects();
+            return ApiResponse::success('CREATED', $this-&gt;present($row));
+        } catch (Throwable $e) {
+            $this-&gt;cleanupTrackedObjects($images);        // gagal: hapus object baru yang yatim
+            return $this-&gt;failure($e, 'Gagal menyimpan kunjungan.');
+        }
+    }
+
+    // ---------- AMBIL URL: GET kunjungan/{id} ----------
+    public function show(Request $request, string $id): JsonResponse
+    {
+        $ctx = $request-&gt;attributes-&gt;get('ctx');
+        try {
+            $row = Kunjungan_m::find((string) $ctx-&gt;id_company, $id);
+            return $row === null
+                ? ApiResponse::error('NOT_FOUND', 'Kunjungan tidak ditemukan.')
+                : ApiResponse::success('SUCCESS', $this-&gt;present($row));   // URL dibuat di sini, offline
+        } catch (Throwable $e) {
+            return $this-&gt;failure($e, 'Gagal membaca kunjungan.');
+        }
+    }
+
+    // ---------- GANTI: POST kunjungan/{id}/foto ----------
+    public function gantiFoto(Request $request, string $id): JsonResponse
+    {
+        if ($error = $this-&gt;validateRequest($request, ['foto' =&gt; 'required'])) {
+            return $error;
+        }
+        $ctx = $request-&gt;attributes-&gt;get('ctx');
+        $images = $this-&gt;images();
+        try {
+            $row = Kunjungan_m::find((string) $ctx-&gt;id_company, $id);
+            if ($row === null) {
+                return ApiResponse::error('NOT_FOUND', 'Kunjungan tidak ditemukan.');
+            }
+            $key = $this-&gt;uploadTrackedImage($images, $this-&gt;foto($request), $request, 'bukti');
+            Kunjungan_m::updateFoto((string) $ctx-&gt;id_company, $id, $key);
+            $this-&gt;releaseTrackedObjects();
+        } catch (Throwable $e) {
+            $this-&gt;cleanupTrackedObjects($images);
+            return $this-&gt;failure($e, 'Gagal mengganti foto kunjungan.');
+        }
+        $this-&gt;deleteOld($images, $row-&gt;foto_bukti);       // hanya SESUDAH database tersimpan
+        return ApiResponse::success('UPDATED', $this-&gt;present(Kunjungan_m::find((string) $ctx-&gt;id_company, $id)));
+    }
+
+    // ---------- HAPUS: DELETE kunjungan/{id} ----------
+    public function destroy(Request $request, string $id): JsonResponse
+    {
+        $ctx = $request-&gt;attributes-&gt;get('ctx');
+        try {
+            $row = Kunjungan_m::find((string) $ctx-&gt;id_company, $id);
+            if ($row === null) {
+                return ApiResponse::error('NOT_FOUND', 'Kunjungan tidak ditemukan.');
+            }
+            Kunjungan_m::delete((string) $ctx-&gt;id_company, $id);   // hapus data dulu
+        } catch (Throwable $e) {
+            return $this-&gt;failure($e, 'Gagal menghapus kunjungan.');
+        }
+        $this-&gt;deleteOld($this-&gt;images(), $row-&gt;foto_bukti);       // lalu hapus object-nya
+        return ApiResponse::success('DELETED');
+    }
+
+    /** Hapus object lama sesudah commit. Gagal hapus tidak boleh menggagalkan request. */
+    private function deleteOld(ModuleImageStorage $images, ?string $key): void
+    {
+        if ($key === null || $key === '') {
+            return;
+        }
+        try {
+            $images-&gt;deleteNew($key);      // key milik modul lain atau file lokal otomatis diabaikan
+        } catch (Throwable $e) {
+            Log::warning('Object kunjungan lama gagal dihapus.', ['key' =&gt; $key]);
+        }
+    }
+}
+</code></pre>
+<p>Nama method <code>deleteNew</code> berlaku untuk <strong>semua</strong> key milik modul itu, baru maupun lama. Key dari modul lain atau path file lokal tidak dikenali sehingga tidak dihapus.</p>
+<p>Ringkasan: endpoint → pemanggilan storage:</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Endpoint</th>
+<th>Pemanggilan storage</th>
+<th>Urutan yang benar</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>POST kunjungan/tambah</code></td>
+<td><code>uploadTrackedImage</code> → <code>releaseTrackedObjects</code> / <code>cleanupTrackedObjects</code></td>
+<td>upload → simpan database → release</td>
+</tr>
+<tr>
+<td><code>GET kunjungan/{id}</code></td>
+<td><code>images()-&gt;url($key)</code></td>
+<td>baca database → buat URL</td>
+</tr>
+<tr>
+<td><code>POST kunjungan/{id}/foto</code></td>
+<td>upload baru, lalu <code>deleteNew($keyLama)</code></td>
+<td>upload → ubah database → release → hapus lama</td>
+</tr>
+<tr>
+<td><code>DELETE kunjungan/{id}</code></td>
+<td><code>deleteNew($key)</code></td>
+<td>hapus database → hapus object</td>
+</tr>
+</tbody>
+</table></div>
+<h3>15.7 Langkah 6: test</h3>
+<p>Test tidak butuh MinIO. Pasang <code>ObjectStorageManager</code> dengan storage palsu (pola yang sama dengan <code>tests/Asset/AssetObjectStorageTest.php</code>; contoh class palsu <code>InMemoryObjectStorage</code> ada di <code>tests/Storage/ObjectStorageManagerTest.php</code>).</p>
+<pre><code class="language-php">$fake = new InMemoryObjectStorage('app');                       // salin class palsu ke test Anda
+$container = new \Illuminate\Container\Container();
+\Illuminate\Container\Container::setInstance($container);
+$container-&gt;instance(ObjectStorageManager::class, new ObjectStorageManager($fake, ['modules' =&gt; [
+    'kunjungan' =&gt; ['submodules' =&gt; ['bukti']],
+]]));
+
+$controller = new Kunjungan_c();
+$request = new \Illuminate\Http\Request(['foto' =&gt; self::PNG, 'catatan' =&gt; 'uji']);
+$request-&gt;attributes-&gt;set('ctx', (object) ['id_company' =&gt; 'COMP', 'id_karyawan' =&gt; 'EMP']);
+
+// Model memakai DB: untuk skenario 2 dan 4 gunakan database test atau mock Kunjungan_m.
+// yang perlu dibuktikan:
+// 1. store sukses  -&gt; $fake-&gt;objects berisi 1 key &quot;app/COMP/kunjungan/bukti/EMP/&lt;hex&gt;.png&quot;
+// 2. store gagal di database -&gt; $fake-&gt;deleted berisi key tersebut, $fake-&gt;objects kosong
+// 3. gantiFoto sukses -&gt; key lama ada di $fake-&gt;deleted, key baru ada di $fake-&gt;objects
+// 4. gantiFoto gagal di database -&gt; key baru terhapus, key lama TETAP ada
+// 5. foto bukan gambar -&gt; response 422 BUSINESS_RULE_VIOLATION dan $fake-&gt;objects kosong
+</code></pre>
+<p>Jalankan: <code>vendor/bin/phpunit tests/Storage tests/Kunjungan</code>.</p>
+<h3>15.8 Langkah 7: uji manual ke MinIO nyata</h3>
+<p>Header standar proyek: <code>api-key</code>, <code>id-company</code>, <code>id-karyawan</code>, <code>locale</code> (nilai di bawah sintetis).</p>
+<pre><code class="language-bash"># upload (multipart)
+curl -X POST &quot;$API/kunjungan/tambah&quot; -H &quot;api-key: ...&quot; -H &quot;id-company: COMP01&quot; -H &quot;id-karyawan: EMP02&quot; \
+     -F &quot;catatan=uji&quot; -F &quot;foto=@selfie.png&quot;
+
+# ambil URL lalu unduh fotonya
+curl &quot;$API/kunjungan/&lt;id&gt;&quot; -H &quot;api-key: ...&quot; -H &quot;id-company: COMP01&quot; -H &quot;id-karyawan: EMP02&quot;
+curl -o hasil.png &quot;&lt;foto_bukti_url dari response&gt;&quot;
+</code></pre>
+<p>Periksa di MinIO bahwa object berada di <code>NAME_APPLICATION/COMP01/kunjungan/bukti/EMP02/&lt;hex&gt;.png</code>, URL berhasil diunduh, dan setelah <code>DELETE</code> object tersebut hilang.</p>
+<h3>15.9 Referensi cepat</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Pemanggilan</th>
+<th>Hasil</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>app(ObjectStorageManager::class)-&gt;for('&lt;modul&gt;')</code></td>
+<td>Layanan gambar milik modul (<code>ModuleImageStorage</code>)</td>
+</tr>
+<tr>
+<td><code>$this-&gt;uploadTrackedImage($images, $foto, $request, '&lt;submodul&gt;')</code></td>
+<td>Validasi, upload, melacak key; mengembalikan key untuk database</td>
+</tr>
+<tr>
+<td><code>$this-&gt;releaseTrackedObjects()</code></td>
+<td>Sukses: lepas pelacakan, object dipertahankan</td>
+</tr>
+<tr>
+<td><code>$this-&gt;cleanupTrackedObjects($images)</code></td>
+<td>Gagal: hapus object yang baru diunggah di request ini</td>
+</tr>
+<tr>
+<td><code>$images-&gt;url($key)</code></td>
+<td>Presigned URL; string kosong untuk path non-object</td>
+</tr>
+<tr>
+<td><code>$images-&gt;deleteNew($key)</code></td>
+<td>Hapus object milik modul ini</td>
+</tr>
+<tr>
+<td><code>app(ObjectStorageManager::class)-&gt;raw()</code></td>
+<td><code>ObjectStorageService</code> mentah (di luar gambar)</td>
+</tr>
+</tbody>
+</table></div>
+<p>Pemetaan exception ke response:</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Exception</th>
+<th>Penyebab</th>
+<th>Response</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>InvalidArgumentException</code></td>
+<td>Gambar tidak valid atau terlalu besar, submodul salah, identitas JWT tidak valid, path terlalu panjang</td>
+<td><code>BUSINESS_RULE_VIOLATION</code> (422)</td>
+</tr>
+<tr>
+<td><code>ObjectStorageConfigurationException</code></td>
+<td>Konfigurasi MinIO kosong atau <code>NAME_APPLICATION</code> tidak valid</td>
+<td><code>SYSTEM_ERROR</code> (500), pesan konfigurasi aman</td>
+</tr>
+<tr>
+<td><code>RuntimeException</code></td>
+<td>Operasi MinIO gagal (jaringan, izin)</td>
+<td><code>SYSTEM_ERROR</code> (500), pesan umum</td>
+</tr>
+<tr>
+<td><code>InvalidArgumentException</code> "belum didaftarkan"</td>
+<td>Modul belum ada di <code>config/object_storage.php</code></td>
+<td>Kesalahan pemrograman, periksa Langkah 1</td>
+</tr>
+</tbody>
+</table></div>
+<h3>15.10 Kesalahan yang sering terjadi</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Kesalahan</th>
+<th>Akibat</th>
+<th>Cara benar</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Menyimpan URL di database</td>
+<td>Foto tidak terbuka setelah 15 menit</td>
+<td>Simpan key, buat URL saat membaca</td>
+</tr>
+<tr>
+<td>Upload di dalam <code>DB::transaction</code></td>
+<td>Transaksi di-retry, object terunggah berkali-kali</td>
+<td>Upload sebelum transaksi</td>
+</tr>
+<tr>
+<td>Lupa <code>releaseTrackedObjects()</code> setelah sukses</td>
+<td>Pelacakan tersisa dan ikut terhapus pada <code>cleanup</code> berikutnya di instance yang sama</td>
+<td>Panggil setelah database tersimpan</td>
+</tr>
+<tr>
+<td>Lupa <code>cleanupTrackedObjects()</code> di <code>catch</code></td>
+<td>Object yatim di bucket</td>
+<td>Selalu panggil di <code>catch</code></td>
+</tr>
+<tr>
+<td>Menghapus object lama sebelum database tersimpan</td>
+<td>Data menunjuk ke object yang sudah hilang bila database gagal</td>
+<td>Hapus object lama <strong>sesudah</strong> commit</td>
+</tr>
+<tr>
+<td>Memakai <code>id_company</code> dari request</td>
+<td>Pengunggah bisa menulis ke folder company lain</td>
+<td>Pakai <code>ctx</code> (trait sudah melakukannya)</td>
+</tr>
+<tr>
+<td>Kolom foto <code>VARCHAR(100)</code></td>
+<td>Key terpotong atau gagal simpan</td>
+<td><code>VARCHAR(255)</code></td>
+</tr>
+<tr>
+<td>Lupa mendaftarkan modul di config</td>
+<td><code>InvalidArgumentException</code> "belum didaftarkan"</td>
+<td>Langkah 1</td>
+</tr>
+</tbody>
+</table></div>
+<h3>15.11 Daftar file untuk fitur baru</h3>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>File</th>
+<th>Status</th>
+<th>Isi</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>config/object_storage.php</code></td>
+<td><strong>Wajib, diubah</strong></td>
+<td>Satu entri di <code>modules</code> (Langkah 1)</td>
+</tr>
+<tr>
+<td><code>routes/modules/&lt;fitur&gt;/...</code></td>
+<td><strong>Wajib, baru</strong></td>
+<td>Route dan <code>_config.php</code> (Langkah 3)</td>
+</tr>
+<tr>
+<td>Model fitur</td>
+<td><strong>Wajib, baru</strong></td>
+<td>Simpan dan baca <strong>key</strong> (Langkah 4)</td>
+</tr>
+<tr>
+<td>Controller fitur</td>
+<td><strong>Wajib, baru</strong></td>
+<td><code>use TracksObjectUploads</code>, upload, URL, ganti, hapus (Langkah 5)</td>
+</tr>
+<tr>
+<td>SQL kolom foto</td>
+<td><strong>Wajib</strong></td>
+<td><code>VARCHAR(255)</code>, dijalankan manual (Langkah 2)</td>
+</tr>
+<tr>
+<td><code>tests/&lt;Fitur&gt;/...Test.php</code></td>
+<td>Dianjurkan, baru</td>
+<td>Upload, pembersihan, ganti, hapus (Langkah 6)</td>
+</tr>
+<tr>
+<td>Dokumentasi fitur</td>
+<td>Dianjurkan</td>
+<td>Nama modul, submodul, kolom penyimpan key</td>
+</tr>
+</tbody>
+</table></div>
+<p>Yang <strong>tidak perlu</strong> dibuat atau diubah:</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>File</th>
+<th>Alasan</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>.env</code></td>
+<td>Bucket, kredensial, dan <code>NAME_APPLICATION</code> dipakai bersama</td>
+</tr>
+<tr>
+<td><code>ObjectStorageServiceProvider.php</code></td>
+<td>Manager sudah terdaftar dan membaca <code>modules</code> dari config</td>
+</tr>
+<tr>
+<td><code>S3ObjectStorageService.php</code>, <code>ObjectStorageService.php</code></td>
+<td>Lapisan inti sudah generik</td>
+</tr>
+<tr>
+<td><code>ModuleImageStorage.php</code>, <code>ObjectStorageManager.php</code>, <code>TracksObjectUploads.php</code></td>
+<td>Dipakai apa adanya</td>
+</tr>
+<tr>
+<td><code>composer.json</code></td>
+<td>Library S3 dan Flysystem sudah terpasang</td>
+</tr>
+<tr>
+<td>Aplikasi mobile</td>
+<td>Cukup membaca field <code>*_url</code>; URL yang kedaluwarsa dimuat ulang lewat endpoint detail</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>Kasus khusus</strong> (jarang): modul yang punya file lama di disk lokal atau key historis berformat sendiri butuh satu kelas turunan <code>ModuleImageStorage</code> seperti <code>app/Support/Asset/AssetImageStorage.php</code>, didaftarkan pada entri modul lewat kunci <code>class</code>. Modul baru tanpa data lama tidak membutuhkannya. Lapisan generik saat ini hanya untuk <strong>gambar</strong> (JPEG, PNG, WebP); untuk jenis file lain pakai <code>raw()</code>.</p>
+<h3>15.12 Urutan kerja yang disarankan</h3>
+<ol>
+<li>Daftarkan modul di <code>config/object_storage.php</code>.</li>
+<li>Siapkan dan jalankan SQL kolom foto (<code>VARCHAR(255)</code>).</li>
+<li>Buat model, lalu controller dan route.</li>
+<li>Tulis test (upload, gagal, ganti, hapus) dan jalankan.</li>
+<li>Uji manual satu foto ke MinIO nyata dan cek object terbentuk, terbuka lewat URL, dan hilang setelah dihapus.</li>
+</ol>
+    </article>
+
+    <footer>Dokumentasi MinIO Object Storage v1.0 · 9 Oktober 2026 · Disusun dari source lokal API (Lumen). Contoh key dan ID adalah data sintetis.</footer>
+  </main>
+</div>
+<button class="to-top" id="to-top" type="button" aria-label="Kembali ke atas">↑</button>
+
+<script>
+(function(){
+  var search=document.getElementById('nav-search');
+  var navs=document.querySelectorAll('.nav');
+  search.addEventListener('input',function(){
+    var q=search.value.trim().toLowerCase();
+    navs.forEach(function(nav){
+      nav.querySelectorAll('.nav-group').forEach(function(g){
+        var any=false;
+        g.querySelectorAll('a').forEach(function(a){
+          var hit=!q||a.textContent.toLowerCase().indexOf(q)>-1;
+          a.hidden=!hit; if(hit) any=true;
+        });
+        g.hidden=!any;
+      });
+    });
+  });
+  var links={};
+  document.querySelectorAll('#nav a').forEach(function(a){links[a.dataset.sec]=a;});
+  var current=null;
+  if('IntersectionObserver' in window){
+    var io=new IntersectionObserver(function(entries){
+      entries.forEach(function(e){
+        if(e.isIntersecting){
+          if(current) current.classList.remove('active');
+          current=links[e.target.id];
+          if(current){current.classList.add('active');var nav=current.closest('.nav');var top=current.offsetTop-nav.offsetTop;if(top<nav.scrollTop||top>nav.scrollTop+nav.clientHeight-30){nav.scrollTop=top-nav.clientHeight/2;}}
+        }
+      });
+    },{rootMargin:'0px 0px -75% 0px'});
+    document.querySelectorAll('.doc h2[id]').forEach(function(h){io.observe(h);});
+  }
+  document.querySelectorAll('.mobile-toc a').forEach(function(a){
+    a.addEventListener('click',function(){a.closest('details').open=false;});
+  });
+  document.getElementById('to-top').addEventListener('click',function(){window.scrollTo({top:0});});
+})();
+</script>
+<script type="module">
+// Fallback renderer: hanya jalan bila viewer belum merender diagram (mis. file dibuka langsung).
+const blocks=[...document.querySelectorAll('pre.mermaid')].filter(function(el){return !el.hasAttribute('data-claude-mermaid-claimed');});
+if(blocks.length){
+  blocks.forEach(function(el){el.setAttribute('data-claude-mermaid-claimed','1');el.dataset.src=el.textContent;});
+  const {default:mermaid}=await import("https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs");
+  const media=window.matchMedia('(prefers-color-scheme: dark)');
+  const render=async function(){
+    const css=getComputedStyle(document.documentElement);
+    const v=function(n){return css.getPropertyValue(n).trim();};
+    mermaid.initialize({startOnLoad:false,securityLevel:'strict',theme:'base',fontFamily:'inherit',
+      themeVariables:{background:v('--surface'),primaryColor:v('--accent-soft'),primaryTextColor:v('--ink'),
+        primaryBorderColor:v('--accent'),lineColor:v('--muted'),secondaryColor:v('--surface-2'),tertiaryColor:v('--surface'),
+        textColor:v('--ink'),mainBkg:v('--accent-soft'),nodeBorder:v('--accent'),clusterBkg:v('--surface-2'),
+        noteBkgColor:v('--surface-2'),noteTextColor:v('--ink'),noteBorderColor:v('--line'),
+        actorBkg:v('--accent-soft'),actorBorder:v('--accent'),actorTextColor:v('--ink'),actorLineColor:v('--muted'),
+        signalColor:v('--ink-2'),signalTextColor:v('--ink'),labelBoxBkgColor:v('--surface-2'),labelTextColor:v('--ink'),
+        edgeLabelBackground:v('--surface'),attributeBackgroundColorOdd:v('--surface'),attributeBackgroundColorEven:v('--surface-2')}});
+    blocks.forEach(function(el){el.removeAttribute('data-processed');el.textContent=el.dataset.src;});
+    try{await mermaid.run({nodes:blocks});}catch(e){console.error(e);}
+  };
+  render();
+  if(media.addEventListener) media.addEventListener('change',render);
+}
+</script>
+<script>
+// Kembali ke index lokal bila dibuka dari komputer, ke index artifact bila dibuka dari claude.ai.
+(function(){var h=location.hostname;var art=location.protocol!=='file:'&&/claude/i.test(h);
+if(art){document.querySelectorAll('a.back').forEach(function(a){a.href='https://claude.ai/artifact/X39UeaJRpBKwqFjswGNqip';a.target='_blank';a.rel='noopener';});
+document.querySelectorAll('.dl').forEach(function(d){d.hidden=true;});}})();
+</script>
