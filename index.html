@@ -128,12 +128,11 @@ footer{color:var(--muted);font-size:13px;border-top:1px solid var(--line);paddin
     <input class="search" id="doc-search" type="search" placeholder="Cari fitur, kode, atau status… (mis. KRY06, checklist)" aria-label="Cari dokumen">
     <div class="mode" role="group" aria-label="Sumber dokumen">
       <span class="mode-label">Sumber</span>
-      <button type="button" id="mode-auto" data-mode="auto" aria-pressed="true">Otomatis</button>
-      <button type="button" id="mode-online" data-mode="online" aria-pressed="false">Online</button>
-      <button type="button" id="mode-offline" data-mode="offline" aria-pressed="false">Offline</button>
+      <button type="button" id="mode-github" data-mode="github" aria-pressed="true">GitHub</button>
+      <button type="button" id="mode-artifact" data-mode="artifact" aria-pressed="false">Artifact</button>
     </div>
   </div>
-  <p class="status" id="mode-status" aria-live="polite"><span class="dot"></span><span id="mode-text">Offline — dokumen dibuka dari file lokal di folder ini.</span></p>
+  <p class="status" id="mode-status" aria-live="polite"><span class="dot"></span><span id="mode-text">GitHub — dokumen dibuka dari situs ini.</span></p>
 
   <section class="stage" aria-labelledby="st-masuk">
     <div class="stage-head">
@@ -446,37 +445,32 @@ footer{color:var(--muted);font-size:13px;border-top:1px solid var(--line);paddin
 })();
 
 (function(){
-  var KEY='asset-docs-mode';
+  var KEY='asset-docs-source';
   var host=location.hostname;
-  var localAvailable=location.protocol==='file:'||!/claude/i.test(host);
+  var onArtifact=location.protocol!=='file:'&&/claude/i.test(host);
   var cards=Array.prototype.slice.call(document.querySelectorAll('a.card'));
   var buttons=Array.prototype.slice.call(document.querySelectorAll('.mode button'));
   var status=document.getElementById('mode-status');
   var text=document.getElementById('mode-text');
-  var choice='auto';
-  try{choice=localStorage.getItem(KEY)||'auto';}catch(e){}
-  if(!localAvailable){
-    document.getElementById('mode-offline').disabled=true;
-    document.getElementById('mode-offline').title='File lokal hanya tersedia saat halaman dibuka dari komputer.';
-    if(choice==='offline') choice='auto';
-  }
-  function effective(){
-    if(!localAvailable) return 'online';
-    if(choice==='auto') return (location.protocol==='file:'&&navigator.onLine)?'online':'offline';
-    return choice;
+  var choice='github';
+  try{choice=localStorage.getItem(KEY)||'github';}catch(e){}
+  if(choice!=='github'&&choice!=='artifact') choice='github';
+  if(onArtifact){
+    choice='artifact';
+    var g=document.getElementById('mode-github');
+    g.disabled=true;
+    g.title='Dokumen GitHub tidak tersedia dari halaman artifact.';
   }
   function apply(){
-    var mode=effective();
     cards.forEach(function(a){
-      if(mode==='online'){a.href=a.dataset.online;a.target='_blank';a.rel='noopener';}
+      if(choice==='artifact'){a.href=a.dataset.online;a.target='_blank';a.rel='noopener';}
       else{a.href=a.dataset.local;a.removeAttribute('target');a.removeAttribute('rel');}
     });
     buttons.forEach(function(b){b.setAttribute('aria-pressed',String(b.dataset.mode===choice));});
-    status.classList.toggle('is-online',mode==='online');
-    var why=choice==='auto'?(localAvailable?(location.protocol==='file:'?' (otomatis: '+(navigator.onLine?'terhubung ke internet':'tidak ada koneksi')+')':' (otomatis: situs ini)'):' (halaman ini dibuka dari claude.ai)'):'';
-    text.textContent=mode==='online'
-      ?'Online — dokumen dibuka dari artifact di claude.ai, tab baru'+why+'.'
-      :(location.protocol==='file:'?'Offline — dokumen dibuka dari file lokal di folder ini':'Dokumen dibuka dari situs ini')+why+'.';
+    status.classList.toggle('is-online',choice==='artifact');
+    text.textContent=choice==='artifact'
+      ?'Artifact — dokumen dibuka dari artifact di claude.ai, tab baru.'
+      :'GitHub — dokumen dibuka dari situs ini.';
   }
   buttons.forEach(function(b){
     b.addEventListener('click',function(){
@@ -486,8 +480,6 @@ footer{color:var(--muted);font-size:13px;border-top:1px solid var(--line);paddin
       apply();
     });
   });
-  window.addEventListener('online',apply);
-  window.addEventListener('offline',apply);
   apply();
 })();
 </script>
