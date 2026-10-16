@@ -462,7 +462,7 @@ footer{color:var(--muted);font-size:13px;border-top:1px solid var(--line);paddin
   }
   function effective(){
     if(!localAvailable) return 'online';
-    if(choice==='auto') return navigator.onLine?'online':'offline';
+    if(choice==='auto') return (location.protocol==='file:'&&navigator.onLine)?'online':'offline';
     return choice;
   }
   function apply(){
@@ -473,10 +473,10 @@ footer{color:var(--muted);font-size:13px;border-top:1px solid var(--line);paddin
     });
     buttons.forEach(function(b){b.setAttribute('aria-pressed',String(b.dataset.mode===choice));});
     status.classList.toggle('is-online',mode==='online');
-    var why=choice==='auto'?(localAvailable?' (otomatis: '+(navigator.onLine?'terhubung ke internet':'tidak ada koneksi')+')':' (halaman ini dibuka dari claude.ai)'):'';
+    var why=choice==='auto'?(localAvailable?(location.protocol==='file:'?' (otomatis: '+(navigator.onLine?'terhubung ke internet':'tidak ada koneksi')+')':' (otomatis: situs ini)'):' (halaman ini dibuka dari claude.ai)'):'';
     text.textContent=mode==='online'
       ?'Online — dokumen dibuka dari artifact di claude.ai, tab baru'+why+'.'
-      :'Offline — dokumen dibuka dari file lokal di folder ini'+why+'.';
+      :(location.protocol==='file:'?'Offline — dokumen dibuka dari file lokal di folder ini':'Dokumen dibuka dari situs ini')+why+'.';
   }
   buttons.forEach(function(b){
     b.addEventListener('click',function(){
