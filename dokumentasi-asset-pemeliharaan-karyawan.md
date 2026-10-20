@@ -18,8 +18,8 @@
 | Mobile | Flutter (`professional_flutter_3_35`), `flutter_bloc`, `dio` |
 | Web | ⚠️ Belum ditemukan: tidak ada source web di workspace |
 | Test otomatis | API `tests/Asset/AssetPemeliharaanKaryawanTest.php` (7 test) · Mobile `test/asset/asset_pemeliharaan_test.dart` (8 test) |
-| Versi Dokumen | 1.1 |
-| Tanggal Dokumentasi | 2026-10-12 |
+| Versi Dokumen | 1.2 |
+| Tanggal Dokumentasi | 2026-10-20 |
 | Dokumen terkait | Upgrade (KRY03), Kerusakan (KRY06), Retur (KRY04), Offboarding (KRY02), Request/Penambahan (KRY-03-1, unit pengganti), PML02 Perbaikan & PML04 Disposal (sudah diimplementasikan, tetapi belum dipicu otomatis dari hasil 4–5) |
 
 ---
@@ -690,7 +690,7 @@ Respons menambah `hasil` (hasil akhir). Notif `pemeliharaan.hasil` ke admin.
   "tab": "proses",
   "peran": "pendamping",
   "mekanisme_pelaksanaan": "hadir_langsung",
-  "karyawan": {"id_karyawan": "EMP-01", "nik": "343242", "nama_karyawan": "Karyawan Contoh", "cabang": "Pusat", "divisi": "IT"},
+  "karyawan": {"id_karyawan": "EMP-01", "nik": "343242", "nama_karyawan": "Karyawan Contoh", "cabang": "Pusat", "divisi": "IT", "jabatan": "Staff IT"},
   "pendamping": {"id_karyawan": "EMP-02", "nik": "343243", "nama_karyawan": "Pendamping Contoh"},
   "vendor": {"id_asset_vendor_m": "", "nama_vendor": "Servis Laptop Contoh", "keterangan_vendor": "0812-0000-0000"},
   "lokasi_pemeliharaan": "Ruang IT lantai 2",
@@ -771,6 +771,7 @@ Segmented mekanisme, dropdown vendor master + "Isi nama vendor manual", keterang
 | `fase_pemeliharaan`, `tab` | `fase`, `tab` | Badge, timeline, tab |
 | `peran` | `peran` → `pendampingSaya` | Label "Anda PIC Pendamping" |
 | `usulan_jadwal` | `usulanTanggal/Jam/Keterangan` | Notice "Usulan Jadwal Admin"; kosong → "Menunggu jadwal baru dari admin" |
+| `karyawan.jabatan` (← `master_jabatan.nama` via `data_karyawan.id_jabatan`) | `AssetKerusakanKaryawan.jabatan` (default `''`) | Nama jabatan pemegang; tersedia di model, tampil di kartu Data Karyawan bila layar menampilkannya |
 | `riwayat_jadwal[]` | `riwayatJadwal` | Riwayat Jadwal |
 | `komponen[]` | `komponen` | Item checklist |
 | `hasil` (objek di detail, string di list) | `hasil.status/checklist` | Warna & label hasil |
@@ -1154,5 +1155,6 @@ Aturan silang:
 
 | Version | Date | Changes |
 |---|---|---|
+| 1.2 | 2026-10-20 | API `getDetail`: `karyawan.jabatan` ditambahkan (query terpisah `data_karyawan` + `master_jabatan` berdasarkan `id_karyawan` header; header tidak punya kolom jabatan; tanpa SQL/migrasi). Mobile: model karyawan membaca `jabatan`. Tes `AssetPemeliharaanKaryawanTest` meng-assert `karyawan.jabatan`. |
 | 1.1 | 2026-10-12 | Sinkronisasi dengan kode 12 Okt 2026: path file mobile mengikuti struktur folder baru (`UI/Modul/Asset/<Fitur>/` berhuruf kapital, model di `Repository/Model/Asset/`). |
 | 1.0 | 2026-09-28 | Initial documentation — disusun dari source lokal API & MOBILE setelah implementasi PML01 konteks karyawan; dibandingkan dengan dokumen bisnis PML01 V2.0 |

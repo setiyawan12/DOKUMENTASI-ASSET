@@ -197,7 +197,7 @@ footer{margin-top:64px;padding-top:18px;border-top:1px solid var(--line);color:v
         <dl>
           <dt>Kode</dt><dd>PML01</dd>
           <dt>Modul</dt><dd>Pemeliharaan Aset</dd>
-          <dt>Versi</dt><dd>1.1 · 12 Okt 2026</dd>
+          <dt>Versi</dt><dd>1.2 · 20 Okt 2026</dd>
           <dt>Stack</dt><dd>Lumen 10 · Flutter</dd>
           <dt>API</dt><dd>16 endpoint</dd>
         </dl>
@@ -303,11 +303,11 @@ footer{margin-top:64px;padding-top:18px;border-top:1px solid var(--line);color:v
 </tr>
 <tr>
 <td>Versi Dokumen</td>
-<td>1.1</td>
+<td>1.2</td>
 </tr>
 <tr>
 <td>Tanggal Dokumentasi</td>
-<td>2026-10-12</td>
+<td>2026-10-20</td>
 </tr>
 <tr>
 <td>Dokumen terkait</td>
@@ -1538,7 +1538,7 @@ DB (header, item, jadwal, asset_pendamping_m, asset_data, asset_log)
   &quot;tab&quot;: &quot;proses&quot;,
   &quot;peran&quot;: &quot;pendamping&quot;,
   &quot;mekanisme_pelaksanaan&quot;: &quot;hadir_langsung&quot;,
-  &quot;karyawan&quot;: {&quot;id_karyawan&quot;: &quot;EMP-01&quot;, &quot;nik&quot;: &quot;343242&quot;, &quot;nama_karyawan&quot;: &quot;Karyawan Contoh&quot;, &quot;cabang&quot;: &quot;Pusat&quot;, &quot;divisi&quot;: &quot;IT&quot;},
+  &quot;karyawan&quot;: {&quot;id_karyawan&quot;: &quot;EMP-01&quot;, &quot;nik&quot;: &quot;343242&quot;, &quot;nama_karyawan&quot;: &quot;Karyawan Contoh&quot;, &quot;cabang&quot;: &quot;Pusat&quot;, &quot;divisi&quot;: &quot;IT&quot;, &quot;jabatan&quot;: &quot;Staff IT&quot;},
   &quot;pendamping&quot;: {&quot;id_karyawan&quot;: &quot;EMP-02&quot;, &quot;nik&quot;: &quot;343243&quot;, &quot;nama_karyawan&quot;: &quot;Pendamping Contoh&quot;},
   &quot;vendor&quot;: {&quot;id_asset_vendor_m&quot;: &quot;&quot;, &quot;nama_vendor&quot;: &quot;Servis Laptop Contoh&quot;, &quot;keterangan_vendor&quot;: &quot;0812-0000-0000&quot;},
   &quot;lokasi_pemeliharaan&quot;: &quot;Ruang IT lantai 2&quot;,
@@ -1715,6 +1715,11 @@ DB (header, item, jadwal, asset_pendamping_m, asset_data, asset_log)
 <td><code>usulan_jadwal</code></td>
 <td><code>usulanTanggal/Jam/Keterangan</code></td>
 <td>Notice "Usulan Jadwal Admin"; kosong → "Menunggu jadwal baru dari admin"</td>
+</tr>
+<tr>
+<td><code>karyawan.jabatan</code> (← <code>master_jabatan.nama</code> via <code>data_karyawan.id_jabatan</code>)</td>
+<td><code>AssetKerusakanKaryawan.jabatan</code> (default <code>''</code>)</td>
+<td>Nama jabatan pemegang; tersedia di model, tampil di kartu Data Karyawan bila layar menampilkannya</td>
 </tr>
 <tr>
 <td><code>riwayat_jadwal[]</code></td>
@@ -2790,6 +2795,11 @@ Aturan silang:
 </tr>
 </thead>
 <tbody>
+<tr>
+<td>1.2</td>
+<td>2026-10-20</td>
+<td>API <code>getDetail</code>: <code>karyawan.jabatan</code> ditambahkan (query terpisah <code>data_karyawan</code> + <code>master_jabatan</code> berdasarkan <code>id_karyawan</code> header; header tidak punya kolom jabatan; tanpa SQL/migrasi). Mobile: model karyawan membaca <code>jabatan</code>. Tes <code>AssetPemeliharaanKaryawanTest</code> meng-assert <code>karyawan.jabatan</code>.</td>
+</tr>
 <tr>
 <td>1.1</td>
 <td>2026-10-12</td>

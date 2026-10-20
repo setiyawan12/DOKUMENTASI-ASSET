@@ -198,7 +198,7 @@ footer{margin-top:64px;padding-top:18px;border-top:1px solid var(--line);color:v
         <dl>
           <dt>Kode</dt><dd>KRY-03-1</dd>
           <dt>Modul</dt><dd>Asset Management</dd>
-          <dt>Versi</dt><dd>1.3 · 12 Okt 2026</dd>
+          <dt>Versi</dt><dd>1.4 · 20 Okt 2026</dd>
           <dt>Stack</dt><dd>Lumen 10 · Flutter</dd>
           <dt>API</dt><dd>17 endpoint</dd>
         </dl>
@@ -218,7 +218,7 @@ footer{margin-top:64px;padding-top:18px;border-top:1px solid var(--line);color:v
         <p class="sub">Satu tabel, dua pintu masuk, satu pintu keluar.</p>
         <div class="three">
           <div class="fact"><b>Dua jalur</b><p>Kolom <code>sumber_pengajuan</code> membedakan <strong>Penambahan</strong> (<code>admin</code>) dan <strong>Pengajuan</strong> (<code>karyawan</code>) di tabel <code>asset_trx_request_karyawan</code>.</p></div>
-          <div class="fact"><b>Approval</b><p>Hanya Pengajuan yang punya keputusan Admin: <strong>Tolak</strong> dengan alasan, atau <strong>Setujui</strong> dengan mengalokasikan asset sekategori + jadwal serah terima.</p></div>
+          <div class="fact"><b>Approval</b><p>Hanya Pengajuan yang punya keputusan Admin: <strong>Tolak</strong> dengan alasan, atau <strong>Setujui</strong> dengan mengalokasikan asset apa pun dari stok + jadwal serah terima.</p></div>
           <div class="fact"><b>Serah terima</b><p><strong>All-or-nothing</strong>: asset baru berpindah ke karyawan jika <em>semua</em> item dinyatakan Normal. Berbeda dengan Onboarding yang parsial.</p></div>
         </div>
       </div>
@@ -238,8 +238,8 @@ footer{margin-top:64px;padding-top:18px;border-top:1px solid var(--line);color:v
         <h3>Jalur Pengajuan (Karyawan → Admin → Karyawan)</h3>
         <p class="sub">Karyawan meminta jenis asset; Admin memutuskan dan memilih unit fisiknya.</p>
         <div class="flow">
-          <div class="step"><span class="badge b-wait">Menunggu Konfirmasi</span><span class="who">Karyawan: Submit ke Admin</span><p>Jenis asset (kategori non-parent), alasan, urgensi.</p><span class="db">header saja, tanpa item</span></div>
-          <div class="step"><span class="badge b-draft">Draft Alokasi</span><span class="who">Admin · opsional</span><p>Asset sekategori dipilih, bisa diubah ulang sebelum dikirim.</p><span class="db">item tersimpan · asset belum dikunci</span></div>
+          <div class="step"><span class="badge b-wait">Menunggu Konfirmasi</span><span class="who">Karyawan: Submit ke Admin</span><p>Jenis asset (teks bebas), alasan.</p><span class="db">header saja, tanpa item</span></div>
+          <div class="step"><span class="badge b-draft">Draft Alokasi</span><span class="who">Admin · opsional</span><p>Asset dipilih dari stok (tanpa batas kategori), bisa diubah ulang sebelum dikirim.</p><span class="db">item tersimpan · asset belum dikunci</span></div>
           <div class="step"><span class="badge b-wait">Menunggu Konfirmasi</span><span class="who">Admin: Submit ke PIC</span><p>Pengajuan disetujui, karyawan mendapat notifikasi.</p><span class="db">tgl_approval terisi · asset → proses</span></div>
           <div class="step"><span class="badge b-done">Selesai</span><span class="who">Karyawan konfirmasi</span><p>Sama seperti jalur Penambahan.</p><span class="db">status_approval = dikonfirmasi</span></div>
         </div>
@@ -254,7 +254,7 @@ footer{margin-top:64px;padding-top:18px;border-top:1px solid var(--line);color:v
           <div class="role"><h4>Business Analyst / PM</h4><p>Dua jalur, aturan bisnis, dan status per sudut pandang.</p><div class="links"><a href="#s3">§3</a><a href="#s9">§9 Rules</a><a href="#s10">§10 Flow</a><a href="#s14">§14 Status</a></div></div>
           <div class="role"><h4>Backend Developer</h4><p>Logika transaksi, dampak asset, dan kontrak API.</p><div class="links"><a href="#s21">§21 Logic</a><a href="#s22">§22 asset_data</a><a href="#s24">§24 API</a></div></div>
           <div class="role"><h4>Mobile Developer</h4><p>Bloc, route, screen, dan mapping field.</p><div class="links"><a href="#s25">§25</a><a href="#s26">§26 Screen</a><a href="#s29">§29 Mapping</a></div></div>
-          <div class="role"><h4>QA / Tester</h4><p>38 skenario uji, edge case, dan risiko.</p><div class="links"><a href="#s38">§38 Test</a><a href="#s40">§40 Edge</a><a href="#s41">§41 Risk</a></div></div>
+          <div class="role"><h4>QA / Tester</h4><p>41 skenario uji, edge case, dan risiko.</p><div class="links"><a href="#s38">§38 Test</a><a href="#s40">§40 Edge</a><a href="#s41">§41 Risk</a></div></div>
           <div class="role"><h4>Technical Support</h4><p>Pesan error, audit trail, dan notifikasi.</p><div class="links"><a href="#s32">§32 Error</a><a href="#s33">§33 Audit</a><a href="#s34">§34 Notif</a></div></div>
           <div class="role"><h4>User / Admin Asset</h4><p>Langkah pemakaian untuk admin dan karyawan.</p><div class="links"><a href="#s36">§36 Manual Book</a><a href="#s37">§37 Tombol</a></div></div>
         </div>
@@ -264,6 +264,7 @@ footer{margin-top:64px;padding-top:18px;border-top:1px solid var(--line);color:v
         <h3>Perlu perhatian</h3>
         <p class="sub">Temuan terpenting dari analisis source. Detail lengkap di <a href="#s39">§39</a> dan <a href="#s41">§41</a>.</p>
         <ul class="attention">
+          <li><span class="sev sev-h">TINGGI</span><span>SQL manual <code>sql-pengajuan-karyawan-jenis-asset-bebas.sql</code> <strong>belum dijalankan</strong>; jalankan sebelum API v1.4 dipakai, atau Pengajuan baru gagal disimpan. <a href="#s41">RISK-012</a></span></li>
           <li><span class="sev sev-h">TINGGI</span><span>Laporan <strong>rusak</strong> membuat transaksi dan <strong>semua asset</strong>-nya macet di status <code>proses</code>; tidak ada endpoint lanjutan. <a href="#s41">RISK-001</a></span></li>
           <li><span class="sev sev-ok">SELESAI</span><span>Asset yang pernah diserahkan lewat penambahan kini <strong>bisa ditambahkan lagi</strong> setelah kembali ke gudang (diperbaiki v1.1). <a href="#s41">RISK-002</a></span></li>
           <li><span class="sev sev-m">RENDAH</span><span><strong>Draft</strong> Penambahan dan Pengajuan kini bisa diubah dan dikirim, tetapi belum bisa dihapus. <a href="#s41">RISK-003</a></span></li>
@@ -313,15 +314,15 @@ footer{margin-top:64px;padding-top:18px;border-top:1px solid var(--line);color:v
 </tr>
 <tr>
 <td>Versi Dokumen</td>
-<td>1.3</td>
+<td>1.4</td>
 </tr>
 <tr>
 <td>Tanggal Dokumentasi</td>
-<td>2026-09-26</td>
+<td>2026-10-20</td>
 </tr>
 <tr>
 <td>Dokumen terkait</td>
-<td><code>dokumentasi-asset-onboarding-karyawan.md</code> (fitur serupa, banyak helper bersama)</td>
+<td><code>dokumentasi-asset-onboarding-karyawan.md</code> (fitur serupa, banyak helper bersama); <code>sql-pengajuan-karyawan-jenis-asset-bebas.sql</code> (SQL manual v1.4, wajib dijalankan sebelum deploy API)</td>
 </tr>
 </tbody>
 </table></div>
@@ -391,7 +392,7 @@ footer{margin-top:64px;padding-top:18px;border-top:1px solid var(--line);color:v
 </table></div>
 <p>Satu tabel, dua pintu masuk, satu pintu keluar:</p>
 <div class="code"><span class="code-lang">Alur</span><pre><code class="language-text">PENAMBAHAN (sumber_pengajuan = admin)            PENGAJUAN (sumber_pengajuan = karyawan)
-Admin: pilih karyawan + asset + jadwal            Karyawan: pilih jenis asset + alasan + urgensi
+Admin: pilih karyawan + asset + jadwal            Karyawan: ketik jenis asset (teks) + alasan
         │ Submit ke Karyawan                              │ Submit ke Admin
         │ asset_data → proses                             ▼
         │                                         Admin: Tolak ──► status ditolak (selesai)
@@ -411,14 +412,14 @@ Admin: pilih karyawan + asset + jadwal            Karyawan: pilih jenis asset + 
 <p>Fitur ini mencatat <strong>pemberian asset tambahan kepada karyawan yang sudah bekerja</strong> (berbeda dari Onboarding yang untuk penyerahan awal). Ada dua jalur yang disimpan di tabel yang sama:</p>
 <ul>
 <li><strong>Penambahan Asset (admin)</strong> — Admin Asset langsung memilih karyawan, asset dari gudang (boleh lintas kategori), dan jadwal serah terima, lalu mengirim ke karyawan.</li>
-<li><strong>Pengajuan Asset (karyawan)</strong> — Karyawan mengajukan <strong>jenis asset</strong> (kategori) beserta alasan dan urgensi. Admin meninjau: <strong>menolak</strong> dengan alasan, atau <strong>menyetujui</strong> dengan mengalokasikan asset fisik dari kategori yang sama dan menentukan jadwal serah terima. Alokasi dapat disimpan sebagai draft terlebih dulu.</li>
+<li><strong>Pengajuan Asset (karyawan)</strong> — Karyawan mengajukan <strong>jenis asset</strong> (teks bebas yang diketik sendiri, maks 150 karakter) beserta alasan. Admin meninjau: <strong>menolak</strong> dengan alasan, atau <strong>menyetujui</strong> dengan mengalokasikan asset fisik apa pun dari stok gudang (tidak dibatasi jenis yang diajukan) dan menentukan jadwal serah terima. Alokasi dapat disimpan sebagai draft terlebih dulu.</li>
 </ul>
 <p>Kedua jalur berakhir di <strong>konfirmasi karyawan</strong>: tiap asset dinilai Normal atau Rusak. Berbeda dengan Onboarding, serah terima di fitur ini bersifat <strong>all-or-nothing</strong>: asset baru berpindah ke karyawan jika <strong>semua</strong> item Normal. Jika ada item Rusak, transaksi berhenti di status "Butuh Proses" dan <strong>tidak ada endpoint lanjutan</strong> di source.</p>
 <hr />
 <h2 id="s5"><span class="sec-no">05</span>Tujuan Fitur</h2>
 <h3>5.1 Tujuan Bisnis (diturunkan dari kode)</h3>
 <ul>
-<li>Karyawan dapat meminta asset tambahan secara tercatat dengan alasan dan tingkat urgensi (Normal / Secepatnya / Mendesak).</li>
+<li>Karyawan dapat meminta asset tambahan secara tercatat dengan menuliskan jenis asset yang dibutuhkan (teks bebas) beserta alasan.</li>
 <li>Admin dapat menyetujui atau menolak permintaan dengan alasan yang tersimpan.</li>
 <li>Admin dapat memberikan asset tambahan tanpa menunggu permintaan.</li>
 <li>Penyerahan asset dijadwalkan (tanggal &amp; jam) dan diverifikasi fisik oleh karyawan.</li>
@@ -427,7 +428,7 @@ Admin: pilih karyawan + asset + jadwal            Karyawan: pilih jenis asset + 
 <h3>5.2 Tujuan Sistem</h3>
 <ul>
 <li>Menyimpan pengajuan/penambahan dengan nomor <code>KRY-03-1-...</code>.</li>
-<li>Mengalokasikan asset fisik yang tersedia di gudang, sesuai kategori pengajuan.</li>
+<li>Mengalokasikan asset fisik yang tersedia di gudang; admin bebas memilih asset apa pun dari stok (tidak dibatasi jenis yang diajukan).</li>
 <li>Mengunci asset (<code>status_asset = proses</code>) setelah dikirim ke karyawan.</li>
 <li>Memindahkan pemegang asset ke karyawan setelah konfirmasi normal.</li>
 <li>Mengirim notifikasi inbox + push ke pihak terkait.</li>
@@ -521,7 +522,7 @@ Admin: pilih karyawan + asset + jadwal            Karyawan: pilih jenis asset + 
 <td>Setujui / alokasi asset</td>
 <td style="text-align: center;">✅ (status Pengajuan / Draft Alokasi)</td>
 <td style="text-align: center;">❌</td>
-<td>Asset harus kategori sama</td>
+<td>Asset apa pun dari stok gudang (tidak dibatasi jenis)</td>
 </tr>
 <tr>
 <td>Konfirmasi asset (Normal/Rusak)</td>
@@ -557,11 +558,11 @@ Admin: pilih karyawan + asset + jadwal            Karyawan: pilih jenis asset + 
 </tr>
 <tr>
 <td>Jenis asset</td>
-<td>Kategori (<code>asset_kategori_m</code>) yang diajukan karyawan; hanya kategori <strong>bukan parent</strong></td>
+<td><strong>Teks bebas</strong> (maks 150 karakter) yang diketik karyawan pada Pengajuan; disimpan di <code>nama_kategori</code>, tanpa relasi ke <code>asset_kategori_m</code></td>
 </tr>
 <tr>
 <td>Urgensi</td>
-<td><code class="chip chip-done">normal</code>, <code>secepatnya</code>, <code>mendesak</code> (Pengajuan)</td>
+<td><strong>Dihapus</strong> dari Pengajuan (v1.4). Kolom <code>urgensi</code> hanya legacy: baris lama tetap terbaca, tidak lagi diisi atau ditampilkan</td>
 </tr>
 <tr>
 <td>Alokasi</td>
@@ -603,16 +604,16 @@ Admin: pilih karyawan + asset + jadwal            Karyawan: pilih jenis asset + 
 <p><code>hasActiveOnboardingAsset</code> → "…sedang diproses pada onboarding." <code>hasActiveRequestAsset</code> (header <strong><code class="chip chip-wait">proses</code> saja</strong>, sumber admin atau pengajuan yang sudah disetujui) → "…sedang diproses pada penambahan lain." Transaksi <code class="chip chip-done">dikonfirmasi</code> (selesai) <strong>tidak lagi</strong> mengunci asset. Asset yang masih dipegang karyawan tetap tidak bisa dipilih karena syarat <code>status_asset = tersedia</code> + <code>pemegang_asset = gudang</code>, sehingga asset hasil Retur/Offboarding bisa ditambahkan lagi (RISK-002, sudah diperbaiki v1.1).</p>
 <h3>BR-006 — Jadwal serah terima wajib saat dikirim</h3>
 <p>Penambahan &amp; alokasi: <code>tgl_serah_terima</code> (Y-m-d) dan <code>jam_serah_terima</code> (H:i) required bila <code>is_draft=false</code>. Draft boleh kosong (disimpan <code>0000-00-00</code> / <code>00:00:00</code>). Backend <strong>tidak</strong> memvalidasi tanggal ≥ hari ini (mobile membatasi <code>firstDate = hari ini</code>).</p>
-<h3>BR-007 — Pengajuan: jenis asset wajib &amp; bukan kategori parent</h3>
-<p><code>id_asset_kategori_m</code> required; kategori harus ada dan <code>flag_parent != 1</code> → "Jenis asset tidak ditemukan atau tidak dapat diajukan."</p>
-<h3>BR-008 — Pengajuan: alasan &amp; urgensi wajib saat dikirim</h3>
-<p><code>keterangan</code> required dan <code>urgensi</code> ∈ {normal, secepatnya, mendesak} bila bukan draft → "Alasan pengajuan wajib diisi." / "Urgensi wajib dipilih." / "Urgensi pengajuan tidak valid."</p>
+<h3>BR-007 — Pengajuan: jenis asset wajib (teks bebas)</h3>
+<p><code>jenis_asset</code> (string, di-trim, maks 150) required bila bukan draft; draft boleh kosong. Tidak ada validasi terhadap <code>asset_kategori_m</code>. Disimpan ke <code>nama_kategori</code>; <code>id_asset_kategori_m</code> dan <code>urgensi</code> diisi NULL. Field <code>id_asset_kategori_m</code> dan <code>urgensi</code> dari klien lama diabaikan → "Jenis asset wajib diisi." (422 <code>VALIDATION_ERROR</code>; bila ada field lain yang gagal, message induk "Data pengajuan asset belum lengkap.")</p>
+<h3>BR-008 — Pengajuan: alasan wajib saat dikirim</h3>
+<p><code>keterangan</code> required bila bukan draft → "Alasan pengajuan wajib diisi." Urgensi <strong>tidak ada lagi</strong> pada Pengajuan (dihapus v1.4): tidak ada form, validasi, maupun tampilan.</p>
 <h3>BR-009 — Tolak/alokasi hanya saat pengajuan belum disetujui</h3>
 <p>Syarat: <code>sumber_pengajuan = karyawan</code>, <code>status_approval = proses</code>, <code>tgl_approval IS NULL</code> → "Pengajuan asset sudah tidak menunggu persetujuan." / "…sudah tidak dapat dialokasikan."</p>
 <h3>BR-010 — Alasan penolakan wajib (maks 255)</h3>
 <p>→ "Alasan penolakan wajib diisi."</p>
-<h3>BR-011 — Asset alokasi harus sesuai jenis yang diajukan</h3>
-<p>Semua <code>asset_data.id_asset_kategori_m</code> = kategori pengajuan → "Asset harus sesuai dengan jenis yang diajukan." Options alokasi juga hanya menampilkan asset kategori tersebut.</p>
+<h3>BR-011 — Alokasi bebas lintas jenis (v1.4)</h3>
+<p>Admin dapat memilih asset <strong>apa pun</strong> dari stok gudang. Jenis yang diajukan karyawan (teks bebas) hanya informasi dan tidak dibandingkan dengan <code>asset_data.id_asset_kategori_m</code>; pengecekan "Asset harus sesuai dengan jenis yang diajukan." dihapus dan options alokasi tidak lagi memfilter kategori. Validasi lain tetap: tersedia + di gudang (BR-004), tidak aktif di transaksi lain (BR-005), status pengajuan (BR-009), otorisasi admin (BR-001), serta lock/transaksi.</p>
 <h3>BR-012 — Alokasi dapat disimpan sebagai draft dan diulang</h3>
 <p>Setiap alokasi menghapus item lama lalu menulis item baru. Draft <strong>tidak</strong> mengunci asset dan <strong>tidak</strong> mengisi <code>tgl_approval</code>.</p>
 <h3>BR-013 — Karyawan hanya melihat &amp; mengonfirmasi transaksi miliknya yang sudah dikirim</h3>
@@ -639,11 +640,11 @@ Karyawan: Asset Saya → banner &quot;Penambahan Asset&quot; → Konfirmasi Pena
 </code></pre></div>
 <h3>10.2 Pengajuan (Karyawan → Admin → Karyawan)</h3>
 <div class="code"><span class="code-lang">Alur</span><pre><code class="language-text">Karyawan: Asset Saya → Pengajuan → (+)
-  → Jenis Asset → Alasan → Urgensi → Simpan Draft / Submit ke Admin
+  → Jenis Asset (ketik bebas) → Alasan → Simpan Draft / Submit ke Admin
   → Submit : status proses, tgl_approval NULL, tanpa item, notif ke semua admin
 Admin: Asset Karyawan → Pengajuan (tab Pengajuan) → Detail
   → Tolak  : isi alasan → status ditolak, item dihapus, notif karyawan
-  → Setujui: pilih asset (kategori sama) + jadwal + catatan
+  → Setujui: pilih asset apa pun dari stok + jadwal + catatan
        → Simpan Draft : &quot;Draft Alokasi&quot; (item tersimpan, asset belum dikunci)
        → Submit ke PIC: tgl_approval terisi, asset_data → proses, notif karyawan &quot;Disetujui&quot;
 Karyawan: Pengajuan (tab Dikonfirmasi, &quot;Menunggu Konfirmasi&quot;) → Konfirmasi Pengajuan Asset
@@ -676,12 +677,12 @@ Karyawan: Pengajuan (tab Dikonfirmasi, &quot;Menunggu Konfirmasi&quot;) → Konf
         A2 --&gt;|Submit ke Karyawan| A4[status proses, asset proses, notif karyawan]
     end
     subgraph Q[Pengajuan - Karyawan]
-        B1[Karyawan isi jenis, alasan, urgensi] --&gt; B2{Aksi}
+        B1[Karyawan ketik jenis asset dan alasan] --&gt; B2{Aksi}
         B2 --&gt;|Simpan Draft| B3[status draft - bisa diubah lalu dikirim (PUT)]
         B2 --&gt;|Submit ke Admin| B4[status proses, tanpa item, notif admin]
         B4 --&gt; B5{Keputusan admin}
         B5 --&gt;|Tolak + alasan| B6[status ditolak, notif karyawan]
-        B5 --&gt;|Setujui| B7[Alokasi asset kategori sama + jadwal]
+        B5 --&gt;|Setujui| B7[Alokasi asset dari stok + jadwal]
         B7 --&gt;|Simpan Draft| B8[Draft Alokasi]
         B8 --&gt; B5
         B7 --&gt;|Submit ke PIC| B9[tgl_approval terisi, asset proses, notif karyawan]
@@ -706,17 +707,17 @@ Karyawan: Pengajuan (tab Dikonfirmasi, &quot;Menunggu Konfirmasi&quot;) → Konf
     participant DB
     participant N as AssetNotification
 
-    K-&gt;&gt;M: Isi jenis asset, alasan, urgensi, Submit ke Admin
+    K-&gt;&gt;M: Ketik jenis asset dan alasan, Submit ke Admin
     M-&gt;&gt;CK: POST /asset/karyawan/pengajuan
     CK-&gt;&gt;R: storePengajuanKaryawan()
-    R-&gt;&gt;DB: lock company, cek karyawan &amp; kategori
-    R-&gt;&gt;DB: INSERT header (sumber karyawan, proses)
+    R-&gt;&gt;DB: lock company, cek karyawan aktif
+    R-&gt;&gt;DB: INSERT header (sumber karyawan, proses, nama_kategori = jenis asset)
     CK-&gt;&gt;N: pengajuan.diajukan (semua admin)
     A-&gt;&gt;M: Buka detail, Setujui, pilih asset + jadwal
     M-&gt;&gt;CA: GET /asset/pengajuan-karyawan/{id}/options
     M-&gt;&gt;CA: POST /asset/pengajuan-karyawan/{id}/alokasi (is_draft false)
     CA-&gt;&gt;R: alokasikanPengajuanAdmin()
-    R-&gt;&gt;DB: validasi asset tersedia, kategori sama, tidak aktif
+    R-&gt;&gt;DB: validasi asset tersedia di gudang, tidak aktif, tanpa filter kategori
     R-&gt;&gt;DB: DELETE item lama, INSERT item baru
     R-&gt;&gt;DB: UPDATE header jadwal, user_approval, tgl_approval
     R-&gt;&gt;DB: UPDATE asset_data status proses
@@ -1011,12 +1012,12 @@ Migrasi <code>2026_09_17_000008</code>: nilai lama 0=draft, 1=proses, 2=ditolak,
 <tr>
 <td><code>asset_kategori_m</code></td>
 <td>Master</td>
-<td>Jenis asset (pengajuan) &amp; snapshot kategori</td>
+<td>Snapshot kategori asset (Penambahan) dan pohon pilihan asset; <strong>bukan lagi</strong> sumber jenis asset Pengajuan</td>
 </tr>
 <tr>
-<td><code>data_karyawan</code>, <code>master_cabang</code>, <code>master_departemen</code></td>
+<td><code>data_karyawan</code>, <code>master_cabang</code>, <code>master_departemen</code>, <code>master_jabatan</code></td>
 <td>Master HR</td>
-<td>Karyawan aktif, cabang, divisi</td>
+<td>Karyawan aktif, jabatan, cabang, departemen</td>
 </tr>
 <tr>
 <td><code>asset_admin</code></td>
@@ -1043,12 +1044,15 @@ Migrasi <code>2026_09_17_000008</code>: nilai lama 0=draft, 1=proses, 2=ditolak,
 <aside class="callout callout-warn">
 <p>⚠️ Belum ditemukan: migration <code>CREATE TABLE</code> untuk tabel request; struktur mengacu DBML + migrations <code>2026_09_16_000003</code>, <code>2026_09_17_000004</code>, <code>2026_09_17_000008</code>.</p>
 </aside>
+<aside class="callout callout-note">
+<p><strong>Perubahan skema v1.4 — SQL manual, BELUM dijalankan:</strong> <code>Claude outputs/sql-pengajuan-karyawan-jenis-asset-bebas.sql</code> mengubah <code>asset_trx_request_karyawan.id_asset_kategori_m</code> dan <code>urgensi</code> menjadi NULL diperbolehkan (tipe tetap <code>varchar(50)</code>); data lama tidak diubah. <code>API/diagram-asset.dbml</code> sudah ditandai nullable. <strong>Jalankan SQL ini di database sebelum API v1.4 dipakai</strong>; tanpa itu INSERT Pengajuan baru (nilai NULL pada <code>id_asset_kategori_m</code>) gagal. Script memuat peringatan cek charset/collation (<code>SHOW CREATE TABLE</code>) karena <code>nama_kategori</code> kini menampung teks bebas (latin1 vs utf8mb4); script tidak mengubah charset.</p>
+</aside>
 <hr />
 <h2 id="s17"><span class="sec-no">17</span>Relasi Database</h2>
 <div class="diagram"><pre class="mermaid">erDiagram
     ASSET_TRX_REQUEST_KARYAWAN ||--o{ ASSET_TRX_REQUEST_KARYAWAN_ITEM : &quot;id_asset_trx_request&quot;
     ASSET_DATA ||--o{ ASSET_TRX_REQUEST_KARYAWAN_ITEM : &quot;id_asset_data&quot;
-    ASSET_KATEGORI_M ||--o{ ASSET_TRX_REQUEST_KARYAWAN : &quot;id_asset_kategori_m (logis)&quot;
+    ASSET_KATEGORI_M |o--o{ ASSET_TRX_REQUEST_KARYAWAN : &quot;id_asset_kategori_m (legacy, nullable)&quot;
     ASSET_KATEGORI_M ||--o{ ASSET_DATA : &quot;id_asset_kategori_m&quot;
     DATA_KARYAWAN ||--o{ ASSET_TRX_REQUEST_KARYAWAN : &quot;id_karyawan (logis)&quot;
     ASSET_DATA ||--o{ ASSET_LOG : &quot;id_asset_data&quot;
@@ -1058,8 +1062,9 @@ Migrasi <code>2026_09_17_000008</code>: nilai lama 0=draft, 1=proses, 2=ditolak,
         varchar id_asset_trx_request_karyawan PK
         varchar no_trx
         enum sumber_pengajuan
-        varchar id_asset_kategori_m
-        varchar urgensi
+        varchar id_asset_kategori_m &quot;nullable, legacy&quot;
+        varchar nama_kategori &quot;jenis asset teks bebas&quot;
+        varchar urgensi &quot;nullable, legacy&quot;
         varchar id_karyawan
         date tgl_serah_terima
         enum status_approval
@@ -1087,7 +1092,7 @@ Migrasi <code>2026_09_17_000008</code>: nilai lama 0=draft, 1=proses, 2=ditolak,
         varchar id_transaksi
     }
 </pre></div>
-<p>Relasi logis (tanpa <code>ref</code> DBML): <code>id_karyawan</code> → <code>data_karyawan</code>, <code>id_asset_kategori_m</code> (header) → <code>asset_kategori_m</code>, <code>asset_log.id_transaksi</code> → header. Semua JOIN mencocokkan <code>id_company</code>. Kolom item <code>parent_id</code> ada di DBML tetapi selalu <code>''</code> (tidak ada penggantian).</p>
+<p>Relasi logis (tanpa <code>ref</code> DBML): <code>id_karyawan</code> → <code>data_karyawan</code>, <code>id_asset_kategori_m</code> (header, legacy/nullable) → <code>asset_kategori_m</code>, <code>asset_log.id_transaksi</code> → header. Semua JOIN mencocokkan <code>id_company</code>. Kolom item <code>parent_id</code> ada di DBML tetapi selalu <code>''</code> (tidak ada penggantian).</p>
 <hr />
 <h2 id="s18"><span class="sec-no">18</span>Data Dictionary</h2>
 <h3>18.1 asset_trx_request_karyawan</h3>
@@ -1130,10 +1135,10 @@ Migrasi <code>2026_09_17_000008</code>: nilai lama 0=draft, 1=proses, 2=ditolak,
 <tr>
 <td>id_asset_kategori_m</td>
 <td>varchar(50)</td>
-<td style="text-align: center;">No</td>
-<td>''</td>
+<td style="text-align: center;">Yes (setelah SQL v1.4)</td>
+<td>NULL</td>
 <td>–</td>
-<td>Pengajuan: jenis diajukan. Penambahan: kategori bila semua asset satu kategori, selain itu <code>''</code></td>
+<td>Penambahan: kategori bila semua asset satu kategori, selain itu <code>''</code>. <strong>Pengajuan baru: NULL</strong> (legacy; baris lama tetap berisi kategori). API membaca NULL sebagai <code>''</code></td>
 </tr>
 <tr>
 <td>nama_kategori</td>
@@ -1141,7 +1146,7 @@ Migrasi <code>2026_09_17_000008</code>: nilai lama 0=draft, 1=proses, 2=ditolak,
 <td style="text-align: center;">No</td>
 <td>''</td>
 <td>–</td>
-<td>Snapshot; Penambahan multi kategori = <code>Multi Kategori</code></td>
+<td>Penambahan: snapshot kategori; multi kategori = <code>Multi Kategori</code>. <strong>Pengajuan: teks jenis asset bebas</strong> (maks 150 karakter dari API)</td>
 </tr>
 <tr>
 <td>keterangan</td>
@@ -1155,9 +1160,9 @@ Migrasi <code>2026_09_17_000008</code>: nilai lama 0=draft, 1=proses, 2=ditolak,
 <td>urgensi</td>
 <td>varchar(50)</td>
 <td style="text-align: center;">Yes</td>
+<td>NULL</td>
 <td>–</td>
-<td>–</td>
-<td><code class="chip chip-done">normal</code>/<code>secepatnya</code>/<code>mendesak</code> (Pengajuan); <code>''</code> untuk Penambahan dari mobile</td>
+<td><strong>LEGACY</strong>: tidak dipakai lagi pada Pengajuan baru (selalu NULL). Baris lama berisi <code>normal</code>/<code>secepatnya</code>/<code>mendesak</code> dan tetap tersimpan; Penambahan admin menulis <code>''</code>. Tidak ditampilkan di API/mobile</td>
 </tr>
 <tr>
 <td>ket_tolak</td>
@@ -1337,7 +1342,7 @@ Migrasi <code>2026_09_17_000008</code>: nilai lama 0=draft, 1=proses, 2=ditolak,
 </tbody>
 </table></div>
 <h3>18.3 asset_data (field yang dipakai)</h3>
-<p><code>id_asset_data</code>, <code>id_asset_kategori_m</code> (validasi kategori alokasi), <code>nama_asset</code>, <code>deskripsi</code>, <code>kode_asset</code>, <code>merek</code>, <code>status_asset</code> (tersedia → proses → terpakai), <code>pemegang_asset</code> (gudang → karyawan), <code>id_pemegang_asset</code>, <code>kondisi_awal</code> (disalin ke log), <code>tgl_update</code>, <code>user_update</code>.</p>
+<p><code>id_asset_data</code>, <code>id_asset_kategori_m</code> (snapshot kategori; tidak lagi dipakai membatasi alokasi), <code>nama_asset</code>, <code>deskripsi</code>, <code>kode_asset</code>, <code>merek</code>, <code>status_asset</code> (tersedia → proses → terpakai), <code>pemegang_asset</code> (gudang → karyawan), <code>id_pemegang_asset</code>, <code>kondisi_awal</code> (disalin ke log), <code>tgl_update</code>, <code>user_update</code>.</p>
 <h3>18.4 asset_log (diisi saat semua normal)</h3>
 <p><code>jenis_log = request_karyawan</code>, <code>id_transaksi</code> = ID header, <code>nama_tabel_transaksi = asset_trx_request_karyawan</code>, <code>kondisi_awal</code> = <code>asset_data.kondisi_awal</code>, <code>kondisi_akhir = normal</code>, <code>posisi_awal</code> = pemegang sebelumnya (<code>gudang</code>), <code>posisi_akhir = pemegang_asset = karyawan</code>, <code>id_pemegang</code>, <code>nama_pemegang</code>, <code>user_input</code> = karyawan.</p>
 <hr />
@@ -1469,11 +1474,11 @@ ApiResponse + AssetNotification (setelah commit)
 <li>Notifikasi <code>penambahan.dikirim</code> (bukan draft). Response 201.</li>
 </ol>
 <h3>21.2 Pengajuan — <code>storePengajuanKaryawan</code></h3>
-<p>Lock → karyawan aktif → kategori ada &amp; bukan parent (FOR UPDATE) → alasan &amp; urgensi wajib bila bukan draft → generate ID/no_trx → INSERT header (<code>sumber = karyawan</code>, tanpa item, jadwal kosong) → notifikasi <code>pengajuan.diajukan</code> (bukan draft). Response 201.</p>
+<p>Lock → karyawan aktif → <code>jenis_asset</code> (di-trim) dan alasan wajib bila bukan draft → generate ID/no_trx → INSERT header (<code>sumber = karyawan</code>, <code>nama_kategori = jenis_asset</code>, <code>id_asset_kategori_m = NULL</code>, <code>urgensi = NULL</code>, tanpa item, jadwal kosong) → notifikasi <code>pengajuan.diajukan</code> (bukan draft). Response 201.</p>
 <h3>21.3 Tolak — <code>tolakPengajuanAdmin</code></h3>
 <p>Lock → admin → header (sumber karyawan, FOR UPDATE) harus <code class="chip chip-wait">proses</code> &amp; <code>tgl_approval</code> NULL → alasan wajib → <strong>DELETE item</strong> (draft alokasi) → UPDATE header <code>ket_tolak</code>, <code>status_approval = ditolak</code>, <code>user_approval</code>, <code>tgl_approval = now</code> → notifikasi <code>pengajuan.ditolak</code>.</p>
 <h3>21.4 Alokasi — <code>alokasikanPengajuanAdmin</code></h3>
-<p>Lock → admin → header syarat sama dengan tolak → asset tersedia + kategori = kategori pengajuan → tidak aktif di onboarding/penambahan lain (kecuali transaksi ini) → jadwal wajib bila bukan draft → DELETE item lama → INSERT item baru → UPDATE header jadwal, <code>ket_tolak = ''</code>, <code>user_approval</code>/<code>tgl_approval</code> (hanya bila bukan draft) → bila bukan draft UPDATE <code>asset_data = proses</code> → notifikasi <code>pengajuan.disetujui</code> (bukan draft). Response 200 <code>SUCCESS</code> (kirim) / <code>UPDATED</code> (draft).</p>
+<p>Lock → admin → header syarat sama dengan tolak → asset tersedia di gudang (tanpa filter kategori; jenis asset pengajuan hanya informasi) → tidak aktif di onboarding/penambahan lain (kecuali transaksi ini) → jadwal wajib bila bukan draft → DELETE item lama → INSERT item baru → UPDATE header jadwal, <code>ket_tolak = ''</code>, <code>user_approval</code>/<code>tgl_approval</code> (hanya bila bukan draft) → bila bukan draft UPDATE <code>asset_data = proses</code> → notifikasi <code>pengajuan.disetujui</code> (bukan draft). Response 200 <code>SUCCESS</code> (kirim) / <code>UPDATED</code> (draft).</p>
 <h3>21.5 Konfirmasi — <code>konfirmasiKaryawan</code></h3>
 <ol>
 <li>Lock; header milik karyawan (FOR UPDATE), status <code class="chip chip-wait">proses</code>; pengajuan harus sudah disetujui.</li>
@@ -1489,10 +1494,12 @@ ApiResponse + AssetNotification (setelah commit)
 <h3>21.6 Query baca</h3>
 <ul>
 <li>Options penambahan: <code>AssetAdmin_m::getOnboardingOptions(excludeEmployeesWithOnboarding: false)</code> → semua karyawan aktif, asset tersedia di gudang, pohon kategori.</li>
-<li>Options alokasi: sama, lalu asset difilter kategori pengajuan. Hanya bila pengajuan <code class="chip chip-wait">proses</code> &amp; belum disetujui (selain itu 404).</li>
-<li>Options pengajuan karyawan: semua kategori company + daftar urgensi.</li>
+<li>Options alokasi: sama (seluruh stok tersedia di gudang), <strong>tanpa filter kategori</strong> (v1.4). Hanya bila pengajuan <code class="chip chip-wait">proses</code> &amp; belum disetujui (selain itu 404).</li>
+<li>Options pengajuan karyawan (legacy): hanya <code>kategori_asset</code> (semua kategori company); daftar <code>urgensi</code> dihapus. Mobile v1.4 tidak lagi memanggil endpoint ini.</li>
 <li>List: JOIN item, hitung <code>jumlah_asset</code>, <code>jumlah_pending</code>, <code>jumlah_rusak</code>; urut <code>tgl_input DESC</code>.</li>
 <li>Detail karyawan pengajuan: sebelum disetujui, jadwal dikosongkan, <code>jumlah_asset = 0</code>, <code>items = []</code>.</li>
+<li>Detail (<code>getDetail</code>): objek <code>karyawan</code> memuat <code>jabatan</code> (LEFT JOIN <code>master_jabatan</code> lewat <code>data_karyawan.id_jabatan</code>; <code>''</code> bila kosong) selain <code>cabang</code> dan <code>divisi</code>.</li>
+<li>Response list/detail/pending Pengajuan: <code>nama_kategori</code> dan <code>nama_asset</code> = teks jenis asset; <code>id_asset_kategori_m</code> = <code>''</code> untuk data baru; tanpa <code>urgensi</code> (termasuk detail Penambahan admin yang berbagi query; penulisan <code>urgensi</code> pada <code>store()</code> Penambahan admin tetap ada, nullable).</li>
 </ul>
 <hr />
 <h2 id="s22"><span class="sec-no">22</span>Dampak terhadap asset_data</h2>
@@ -1631,7 +1638,7 @@ ApiResponse + AssetNotification (setelah commit)
 <td>API-010</td>
 <td>GET</td>
 <td><code>/asset/karyawan/pengajuan/options</code></td>
-<td>Opsi jenis &amp; urgensi</td>
+<td>Opsi kategori (legacy, tidak dipakai mobile)</td>
 <td>JWT</td>
 </tr>
 <tr>
@@ -1737,7 +1744,6 @@ Endpoint hapus draft, batal, dan tindak lanjut rusak: ⚠️ Belum ditemukan. Ed
         &quot;id_asset_kategori_m&quot;: &quot;CMP001202601002&quot;,
         &quot;nama_kategori&quot;: &quot;Laptop&quot;,
         &quot;keterangan&quot;: &quot;&quot;,
-        &quot;urgensi&quot;: &quot;&quot;,
         &quot;ket_tolak&quot;: &quot;&quot;,
         &quot;id_karyawan&quot;: &quot;KRY0002&quot;,
         &quot;nik_karyawan&quot;: &quot;EMP-002&quot;,
@@ -1821,7 +1827,7 @@ Endpoint hapus draft, batal, dan tindak lanjut rusak: ⚠️ Belum ditemukan. Ed
 <tr>
 <td>urgensi</td>
 <td>nullable|string|max:50</td>
-<td>–</td>
+<td>– (legacy: mobile masih mengirim <code>''</code>; tidak ditampilkan)</td>
 </tr>
 <tr>
 <td>is_draft</td>
@@ -1853,7 +1859,6 @@ INSERT notif_data                            -- hanya bila bukan draft
     &quot;id_asset_kategori_m&quot;: &quot;CMP001202601002&quot;,
     &quot;nama_kategori&quot;: &quot;Laptop&quot;,
     &quot;keterangan&quot;: &quot;&quot;,
-    &quot;urgensi&quot;: &quot;&quot;,
     &quot;ket_tolak&quot;: &quot;&quot;,
     &quot;tgl_pengajuan&quot;: &quot;2026-09-26&quot;,
     &quot;tgl_serah_terima&quot;: &quot;2026-09-29&quot;,
@@ -1864,7 +1869,7 @@ INSERT notif_data                            -- hanya bila bukan draft
     &quot;status_label&quot;: &quot;Menunggu Diterima&quot;,
     &quot;tab&quot;: &quot;pending&quot;,
     &quot;jumlah_asset&quot;: 1,
-    &quot;karyawan&quot;: { &quot;nik&quot;: &quot;EMP-002&quot;, &quot;nama_karyawan&quot;: &quot;Sari Contoh&quot;, &quot;cabang&quot;: &quot;Kantor Pusat&quot;, &quot;divisi&quot;: &quot;Finance&quot; },
+    &quot;karyawan&quot;: { &quot;nik&quot;: &quot;EMP-002&quot;, &quot;nama_karyawan&quot;: &quot;Sari Contoh&quot;, &quot;jabatan&quot;: &quot;Staff Finance&quot;, &quot;cabang&quot;: &quot;Kantor Pusat&quot;, &quot;divisi&quot;: &quot;Finance&quot; },
     &quot;items&quot;: [
       {
         &quot;id_item&quot;: &quot;CMP001202609010&quot;,
@@ -1884,7 +1889,7 @@ INSERT notif_data                            -- hanya bila bukan draft
   }
 }
 </code></pre></div>
-<p>404: "Penambahan asset tidak ditemukan." (hanya sumber admin).</p>
+<p>404: "Penambahan asset tidak ditemukan." (hanya sumber admin). <code>karyawan.jabatan</code> (v1.4) berasal dari join <code>master_jabatan</code>, <code>''</code> bila kosong; key <code>divisi</code> dipertahankan (label UI: Departemen). Response tidak memuat <code>urgensi</code>.</p>
 <h3>API-005 — List Pengajuan (Admin)</h3>
 <div class="code"><span class="code-lang">HTTP</span><pre><code class="language-http">GET /asset/pengajuan-karyawan?tab=pengajuan&amp;limit=20&amp;offset=0
 </code></pre></div>
@@ -1892,11 +1897,11 @@ INSERT notif_data                            -- hanya bila bukan draft
 <h3>API-006 — Detail Pengajuan (Admin)</h3>
 <div class="code"><span class="code-lang">HTTP</span><pre><code class="language-http">GET /asset/pengajuan-karyawan/{id}
 </code></pre></div>
-<p>Struktur sama dengan API-004 (<code>keterangan</code> = alasan, <code>urgensi</code> terisi), label/tab dari §14.2. 404 "Pengajuan asset tidak ditemukan." bila tidak ada atau masih draft.</p>
+<p>Struktur sama dengan API-004 (<code>keterangan</code> = alasan; <code>nama_kategori</code> dan <code>nama_asset</code> = teks jenis asset, <code>id_asset_kategori_m</code> = <code>''</code> untuk data baru; tanpa <code>urgensi</code>), label/tab dari §14.2. 404 "Pengajuan asset tidak ditemukan." bila tidak ada atau masih draft.</p>
 <h3>API-007 — Opsi Alokasi</h3>
 <div class="code"><span class="code-lang">HTTP</span><pre><code class="language-http">GET /asset/pengajuan-karyawan/{id}/options
 </code></pre></div>
-<p>Sama dengan API-001, tetapi <code>assets</code> hanya kategori pengajuan. 404 "Opsi pengajuan asset tidak ditemukan." bila pengajuan bukan <code class="chip chip-wait">proses</code> atau sudah disetujui. Message: "Opsi persetujuan pengajuan asset berhasil ditemukan."</p>
+<p>Sama dengan API-001: <code>assets</code> memuat seluruh stok tersedia di gudang, <strong>tanpa filter kategori</strong> (v1.4). 404 "Opsi pengajuan asset tidak ditemukan." bila pengajuan bukan <code class="chip chip-wait">proses</code> atau sudah disetujui. Message: "Opsi persetujuan pengajuan asset berhasil ditemukan."</p>
 <h3>API-008 — Tolak Pengajuan</h3>
 <div class="code"><span class="code-lang">HTTP</span><pre><code class="language-http">POST /asset/pengajuan-karyawan/{id}/tolak
 </code></pre></div>
@@ -1935,7 +1940,7 @@ INSERT notif_data                            -- hanya bila bukan draft
   &quot;is_draft&quot;: false
 }
 </code></pre></div>
-<p>Validasi sama dengan API-003 untuk <code>asset_ids</code>, jadwal, <code>keterangan_serah_terima</code>, <code>is_draft</code> (message: "Data persetujuan pengajuan belum lengkap.").</p>
+<p>Alokasi <strong>tidak dibatasi kategori</strong> (v1.4): asset apa pun dari stok boleh dipilih. Validasi sama dengan API-003 untuk <code>asset_ids</code>, jadwal, <code>keterangan_serah_terima</code>, <code>is_draft</code> (message: "Data persetujuan pengajuan belum lengkap.").</p>
 <p>Database impact:</p>
 <div class="code"><span class="code-lang">Alur</span><pre><code class="language-text">DELETE asset_trx_request_karyawan_item (item lama)
 INSERT asset_trx_request_karyawan_item
@@ -1948,8 +1953,8 @@ INSERT notif_data                            -- bila bukan draft
             &quot;status_label&quot;: &quot;Menunggu Konfirmasi&quot;, &quot;tab&quot;: &quot;proses&quot;, &quot;jumlah_asset&quot;: 1 } }
 </code></pre></div>
 <p>Draft: code <code>UPDATED</code>, "Draft alokasi pengajuan asset berhasil disimpan.", label "Draft Alokasi", tab <code>pengajuan</code>.
-422: "Pengajuan asset sudah tidak dapat dialokasikan.", "Satu atau beberapa asset tidak tersedia.", "Asset harus sesuai dengan jenis yang diajukan.", "…sedang diproses pada onboarding.", "…sedang diproses pada penambahan lain.", "Tanggal/Jam serah terima wajib diisi." 500: "Terjadi kesalahan saat menyetujui pengajuan asset."</p>
-<h3>API-010 — Opsi Pengajuan (Karyawan)</h3>
+422: "Pengajuan asset sudah tidak dapat dialokasikan.", "Satu atau beberapa asset tidak tersedia.", "…sedang diproses pada onboarding.", "…sedang diproses pada penambahan lain.", "Tanggal/Jam serah terima wajib diisi." 500: "Terjadi kesalahan saat menyetujui pengajuan asset."</p>
+<h3>API-010 — Opsi Pengajuan (Karyawan) — legacy</h3>
 <div class="code"><span class="code-lang">HTTP</span><pre><code class="language-http">GET /asset/karyawan/pengajuan/options
 </code></pre></div>
 <div class="code"><span class="code-lang">JSON</span><pre><code class="language-json">{
@@ -1959,15 +1964,11 @@ INSERT notif_data                            -- bila bukan draft
     &quot;kategori_asset&quot;: [
       {&quot;id_asset_kategori_m&quot;: &quot;CMP001202601001&quot;, &quot;parent_id&quot;: &quot;&quot;, &quot;flag_parent&quot;: 1, &quot;nama_kategori&quot;: &quot;Elektronik&quot;},
       {&quot;id_asset_kategori_m&quot;: &quot;CMP001202601002&quot;, &quot;parent_id&quot;: &quot;CMP001202601001&quot;, &quot;flag_parent&quot;: 0, &quot;nama_kategori&quot;: &quot;Laptop&quot;}
-    ],
-    &quot;urgensi&quot;: [
-      {&quot;value&quot;: &quot;normal&quot;, &quot;label&quot;: &quot;Normal&quot;},
-      {&quot;value&quot;: &quot;secepatnya&quot;, &quot;label&quot;: &quot;Secepatnya&quot;},
-      {&quot;value&quot;: &quot;mendesak&quot;, &quot;label&quot;: &quot;Mendesak&quot;}
     ]
   }
 }
 </code></pre></div>
+<p><strong>Catatan v1.4:</strong> <code>urgensi</code> dihapus dari response. <code>kategori_asset</code> dipertahankan hanya untuk klien lama; mobile v1.4 tidak lagi memanggil endpoint ini.</p>
 <h3>API-011 — List Pengajuan Saya</h3>
 <div class="code"><span class="code-lang">HTTP</span><pre><code class="language-http">GET /asset/karyawan/pengajuan?tab=pengajuan&amp;limit=20&amp;offset=0
 </code></pre></div>
@@ -1975,8 +1976,8 @@ INSERT notif_data                            -- bila bukan draft
 <h3>API-012 — Buat Pengajuan</h3>
 <div class="code"><span class="code-lang">HTTP</span><pre><code class="language-http">POST /asset/karyawan/pengajuan
 </code></pre></div>
-<div class="code"><span class="code-lang">JSON</span><pre><code class="language-json">{ &quot;id_asset_kategori_m&quot;: &quot;CMP001202601002&quot;, &quot;keterangan&quot;: &quot;Laptop lama sering mati, butuh untuk presentasi klien&quot;,
-  &quot;urgensi&quot;: &quot;secepatnya&quot;, &quot;is_draft&quot;: false }
+<div class="code"><span class="code-lang">JSON</span><pre><code class="language-json">{ &quot;jenis_asset&quot;: &quot;Laptop&quot;, &quot;keterangan&quot;: &quot;Laptop lama sering mati, butuh untuk presentasi klien&quot;,
+  &quot;is_draft&quot;: false }
 </code></pre></div>
 <div class="table-wrap"><table>
 <thead>
@@ -1988,9 +1989,9 @@ INSERT notif_data                            -- bila bukan draft
 </thead>
 <tbody>
 <tr>
-<td>id_asset_kategori_m</td>
-<td>required|string|max:50</td>
-<td>Jenis asset wajib dipilih.</td>
+<td>jenis_asset</td>
+<td>required (kirim) / nullable (draft), string, trim, max:150</td>
+<td>Jenis asset wajib diisi.</td>
 </tr>
 <tr>
 <td>keterangan</td>
@@ -1998,9 +1999,9 @@ INSERT notif_data                            -- bila bukan draft
 <td>Alasan pengajuan wajib diisi.</td>
 </tr>
 <tr>
-<td>urgensi</td>
-<td>required (kirim) / nullable (draft), max:50, in:normal,secepatnya,mendesak</td>
-<td>Urgensi wajib dipilih. / Urgensi pengajuan tidak valid.</td>
+<td>id_asset_kategori_m, urgensi</td>
+<td>– (diabaikan)</td>
+<td>Field dari klien lama tidak divalidasi dan tidak disimpan.</td>
 </tr>
 <tr>
 <td>is_draft</td>
@@ -2009,12 +2010,13 @@ INSERT notif_data                            -- bila bukan draft
 </tr>
 </tbody>
 </table></div>
-<p>Database impact: <code>INSERT asset_trx_request_karyawan</code> (sumber karyawan, tanpa item); <code>INSERT notif_data</code> (bukan draft).</p>
+<p>Database impact: <code>INSERT asset_trx_request_karyawan</code> (sumber karyawan, tanpa item; <code>nama_kategori = jenis_asset</code>, <code>id_asset_kategori_m = NULL</code>, <code>urgensi = NULL</code>); <code>INSERT notif_data</code> (bukan draft).</p>
 <div class="code"><span class="code-lang">JSON</span><pre><code class="language-json">{ &quot;code&quot;: &quot;CREATED&quot;, &quot;message&quot;: &quot;Pengajuan asset berhasil dikirim ke admin.&quot;,
   &quot;data&quot;: { &quot;id&quot;: &quot;CMP001202609005&quot;, &quot;no_trx&quot;: &quot;KRY-03-1-202609005&quot;,
             &quot;status_approval&quot;: &quot;proses&quot;, &quot;status_label&quot;: &quot;Menunggu Konfirmasi&quot;, &quot;tab&quot;: &quot;pengajuan&quot; } }
 </code></pre></div>
-<p>422: "Karyawan tidak ditemukan atau tidak aktif.", "Jenis asset tidak ditemukan atau tidak dapat diajukan." 500: "Terjadi kesalahan saat menyimpan pengajuan asset."</p>
+<p>422: "Karyawan tidak ditemukan atau tidak aktif." Kegagalan validasi: 422 <code>VALIDATION_ERROR</code> "Jenis asset wajib diisi." / "Alasan pengajuan wajib diisi." (bila lebih dari satu field gagal, message induk "Data pengajuan asset belum lengkap."). 500: "Terjadi kesalahan saat menyimpan pengajuan asset."</p>
+<p><strong>Kompatibilitas klien lama (&lt; v1.4):</strong> submit tanpa <code>jenis_asset</code> ditolak 422 "Jenis asset wajib diisi."; <code>id_asset_kategori_m</code> dan <code>urgensi</code> dari klien lama diabaikan. Draft lama mempertahankan <code>nama_kategori</code> yang tersimpan (lihat API-017). Response list/detail mengisi <code>nama_kategori</code> dan <code>nama_asset</code> dengan teks jenis asset; <code>id_asset_kategori_m</code> bernilai <code>''</code> untuk data baru.</p>
 <h3>API-013 — Detail Pengajuan Saya</h3>
 <div class="code"><span class="code-lang">HTTP</span><pre><code class="language-http">GET /asset/karyawan/pengajuan/{id}
 </code></pre></div>
@@ -2081,7 +2083,7 @@ INSERT notif_data (semua admin)
 <h3>API-017 — Ubah / Kirim Draft Pengajuan Saya</h3>
 <div class="code"><span class="code-lang">HTTP</span><pre><code class="language-http">PUT /asset/karyawan/pengajuan/{id}
 </code></pre></div>
-<p>Body dan validasi sama dengan API-012 (<code>id_asset_kategori_m</code>, <code>keterangan</code>, <code>urgensi</code>, <code>is_draft</code>). Hanya untuk pengajuan milik pemanggil yang masih <code>draft</code>, belum disetujui (<code>tgl_approval</code> kosong), dan belum punya item; selain itu 422 "Pengajuan asset sudah tidak dapat diubah karena bukan draft." dan 404 "Pengajuan asset tidak ditemukan." bila bukan miliknya. Dengan <code>is_draft=false</code> status menjadi <code>proses</code>, <code>tgl_pengajuan</code> diisi hari ini, dan notifikasi <code>pengajuan.diajukan</code> dikirim.</p>
+<p>Body dan validasi sama dengan API-012 (<code>jenis_asset</code>, <code>keterangan</code>, <code>is_draft</code>). Pada PUT draft (<code>is_draft=true</code>) tanpa key <code>jenis_asset</code>, <code>nama_kategori</code> yang tersimpan dipertahankan (draft lama tetap utuh); bila key dikirim, nilainya menggantikan <code>nama_kategori</code> dan <code>id_asset_kategori_m</code> di-NULL-kan, <code>urgensi</code> selalu NULL. Saat <code>is_draft=false</code>, <code>jenis_asset</code> dan <code>keterangan</code> wajib (422 "Jenis asset wajib diisi." / "Alasan pengajuan wajib diisi."; message induk "Data pengajuan asset belum lengkap."). Hanya untuk pengajuan milik pemanggil yang masih <code>draft</code>, belum disetujui (<code>tgl_approval</code> kosong), dan belum punya item; selain itu 422 "Pengajuan asset sudah tidak dapat diubah karena bukan draft." dan 404 "Pengajuan asset tidak ditemukan." bila bukan miliknya. Dengan <code>is_draft=false</code> status menjadi <code>proses</code>, <code>tgl_pengajuan</code> diisi hari ini, dan notifikasi <code>pengajuan.diajukan</code> dikirim.</p>
 <p>Response: code <code>UPDATED</code>, "Draft pengajuan asset berhasil disimpan." atau "Pengajuan asset berhasil dikirim ke admin.".</p>
 <h2 id="s25"><span class="sec-no">25</span>Mobile Architecture</h2>
 <div class="code"><span class="code-lang">Alur</span><pre><code class="language-text">Page → Bloc → Api Service → ApiClient (Dio + Bearer JWT) → Backend
@@ -2108,7 +2110,7 @@ INSERT notif_data (semua admin)
 <tr>
 <td>Api</td>
 <td><code>Repository/Service/assetPengajuanKaryawanApi.dart</code></td>
-<td>Pengajuan karyawan: getOptions, getRequests, store, getDetail</td>
+<td>Pengajuan karyawan: getRequests, store, update (draft), getDetail (getOptions dihapus v1.4)</td>
 </tr>
 <tr>
 <td>Api</td>
@@ -2118,12 +2120,12 @@ INSERT notif_data (semua admin)
 <tr>
 <td>Model</td>
 <td><code>Repository/Model/Asset/mAssetRequestKaryawan.dart</code></td>
-<td>AssetRequestApproval, AssetRequestKaryawanRecord/Item/Employee/Page, AssetRequestKaryawanRequest, AssetKonfirmasiPenambahanRequest</td>
+<td>AssetRequestApproval, AssetRequestKaryawanRecord/Item/Employee (field <code>jabatan</code>)/Page, AssetRequestKaryawanRequest, AssetKonfirmasiPenambahanRequest</td>
 </tr>
 <tr>
 <td>Model</td>
 <td><code>Repository/Model/Asset/mAssetPengajuanKaryawan.dart</code></td>
-<td>Options (kategori, urgensi), AssetPengajuanKaryawanRequest</td>
+<td>AssetPengajuanKaryawanRequest (<code>jenisAsset</code>, <code>keterangan</code>, <code>isDraft</code> → <code>jenis_asset</code>, <code>keterangan</code>, <code>is_draft</code>); model Options dan Urgensi dihapus v1.4</td>
 </tr>
 <tr>
 <td>Model</td>
@@ -2143,7 +2145,7 @@ INSERT notif_data (semua admin)
 <tr>
 <td>Bloc</td>
 <td><code>AssetPengajuanKaryawanBloc</code></td>
-<td>List/paging, options, detail, submit pengajuan</td>
+<td>List/paging, draft, detail, submit pengajuan (tanpa options sejak v1.4)</td>
 </tr>
 <tr>
 <td>Bloc</td>
@@ -2182,7 +2184,7 @@ INSERT notif_data (semua admin)
 | <code>/asset_admin_detail_pengajuan_karyawan</code> | Detail Pengajuan admin (title "Konfirmasi Pengajuan Asset") | LoadAssetPengajuanAdminDetail(id) |
 | <code>/asset_admin_setujui_pengajuan_karyawan</code> | Form Setujui | LoadAssetPengajuanAdminOptions(id), argumen record |
 | <code>/asset_pengajuan</code> | List Pengajuan karyawan | LoadAssetPengajuanKaryawanList |
-| <code>/asset_tambah_pengajuan</code> | Form Pengajuan | LoadAssetPengajuanKaryawanOptions |
+| <code>/asset_tambah_pengajuan</code> | Form Pengajuan | Form baru: tanpa event awal; <code>LoadAssetPengajuanKaryawanDraft(id)</code> saat ubah draft |
 | <code>/asset_detail_pengajuan</code> | Detail Pengajuan karyawan | LoadAssetPengajuanKaryawanDetail(id) |
 | <code>/asset_konfirmasi_pengajuan</code> | Konfirmasi (isPengajuan: true) | LoadAssetKonfirmasiPenambahan(id) |
 | <code>/asset_konfirmasi_penambahan</code> | Konfirmasi Penambahan | LoadAssetKonfirmasiPenambahan(id) |</p>
@@ -2240,17 +2242,17 @@ INSERT notif_data (semua admin)
 </tbody>
 </table></div>
 <h3>26.3 Detail Penambahan Asset (Admin)</h3>
-<p>Tanggal Penambahan, badge status, Nomor Pengajuan; Data Karyawan (nama, NIK, Cabang, Divisi); Jadwal Serah Terima (tanggal, jam, catatan); daftar asset. <strong>Tidak ada tombol aksi</strong> dan <strong>kondisi item (Normal/Rusak) tidak ditampilkan</strong>.</p>
+<p>Tanggal Penambahan, badge status, Nomor Pengajuan; Data Karyawan (nama, NIK, Jabatan, Cabang, Departemen); Jadwal Serah Terima (tanggal, jam, catatan); daftar asset. <strong>Tidak ada tombol aksi</strong> dan <strong>kondisi item (Normal/Rusak) tidak ditampilkan</strong>.</p>
 <p><strong>Alur status</strong>: <code>AssetAlurStepper.pengajuan</code> (Pengajuan → Alokasi → Konfirmasi → Selesai; berpindah dari Alokasi ke Konfirmasi setelah admin mengalokasikan asset; disembunyikan bila ditolak). File: <code>Shared/Widgets/AssetAlurWidgets.dart</code>.</p>
 <h3>26.4 Pengajuan Asset (Admin) — list</h3>
-<p>Tab Pengajuan / Proses / Dikonfirmasi / Selesai; kartu menampilkan tanggal, status, karyawan, Urgensi, jadwal (bila ada).</p>
+<p>Tab Pengajuan / Proses / Dikonfirmasi / Selesai; kartu menampilkan tanggal, status, karyawan, jadwal (bila ada); tanpa Urgensi (dihapus v1.4).</p>
 <h3>26.5 Konfirmasi Pengajuan Asset (Admin, detail)</h3>
-<p>Tanggal Pengajuan &amp; status; Data Karyawan; Pengajuan Asset (Jenis Asset, Alasan, Urgensi); Alasan Penolakan (bila ditolak); Jadwal Serah Terima (bila ada); daftar asset (bila dialokasikan). Tombol <strong>Tolak</strong> (bottom sheet "Alasan Penolakan" wajib → Kirim) dan <strong>Setujui</strong>, tampil jika status <code class="chip chip-wait">proses</code> dan tab <code>pengajuan</code> (termasuk Draft Alokasi).</p>
+<p>Tanggal Pengajuan &amp; status; Data Karyawan (Jabatan, Cabang, Departemen); Pengajuan Asset (Jenis Asset sebagai teks, Alasan); Alasan Penolakan (bila ditolak); Jadwal Serah Terima (bila ada); daftar asset (bila dialokasikan). Tombol <strong>Tolak</strong> (merah; bottom sheet "Alasan Penolakan" wajib → Kirim) dan <strong>Setujui</strong> (hijau), keduanya berbentuk pil tinggi 44, tampil jika status <code class="chip chip-wait">proses</code> dan tab <code>pengajuan</code> (termasuk Draft Alokasi).</p>
 <p>Stepper alur status sama seperti §26.3 (<code>AssetAlurStepper.pengajuan</code>).</p>
 <h3>26.6 Setujui Pengajuan Asset (Admin)</h3>
-<p>Ringkasan Jenis Asset, alasan, Urgensi; "Penambahan Asset" + "Tambah Asset" (hanya asset kategori pengajuan, draft alokasi terisi otomatis); Jadwal Serah Terima &amp; Jam (wajib saat kirim); Catatan Tambahan; tombol <strong>Simpan Draft</strong> / <strong>Submit ke PIC</strong>.</p>
+<p>Ringkasan Jenis Asset (teks) dan alasan, tanpa Urgensi; "Penambahan Asset" + tombol "Tambah Asset" (lebar penuh, pil hijau; picker memakai <strong>seluruh kategori</strong> tanpa filter jenis pengajuan, draft alokasi terisi otomatis); Jadwal Serah Terima &amp; Jam (wajib saat kirim; <strong>kosong sampai admin mengisi</strong>: nilai <code>0000-00-00</code> / <code>00:00:00</code> dari DB dianggap kosong, tanggal bertahun &lt; 2000 dan jamnya dikosongkan, sehingga tidak lagi tampil <code>30-11-0001</code> / <code>00:00</code>); Catatan Tambahan; tombol <strong>Simpan Draft</strong> (biru terisi) / <strong>Submit ke PIC</strong> (outline biru), keduanya pil tinggi 44.</p>
 <h3>26.7 Pengajuan Asset (Karyawan) — list</h3>
-<p>Tab Pengajuan / Dikonfirmasi / Ditolak / Selesai; kartu: tanggal, status (Draft, Menunggu Konfirmasi, Dikonfirmasi Admin, Butuh Proses, Ditolak, Selesai), alasan, Urgensi. Tap: bila disetujui &amp; ada item pending → Konfirmasi Pengajuan Asset, selain itu → Detail.</p>
+<p>Tab Pengajuan / Dikonfirmasi / Ditolak / Selesai; kartu: tanggal, status (Draft, Menunggu Konfirmasi, Dikonfirmasi Admin, Butuh Proses, Ditolak, Selesai), alasan (tanpa Urgensi). Tap: bila disetujui &amp; ada item pending → Konfirmasi Pengajuan Asset, selain itu → Detail.</p>
 <h3>26.8 Tambah Pengajuan Asset (Karyawan)</h3>
 <div class="table-wrap"><table>
 <thead>
@@ -2264,9 +2266,9 @@ INSERT notif_data (semua admin)
 <tbody>
 <tr>
 <td>Jenis Asset</td>
-<td>Bottom sheet "Pilih Kategori Asset" (cari, hanya non-parent)</td>
-<td style="text-align: center;">Ya</td>
-<td><code>kategori_asset</code></td>
+<td>TextFormField teks bebas (maxLength 150, counter disembunyikan; error server key <code>jenis_asset</code>)</td>
+<td style="text-align: center;">Ya saat kirim (draft boleh kosong)</td>
+<td>Input</td>
 </tr>
 <tr>
 <td>Alasan</td>
@@ -2276,9 +2278,9 @@ INSERT notif_data (semua admin)
 </tr>
 <tr>
 <td>Urgensi</td>
-<td>Bottom sheet (Normal/Secepatnya/Mendesak)</td>
-<td style="text-align: center;">Ya saat kirim</td>
-<td><code>urgensi</code></td>
+<td>Field dihapus (v1.4)</td>
+<td style="text-align: center;">–</td>
+<td>–</td>
 </tr>
 <tr>
 <td>Tombol</td>
@@ -2289,10 +2291,10 @@ INSERT notif_data (semua admin)
 </tbody>
 </table></div>
 <h3>26.9 Detail Pengajuan Asset (Karyawan)</h3>
-<p>Nomor Pengajuan, data karyawan, Jenis Asset, Alasan, Urgensi, Alasan Penolakan (bila ditolak), Jadwal, asset beserta kondisi Normal/Rusak dan Report Kerusakan.</p>
+<p>Nomor Pengajuan, data karyawan (Jabatan, Cabang, Departemen), Jenis Asset, Alasan, Alasan Penolakan (bila ditolak), Jadwal, asset beserta kondisi Normal/Rusak dan Report Kerusakan.</p>
 <p>Stepper alur status sama seperti §26.3 (<code>AssetAlurStepper.pengajuan</code>).</p>
 <h3>26.10 Konfirmasi Penambahan / Pengajuan Asset (Karyawan)</h3>
-<p>Info transaksi (Tanggal &amp; Kode Penambahan / Nomor Pengajuan), Data Karyawan, Jadwal Serah Terima, (Pengajuan: Jenis Asset, Alasan, Urgensi), "Penting! Periksa kondisi asset…", per asset Kelengkapan + tombol <strong>Normal/Rusak</strong> + "Report Kerusakan <em>" (maks 255), pernyataan tanggung jawab, tombol </em><em>Konfirmasi Asset</em>*.</p>
+<p>Info transaksi (Tanggal &amp; Kode Penambahan / Nomor Pengajuan), Data Karyawan (Jabatan, Cabang, Departemen), Jadwal Serah Terima, (Pengajuan: Jenis Asset, Alasan), "Penting! Periksa kondisi asset…", per asset Kelengkapan + tombol <strong>Normal/Rusak</strong> + "Report Kerusakan <em>" (maks 255), pernyataan tanggung jawab, tombol </em><em>Konfirmasi Asset</em>*.</p>
 <h3>26.11 Asset Saya</h3>
 <p>Menu <strong>Pengajuan</strong>; banner <strong>Penambahan Asset</strong> untuk transaksi pertama yang menunggu dicek.</p>
 <hr />
@@ -2359,10 +2361,10 @@ INSERT notif_data (semua admin)
 </tr>
 <tr>
 <td>Jenis Asset (pengajuan)</td>
-<td><code>_selectedCategoryId</code></td>
-<td><code>id_asset_kategori_m</code></td>
-<td>string</td>
-<td style="text-align: center;">Ya</td>
+<td><code>_categoryController.text.trim()</code></td>
+<td><code>jenis_asset</code></td>
+<td>string (maks 150)</td>
+<td style="text-align: center;">Ya saat kirim</td>
 </tr>
 <tr>
 <td>Alasan (pengajuan)</td>
@@ -2373,10 +2375,10 @@ INSERT notif_data (semua admin)
 </tr>
 <tr>
 <td>Urgensi (pengajuan)</td>
-<td><code>_selectedUrgency</code></td>
-<td><code>urgensi</code></td>
-<td>string</td>
-<td style="text-align: center;">Ya saat kirim</td>
+<td>– (field dihapus v1.4)</td>
+<td>–</td>
+<td>–</td>
+<td style="text-align: center;">–</td>
 </tr>
 <tr>
 <td>Alasan Penolakan</td>
@@ -2423,9 +2425,9 @@ INSERT notif_data (semua admin)
 <td>Navigasi, "Nomor Pengajuan"/"Kode Penambahan"</td>
 </tr>
 <tr>
-<td><code>nama_kategori</code>, <code>id_asset_kategori_m</code></td>
+<td><code>nama_kategori</code> (+ <code>id_asset_kategori_m</code> legacy, <code>''</code> untuk data baru)</td>
 <td><code>namaKategori</code>, <code>idAssetKategori</code></td>
-<td>"Jenis Asset"</td>
+<td>"Jenis Asset" (teks bebas)</td>
 </tr>
 <tr>
 <td><code>keterangan</code></td>
@@ -2433,9 +2435,9 @@ INSERT notif_data (semua admin)
 <td>"Alasan"</td>
 </tr>
 <tr>
-<td><code>urgensi</code></td>
-<td><code>urgensi</code> → <code>labelUrgensiAsset</code></td>
-<td>"Urgensi"</td>
+<td><code>urgensi</code> (legacy)</td>
+<td>Tidak dibaca untuk Pengajuan</td>
+<td>Tidak ditampilkan (dihapus v1.4)</td>
 </tr>
 <tr>
 <td><code>ket_tolak</code></td>
@@ -2478,9 +2480,9 @@ INSERT notif_data (semua admin)
 <td>"Butuh Proses"</td>
 </tr>
 <tr>
-<td><code>karyawan.*</code> / <code>nik_karyawan</code>, <code>nama_karyawan</code></td>
-<td><code>employee</code></td>
-<td>Data Karyawan</td>
+<td><code>karyawan.*</code> (id_karyawan, nik, nama_karyawan, <strong>jabatan</strong>, cabang, divisi) / <code>nik_karyawan</code>, <code>nama_karyawan</code></td>
+<td><code>employee</code> (<code>AssetRequestKaryawanEmployee</code>; <code>jabatan</code> dibaca dari <code>jabatan</code> atau <code>nama_jabatan</code>)</td>
+<td>Data Karyawan: Jabatan, Cabang, Departemen</td>
 </tr>
 <tr>
 <td><code>items[]</code></td>
@@ -2571,11 +2573,11 @@ INSERT notif_data (semua admin)
 </tr>
 <tr>
 <td>Jenis Asset</td>
-<td><code>idAssetKategori</code></td>
-<td><code>id_asset_kategori_m</code></td>
-<td><code>$category</code></td>
+<td><code>jenisAsset</code></td>
+<td><code>jenis_asset</code></td>
+<td><code>$jenisAsset</code> (trim)</td>
 <td>header</td>
-<td>id_asset_kategori_m, nama_kategori</td>
+<td>nama_kategori (<code>id_asset_kategori_m</code> = NULL)</td>
 </tr>
 <tr>
 <td>Alasan</td>
@@ -2587,11 +2589,11 @@ INSERT notif_data (semua admin)
 </tr>
 <tr>
 <td>Urgensi</td>
-<td><code>urgensi</code></td>
-<td><code>urgensi</code></td>
-<td>trim</td>
+<td>– (dihapus)</td>
+<td>– (diabaikan)</td>
+<td>NULL</td>
 <td>header</td>
-<td>urgensi</td>
+<td>urgensi = NULL (legacy)</td>
 </tr>
 <tr>
 <td>Simpan Draft / Submit</td>
@@ -2683,11 +2685,11 @@ INSERT notif_data (semua admin)
 </tr>
 <tr>
 <td>header</td>
-<td>urgensi</td>
-<td>〃</td>
-<td><code>urgensi</code></td>
-<td>urgensi</td>
-<td>Urgensi</td>
+<td>urgensi (legacy)</td>
+<td>–</td>
+<td>tidak dikirim</td>
+<td>tidak dibaca</td>
+<td>tidak ditampilkan</td>
 </tr>
 <tr>
 <td>header</td>
@@ -2747,11 +2749,11 @@ INSERT notif_data (semua admin)
 </tr>
 <tr>
 <td>data_karyawan → master</td>
-<td>cabang, departemen</td>
-<td>LEFT JOIN</td>
-<td><code>karyawan.cabang</code>, <code>karyawan.divisi</code></td>
-<td>employee.cabang/divisi</td>
-<td>Data Karyawan</td>
+<td>jabatan, cabang, departemen</td>
+<td>LEFT JOIN (<code>master_jabatan</code> lewat <code>data_karyawan.id_jabatan</code>, <code>master_cabang</code>, <code>master_departemen</code>)</td>
+<td><code>karyawan.jabatan</code>, <code>karyawan.cabang</code>, <code>karyawan.divisi</code></td>
+<td>employee.jabatan/cabang/divisi</td>
+<td>Data Karyawan (Jabatan, Cabang, Departemen)</td>
 </tr>
 </tbody>
 </table></div>
@@ -2784,18 +2786,18 @@ INSERT notif_data (semua admin)
 </tr>
 <tr>
 <td>Form Setujui</td>
-<td>Picker hanya asset kategori pengajuan</td>
+<td>Picker memakai seluruh kategori (tanpa filter jenis pengajuan)</td>
 <td>–</td>
 </tr>
 <tr>
 <td>Form Pengajuan</td>
-<td>Jenis asset wajib; hanya kategori non-parent</td>
-<td>"Jenis asset wajib dipilih."</td>
+<td>Jenis asset (TextFormField, maks 150) wajib saat kirim; draft boleh kosong; error server key <code>jenis_asset</code></td>
+<td>"Jenis asset wajib diisi."</td>
 </tr>
 <tr>
 <td>Form Pengajuan</td>
-<td>Alasan &amp; urgensi wajib saat kirim</td>
-<td>"Alasan pengajuan wajib diisi." / "Urgensi wajib dipilih."</td>
+<td>Alasan wajib saat kirim</td>
+<td>"Alasan pengajuan wajib diisi."</td>
 </tr>
 <tr>
 <td>Tolak</td>
@@ -2817,7 +2819,7 @@ INSERT notif_data (semua admin)
 <h3>31.2 Backend</h3>
 <p>Lihat §9 dan §24.</p>
 <h3>31.3 Database</h3>
-<p>ENUM <code>sumber_pengajuan</code>, <code>status_approval</code>, <code>status_item</code>; UNIQUE <code>no_trx</code> (DBML); NOT NULL default untuk jadwal (<code>0000-00-00</code>, <code>00:00:00</code>).</p>
+<p>ENUM <code>sumber_pengajuan</code>, <code>status_approval</code>, <code>status_item</code>; UNIQUE <code>no_trx</code> (DBML); NOT NULL default untuk jadwal (<code>0000-00-00</code>, <code>00:00:00</code>); <code>id_asset_kategori_m</code> dan <code>urgensi</code> NULL diperbolehkan setelah SQL v1.4 dijalankan.</p>
 <h3>31.4 Ringkasan per Field</h3>
 <div class="table-wrap"><table>
 <thead>
@@ -2838,7 +2840,7 @@ INSERT notif_data (semua admin)
 <tr>
 <td>asset_ids</td>
 <td>Min 1, picker exclude duplikat</td>
-<td>required, distinct, tersedia+gudang, tidak aktif, (alokasi) kategori sama</td>
+<td>required, distinct, tersedia+gudang, tidak aktif (alokasi tanpa filter kategori)</td>
 <td>item.id_asset_data</td>
 </tr>
 <tr>
@@ -2848,10 +2850,10 @@ INSERT notif_data (semua admin)
 <td>date/time NOT NULL</td>
 </tr>
 <tr>
-<td>id_asset_kategori_m</td>
-<td>Wajib, non-parent</td>
-<td>required, ada, non-parent</td>
-<td>varchar(50)</td>
+<td>jenis_asset (pengajuan)</td>
+<td>Teks bebas, maks 150, wajib saat kirim</td>
+<td>required saat kirim, string, trim, max:150</td>
+<td><code>nama_kategori</code> varchar(255)</td>
 </tr>
 <tr>
 <td>keterangan (pengajuan)</td>
@@ -2861,9 +2863,9 @@ INSERT notif_data (semua admin)
 </tr>
 <tr>
 <td>urgensi</td>
-<td>Wajib saat kirim</td>
-<td>in:normal,secepatnya,mendesak (pengajuan)</td>
-<td>varchar(50)</td>
+<td>– (dihapus)</td>
+<td>– (diabaikan)</td>
+<td>varchar(50) NULL (legacy)</td>
 </tr>
 <tr>
 <td>ket_tolak</td>
@@ -2898,7 +2900,7 @@ INSERT notif_data (semua admin)
 <td>Error per field / snackbar warning</td>
 </tr>
 <tr>
-<td>Aturan bisnis (asset tidak tersedia, status tidak valid, kategori tidak sesuai, dll.)</td>
+<td>Aturan bisnis (asset tidak tersedia, status tidak valid, dll.)</td>
 <td style="text-align: right;">422</td>
 <td>BUSINESS_RULE_VIOLATION</td>
 <td>Snackbar error</td>
@@ -3105,6 +3107,10 @@ INSERT notif_data (semua admin)
 <td><code>lockCompany</code> + <code>lockForUpdate</code></td>
 </tr>
 <tr>
+<td>Input teks bebas</td>
+<td><code>jenis_asset</code> di-trim dan dibatasi 150 karakter; disimpan lewat Query Builder (parameter binding) dan ditampilkan sebagai teks biasa di mobile</td>
+</tr>
+<tr>
 <td>Catatan</td>
 <td>Validasi request dijalankan sebelum cek admin pada store/tolak/alokasi (non-admin dapat menerima 422, bukan 403)</td>
 </tr>
@@ -3130,16 +3136,16 @@ INSERT notif_data (semua admin)
 <h3>B. Admin — Meninjau Pengajuan</h3>
 <ol>
 <li>Buka <strong>Asset Karyawan</strong> → aksi <strong>Pengajuan</strong> (atau panel <strong>Pengajuan Asset Perlu Diproses</strong> → <strong>Tinjau Pengajuan</strong>).</li>
-<li>Tab <strong>Pengajuan</strong> → pilih pengajuan → halaman <strong>Konfirmasi Pengajuan Asset</strong> (Jenis Asset, Alasan, Urgensi).</li>
+<li>Tab <strong>Pengajuan</strong> → pilih pengajuan → halaman <strong>Konfirmasi Pengajuan Asset</strong> (Jenis Asset, Alasan).</li>
 <li><strong>Menolak</strong>: tekan <strong>Tolak</strong> → isi <strong>Alasan Penolakan</strong> → <strong>Kirim</strong>.</li>
-<li><strong>Menyetujui</strong>: tekan <strong>Setujui</strong> → halaman <strong>Setujui Pengajuan Asset</strong> → <strong>Tambah Asset</strong> (hanya jenis yang diajukan) → isi jadwal → <strong>Submit ke PIC</strong>.
+<li><strong>Menyetujui</strong>: tekan <strong>Setujui</strong> → halaman <strong>Setujui Pengajuan Asset</strong> → <strong>Tambah Asset</strong> (boleh asset apa pun dari stok; jenis yang diajukan hanya informasi) → isi jadwal (kosong sampai Anda mengisi) → <strong>Submit ke PIC</strong>.
    - <strong>Simpan Draft</strong> menyimpan pilihan sebagai <strong>Draft Alokasi</strong>; buka lagi dari tab Pengajuan (<strong>Lanjutkan Alokasi</strong>) untuk mengirim.</li>
 <li>Pengajuan berpindah ke tab <strong>Proses</strong> (menunggu karyawan), lalu <strong>Selesai</strong> setelah karyawan mengonfirmasi semua asset Normal.</li>
 </ol>
 <h3>C. Karyawan — Mengajukan Asset</h3>
 <ol>
 <li>Buka <strong>Asset Saya</strong> → menu <strong>Pengajuan</strong> → tekan <strong>+</strong>.</li>
-<li>Pilih <strong>Jenis Asset</strong>, isi <strong>Alasan</strong>, pilih <strong>Urgensi</strong> (Normal / Secepatnya / Mendesak).</li>
+<li>Ketik <strong>Jenis Asset</strong> (teks bebas, maks 150 karakter, mis. Laptop atau Monitor 24 inch) dan isi <strong>Alasan</strong>.</li>
 <li>Tekan <strong>Submit ke Admin</strong>.</li>
 <li>Pantau status di tab <strong>Pengajuan</strong>, <strong>Dikonfirmasi</strong>, <strong>Ditolak</strong>, atau <strong>Selesai</strong>. Jika ditolak, alasan tampil di detail.</li>
 </ol>
@@ -3197,28 +3203,35 @@ INSERT notif_data (semua admin)
 <td>Admin</td>
 <td>Detail Pengajuan</td>
 <td><code>status = proses</code> &amp; tab <code>pengajuan</code></td>
-<td>Bottom sheet alasan → POST tolak</td>
+<td>Bottom sheet alasan → POST tolak (tombol merah, pil tinggi 44)</td>
 </tr>
 <tr>
 <td>Setujui</td>
 <td>Admin</td>
 <td>Detail Pengajuan</td>
 <td>Sama dengan Tolak</td>
-<td>Form Setujui</td>
+<td>Form Setujui (tombol hijau, pil tinggi 44)</td>
 </tr>
 <tr>
 <td>Simpan Draft</td>
 <td>Admin</td>
 <td>Form Setujui</td>
 <td>Tidak submitting</td>
-<td>POST alokasi <code>is_draft=true</code></td>
+<td>POST alokasi <code>is_draft=true</code> (biru terisi, pil tinggi 44)</td>
 </tr>
 <tr>
 <td>Submit ke PIC</td>
 <td>Admin</td>
 <td>Form Setujui</td>
 <td>Tidak submitting</td>
-<td>POST alokasi <code>is_draft=false</code></td>
+<td>POST alokasi <code>is_draft=false</code> (outline biru, pil tinggi 44)</td>
+</tr>
+<tr>
+<td>Tambah Asset</td>
+<td>Admin</td>
+<td>Form Setujui</td>
+<td>Tidak submitting</td>
+<td>Picker asset semua kategori (lebar penuh, pil hijau)</td>
 </tr>
 <tr>
 <td>+ Tambah Pengajuan Asset</td>
@@ -3259,6 +3272,9 @@ INSERT notif_data (semua admin)
 </table></div>
 <hr />
 <div class="group-divider" id="g38"><span>QA & Risiko</span></div><h2 id="s38"><span class="sec-no">38</span>Testing Scenario</h2>
+<aside class="callout callout-note">
+<p>Hasil otomatis terakhir (2026-10-20): API <code>tests/Asset/AssetModelTest.php</code> 99 tes lulus (1293 assertion); mobile <code>test/asset/asset_pengajuan_karyawan_test.dart</code> dan <code>test/asset/asset_pengajuan_admin_test.dart</code> 38 tes lulus.</p>
+</aside>
 <h3>Happy Path</h3>
 <div class="table-wrap"><table>
 <thead>
@@ -3296,8 +3312,8 @@ INSERT notif_data (semua admin)
 <td>TC-04</td>
 <td>Pengajuan dikirim</td>
 <td>Karyawan aktif</td>
-<td>Jenis + alasan + urgensi → Submit ke Admin</td>
-<td>201; <code>sumber=karyawan</code>; tanpa item; notif semua admin</td>
+<td>Ketik jenis asset + alasan → Submit ke Admin</td>
+<td>201; <code>sumber=karyawan</code>; tanpa item; <code>nama_kategori</code> = teks jenis asset, <code>id_asset_kategori_m</code>/<code>urgensi</code> NULL; notif semua admin</td>
 </tr>
 <tr>
 <td>TC-05</td>
@@ -3361,18 +3377,18 @@ INSERT notif_data (semua admin)
 </tr>
 <tr>
 <td>TC-13</td>
-<td>Pengajuan tanpa alasan/urgensi</td>
-<td>422</td>
+<td>Pengajuan tanpa jenis asset atau alasan</td>
+<td>422 "Jenis asset wajib diisi." / "Alasan pengajuan wajib diisi."</td>
 </tr>
 <tr>
 <td>TC-14</td>
-<td>Urgensi <code>tinggi</code> via API</td>
-<td>422 "Urgensi pengajuan tidak valid."</td>
+<td>Klien lama mengirim <code>urgensi</code> dan <code>id_asset_kategori_m</code></td>
+<td>Diabaikan; tersimpan <code>nama_kategori = jenis_asset</code>, <code>id_asset_kategori_m = NULL</code>, <code>urgensi = NULL</code></td>
 </tr>
 <tr>
 <td>TC-15</td>
-<td>Jenis asset = kategori parent (API)</td>
-<td>422 "Jenis asset tidak ditemukan atau tidak dapat diajukan."</td>
+<td>Submit tanpa <code>jenis_asset</code> (klien lama, API)</td>
+<td>422 "Jenis asset wajib diisi." (<code>test_submit_without_jenis_asset_is_rejected</code>)</td>
 </tr>
 <tr>
 <td>TC-16</td>
@@ -3381,8 +3397,8 @@ INSERT notif_data (semua admin)
 </tr>
 <tr>
 <td>TC-17</td>
-<td>Alokasi asset beda kategori (API)</td>
-<td>422 "Asset harus sesuai dengan jenis yang diajukan."</td>
+<td>Alokasi asset lintas kategori dari jenis yang diajukan (API)</td>
+<td>Diterima; alokasi tidak dibatasi kategori (<code>test_admin_can_allocate_any_stock_asset_regardless_of_free_text_jenis</code>)</td>
 </tr>
 <tr>
 <td>TC-18</td>
@@ -3530,6 +3546,21 @@ INSERT notif_data (semua admin)
 <td>Notifikasi dibuka</td>
 <td>Rute sesuai §34</td>
 </tr>
+<tr>
+<td>TC-39</td>
+<td>PUT draft pengajuan tanpa key <code>jenis_asset</code> (draft lama)</td>
+<td><code>nama_kategori</code> tersimpan dipertahankan (<code>test_draft_update_without_jenis_asset_key_keeps_stored_jenis_asset</code>)</td>
+</tr>
+<tr>
+<td>TC-40</td>
+<td>Baris lama berisi <code>id_asset_kategori_m</code> + <code>urgensi</code> dibaca</td>
+<td>Terbaca normal; response tanpa <code>urgensi</code> (<code>test_legacy_request_row_with_category_and_urgensi_stays_readable</code>)</td>
+</tr>
+<tr>
+<td>TC-41</td>
+<td>Buka layar Setujui saat DB mengirim <code>0000-00-00</code> / <code>00:00:00</code></td>
+<td>Field Jadwal dan Jam kosong sampai admin mengisi (bukan <code>30-11-0001</code> / <code>00:00</code>)</td>
+</tr>
 </tbody>
 </table></div>
 <hr />
@@ -3622,6 +3653,13 @@ INSERT notif_data (semua admin)
 <td>422 vs 403</td>
 <td>Pindahkan cek akses</td>
 </tr>
+<tr>
+<td>INC-12</td>
+<td>DB</td>
+<td>Kolom <code>id_asset_kategori_m</code> dan <code>urgensi</code> pada header kini legacy (nullable, tidak diisi Pengajuan baru)</td>
+<td>Baris lama masih berisi kategori/urgensi yang tidak ditampilkan lagi; skema fisik bergantung pada SQL manual v1.4</td>
+<td>Hapus kolom setelah data lama tidak diperlukan; pastikan SQL v1.4 dijalankan</td>
+</tr>
 </tbody>
 </table></div>
 <hr />
@@ -3696,6 +3734,30 @@ INSERT notif_data (semua admin)
 <td>Terlewat</td>
 <td>Lihat INC-06</td>
 </tr>
+<tr>
+<td>Aplikasi lama (sebelum v1.4) mengirim pengajuan</td>
+<td>Tanpa <code>jenis_asset</code> → 422 "Jenis asset wajib diisi."; <code>id_asset_kategori_m</code>/<code>urgensi</code> diabaikan</td>
+<td>Pengajuan dari klien lama gagal sampai aplikasi diperbarui</td>
+<td>Informasikan/paksa update aplikasi</td>
+</tr>
+<tr>
+<td>Draft lama (dibuat sebelum v1.4)</td>
+<td><code>nama_kategori</code> berisi nama kategori lama dan dipertahankan saat PUT draft tanpa key <code>jenis_asset</code>; dapat dikirim lewat klien baru</td>
+<td>Aman</td>
+<td>–</td>
+</tr>
+<tr>
+<td>SQL v1.4 belum dijalankan saat API baru aktif</td>
+<td>INSERT pengajuan dengan <code>id_asset_kategori_m</code> NULL gagal pada kolom NOT NULL → 500</td>
+<td>Karyawan tidak bisa mengajukan</td>
+<td>Jalankan <code>sql-pengajuan-karyawan-jenis-asset-bebas.sql</code> sebelum deploy</td>
+</tr>
+<tr>
+<td>Jenis asset diketik dengan ejaan beragam</td>
+<td>Tidak ada normalisasi</td>
+<td>Sulit mengelompokkan atau menghitung per jenis</td>
+<td>Pertimbangkan autocomplete/master jenis</td>
+</tr>
 </tbody>
 </table></div>
 <hr />
@@ -3737,11 +3799,15 @@ INSERT notif_data (semua admin)
 <p>Kegagalan notif hanya di-log.</p>
 <h3>RISK-011 — Tolak menghapus draft alokasi (hard delete)</h3>
 <p>Tidak ada jejak asset yang sempat dialokasikan.</p>
+<h3>RISK-012 — SQL v1.4 belum dijalankan sebelum deploy API (TINGGI)</h3>
+<p>Kolom <code>id_asset_kategori_m</code> masih NOT NULL di DB sampai <code>sql-pengajuan-karyawan-jenis-asset-bebas.sql</code> dijalankan, sehingga INSERT Pengajuan baru (NULL) gagal (500). Status saat ini: SQL <strong>belum dijalankan</strong> (langkah user, sebelum API dipakai). Cek charset/collation <code>nama_kategori</code> (<code>SHOW CREATE TABLE</code>) lebih dulu.</p>
+<h3>RISK-013 — Jenis asset teks bebas tidak ternormalisasi (RENDAH)</h3>
+<p>Tidak ada master atau validasi isi; ejaan beragam menyulitkan laporan per jenis. Bila <code>nama_kategori</code> memakai latin1, karakter non-latin/emoji dapat gagal atau rusak (pertimbangkan utf8mb4).</p>
 <hr />
 <div class="group-divider" id="g42"><span>Referensi Developer</span></div><h2 id="s42"><span class="sec-no">42</span>Dependency</h2>
 <div class="code"><span class="code-lang">Alur</span><pre><code class="language-text">Master Company / Data Karyawan / Asset Admin
       ↓
-Master Kategori ──► Pengajuan (jenis asset)
+Master Kategori ──► Penambahan (snapshot kategori)   [Pengajuan: jenis asset teks bebas, tanpa master]
       ↓
 Asset Data (tersedia @gudang)
       ↓
@@ -3755,6 +3821,7 @@ Bergantung pada / dipakai oleh:
   - Asset Saya: getPendingForEmployee (banner penambahan)
   - Offboarding: menelusuri sumber asset dari request `dikonfirmasi` dengan item normal (jenis &quot;onboarding&quot;)
   - Retur/Offboarding mengembalikan asset ke gudang → asset bisa ditambahkan lagi (RISK-002 diperbaiki v1.1)
+  - SQL manual sql-pengajuan-karyawan-jenis-asset-bebas.sql (kolom header nullable) harus dijalankan sebelum API v1.4 dipakai
 </code></pre></div>
 <hr />
 <h2 id="s43"><span class="sec-no">43</span>Source Code Reference</h2>
@@ -3813,9 +3880,9 @@ Bergantung pada / dipakai oleh:
 <td>Event <code>pengajuan.*</code>, <code>penambahan.*</code></td>
 </tr>
 <tr>
-<td><code>API/diagram-asset.dbml</code>; migrations <code>2026_09_16_000003</code>, <code>2026_09_17_000004</code>, <code>2026_09_17_000008</code></td>
+<td><code>API/diagram-asset.dbml</code>; migrations <code>2026_09_16_000003</code>, <code>2026_09_17_000004</code>, <code>2026_09_17_000008</code>; SQL manual <code>Claude outputs/sql-pengajuan-karyawan-jenis-asset-bebas.sql</code> (v1.4)</td>
 <td>DB</td>
-<td>Struktur, index, enum</td>
+<td>Struktur, index, enum, kolom nullable (v1.4)</td>
 </tr>
 <tr>
 <td><code>MOBILE/lib/Repository/Service/assetRequestKaryawanApi.dart</code>, <code>assetPengajuanAdminApi.dart</code>, <code>assetPengajuanKaryawanApi.dart</code>, <code>assetSayaApi.dart</code></td>
@@ -3862,6 +3929,8 @@ Bergantung pada / dipakai oleh:
 <li><strong>Label dihitung di tiga fungsi berbeda</strong> (<code>requestStatusMetadata</code>, <code>pengajuanAdminStatusMetadata</code>, <code>pengajuanStatusMetadata</code>) dan dipetakan ulang di mobile — ubah bersamaan.</li>
 <li><strong>Karyawan tidak melihat alokasi sebelum disetujui</strong>: <code>mapPengajuanKaryawanRecords</code> &amp; <code>getDetailPengajuanKaryawan</code> mengosongkan jadwal/item.</li>
 <li><strong>Opsi asset memakai fungsi onboarding</strong> (<code>AssetAdmin_m::getOnboardingOptions</code> dengan <code>excludeEmployeesWithOnboarding: false</code>).</li>
+<li><strong>Jenis asset Pengajuan = teks bebas (v1.4)</strong>: <code>nama_kategori</code> menyimpan teks; <code>id_asset_kategori_m</code> dan <code>urgensi</code> NULL (baris lama tetap berisi kategori/urgensi). Jangan memfilter alokasi dengan <code>id_asset_kategori_m</code> header.</li>
+<li><strong>Sisa <code>urgensi</code> di kode</strong>: <code>store()</code> Penambahan admin masih menulis <code>urgensi = ''</code> (kolom nullable) dan mobile <code>AssetRequestKaryawanRequest</code> masih mengirim <code>''</code>; dibiarkan agar kontrak Penambahan tidak berubah.</li>
 <li><strong>Reservasi hanya saat kirim</strong>; draft tidak mengunci asset (beda dengan onboarding).</li>
 <li><strong>Jam</strong> dikirim <code>H:i</code>, disimpan <code>H:i:s</code>; tanggal kosong disimpan <code>0000-00-00</code> dan diabaikan mobile lewat <code>hasSchedule</code>.</li>
 <li><strong><code>asset_log.jenis_log = request_karyawan</code></strong> — dipakai Offboarding untuk menelusuri asal asset.</li>
@@ -3870,20 +3939,20 @@ Bergantung pada / dipakai oleh:
 <hr />
 <h2 id="s45"><span class="sec-no">45</span>End-to-End Traceability</h2>
 <h3>45.1 Pengajuan → jenis asset</h3>
-<div class="code"><span class="code-lang">Alur</span><pre><code class="language-text">Karyawan memilih &quot;Laptop&quot; di bottom sheet Pilih Kategori Asset
-  → _selectedCategoryId
-  → AssetPengajuanKaryawanRequest.idAssetKategori
-  → JSON &quot;id_asset_kategori_m&quot;
-  → AssetKaryawanPengajuan_c::storePengajuanSaya (required|max:50)
-  → AssetRequestKaryawan_m::storePengajuanKaryawan (kategori ada &amp; bukan parent)
-  → asset_trx_request_karyawan.id_asset_kategori_m + nama_kategori
-  → (admin) getPengajuanAdminOptions memfilter assets by kategori ini
+<div class="code"><span class="code-lang">Alur</span><pre><code class="language-text">Karyawan mengetik &quot;Laptop&quot; di field Jenis Asset
+  → _categoryController.text.trim()
+  → AssetPengajuanKaryawanRequest.jenisAsset
+  → JSON &quot;jenis_asset&quot;
+  → AssetKaryawanPengajuan_c::storePengajuanSaya (trim, required saat kirim, max:150)
+  → AssetRequestKaryawan_m::storePengajuanKaryawan
+  → asset_trx_request_karyawan.nama_kategori = &quot;Laptop&quot; (id_asset_kategori_m = NULL, urgensi = NULL)
+  → (admin) getPengajuanAdminOptions: seluruh stok tersedia, tanpa filter kategori
 </code></pre></div>
 <h3>45.2 Alokasi → asset diterima karyawan</h3>
 <div class="code"><span class="code-lang">Alur</span><pre><code class="language-text">Admin memilih asset di Setujui Pengajuan Asset
   → _selectedAssets[].idAssetData → AssetPengajuanAdminAlokasiRequest.assetIds
   → JSON &quot;asset_ids&quot;
-  → alokasikanPengajuanAdmin: tersedia @gudang + kategori sama
+  → alokasikanPengajuanAdmin: tersedia @gudang (tanpa filter kategori)
   → INSERT asset_trx_request_karyawan_item (belum_dicek)
   → UPDATE asset_data.status_asset = proses
 Karyawan memilih Normal → statusByItem → JSON items[].status_item
@@ -3971,6 +4040,7 @@ Karyawan memilih Normal → statusByItem → JSON items[].status_item
 <li class="task">Migration CREATE TABLE baseline</li>
 <li class="task">Unique <code>no_trx</code> per company</li>
 <li class="task">Kolom tanggal nullable</li>
+<li class="task done">SQL manual <code>sql-pengajuan-karyawan-jenis-asset-bebas.sql</code> + DBML: <code>id_asset_kategori_m</code> dan <code>urgensi</code> nullable (v1.4) disiapkan</li>
 </ul>
 <h3>Backend</h3>
 <ul>
@@ -3980,6 +4050,7 @@ Karyawan memilih Normal → statusByItem → JSON items[].status_item
 <li class="task done">Edit / kirim draft (<code>PUT</code>); hapus draft belum ada</li>
 <li class="task">Tindak lanjut asset rusak</li>
 <li class="task done">Perbaikan <code>hasActiveRequestAsset</code> (v1.1)</li>
+<li class="task done">Pengajuan: <code>jenis_asset</code> teks bebas, urgensi dihapus, alokasi lintas kategori (v1.4; 99 tes API lulus)</li>
 <li class="task">Validasi tanggal serah terima ≥ hari ini</li>
 </ul>
 <h3>Mobile</h3>
@@ -3989,8 +4060,17 @@ Karyawan memilih Normal → statusByItem → JSON items[].status_item
 <li class="task done">List, form, detail Pengajuan (karyawan)</li>
 <li class="task done">Konfirmasi Penambahan/Pengajuan</li>
 <li class="task done">Lanjutkan (ubah) draft</li>
+<li class="task done">Form Jenis Asset teks bebas tanpa Urgensi; Bloc tanpa options (v1.4)</li>
+<li class="task done">Data Karyawan menampilkan Jabatan, Cabang, Departemen</li>
+<li class="task done">Tombol pil (Tambah Asset, Simpan Draft, Submit ke PIC, Tolak, Setujui); nilai awal jadwal/jam layar Setujui kosong (38 tes mobile lulus)</li>
 <li class="task">Tampilkan kondisi item di detail admin</li>
 <li class="task">Semua banner penambahan di Asset Saya</li>
+</ul>
+<h3>Rilis / Deploy v1.4</h3>
+<ul>
+<li class="task"><strong>Jalankan <code>sql-pengajuan-karyawan-jenis-asset-bebas.sql</code> di database SEBELUM deploy API v1.4</strong> (langkah user; belum dijalankan; cek charset <code>nama_kategori</code> lebih dulu)</li>
+<li class="task">Deploy API v1.4</li>
+<li class="task">Rilis aplikasi mobile v1.4 (klien lama tanpa <code>jenis_asset</code> ditolak 422)</li>
 </ul>
 <h3>Documentation</h3>
 <ul>
@@ -4008,6 +4088,11 @@ Karyawan memilih Normal → statusByItem → JSON items[].status_item
 </tr>
 </thead>
 <tbody>
+<tr>
+<td>1.4</td>
+<td>2026-10-20</td>
+<td>Pengajuan karyawan: <strong>Jenis Asset teks bebas</strong> (<code>jenis_asset</code>, maks 150) menggantikan pilihan kategori; <strong>Urgensi dihapus</strong> dari form, validasi, response, dan options. <code>id_asset_kategori_m</code>/<code>urgensi</code> dari klien lama diabaikan dan disimpan NULL; <code>nama_kategori</code> = teks jenis asset (BR-007, BR-008, API-010/012/017, §18, §21, §24, §26-§31). Persetujuan admin <strong>tidak lagi dibatasi kategori</strong> (BR-011, API-007/009). SQL manual <code>sql-pengajuan-karyawan-jenis-asset-bebas.sql</code> (kolom nullable) <strong>belum dijalankan; jalankan sebelum deploy API</strong>. Kartu Data Karyawan menampilkan Jabatan, Cabang, Departemen (<code>karyawan.jabatan</code>). Mobile: tombol bentuk pil, perbaikan nilai awal jadwal/jam layar Setujui. Kompatibilitas: submit klien lama tanpa <code>jenis_asset</code> -&gt; 422; draft lama mempertahankan <code>nama_kategori</code>. Tes: API 99 lulus, mobile 38 lulus. Ditambah TC-39..TC-41, RISK-012/013, INC-12.</td>
+</tr>
 <tr>
 <td>1.3</td>
 <td>2026-10-12</td>

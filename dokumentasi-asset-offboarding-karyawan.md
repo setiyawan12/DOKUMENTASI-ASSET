@@ -18,8 +18,8 @@
 | Mobile | Flutter (`professional_flutter_3_35`), `flutter_bloc`, `dio` |
 | Web | ⚠️ Belum ditemukan: tidak ada source web di workspace |
 | Test otomatis | `API/tests/Asset/AssetOffboardingModelTest.php`, `AssetOffboardingRouteTest.php`, `OffboardingStatusMigrationTest.php`, `OffboardingLegacyStatusMigrationTest.php` |
-| Versi Dokumen | 1.4 |
-| Tanggal Dokumentasi | 2026-10-12 |
+| Versi Dokumen | 1.5 |
+| Tanggal Dokumentasi | 2026-10-20 |
 | Dokumen terkait | Onboarding (KRY01), Request/Penambahan, Retur (KRY04), Peminjaman (KRY05), Kerusakan (KRY06), Upgrade (KRY03) |
 
 ---
@@ -373,7 +373,7 @@ Status `asset_data`:
 | `asset_data` | Master | Status & pemegang asset |
 | `asset_log` | Log | `offboarding_karyawan`, `pengembalian_karyawan` |
 | `asset_trx_onboarding_karyawan(_item)`, `asset_trx_request_karyawan(_item)`, `asset_trx_retur_karyawan(_item)` | Sumber / cek | Deteksi sumber & cek flow lain |
-| `data_karyawan`, `master_cabang`, `master_departemen` | Master HR | Karyawan aktif, cabang, divisi |
+| `data_karyawan`, `master_cabang`, `master_departemen`, `master_jabatan` | Master HR | Karyawan aktif, cabang, departemen, jabatan |
 | `asset_admin`, `master_company` | Akses / lock | Admin & mutex |
 | `notif_data`, `users` | Notifikasi | Inbox & FCM |
 | `asset_offboarding_migration_state` | Teknis | Marker rollback migration |
@@ -549,7 +549,7 @@ Admin → header `dikonfirmasi` → `assertCurrentHoldings` → semua item norma
 ### 21.7 Query baca
 - **Opsi**: karyawan aktif yang memegang asset dan tanpa off boarding aktif.
 - **List**: tab `pengajuan` (admin: draft + pengajuan; karyawan: pengajuan), `dikonfirmasi`, `selesai`; tanpa tab = semua. `jumlah_asset` = jumlah item. Key array: `offboardings`.
-- **Detail**: header + cabang/divisi + items (dengan `jenis_transaksi` & sumber). Karyawan tidak dapat membuka draft.
+- **Detail**: header + cabang/departemen/jabatan + items (dengan `jenis_transaksi` & sumber). Karyawan tidak dapat membuka draft.
 - **Summary admin**: `offboarding_perlu_proses` & `offboarding_pending` = status `draft` + `dikonfirmasi`.
 
 ---
@@ -698,6 +698,7 @@ GET /asset/karyawan/offboarding/{id}
   "nama_karyawan": "Budi Contoh",
   "nama_cabang": "Kantor Pusat",
   "nama_divisi": "Finance",
+  "nama_jabatan": "Staff Finance",
   "status": "pengajuan",
   "status_approval": "pengajuan",
   "status_label": "Menunggu Diterima",
@@ -846,7 +847,7 @@ Tab **Pengajuan**, **Dikonfirmasi**, **Selesai**. Kartu: Data Karyawan (admin) /
 > Form **tidak menampilkan daftar asset** karyawan sebelum disimpan; daftar muncul di detail setelah disimpan.
 
 ### 26.3 Detail Off Boarding Asset
-Header (nomor, status, jadwal), Catatan, Data Karyawan (cabang, divisi), daftar asset dipisah **Off Boarding Asset** (asset tetap) dan **Asset yang Dipinjam** (pinjaman). Per asset: pilihan **Normal / Rusak** (+ **Keterangan Kerusakan**) saat karyawan mengonfirmasi, atau tampilan kondisi.
+Header (nomor, status, jadwal), Catatan, Data Karyawan (Jabatan, Cabang, Departemen), daftar asset dipisah **Off Boarding Asset** (asset tetap) dan **Asset yang Dipinjam** (pinjaman). Per asset: pilihan **Normal / Rusak** (+ **Keterangan Kerusakan**) saat karyawan mengonfirmasi, atau tampilan kondisi.
 
 | Role | Status | Tombol |
 |---|---|---|
@@ -890,7 +891,7 @@ Panel **Off Boarding Perlu Diproses** (`summary.offboarding_pending`) dengan tom
 | `filters[]` | AssetOffboardingFilter | Tab |
 | `status_approval`, `status_label`, `tab` | AssetOffboardingRecord.status | Badge, tombol |
 | `tgl_offboarding`, `jam_offboarding` | tglOffboarding, jamOffboarding | Jadwal |
-| `nama_cabang`, `nama_divisi` | namaCabang, namaDivisi | Data Karyawan |
+| `nama_cabang`, `nama_divisi`, `nama_jabatan` | namaCabang, namaDivisi, jabatan (dibaca dari `nama_jabatan` lalu `jabatan`; default `''`) | Data Karyawan: Jabatan, Cabang, Departemen |
 | `items[]` | AssetOffboardingItem | Daftar asset (dipisah menurut `jenis_transaksi`) |
 | `items[].status_item`, `ket_rusak` | statusItem, ketRusak | Kondisi |
 | `karyawan[]` (options) | AssetOffboardingEmployee | Pilih Karyawan |
@@ -925,6 +926,7 @@ Panel **Off Boarding Perlu Diproses** (`summary.offboarding_pending`) dengan tom
 | item | jenis_transaksi | `items[].jenis_transaksi` | jenisTransaksi | Kelompok "Off Boarding Asset" / "Asset yang Dipinjam" |
 | item | status_item, ket_rusak | idem | statusItem, ketRusak | Kondisi |
 | master_cabang / master_departemen | nama | `nama_cabang`, `nama_divisi` | idem | Data Karyawan |
+| master_jabatan (via `data_karyawan.id_jabatan`) | nama | `nama_jabatan` | jabatan | Data Karyawan |
 
 ---
 
@@ -1290,6 +1292,7 @@ Admin: Terima Penyerahan Asset → receive()
 
 | Version | Date | Changes |
 |---|---|---|
+| 1.5 | 2026-10-20 | Detail off boarding: kartu Data Karyawan kini menampilkan Jabatan, Cabang, Departemen (label Divisi diganti Departemen). API: `nama_jabatan` ditambahkan di `getDetail` (sejajar `nama_cabang`/`nama_divisi`; leftJoin `master_jabatan`, tanpa SQL/migrasi); mobile: field `jabatan` di `AssetOffboardingRecord`; tes `AssetOffboardingModelTest` meng-assert `nama_jabatan`. |
 | 1.4 | 2026-10-12 | Mobile: stepper alur status (`AssetAlurStepper.offboarding`) dan kartu timeline vertikal per aset (`AssetOffboardingTimelineCards`) di detail off boarding (§26.3). Teks langkah di grup JSON `alur`. Tidak ada perubahan API. |
 | 1.3 | 2026-10-12 | INC-01 diperbaiki: respons 500 simpan off boarding tidak lagi memuat pesan exception. Sinkronisasi dengan kode 12 Okt 2026: path file mobile mengikuti struktur folder baru (`UI/Modul/Asset/<Fitur>/` berhuruf kapital, model di `Repository/Model/Asset/`). |
 | 1.2 | 2026-10-05 | Lokasi gudang tujuan dipilih admin **per asset** saat Terima Penyerahan: kolom `asset_data.id_asset_lokasi_m` dan item `id_asset_lokasi_m_tujuan`; `POST .../terima` kini menerima `items[]` (kontrak berubah); `options` memuat `lokasi_gudang`; mobile menambah dialog Lokasi Tujuan Asset. RISK-009, TC-25..27, edge case, checklist ditambah. Nama controller disesuaikan dengan pemisahan file (`AssetAdminOffboarding_c`, `AssetKaryawanOffboarding_c`) |

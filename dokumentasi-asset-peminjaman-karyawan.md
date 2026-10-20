@@ -17,8 +17,8 @@
 | Database | Struktur mengacu `API/diagram-asset.dbml` + migrations. ⚠️ Asumsi: MySQL/MariaDB |
 | Mobile | Flutter (package `professional_flutter_3_35`), `flutter_bloc`, `dio` |
 | Web | ⚠️ Belum ditemukan: tidak ada source web di workspace |
-| Versi Dokumen | 1.3 |
-| Tanggal Dokumentasi | 2026-10-12 |
+| Versi Dokumen | 1.4 |
+| Tanggal Dokumentasi | 2026-10-20 |
 | Dokumen terkait | Onboarding, Request/Penambahan (helper & pola bersama), Offboarding (mengembalikan pinjaman saat karyawan keluar) |
 
 ---
@@ -415,7 +415,7 @@ Status `asset_data`:
 | `asset_trx_peminjaman_karyawan_item` | Transaction Detail | Asset per transaksi + keputusan/kondisi |
 | `asset_data` | Master | Status & pemegang asset |
 | `asset_kategori_m` | Master | Nama kategori (snapshot) |
-| `data_karyawan`, `master_cabang`, `master_departemen` | Master HR | Karyawan aktif, cabang, divisi |
+| `data_karyawan`, `master_cabang`, `master_departemen`, `master_jabatan` | Master HR | Karyawan aktif, cabang, departemen, jabatan |
 | `asset_admin` | Master akses | Admin asset |
 | `master_company` | Master | Lock transaksi |
 | `asset_log` | Log | `peminjaman_karyawan`, `pengembalian_karyawan` |
@@ -692,7 +692,7 @@ Field sama dengan record list (tanpa `id_karyawan`, `nik/nama` di dalam `karyawa
 ```json
 {
   "dapat_dikembalikan": true,
-  "karyawan": {"nik": "EMP-003", "nama_karyawan": "Andi Contoh", "cabang": "Kantor Pusat", "divisi": "Sales"},
+  "karyawan": {"nik": "EMP-003", "nama_karyawan": "Andi Contoh", "cabang": "Kantor Pusat", "divisi": "Sales", "jabatan": "Staff Sales"},
   "assets": [
     {
       "id_item": "CMP001202609021",
@@ -940,7 +940,7 @@ Switch **Peminjaman** / **Pengembalian**; tab peminjaman: Pengajuan, Dikonfirmas
 | Tombol | **Ajukan Peminjaman** | – | – |
 
 ### 26.3 Detail Peminjaman / Pengembalian (Karyawan)
-Header (Tanggal Pengajuan/Diterima, status, Nomor Pengajuan), Data Karyawan, Detail Peminjaman (Tanggal Pinjam, Tanggal Kembali, Keperluan, Tujuan Peminjaman), Jadwal Serah Terima, daftar asset dengan status **Disetujui Admin**/**Ditolak Admin** (+Alasan Penolakan) atau kondisi **Normal**/**Rusak** (+Keterangan Kerusakan) untuk pengembalian.
+Header (Tanggal Pengajuan/Diterima, status, Nomor Pengajuan), Data Karyawan (Jabatan, Cabang, Departemen), Detail Peminjaman (Tanggal Pinjam, Tanggal Kembali, Keperluan, Tujuan Peminjaman), Jadwal Serah Terima, daftar asset dengan status **Disetujui Admin**/**Ditolak Admin** (+Alasan Penolakan) atau kondisi **Normal**/**Rusak** (+Keterangan Kerusakan) untuk pengembalian.
 - Status `dikonfirmasi`: panel "Siap untuk meminjam Asset?" + instruksi, tombol **Batalkan** dan **Terima Asset** (dialog konfirmasi).
 - `dapat_dikembalikan`: tombol **Kembalikan Asset** (dialog "Asset aktif pada peminjaman ini akan diajukan untuk dikembalikan.").
 
@@ -950,7 +950,7 @@ Header (Tanggal Pengajuan/Diterima, status, Nomor Pengajuan), Data Karyawan, Det
 Switch Peminjaman/Pengembalian dan tab seperti karyawan; kartu menampilkan karyawan, keperluan, periode, jumlah asset.
 
 ### 26.5 Detail Peminjaman (Admin)
-Data karyawan, detail peminjaman, daftar asset. Status `pengajuan`: tiap asset tombol **Setujui**/**Tolak** (+Alasan Penolakan) dan tombol bawah **Konfirmasi** → sheet **Konfirmasi Peminjaman Asset** (ringkasan, Jadwal Serah Terima dibatasi periode pinjam, Jam Serah Terima, Catatan Tambahan, **Submit**). Jadwal hanya diminta bila ada asset disetujui.
+Data karyawan (Jabatan, Cabang, Departemen), detail peminjaman, daftar asset. Status `pengajuan`: tiap asset tombol **Setujui**/**Tolak** (+Alasan Penolakan) dan tombol bawah **Konfirmasi** → sheet **Konfirmasi Peminjaman Asset** (ringkasan, Jadwal Serah Terima dibatasi periode pinjam, Jam Serah Terima, Catatan Tambahan, **Submit**). Jadwal hanya diminta bila ada asset disetujui.
 
 Stepper dan kartu timeline sama seperti §26.3; kartu timeline disembunyikan saat form keputusan admin terbuka.
 
@@ -999,7 +999,7 @@ Banner per peminjaman `dikonfirmasi` (aksi terima), banner jatuh tempo (label da
 | `terlambat` | terlambat | "Terlambat" + peringatan |
 | `dapat_dikembalikan` | dapatDikembalikan | Tombol Kembalikan Asset |
 | `jenis_status`, `id_peminjaman_asal` | jenisStatus, idPeminjamanAsal | Mode pengembalian |
-| `karyawan.*` | karyawan | Data Karyawan |
+| `karyawan.*` (termasuk `karyawan.jabatan` ← `master_jabatan.nama`) | karyawan (`jabatan` default `''`) | Data Karyawan: Jabatan, Cabang (`cabang`), Departemen (`divisi`) |
 | `assets[]` | assets (`AssetPeminjamanAsset`) | Daftar asset, keputusan/kondisi |
 | `lokasi_gudang[]`, `karyawan.id_cabang`, `assets[].nama_lokasi_tujuan` | AssetPeminjamanRecord.lokasiGudang, AssetPeminjamanKaryawan.idCabang, AssetPeminjamanAsset | Dropdown Lokasi Tujuan Asset; lokasi tujuan di kartu |
 | `filters`, `records`, `pagination` | AssetPeminjamanPage | Tab, list, infinite scroll |
@@ -1477,6 +1477,7 @@ asset_trx_peminjaman_karyawan_item.ket_tolak (baris pengembalian)
 
 | Version | Date | Changes |
 |---|---|---|
+| 1.4 | 2026-10-20 | Detail peminjaman (karyawan & admin): kartu Data Karyawan kini menampilkan Jabatan, Cabang, Departemen (label Divisi diganti Departemen). API: `karyawan.jabatan` ditambahkan di `getDetail` (leftJoin `master_jabatan`, tanpa SQL/migrasi); mobile: field `jabatan` di `AssetPeminjamanKaryawan`; tes `asset_karyawan_jabatan_test.dart`. |
 | 1.3 | 2026-10-12 | Mobile: stepper alur status (`AssetAlurStepper.peminjaman`) dan kartu timeline vertikal per aset (`AssetPeminjamanTimelineCards`) di detail peminjaman/pengembalian karyawan dan admin (§26.3, 26.5, 26.6). Teks langkah di grup JSON `alur`. Tidak ada perubahan API. |
 | 1.2 | 2026-10-12 | Sinkronisasi dengan kode 12 Okt 2026: path file mobile mengikuti struktur folder baru (`UI/Modul/Asset/<Fitur>/` berhuruf kapital, model di `Repository/Model/Asset/`). |
 | 1.1 | 2026-10-05 | Konfirmasi pengembalian kini wajib memilih **lokasi gudang per asset** (`items[].id_asset_lokasi_m`; kolom `asset_trx_peminjaman_karyawan_item.id_asset_lokasi_m_tujuan` dan `asset_data.id_asset_lokasi_m`); lokasi dikosongkan saat karyawan menerima pinjaman. BR-014/015/015a, TC-38..40, mobile dropdown Lokasi Tujuan Asset. Nama controller disesuaikan (`AssetAdminPeminjaman_c`, `AssetAdminPengembalian_c`, `AssetKaryawanPeminjaman_c`) |

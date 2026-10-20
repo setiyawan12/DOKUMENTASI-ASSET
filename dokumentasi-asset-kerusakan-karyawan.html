@@ -198,7 +198,7 @@ footer{margin-top:64px;padding-top:18px;border-top:1px solid var(--line);color:v
         <dl>
           <dt>Kode</dt><dd>KRY06</dd>
           <dt>Modul</dt><dd>Asset Management</dd>
-          <dt>Versi</dt><dd>1.4 · 12 Okt 2026</dd>
+          <dt>Versi</dt><dd>1.5 · 20 Okt 2026</dd>
           <dt>Stack</dt><dd>Lumen 10 · Flutter</dd>
           <dt>API</dt><dd>13 endpoint</dd>
         </dl>
@@ -304,11 +304,11 @@ footer{margin-top:64px;padding-top:18px;border-top:1px solid var(--line);color:v
 </tr>
 <tr>
 <td>Versi Dokumen</td>
-<td>1.4</td>
+<td>1.5</td>
 </tr>
 <tr>
 <td>Tanggal Dokumentasi</td>
-<td>2026-10-12</td>
+<td>2026-10-20</td>
 </tr>
 <tr>
 <td>Dokumen terkait</td>
@@ -1834,6 +1834,7 @@ GET /asset/karyawan/rusak?tab=pengajuan
 <p><strong>Alur status</strong>: di bawah header tampil <code>AssetAlurStepper.kerusakan</code> (Laporan → Review → Serah Terima → Selesai; disembunyikan bila laporan ditolak) dan kartu aset <code>AssetKerusakanTimelineCard</code> berisi timeline vertikal: Laporan (tanggal, jumlah item, keterangan) · Review (jumlah item disetujui/ditolak, jadwal; chip <strong>Ditolak</strong>) · Serah Terima (tanggal diserahkan, status unit utama, unit pengganti + hasil checklist; chip <strong>Checklist Rusak</strong>) · Selesai (unit pengganti). Checklist unit pengganti memakai komponen bersama <code>AssetKondisiChecklist</code> (kartu berikon, pilihan <strong>Normal / Rusak</strong> berwarna hijau/merah, keterangan muncul saat Rusak). File: <code>Shared/Widgets/AssetAlurWidgets.dart</code>, <code>Shared/Widgets/AssetKerusakanTimeline.dart</code>, <code>Shared/Widgets/AssetFormWidgets.dart</code>.</p>
 <h3>26.4 Detail admin</h3>
 <ul>
+<li>Kartu <strong>Data Karyawan</strong> menampilkan tiga baris berurutan: <strong>Jabatan</strong>, <strong>Cabang</strong>, <strong>Departemen</strong> (label "Divisi" diganti "Departemen"; nilai kosong tampil <code>-</code>). Mobile (<code>AssetKerusakanKaryawan.jabatan</code>) membaca <code>karyawan.jabatan</code> lalu <code>karyawan.nama_jabatan</code>, sedangkan <code>cabang</code>/<code>divisi</code> dari <code>karyawan</code>. API: <code>AssetRusakKaryawan_m::getDetail</code> (endpoint detail admin Kerusakan) menambah <code>karyawan.jabatan</code> lewat join <code>master_jabatan</code> (<code>data_karyawan.id_jabatan</code>); <code>''</code> bila jabatan kosong.</li>
 <li><code>aksi.review</code>: per item <strong>Tolak</strong> (+Alasan Penolakan) / <strong>Setujui</strong> → <strong>Diganti / Tidak Diganti</strong>; bila unit utama diganti → <strong>Pilih Unit Pengganti</strong> ("Tidak ada unit pengganti yang tersedia untuk kategori ini."); <strong>Simpan Review</strong> → sheet <strong>Jadwal Serah Terima</strong> (tanggal mulai hari ini, jam, catatan) bila ada yang disetujui.</li>
 <li><code>aksi.ubah_jadwal</code> → <strong>Ubah Jadwal</strong>.</li>
 <li><code>aksi.selesai</code> (hanya laporan lama) → info "Seluruh item unit pengganti normal." + <strong>Selesaikan Laporan</strong> (dialog "Unit pengganti akan menjadi asset aktif karyawan.").</li>
@@ -3036,6 +3037,11 @@ Admin: hanya menerima notifikasi kerusakan.selesai_otomatis
 </tr>
 </thead>
 <tbody>
+<tr>
+<td>1.5</td>
+<td>2026-10-20</td>
+<td>Mobile: kartu Data Karyawan di detail admin Kerusakan kini menampilkan Jabatan, Cabang, Departemen (label Divisi diganti Departemen); model <code>AssetKerusakanKaryawan</code> membaca <code>jabatan</code>/<code>nama_jabatan</code>. API: <code>AssetRusakKaryawan_m::getDetail</code> menambah <code>karyawan.jabatan</code> (join <code>master_jabatan</code>); tes <code>AssetRusakKaryawanTest</code> meng-assert <code>Staff IT</code>.</td>
+</tr>
 <tr>
 <td>1.4</td>
 <td>2026-10-12</td>

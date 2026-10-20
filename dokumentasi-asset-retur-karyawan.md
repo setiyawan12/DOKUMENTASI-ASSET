@@ -17,8 +17,8 @@
 | Database | Struktur mengacu `API/diagram-asset.dbml` + migration `2026_09_18_000010`. ⚠️ Asumsi: MySQL/MariaDB |
 | Mobile | Flutter (package `professional_flutter_3_35`), `flutter_bloc`, `dio` |
 | Web | ⚠️ Belum ditemukan: tidak ada source web di workspace |
-| Versi Dokumen | 1.6 |
-| Tanggal Dokumentasi | 2026-10-12 |
+| Versi Dokumen | 1.7 |
+| Tanggal Dokumentasi | 2026-10-20 |
 | Dokumen terkait | `API/ALUR RETUR.md` (lama), Onboarding, Request/Penambahan, Peminjaman, Offboarding, Kerusakan, Upgrade |
 
 ---
@@ -350,7 +350,7 @@ Status `asset_data`:
 | `asset_trx_retur_karyawan_item` | Transaction Detail | Item asal + item pengganti (`parent_id`) |
 | `asset_data` | Master | Status & pemegang asset |
 | `asset_kategori_m` | Master | Snapshot kategori; pohon kategori picker pengganti |
-| `data_karyawan`, `master_cabang`, `master_departemen` | Master HR | Karyawan aktif, cabang, divisi |
+| `data_karyawan`, `master_cabang`, `master_departemen`, `master_jabatan` | Master HR | Karyawan aktif, cabang, departemen, jabatan |
 | `asset_admin`, `master_company` | Akses / lock | Admin & mutex |
 | `asset_log` | Log | `retur_karyawan` |
 | `notif_data`, `users` | Notifikasi | Inbox & FCM |
@@ -617,7 +617,7 @@ GET /asset/karyawan/retur/{id}
   "status_label": "Dikonfirmasi",
   "tab": "dikonfirmasi",
   "jumlah_asset": 1,
-  "karyawan": {"id_karyawan": "KRY0004", "nik": "EMP-004", "nama_karyawan": "Rina Contoh", "cabang": "Kantor Pusat", "divisi": "HR"},
+  "karyawan": {"id_karyawan": "KRY0004", "nik": "EMP-004", "nama_karyawan": "Rina Contoh", "cabang": "Kantor Pusat", "divisi": "HR", "jabatan": "Staff HR"},
   "items": [
     {
       "id_item": "CMP001202609031",
@@ -826,7 +826,7 @@ Tab **Pengajuan** (termasuk yang ditolak), **Dikonfirmasi**, **Diterima**. Kartu
 | Tombol | **Ajukan Retur** | – | – |
 
 ### 26.3 Detail Retur Asset (Karyawan)
-Nomor, Tanggal Pengajuan, Status, Catatan Tambahan, Alasan Penolakan, Jadwal Serah Terima; Data Karyawan; **Asset Retur**: per item alasan, pengganti (Tanpa/Dengan), keterangan, keputusan **Disetujui Admin**/**Ditolak Admin** (+alasan), **Asset Pengganti** bila ada. Karyawan tidak lagi memiliki tombol **Terima Asset** (v1.4): hanya banner info jadwal / serah langsung; penyelesaian dilakukan admin.
+Nomor, Tanggal Pengajuan, Status, Catatan Tambahan, Alasan Penolakan, Jadwal Serah Terima; Data Karyawan (Jabatan, Cabang, Departemen); **Asset Retur**: per item alasan, pengganti (Tanpa/Dengan), keterangan, keputusan **Disetujui Admin**/**Ditolak Admin** (+alasan), **Asset Pengganti** bila ada. Karyawan tidak lagi memiliki tombol **Terima Asset** (v1.4): hanya banner info jadwal / serah langsung; penyelesaian dilakukan admin.
 
 **Alur status**: `AssetAlurStepper.retur` (Pengajuan → Konfirmasi → Serah Terima → Selesai; disembunyikan bila ditolak) dan satu kartu timeline per aset (`AssetReturTimelineCards`): Pengajuan (tanggal, alasan retur, keterangan) · Konfirmasi (unit pengganti; chip **Ditolak** per aset) · Serah Terima (jadwal) · Selesai (lokasi gudang tujuan aset itu). Aset yang ditolak berhenti di Konfirmasi sementara aset lain lanjut. File: `Shared/Widgets/AssetAlurWidgets.dart`, `Shared/Widgets/AssetReturTimeline.dart`.
 
@@ -867,7 +867,7 @@ Banner retur yang sudah disetujui dan menunggu diterima (informasi; penyelesaian
 | `tgl_pengambilan`, `jam_pengambilan`, `flag_jadwalkan` | idem | Info jadwal / serah langsung |
 | `lokasi_gudang[]`, `karyawan.id_cabang`, `items[].nama_lokasi_tujuan` | AssetReturRecord.lokasiGudang, AssetReturKaryawan.idCabang, AssetReturItem.namaLokasiTujuan | Dialog Lokasi Tujuan Asset; lokasi tujuan di kartu |
 | `keterangan`, `ket_tolak` | idem | Catatan Tambahan, Alasan Penolakan |
-| `karyawan.*` | AssetReturKaryawan | Data Karyawan |
+| `karyawan.*` (termasuk `karyawan.jabatan` ← `master_jabatan.nama`) | AssetReturKaryawan (`jabatan` default `''`) | Data Karyawan: Jabatan, Cabang (`cabang`), Departemen (`divisi`) |
 | `items[]` | AssetReturItem (alasan, rusak_dengan_pengganti, ket_retur, status_item, ket_tolak, asset_pengganti) | Kartu asset retur & pengganti |
 | `alasan_retur` (options) | AssetReturOption | Pilihan alasan |
 | `assets` (options karyawan / admin) | AssetReturAsset / AssetReturAdminOptions | Picker asset retur / pengganti |
@@ -1242,6 +1242,7 @@ Admin: Terima Asset (pilih gudang per asset)
 
 | Version | Date | Changes |
 |---|---|---|
+| 1.7 | 2026-10-20 | Detail retur (karyawan & admin): kartu Data Karyawan kini menampilkan Jabatan, Cabang, Departemen (label Divisi diganti Departemen). API: `karyawan.jabatan` ditambahkan di `getDetail` (leftJoin `master_jabatan`, tanpa SQL/migrasi); mobile: field `jabatan` di `AssetReturKaryawan`; tes `asset_karyawan_jabatan_test.dart`. |
 | 1.6 | 2026-10-12 | Mobile: stepper alur status (`AssetAlurStepper.retur`) dan kartu timeline vertikal per aset (`AssetReturTimelineCards`) di detail retur karyawan dan admin (§26.3-26.4). Teks langkah di grup JSON `alur`. Tidak ada perubahan API. |
 | 1.5 | 2026-10-12 | RISK-003 ditutup: retur kini menolak asset yang sedang di Upgrade atau Laporan Kerusakan aktif (BR-006, TC-22b). Jumlah endpoint dikoreksi menjadi 5 admin + 4 karyawan (route karyawan `terima` sudah dihapus sejak v1.4). Sinkronisasi dengan kode 12 Okt 2026: path file mobile mengikuti struktur folder baru (`UI/Modul/Asset/<Fitur>/` berhuruf kapital, model di `Repository/Model/Asset/`). |
 | 1.4 | 2026-10-05 | Retur hanya difinalisasi **admin**: route karyawan `POST /asset/karyawan/retur/{id}/terima` dihapus (TC-16 diubah). Admin memilih **lokasi gudang per asset** saat Terima (`items[]` baru, kolom `asset_trx_retur_karyawan_item.id_asset_lokasi_m_tujuan`, `asset_data.id_asset_lokasi_m`); asset pengganti dikosongkan lokasinya. BR-013a, TC-25/26, mobile dialog Lokasi Tujuan Asset. Nama controller disesuaikan (`AssetAdminRetur_c`, `AssetKaryawanRetur_c`) |

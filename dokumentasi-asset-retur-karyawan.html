@@ -198,7 +198,7 @@ footer{margin-top:64px;padding-top:18px;border-top:1px solid var(--line);color:v
         <dl>
           <dt>Kode</dt><dd>KRY04</dd>
           <dt>Modul</dt><dd>Asset Management</dd>
-          <dt>Versi</dt><dd>1.6 · 12 Okt 2026</dd>
+          <dt>Versi</dt><dd>1.7 · 20 Okt 2026</dd>
           <dt>Stack</dt><dd>Lumen 10 · Flutter</dd>
           <dt>API</dt><dd>9 endpoint</dd>
         </dl>
@@ -300,11 +300,11 @@ footer{margin-top:64px;padding-top:18px;border-top:1px solid var(--line);color:v
 </tr>
 <tr>
 <td>Versi Dokumen</td>
-<td>1.6</td>
+<td>1.7</td>
 </tr>
 <tr>
 <td>Tanggal Dokumentasi</td>
-<td>2026-10-12</td>
+<td>2026-10-20</td>
 </tr>
 <tr>
 <td>Dokumen terkait</td>
@@ -853,9 +853,9 @@ Admin: Terima Asset (pilih lokasi gudang per asset)
 <td>Snapshot kategori; pohon kategori picker pengganti</td>
 </tr>
 <tr>
-<td><code>data_karyawan</code>, <code>master_cabang</code>, <code>master_departemen</code></td>
+<td><code>data_karyawan</code>, <code>master_cabang</code>, <code>master_departemen</code>, <code>master_jabatan</code></td>
 <td>Master HR</td>
-<td>Karyawan aktif, cabang, divisi</td>
+<td>Karyawan aktif, cabang, departemen, jabatan</td>
 </tr>
 <tr>
 <td><code>asset_admin</code>, <code>master_company</code></td>
@@ -1501,7 +1501,7 @@ GET /asset/karyawan/retur/{id}
   &quot;status_label&quot;: &quot;Dikonfirmasi&quot;,
   &quot;tab&quot;: &quot;dikonfirmasi&quot;,
   &quot;jumlah_asset&quot;: 1,
-  &quot;karyawan&quot;: {&quot;id_karyawan&quot;: &quot;KRY0004&quot;, &quot;nik&quot;: &quot;EMP-004&quot;, &quot;nama_karyawan&quot;: &quot;Rina Contoh&quot;, &quot;cabang&quot;: &quot;Kantor Pusat&quot;, &quot;divisi&quot;: &quot;HR&quot;},
+  &quot;karyawan&quot;: {&quot;id_karyawan&quot;: &quot;KRY0004&quot;, &quot;nik&quot;: &quot;EMP-004&quot;, &quot;nama_karyawan&quot;: &quot;Rina Contoh&quot;, &quot;cabang&quot;: &quot;Kantor Pusat&quot;, &quot;divisi&quot;: &quot;HR&quot;, &quot;jabatan&quot;: &quot;Staff HR&quot;},
   &quot;items&quot;: [
     {
       &quot;id_item&quot;: &quot;CMP001202609031&quot;,
@@ -1883,7 +1883,7 @@ INSERT notif_data
 </tbody>
 </table></div>
 <h3>26.3 Detail Retur Asset (Karyawan)</h3>
-<p>Nomor, Tanggal Pengajuan, Status, Catatan Tambahan, Alasan Penolakan, Jadwal Serah Terima; Data Karyawan; <strong>Asset Retur</strong>: per item alasan, pengganti (Tanpa/Dengan), keterangan, keputusan <strong>Disetujui Admin</strong>/<strong>Ditolak Admin</strong> (+alasan), <strong>Asset Pengganti</strong> bila ada. Karyawan tidak lagi memiliki tombol <strong>Terima Asset</strong> (v1.4): hanya banner info jadwal / serah langsung; penyelesaian dilakukan admin.</p>
+<p>Nomor, Tanggal Pengajuan, Status, Catatan Tambahan, Alasan Penolakan, Jadwal Serah Terima; Data Karyawan (Jabatan, Cabang, Departemen); <strong>Asset Retur</strong>: per item alasan, pengganti (Tanpa/Dengan), keterangan, keputusan <strong>Disetujui Admin</strong>/<strong>Ditolak Admin</strong> (+alasan), <strong>Asset Pengganti</strong> bila ada. Karyawan tidak lagi memiliki tombol <strong>Terima Asset</strong> (v1.4): hanya banner info jadwal / serah langsung; penyelesaian dilakukan admin.</p>
 <p><strong>Alur status</strong>: <code>AssetAlurStepper.retur</code> (Pengajuan → Konfirmasi → Serah Terima → Selesai; disembunyikan bila ditolak) dan satu kartu timeline per aset (<code>AssetReturTimelineCards</code>): Pengajuan (tanggal, alasan retur, keterangan) · Konfirmasi (unit pengganti; chip <strong>Ditolak</strong> per aset) · Serah Terima (jadwal) · Selesai (lokasi gudang tujuan aset itu). Aset yang ditolak berhenti di Konfirmasi sementara aset lain lanjut. File: <code>Shared/Widgets/AssetAlurWidgets.dart</code>, <code>Shared/Widgets/AssetReturTimeline.dart</code>.</p>
 <h3>26.4 Detail Retur Asset (Admin)</h3>
 <p>Sama dengan 26.3. Status <code>pengajuan</code>: per item <strong>Tolak</strong> (+Alasan Penolakan) dan <strong>Setujui</strong> / <strong>Ganti Asset</strong> (untuk item yang butuh pengganti → pilih asset dari gudang); tombol <strong>Konfirmasi Asset</strong> → sheet <strong>Konfirmasi Retur Asset</strong>: <strong>Metode Serah Terima</strong> (Dijadwalkan / Serahkan Langsung), Jadwal &amp; Jam (mulai hari ini), Catatan Tambahan → <strong>Submit</strong>. Status disetujui &amp; proses: tombol <strong>Terima Asset</strong> → dialog <strong>Lokasi Tujuan Asset</strong> (v1.4): tiap asset asal yang disetujui punya dropdown gudang sendiri (default gudang di cabang karyawan; tombol aktif setelah semua terpilih). Bila belum ada lokasi gudang muncul "Belum ada lokasi gudang.". Setelah selesai, kartu asset menampilkan "Lokasi Tujuan Asset: {gudang}".</p>
@@ -2019,9 +2019,9 @@ INSERT notif_data
 <td>Catatan Tambahan, Alasan Penolakan</td>
 </tr>
 <tr>
-<td><code>karyawan.*</code></td>
-<td>AssetReturKaryawan</td>
-<td>Data Karyawan</td>
+<td><code>karyawan.*</code> (termasuk <code>karyawan.jabatan</code> ← <code>master_jabatan.nama</code>)</td>
+<td>AssetReturKaryawan (<code>jabatan</code> default <code>''</code>)</td>
+<td>Data Karyawan: Jabatan, Cabang (<code>cabang</code>), Departemen (<code>divisi</code>)</td>
 </tr>
 <tr>
 <td><code>items[]</code></td>
@@ -3111,6 +3111,11 @@ Admin: Terima Asset (pilih gudang per asset)
 </tr>
 </thead>
 <tbody>
+<tr>
+<td>1.7</td>
+<td>2026-10-20</td>
+<td>Detail retur (karyawan &amp; admin): kartu Data Karyawan kini menampilkan Jabatan, Cabang, Departemen (label Divisi diganti Departemen). API: <code>karyawan.jabatan</code> ditambahkan di <code>getDetail</code> (leftJoin <code>master_jabatan</code>, tanpa SQL/migrasi); mobile: field <code>jabatan</code> di <code>AssetReturKaryawan</code>; tes <code>asset_karyawan_jabatan_test.dart</code>.</td>
+</tr>
 <tr>
 <td>1.6</td>
 <td>2026-10-12</td>

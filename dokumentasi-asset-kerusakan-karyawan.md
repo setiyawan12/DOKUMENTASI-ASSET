@@ -18,8 +18,8 @@
 | Mobile | Flutter (`professional_flutter_3_35`), `flutter_bloc`, `dio` |
 | Web | ⚠️ Belum ditemukan: tidak ada source web di workspace |
 | Test otomatis | `API/tests/Asset/AssetRusakKaryawanTest.php` (15 test) |
-| Versi Dokumen | 1.4 |
-| Tanggal Dokumentasi | 2026-10-12 |
+| Versi Dokumen | 1.5 |
+| Tanggal Dokumentasi | 2026-10-20 |
 | Dokumen terkait | Onboarding (KRY01), Offboarding (KRY02), Upgrade (KRY03), Retur (KRY04), Peminjaman (KRY05), Request/Penambahan |
 
 ---
@@ -829,6 +829,7 @@ Info laporan, **Jadwal Serah Terima** ("Serah terima dijadwalkan pada {tanggal},
 **Alur status**: di bawah header tampil `AssetAlurStepper.kerusakan` (Laporan → Review → Serah Terima → Selesai; disembunyikan bila laporan ditolak) dan kartu aset `AssetKerusakanTimelineCard` berisi timeline vertikal: Laporan (tanggal, jumlah item, keterangan) · Review (jumlah item disetujui/ditolak, jadwal; chip **Ditolak**) · Serah Terima (tanggal diserahkan, status unit utama, unit pengganti + hasil checklist; chip **Checklist Rusak**) · Selesai (unit pengganti). Checklist unit pengganti memakai komponen bersama `AssetKondisiChecklist` (kartu berikon, pilihan **Normal / Rusak** berwarna hijau/merah, keterangan muncul saat Rusak). File: `Shared/Widgets/AssetAlurWidgets.dart`, `Shared/Widgets/AssetKerusakanTimeline.dart`, `Shared/Widgets/AssetFormWidgets.dart`.
 
 ### 26.4 Detail admin
+- Kartu **Data Karyawan** menampilkan tiga baris berurutan: **Jabatan**, **Cabang**, **Departemen** (label "Divisi" diganti "Departemen"; nilai kosong tampil `-`). Mobile (`AssetKerusakanKaryawan.jabatan`) membaca `karyawan.jabatan` lalu `karyawan.nama_jabatan`, sedangkan `cabang`/`divisi` dari `karyawan`. API: `AssetRusakKaryawan_m::getDetail` (endpoint detail admin Kerusakan) menambah `karyawan.jabatan` lewat join `master_jabatan` (`data_karyawan.id_jabatan`); `''` bila jabatan kosong.
 - `aksi.review`: per item **Tolak** (+Alasan Penolakan) / **Setujui** → **Diganti / Tidak Diganti**; bila unit utama diganti → **Pilih Unit Pengganti** ("Tidak ada unit pengganti yang tersedia untuk kategori ini."); **Simpan Review** → sheet **Jadwal Serah Terima** (tanggal mulai hari ini, jam, catatan) bila ada yang disetujui.
 - `aksi.ubah_jadwal` → **Ubah Jadwal**.
 - `aksi.selesai` (hanya laporan lama) → info "Seluruh item unit pengganti normal." + **Selesaikan Laporan** (dialog "Unit pengganti akan menjadi asset aktif karyawan.").
@@ -1233,6 +1234,7 @@ Admin: hanya menerima notifikasi kerusakan.selesai_otomatis
 
 | Version | Date | Changes |
 |---|---|---|
+| 1.5 | 2026-10-20 | Mobile: kartu Data Karyawan di detail admin Kerusakan kini menampilkan Jabatan, Cabang, Departemen (label Divisi diganti Departemen); model `AssetKerusakanKaryawan` membaca `jabatan`/`nama_jabatan`. API: `AssetRusakKaryawan_m::getDetail` menambah `karyawan.jabatan` (join `master_jabatan`); tes `AssetRusakKaryawanTest` meng-assert `Staff IT`. |
 | 1.4 | 2026-10-12 | Mobile: stepper alur status (`AssetAlurStepper.kerusakan`) dan kartu timeline vertikal `AssetKerusakanTimelineCard` di detail karyawan dan admin (§26.3-26.4); checklist unit pengganti memakai `AssetKondisiChecklist` dengan pilihan Normal/Rusak berwarna. Field `tgl_pelepasan` kini dibaca mobile. Teks langkah di grup JSON `alur`. Tidak ada perubahan API. |
 | 1.3 | 2026-10-12 | Alur dipangkas: checklist unit pengganti dikirim bersama serah terima (`pelepasan` menerima `items`, flag `aksi.pelepasan_checklist`), dan checklist normal menyelesaikan laporan otomatis tanpa langkah admin (notifikasi `kerusakan.selesai_otomatis`). Checklist rusak tetap menunggu admin (Pilih Pengganti Lain). Endpoint `checklist` dan `selesai` dipertahankan untuk aplikasi lama dan laporan yang sudah menunggu review. 15 test API. |
 | 1.2 | 2026-10-12 | RISK-001 ditutup: Retur kini menolak asset dalam laporan kerusakan aktif (TC-21, edge case). Sinkronisasi dengan kode 12 Okt 2026: path file mobile mengikuti struktur folder baru (`UI/Modul/Asset/<Fitur>/` berhuruf kapital, model di `Repository/Model/Asset/`). `AssetKerusakanWidgets` kini di `Shared/Widgets/`. |

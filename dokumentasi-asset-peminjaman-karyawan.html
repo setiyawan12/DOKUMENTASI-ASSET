@@ -197,7 +197,7 @@ footer{margin-top:64px;padding-top:18px;border-top:1px solid var(--line);color:v
         <dl>
           <dt>Kode</dt><dd>KRY05</dd>
           <dt>Modul</dt><dd>Asset Management</dd>
-          <dt>Versi</dt><dd>1.3 · 12 Okt 2026</dd>
+          <dt>Versi</dt><dd>1.4 · 20 Okt 2026</dd>
           <dt>Stack</dt><dd>Lumen 10 · Flutter</dd>
           <dt>API</dt><dd>15 endpoint</dd>
         </dl>
@@ -300,11 +300,11 @@ footer{margin-top:64px;padding-top:18px;border-top:1px solid var(--line);color:v
 </tr>
 <tr>
 <td>Versi Dokumen</td>
-<td>1.3</td>
+<td>1.4</td>
 </tr>
 <tr>
 <td>Tanggal Dokumentasi</td>
-<td>2026-10-12</td>
+<td>2026-10-20</td>
 </tr>
 <tr>
 <td>Dokumen terkait</td>
@@ -969,9 +969,9 @@ Admin: kondisi + lokasi gudang tiap asset ─► asset → tersedia / rusak @gud
 <td>Nama kategori (snapshot)</td>
 </tr>
 <tr>
-<td><code>data_karyawan</code>, <code>master_cabang</code>, <code>master_departemen</code></td>
+<td><code>data_karyawan</code>, <code>master_cabang</code>, <code>master_departemen</code>, <code>master_jabatan</code></td>
 <td>Master HR</td>
-<td>Karyawan aktif, cabang, divisi</td>
+<td>Karyawan aktif, cabang, departemen, jabatan</td>
 </tr>
 <tr>
 <td><code>asset_admin</code></td>
@@ -1682,7 +1682,7 @@ GET /asset/karyawan/peminjaman/{id}        (karyawan, hanya miliknya)
 <p>Field sama dengan record list (tanpa <code>id_karyawan</code>, <code>nik/nama</code> di dalam <code>karyawan</code>) ditambah:</p>
 <div class="code"><span class="code-lang">JSON</span><pre><code class="language-json">{
   &quot;dapat_dikembalikan&quot;: true,
-  &quot;karyawan&quot;: {&quot;nik&quot;: &quot;EMP-003&quot;, &quot;nama_karyawan&quot;: &quot;Andi Contoh&quot;, &quot;cabang&quot;: &quot;Kantor Pusat&quot;, &quot;divisi&quot;: &quot;Sales&quot;},
+  &quot;karyawan&quot;: {&quot;nik&quot;: &quot;EMP-003&quot;, &quot;nama_karyawan&quot;: &quot;Andi Contoh&quot;, &quot;cabang&quot;: &quot;Kantor Pusat&quot;, &quot;divisi&quot;: &quot;Sales&quot;, &quot;jabatan&quot;: &quot;Staff Sales&quot;},
   &quot;assets&quot;: [
     {
       &quot;id_item&quot;: &quot;CMP001202609021&quot;,
@@ -2102,14 +2102,14 @@ INSERT notif_data
 </tbody>
 </table></div>
 <h3>26.3 Detail Peminjaman / Pengembalian (Karyawan)</h3>
-<p>Header (Tanggal Pengajuan/Diterima, status, Nomor Pengajuan), Data Karyawan, Detail Peminjaman (Tanggal Pinjam, Tanggal Kembali, Keperluan, Tujuan Peminjaman), Jadwal Serah Terima, daftar asset dengan status <strong>Disetujui Admin</strong>/<strong>Ditolak Admin</strong> (+Alasan Penolakan) atau kondisi <strong>Normal</strong>/<strong>Rusak</strong> (+Keterangan Kerusakan) untuk pengembalian.
+<p>Header (Tanggal Pengajuan/Diterima, status, Nomor Pengajuan), Data Karyawan (Jabatan, Cabang, Departemen), Detail Peminjaman (Tanggal Pinjam, Tanggal Kembali, Keperluan, Tujuan Peminjaman), Jadwal Serah Terima, daftar asset dengan status <strong>Disetujui Admin</strong>/<strong>Ditolak Admin</strong> (+Alasan Penolakan) atau kondisi <strong>Normal</strong>/<strong>Rusak</strong> (+Keterangan Kerusakan) untuk pengembalian.
 - Status <code class="chip chip-done">dikonfirmasi</code>: panel "Siap untuk meminjam Asset?" + instruksi, tombol <strong>Batalkan</strong> dan <strong>Terima Asset</strong> (dialog konfirmasi).
 - <code>dapat_dikembalikan</code>: tombol <strong>Kembalikan Asset</strong> (dialog "Asset aktif pada peminjaman ini akan diajukan untuk dikembalikan.").</p>
 <p><strong>Alur status</strong>: <code>AssetAlurStepper.peminjaman</code> (Pengajuan → Konfirmasi → Dipinjam → Pengembalian → Selesai; transaksi pengembalian mulai dari langkah Pengembalian; disembunyikan bila ditolak) dan satu kartu timeline per aset (<code>AssetPeminjamanTimelineCards</code>). Transaksi peminjaman: Pengajuan (keperluan, periode) · Konfirmasi (jadwal serah terima; chip <strong>Ditolak</strong> per aset) · Dipinjam (tanggal diterima, batas kembali; chip <strong>Terlambat</strong>) · Pengembalian · Selesai (lokasi gudang). Transaksi pengembalian: Pengembalian (jadwal) · Konfirmasi (kondisi Normal/Rusak; chip <strong>Rusak</strong>) · Selesai (lokasi gudang). Alasan penolakan tetap di kartu aset. File: <code>Shared/Widgets/AssetAlurWidgets.dart</code>, <code>Shared/Widgets/AssetPeminjamanTimeline.dart</code>.</p>
 <h3>26.4 Peminjaman Asset (Admin)</h3>
 <p>Switch Peminjaman/Pengembalian dan tab seperti karyawan; kartu menampilkan karyawan, keperluan, periode, jumlah asset.</p>
 <h3>26.5 Detail Peminjaman (Admin)</h3>
-<p>Data karyawan, detail peminjaman, daftar asset. Status <code>pengajuan</code>: tiap asset tombol <strong>Setujui</strong>/<strong>Tolak</strong> (+Alasan Penolakan) dan tombol bawah <strong>Konfirmasi</strong> → sheet <strong>Konfirmasi Peminjaman Asset</strong> (ringkasan, Jadwal Serah Terima dibatasi periode pinjam, Jam Serah Terima, Catatan Tambahan, <strong>Submit</strong>). Jadwal hanya diminta bila ada asset disetujui.</p>
+<p>Data karyawan (Jabatan, Cabang, Departemen), detail peminjaman, daftar asset. Status <code>pengajuan</code>: tiap asset tombol <strong>Setujui</strong>/<strong>Tolak</strong> (+Alasan Penolakan) dan tombol bawah <strong>Konfirmasi</strong> → sheet <strong>Konfirmasi Peminjaman Asset</strong> (ringkasan, Jadwal Serah Terima dibatasi periode pinjam, Jam Serah Terima, Catatan Tambahan, <strong>Submit</strong>). Jadwal hanya diminta bila ada asset disetujui.</p>
 <p>Stepper dan kartu timeline sama seperti §26.3; kartu timeline disembunyikan saat form keputusan admin terbuka.</p>
 <h3>26.6 Detail Pengembalian (Admin)</h3>
 <p>Status <code>pengajuan</code>: tiap asset <strong>Normal</strong>/<strong>Rusak</strong> (+Keterangan Kerusakan) dropdown <strong>Lokasi Tujuan Asset</strong> per asset (v1.1; default gudang di cabang karyawan) dan tombol <strong>Konfirmasi</strong> (langsung dikirim, tanpa sheet). Bila belum ada pilihan lokasi: "Pilih lokasi gudang tujuan untuk seluruh asset.". Setelah selesai: kondisi dan lokasi tujuan read-only.</p>
@@ -2289,9 +2289,9 @@ INSERT notif_data
 <td>Mode pengembalian</td>
 </tr>
 <tr>
-<td><code>karyawan.*</code></td>
-<td>karyawan</td>
-<td>Data Karyawan</td>
+<td><code>karyawan.*</code> (termasuk <code>karyawan.jabatan</code> ← <code>master_jabatan.nama</code>)</td>
+<td>karyawan (<code>jabatan</code> default <code>''</code>)</td>
+<td>Data Karyawan: Jabatan, Cabang (<code>cabang</code>), Departemen (<code>divisi</code>)</td>
 </tr>
 <tr>
 <td><code>assets[]</code></td>
@@ -3752,6 +3752,11 @@ Admin: Normal → items[].kondisi = normal → item.status_item = disetujui
 </tr>
 </thead>
 <tbody>
+<tr>
+<td>1.4</td>
+<td>2026-10-20</td>
+<td>Detail peminjaman (karyawan &amp; admin): kartu Data Karyawan kini menampilkan Jabatan, Cabang, Departemen (label Divisi diganti Departemen). API: <code>karyawan.jabatan</code> ditambahkan di <code>getDetail</code> (leftJoin <code>master_jabatan</code>, tanpa SQL/migrasi); mobile: field <code>jabatan</code> di <code>AssetPeminjamanKaryawan</code>; tes <code>asset_karyawan_jabatan_test.dart</code>.</td>
+</tr>
 <tr>
 <td>1.3</td>
 <td>2026-10-12</td>

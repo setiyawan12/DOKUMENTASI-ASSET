@@ -198,7 +198,7 @@ footer{margin-top:64px;padding-top:18px;border-top:1px solid var(--line);color:v
         <dl>
           <dt>Kode</dt><dd>KRY02</dd>
           <dt>Modul</dt><dd>Asset Management</dd>
-          <dt>Versi</dt><dd>1.4 · 12 Okt 2026</dd>
+          <dt>Versi</dt><dd>1.5 · 20 Okt 2026</dd>
           <dt>Stack</dt><dd>Lumen 10 · Flutter</dd>
           <dt>API</dt><dd>11 endpoint</dd>
         </dl>
@@ -304,11 +304,11 @@ footer{margin-top:64px;padding-top:18px;border-top:1px solid var(--line);color:v
 </tr>
 <tr>
 <td>Versi Dokumen</td>
-<td>1.4</td>
+<td>1.5</td>
 </tr>
 <tr>
 <td>Tanggal Dokumentasi</td>
-<td>2026-10-12</td>
+<td>2026-10-20</td>
 </tr>
 <tr>
 <td>Dokumen terkait</td>
@@ -874,9 +874,9 @@ Admin: Terima Penyerahan Asset                                 selesai
 <td>Deteksi sumber &amp; cek flow lain</td>
 </tr>
 <tr>
-<td><code>data_karyawan</code>, <code>master_cabang</code>, <code>master_departemen</code></td>
+<td><code>data_karyawan</code>, <code>master_cabang</code>, <code>master_departemen</code>, <code>master_jabatan</code></td>
 <td>Master HR</td>
-<td>Karyawan aktif, cabang, divisi</td>
+<td>Karyawan aktif, cabang, departemen, jabatan</td>
 </tr>
 <tr>
 <td><code>asset_admin</code>, <code>master_company</code></td>
@@ -1329,7 +1329,7 @@ DB::transaction (retry 3) → ApiResponse + AssetNotification
 <ul>
 <li><strong>Opsi</strong>: karyawan aktif yang memegang asset dan tanpa off boarding aktif.</li>
 <li><strong>List</strong>: tab <code>pengajuan</code> (admin: draft + pengajuan; karyawan: pengajuan), <code class="chip chip-done">dikonfirmasi</code>, <code>selesai</code>; tanpa tab = semua. <code>jumlah_asset</code> = jumlah item. Key array: <code>offboardings</code>.</li>
-<li><strong>Detail</strong>: header + cabang/divisi + items (dengan <code>jenis_transaksi</code> &amp; sumber). Karyawan tidak dapat membuka draft.</li>
+<li><strong>Detail</strong>: header + cabang/departemen/jabatan + items (dengan <code>jenis_transaksi</code> &amp; sumber). Karyawan tidak dapat membuka draft.</li>
 <li><strong>Summary admin</strong>: <code>offboarding_perlu_proses</code> &amp; <code>offboarding_pending</code> = status <code class="chip chip-draft">draft</code> + <code class="chip chip-done">dikonfirmasi</code>.</li>
 </ul>
 <hr />
@@ -1605,6 +1605,7 @@ GET /asset/karyawan/offboarding/{id}
   &quot;nama_karyawan&quot;: &quot;Budi Contoh&quot;,
   &quot;nama_cabang&quot;: &quot;Kantor Pusat&quot;,
   &quot;nama_divisi&quot;: &quot;Finance&quot;,
+  &quot;nama_jabatan&quot;: &quot;Staff Finance&quot;,
   &quot;status&quot;: &quot;pengajuan&quot;,
   &quot;status_approval&quot;: &quot;pengajuan&quot;,
   &quot;status_label&quot;: &quot;Menunggu Diterima&quot;,
@@ -1867,7 +1868,7 @@ INSERT notif_data
 <p>Form <strong>tidak menampilkan daftar asset</strong> karyawan sebelum disimpan; daftar muncul di detail setelah disimpan.</p>
 </aside>
 <h3>26.3 Detail Off Boarding Asset</h3>
-<p>Header (nomor, status, jadwal), Catatan, Data Karyawan (cabang, divisi), daftar asset dipisah <strong>Off Boarding Asset</strong> (asset tetap) dan <strong>Asset yang Dipinjam</strong> (pinjaman). Per asset: pilihan <strong>Normal / Rusak</strong> (+ <strong>Keterangan Kerusakan</strong>) saat karyawan mengonfirmasi, atau tampilan kondisi.</p>
+<p>Header (nomor, status, jadwal), Catatan, Data Karyawan (Jabatan, Cabang, Departemen), daftar asset dipisah <strong>Off Boarding Asset</strong> (asset tetap) dan <strong>Asset yang Dipinjam</strong> (pinjaman). Per asset: pilihan <strong>Normal / Rusak</strong> (+ <strong>Keterangan Kerusakan</strong>) saat karyawan mengonfirmasi, atau tampilan kondisi.</p>
 <div class="table-wrap"><table>
 <thead>
 <tr>
@@ -2010,9 +2011,9 @@ INSERT notif_data
 <td>Jadwal</td>
 </tr>
 <tr>
-<td><code>nama_cabang</code>, <code>nama_divisi</code></td>
-<td>namaCabang, namaDivisi</td>
-<td>Data Karyawan</td>
+<td><code>nama_cabang</code>, <code>nama_divisi</code>, <code>nama_jabatan</code></td>
+<td>namaCabang, namaDivisi, jabatan (dibaca dari <code>nama_jabatan</code> lalu <code>jabatan</code>; default <code>''</code>)</td>
+<td>Data Karyawan: Jabatan, Cabang, Departemen</td>
 </tr>
 <tr>
 <td><code>items[]</code></td>
@@ -2172,6 +2173,13 @@ INSERT notif_data
 <td>nama</td>
 <td><code>nama_cabang</code>, <code>nama_divisi</code></td>
 <td>idem</td>
+<td>Data Karyawan</td>
+</tr>
+<tr>
+<td>master_jabatan (via <code>data_karyawan.id_jabatan</code>)</td>
+<td>nama</td>
+<td><code>nama_jabatan</code></td>
+<td>jabatan</td>
 <td>Data Karyawan</td>
 </tr>
 </tbody>
@@ -3148,6 +3156,11 @@ Admin: Terima Penyerahan Asset → receive()
 </tr>
 </thead>
 <tbody>
+<tr>
+<td>1.5</td>
+<td>2026-10-20</td>
+<td>Detail off boarding: kartu Data Karyawan kini menampilkan Jabatan, Cabang, Departemen (label Divisi diganti Departemen). API: <code>nama_jabatan</code> ditambahkan di <code>getDetail</code> (sejajar <code>nama_cabang</code>/<code>nama_divisi</code>; leftJoin <code>master_jabatan</code>, tanpa SQL/migrasi); mobile: field <code>jabatan</code> di <code>AssetOffboardingRecord</code>; tes <code>AssetOffboardingModelTest</code> meng-assert <code>nama_jabatan</code>.</td>
+</tr>
 <tr>
 <td>1.4</td>
 <td>2026-10-12</td>
