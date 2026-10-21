@@ -1,6 +1,6 @@
 # Dokumentasi Teknis & Manual Book — Pemeliharaan Terjadwal Asset Gudang
 
-> Dokumen ini disusun **dari source code lokal** (`API/` Lumen dan `MOBILE/` Flutter) per 8 Oktober 2026. Cakupan: **PML01 konteks gudang** (asset berstatus `tersedia` di gudang). Konteks karyawan ada di dokumen terpisah *Pemeliharaan Terjadwal Asset Karyawan*.
+> Dokumen ini disusun **dari source code lokal** (`API/` Lumen dan `MOBILE/` Flutter) per 21 Oktober 2026. Cakupan: **PML01 konteks gudang** (asset berstatus `tersedia` di gudang). Konteks karyawan ada di dokumen terpisah *Pemeliharaan Terjadwal Asset Karyawan*.
 > Bagian yang tidak ditemukan ditandai **⚠️ Belum ditemukan**, asumsi ditandai **⚠️ Asumsi**.
 > Contoh ID/nama pada payload adalah **data sintetis**.
 
@@ -17,8 +17,8 @@
 | Database | `API/diagram-asset.dbml` (tanda `[NEW PML01 gudang]`) + SQL manual `Claude outputs/sql-pml01-pemeliharaan-gudang.sql`. ⚠️ SQL harus dijalankan manual; tidak ada migration Lumen |
 | Mobile | Flutter (`professional_flutter_3_35`), `flutter_bloc`, `dio` |
 | Web | ⚠️ Belum ditemukan: tidak ada source web di workspace |
-| Test otomatis | API `tests/Asset/AssetPemeliharaanGudangTest.php` (8 test) · Mobile `test/asset/asset_pemeliharaan_gudang_test.dart` (13 test) dan `asset_pemeliharaan_gudang_dashboard_test.dart` (8 test) |
-| Versi dokumen | 1.2 — 12 Oktober 2026 |
+| Test otomatis | API `tests/Asset/AssetPemeliharaanGudangTest.php` (16 test) · Mobile `test/asset/asset_pemeliharaan_gudang_test.dart` (30 test) dan `asset_pemeliharaan_gudang_dashboard_test.dart` (8 test) |
+| Versi dokumen | 1.3 — 21 Oktober 2026 |
 | Dokumen terkait | Pemeliharaan Karyawan (PML01), Perbaikan (PML02), Klaim Garansi (PML03), Disposal (PML04), Master Pendamping & Tugas PIC |
 
 ## 2. Daftar Isi
@@ -27,22 +27,23 @@ Lihat panel navigasi di samping.
 
 ## 3. Quick Overview
 
-Asset yang **tersedia di gudang** dan punya jadwal PM (`flag_pemeliharaan = 1`) muncul di **Monitoring Jatuh Tempo** sejak **H-14**. Admin membuat transaksi PM untuk satu atau banyak asset, menentukan vendor/teknisi, lokasi, jadwal, dan **PIC Pendamping** (wajib, dari master pendamping aktif). Sejak dibuat, asset **dikunci** (`dalam_perbaikan`). PIC (atau admin sebagai cadangan) langsung mengisi **checklist hasil per komponen** setelah PM dilaksanakan, tanpa langkah Mulai; hasil asset = komponen **terberat**. Admin mereview: hasil 1–3 mengembalikan asset ke `tersedia` dengan jadwal PM berikutnya, hasil 4–5 menandai asset `rusak` di gudang untuk Perbaikan/Disposal.
+Asset yang **tersedia di gudang** dan punya jadwal PM (`flag_pemeliharaan = 1`) muncul di **Monitoring Jatuh Tempo** sejak **H-14**. Admin memilih satu atau banyak asset; untuk **setiap asset** dibuat **satu transaksi PM sendiri** dengan jadwal, vendor/teknisi, lokasi, dan **PIC Pendamping** (wajib, dari master pendamping aktif) masing-masing. Sejak dibuat, asset **dikunci** (`dalam_perbaikan`). PIC (atau admin sebagai cadangan) langsung mengisi **checklist hasil per komponen** setelah PM dilaksanakan, tanpa langkah Mulai; hasil asset = komponen **terberat**. Admin mereview: hasil 1–3 mengembalikan asset ke `tersedia` dengan jadwal PM berikutnya, hasil 4–5 menandai asset `rusak` di gudang untuk Perbaikan/Disposal.
 
 | Aspek | Ringkasan |
 |---|---|
 | Aktor | Admin Asset, PIC Pendamping, Sistem |
+| Struktur transaksi | 1 transaksi = 1 asset; satu request pembuatan dapat membuat banyak transaksi |
 | Fase | `penjadwalan` → `menunggu_review` → `selesai` (`dibatalkan` hanya dari penjadwalan; `pelaksanaan` hanya tersisa pada transaksi lama) |
 | Status asset | `tersedia` → `dalam_perbaikan` → `tersedia` / `rusak` |
-| Endpoint | 11 admin + 4 PIC |
-| Notifikasi | 7 event (`pemeliharaan_gudang.*`) |
+| Endpoint | 10 admin + 3 PIC |
+| Notifikasi | 5 event (`pemeliharaan_gudang.*`) |
 
 ## 4. Ringkasan Fitur
 
 | No | Fitur | Aktor |
 |---|---|---|
 | 1 | Monitoring asset gudang jatuh tempo PM (H-14) | Admin |
-| 2 | Buat PM (multi-asset, vendor, lokasi, PIC) | Admin |
+| 2 | Buat PM (pilih banyak asset; satu transaksi per asset dengan jadwal, vendor, lokasi, PIC sendiri) | Admin |
 | 3 | Ubah jadwal/vendor/lokasi/PIC selama penjadwalan | Admin |
 | 4 | Ganti PIC sebelum hasil dikirim | Admin |
 | 5 | Batalkan PM sebelum hasil dikirim | Admin |
@@ -125,15 +126,18 @@ Asset kembali `tersedia`; jadwal PM berikutnya dihitung dari tanggal review + in
 Asset menjadi `rusak`, `kondisi_awal = rusak`, `ket_rusak` dari temuan + catatan review, `status_rusak = sudah tidak bisa di gunakan`. `nama_tabel_tindak_lanjut` diisi `asset_trx_perbaikan` (hasil 4) atau `asset_trx_disposal` (hasil 5).
 
 ### BR-010 — Penomoran
-`id` = `id_company` + `YYYYMM` + 3 digit; `no_trx` = `PML01-3-YYYYMMNNN`. Batas 999 per bulan per perusahaan.
+`id` = `id_company` + `YYYYMM` + 3 digit; `no_trx` = `PML01-3-YYYYMMNNN`. Batas 999 per bulan per perusahaan, dihitung per transaksi (N asset memakai N nomor).
 
 ### BR-011 — Skema harus sudah diterapkan
 Dashboard memanggil `skemaSiap()`; sebelum SQL diterapkan, bagian gudang kosong tanpa memblokir modul lain.
 
+### BR-012 — Satu transaksi satu asset
+Setiap transaksi baru memuat tepat satu asset (satu header, satu item), sehingga jadwal, vendor, lokasi, dan PIC ditentukan per asset. Satu request pembuatan boleh memuat 1–50 asset dan menghasilkan satu transaksi per asset secara atomik: bila satu asset gagal validasi, tidak ada transaksi yang tersimpan. Transaksi lama yang berisi banyak asset tetap dapat dibuka, diubah, diisi hasilnya, dan direview seperti sebelumnya.
+
 ## 10. Business Flow
 
-1. Admin membuka **Monitoring Jatuh Tempo** (tab Gudang) dan memilih asset.
-2. Admin mengisi jadwal, vendor/teknisi, lokasi, PIC, keterangan → transaksi `penjadwalan`, asset `dalam_perbaikan`. PIC dinotifikasi.
+1. Admin membuka **Monitoring Jatuh Tempo** (tab Gudang) dan memilih satu atau banyak asset.
+2. Admin mengisi jadwal, vendor/teknisi, lokasi, PIC, keterangan **untuk setiap asset** (halaman form per asset) → satu transaksi `penjadwalan` per asset, asset `dalam_perbaikan`. PIC dinotifikasi per transaksi.
 3. Admin dapat mengubah jadwal, mengganti PIC, atau membatalkan.
 4. PIC (atau admin) mengisi checklist hasil seluruh asset setelah PM dilaksanakan → `menunggu_review`. Admin dinotifikasi.
 5. Admin mereview → `selesai`; asset kembali `tersedia` (hasil 1–3) atau `rusak` (hasil 4–5).
@@ -180,8 +184,8 @@ sequenceDiagram
     participant API
     participant DB
     Admin->>App: Buat PM
-    App->>API: POST pemeliharaan-gudang
-    API->>DB: Kunci asset, insert header+item, asset_log
+    App->>API: POST pemeliharaan-gudang (1 request, N transaksi)
+    API->>DB: Kunci asset, insert N header + N item, asset_log
     API-->>PIC: Notifikasi ditugaskan
     PIC->>API: POST karyawan/pemeliharaan-gudang/{id}/hasil (checklist)
     API->>DB: hasil per item, tgl_mulai, fase menunggu_review
@@ -304,7 +308,7 @@ Ditulis saat PM dibuat (`posisi` gudang → gudang), saat dibatalkan, dan saat r
 ## 21. Backend Business Logic
 
 ### 21.1 Buat PM — `store`
-Transaksi DB dengan kunci perusahaan; validasi asset (BR-001/002), jadwal tidak sebelum hari ini, vendor, lokasi, PIC; nomor urut; insert header + item; setiap asset → `dalam_perbaikan` + `asset_log`.
+Transaksi DB dengan kunci perusahaan. Input `pemeliharaan[]` (1–50 elemen, satu elemen per asset). Seluruh elemen divalidasi lebih dulu (asset BR-001/002, jadwal tidak sebelum hari ini, vendor, lokasi, PIC) sebelum ada yang ditulis. Nomor urut header dan item dihitung sekali untuk N transaksi (batas 999 dicek untuk N sekaligus); setiap asset → satu header + satu item, `dalam_perbaikan` + `asset_log`. Pesan error bisnis diawali `Asset <nama>:`. Notifikasi `ditugaskan` dikirim per transaksi setelah commit.
 
 ### 21.2 Ubah — `ubah`
 Hanya `penjadwalan`; validasi ulang jadwal dan PIC. Mengembalikan `pic_berubah` untuk memilih event notifikasi (`ditugaskan` bila PIC berganti, selain itu `diubah`).
@@ -363,24 +367,41 @@ Daftar asset gudang jatuh tempo (H-14) beserta watchlist dari PM sebelumnya.
 Query: `tab` (`jadwal|proses|selesai`), `limit` (1–50, default 20), `offset`. Respons `{filters, records[], pagination{limit, offset, next_offset, has_more}}`. Record memuat `peran` (`admin`/`pendamping`), `jumlah_asset`, ringkasan asset, PIC.
 
 ### API-004 — Buat
-Body:
+
+Satu request membuat satu transaksi **per asset**. Body:
 ```json
 {
-  "asset_ids": ["AC-1", "AC-2"],
-  "tgl_jadwal": "2026-10-20",
-  "jam_jadwal": "09:00",
-  "id_asset_vendor_m": "VND-1",
-  "nama_vendor": "",
-  "keterangan_vendor": "0812-0000",
-  "lokasi_pemeliharaan": "Gudang Utama",
-  "id_asset_pendamping_m": "PDM-1",
-  "keterangan": "Servis berkala"
+  "pemeliharaan": [
+    {
+      "id_asset_data": "AC-1",
+      "tgl_jadwal": "2026-10-20",
+      "jam_jadwal": "09:00",
+      "id_asset_vendor_m": "VND-1",
+      "nama_vendor": "",
+      "keterangan_vendor": "0812-0000",
+      "lokasi_pemeliharaan": "Gudang Utama",
+      "id_asset_pendamping_m": "PDM-1",
+      "keterangan": "Servis berkala"
+    },
+    {
+      "id_asset_data": "AC-2",
+      "tgl_jadwal": "2026-10-22",
+      "jam_jadwal": "13:00",
+      "id_asset_vendor_m": "",
+      "nama_vendor": "Teknisi Lepas",
+      "keterangan_vendor": "",
+      "lokasi_pemeliharaan": "Gudang Cabang",
+      "id_asset_pendamping_m": "PDM-2",
+      "keterangan": ""
+    }
+  ]
 }
 ```
-Aturan: `nama_vendor` wajib bila `id_asset_vendor_m` kosong. Respons `CREATED` `{id, no_trx, fase_pemeliharaan, status_label, tab}`.
+
+Aturan: `pemeliharaan` wajib, 1–50 elemen, `id_asset_data` harus berbeda antar elemen. Setiap elemen divalidasi dengan aturan form yang sama; `nama_vendor` wajib bila `id_asset_vendor_m` kosong. Kunci error validasi berbentuk `pemeliharaan.N.field` (N = indeks elemen). Pembuatan atomik: bila satu asset gagal (mis. bukan asset gudang tersedia), tidak ada transaksi yang tersimpan dan pesan `BUSINESS_RULE_VIOLATION` diawali `Asset <nama>:`. Respons `CREATED`: `{records: [{id, no_trx, fase_pemeliharaan, status_label, tab, id_asset_data}], jumlah}`. Payload lama `asset_ids` tidak lagi diterima.
 
 ### API-005 — Ubah
-Body sama tanpa `asset_ids`.
+Body sama dengan satu elemen `pemeliharaan[]` pada API-004, tanpa `id_asset_data`.
 
 ### API-006 — Ganti PIC
 Body `{id_asset_pendamping_m}`.
@@ -434,7 +455,7 @@ Berisi header, PIC, vendor, jadwal, hasil/review, `assets[]` dengan checklist, d
 `HalamanAssetPemeliharaanGudang` dan `AssetPemeliharaanGudangListView`: tab Jadwal/Proses/Selesai, kartu transaksi, paginasi.
 
 ### 26.2 Monitoring dan Buat PM (admin)
-`HalamanBuatPemeliharaanGudang`: daftar asset jatuh tempo, pilih banyak, lalu sheet form (jadwal, vendor terdaftar/manual, lokasi, PIC, keterangan).
+`HalamanBuatPemeliharaanGudang`: daftar asset jatuh tempo, pilih banyak (maksimal 50), lalu **Lanjut** membuka halaman `HalamanFormPemeliharaanGudang` (route `/asset_admin_form_pemeliharaan_gudang`, bukan bottom sheet). Halaman form berisi satu kartu per asset yang bisa dilipat (satu terbuka sekaligus; header: nama, kode, chip Lengkap/Belum lengkap, menu *Samakan untuk semua*; ringkasan satu baris saat terlipat) dengan field tanggal, jam, vendor terdaftar/manual, kontak vendor, lokasi, PIC, dan catatan. Bar bawah menampilkan progres "N dari M lengkap" dan tombol **Buat Pemeliharaan**, yang baru mengirim setelah semua kartu lengkap; kartu pertama yang bermasalah terbuka otomatis. Tombol back sistem dan AppBar nonaktif saat submit. Picker vendor dan PIC tetap bottom sheet. Sheet ubah di halaman detail (`showAssetPemeliharaanGudangFormSheet`) tidak berubah.
 
 ### 26.3 Detail
 `HalamanDetailAssetPemeliharaanGudang`: tahapan, asset beserta checklist, tombol sesuai `aksi`.
@@ -465,9 +486,11 @@ Respons dipetakan ke `AssetPemeliharaanGudangRecord`/`Page`/`Options`; kegagalan
 
 ## 29. Mapping Mobile → API → Database
 
+Setiap field form dikirim per asset sebagai satu elemen `pemeliharaan[]`; kartu form = satu elemen = satu transaksi.
+
 | Field form | Field API | Kolom DB |
 |---|---|---|
-| Asset terpilih | `asset_ids` | `…_item.id_asset_data` |
+| Asset pada kartu | `pemeliharaan[].id_asset_data` | `…_item.id_asset_data` |
 | Tanggal/jam | `tgl_jadwal`/`jam_jadwal` | `tgl_pemeliharaan`/`jam_pemeliharaan` |
 | Vendor terdaftar | `id_asset_vendor_m` | `id_asset_vendor_m` |
 | Vendor manual | `nama_vendor` | `nama_vendor` |
@@ -487,10 +510,10 @@ Respons dipetakan ke `AssetPemeliharaanGudangRecord`/`Page`/`Options`; kegagalan
 ## 31. Validation
 
 ### 31.1 Mobile
-Tanggal, jam, lokasi, vendor (mode terdaftar/manual), dan PIC wajib; alasan batal wajib; checklist harus lengkap untuk semua asset.
+Tanggal, jam, lokasi, vendor (mode terdaftar/manual), dan PIC wajib **per asset** (kartu yang belum lengkap ditandai dan submit tertahan sampai semua lengkap); maksimal 50 asset dipilih; alasan batal wajib; checklist harus lengkap untuk semua asset.
 
 ### 31.2 Backend
-Lihat BR dan §24. Aturan Laravel: `tgl_jadwal` `Y-m-d`, `jam_jadwal` `H:i`, `lokasi_pemeliharaan` wajib, `id_asset_pendamping_m` wajib, `hasil` dalam lima nilai.
+Lihat BR dan §24. Aturan Laravel: `pemeliharaan` wajib 1–50 elemen dengan `id_asset_data` distinct, dan aturan berikut berlaku per elemen: `tgl_jadwal` `Y-m-d`, `jam_jadwal` `H:i`, `lokasi_pemeliharaan` wajib, `id_asset_pendamping_m` wajib, `hasil` dalam lima nilai.
 
 ### 31.3 Database
 Enum `fase_pemeliharaan`, `status`, `status_item_pendamping`; FK PIC, vendor, asset; unik `(trx, asset)`.
@@ -529,8 +552,9 @@ JWT; admin diperiksa per request; PIC dibatasi ke `id_pic_pendamping` miliknya; 
 
 ### A. Admin — Menjadwalkan PM
 1. Buka Pemeliharaan → tab **Gudang**.
-2. Pilih asset jatuh tempo, ketuk lanjut.
-3. Isi jadwal, vendor, lokasi, PIC, keterangan lalu simpan.
+2. Pilih satu atau banyak asset jatuh tempo (maksimal 50), ketuk **Lanjut**.
+3. Pada halaman **Jadwal per Aset**, isi jadwal, vendor, lokasi, PIC, dan catatan untuk tiap asset. Gunakan menu ⋮ → *Samakan untuk semua* untuk menyalin isian satu asset ke asset lain.
+4. Pastikan bar bawah menunjukkan semua asset lengkap, lalu ketuk **Buat Pemeliharaan** (satu transaksi per asset).
 
 ### B. Admin — Mengubah / mengganti PIC / membatalkan
 Buka detail transaksi `penjadwalan`; pilih Ubah, Ganti PIC, atau Batalkan (isi alasan).
@@ -567,6 +591,11 @@ Semua dikendalikan objek `aksi` dari API.
 | T-08 | PIC lain mengakses transaksi | Tidak ditemukan |
 | T-09 | Hasil tidak mencakup semua asset | Ditolak |
 | T-10 | Route admin dan PIC | 200/403 sesuai peran |
+| T-11 | Buat PM untuk beberapa asset dengan jadwal/vendor/PIC berbeda | Satu transaksi per asset (masing-masing 1 item), nomor `PML01-3-…` berurutan |
+| T-12 | Satu asset dalam request tidak eligible | Tidak ada transaksi tersimpan, asset lain tetap `tersedia`, pesan menyebut nama asset |
+| T-13 | Vendor kosong tanpa nama manual / asset duplikat / 51 elemen | 422 dengan kunci `pemeliharaan.N.field` |
+| T-14 | Non-admin memanggil buat PM | 403 tanpa transaksi, perubahan status, atau notifikasi |
+| T-15 | Mobile: back saat submit, pilihan ke-51, Samakan untuk semua | Back diblokir, pilihan ditolak dengan peringatan, isian tersalin ke semua kartu |
 
 Cakupan otomatis: lihat §1.
 
@@ -584,6 +613,8 @@ Cakupan otomatis: lihat §1.
 - Asset diubah statusnya di luar alur saat `pelaksanaan`: `lockAssets` menolak dengan *"Status asset sudah berubah…"*.
 - Dua admin membuat PM untuk asset yang sama: yang kedua gagal karena asset sudah `dalam_perbaikan`.
 - Asset tanpa interval: review tidak mengubah jadwal.
+- Transaksi lama yang berisi banyak asset tetap berfungsi (hasil dan review diproses untuk semua asset sekaligus); transaksi baru selalu 1 asset.
+- Back saat submit ditahan (`PopScope`). Bila form tetap tertutup setelah pembuatan sukses, halaman pilih ikut tertutup dan daftar dimuat ulang.
 
 ## 41. Potential Bug / Technical Risk
 
@@ -601,6 +632,12 @@ Kegagalan push tidak membatalkan transaksi.
 
 ### RISK-005 — Kapasitas penomoran (RENDAH)
 Maksimum 999 transaksi per bulan per perusahaan.
+
+### RISK-006 — Submit ulang setelah request terputus (RENDAH)
+Klien memakai timeout 30 detik tanpa `sendTimeout`. Bila koneksi putus setelah server menyimpan, form aktif lagi; submit ulang kemungkinan besar ditolak karena asset sudah `dalam_perbaikan`, tetapi belum diuji.
+
+### RISK-007 — Notifikasi berurutan untuk banyak transaksi (RENDAH)
+Sampai 50 notifikasi dikirim berurutan setelah commit. Kegagalan di tengah dapat menghasilkan respons error padahal transaksi sudah tersimpan. Penguncian `lockForUpdate` baru diuji pada SQLite, belum pada MySQL.
 
 ## 42. Dependency
 
@@ -671,3 +708,4 @@ Tabel baru: `asset_trx_pemeliharaan_gudang`, `…_item`. Perubahan: `asset_penda
 | 1.0 | 8 Okt 2026 | Dokumen awal PML01 konteks gudang |
 | 1.1 | 12 Okt 2026 | Sinkronisasi dengan kode 12 Okt 2026: path file mobile mengikuti struktur folder baru (`UI/Modul/Asset/<Fitur>/` berhuruf kapital, model di `Repository/Model/Asset/`). |
 | 1.2 | 12 Okt 2026 | Langkah **Mulai PM** dihapus: PIC/admin mengisi hasil langsung dari `penjadwalan`; endpoint `…/mulai` (2) dan notifikasi `pemeliharaan_gudang.dimulai*` dihapus; API-009…015 dinomori ulang menjadi API-008…013; `tgl_mulai` terisi otomatis saat hasil. Fase `pelaksanaan` hanya tersisa untuk transaksi lama. |
+| 1.3 | 21 Okt 2026 | Pembuatan PM berubah menjadi **1 transaksi = 1 asset**: `POST asset/pemeliharaan-gudang` menerima `pemeliharaan[]` (1–50 elemen, atomik) dan membalas `{records[], jumlah}`; `asset_ids` dihapus; BR-012 ditambah. Mobile: **Lanjut** membuka halaman form per asset (kartu lipat, Samakan untuk semua, progres), bukan bottom sheet; pilihan dibatasi 50; back diblokir saat submit. Koreksi angka ringkasan: 10 admin + 3 PIC endpoint, 5 event notifikasi; jumlah test 16 API / 30 + 8 mobile. Tanpa perubahan skema. |
