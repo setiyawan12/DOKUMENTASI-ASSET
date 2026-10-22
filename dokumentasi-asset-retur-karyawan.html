@@ -198,7 +198,7 @@ footer{margin-top:64px;padding-top:18px;border-top:1px solid var(--line);color:v
         <dl>
           <dt>Kode</dt><dd>KRY04</dd>
           <dt>Modul</dt><dd>Asset Management</dd>
-          <dt>Versi</dt><dd>1.7 · 20 Okt 2026</dd>
+          <dt>Versi</dt><dd>1.8 · 22 Okt 2026</dd>
           <dt>Stack</dt><dd>Lumen 10 · Flutter</dd>
           <dt>API</dt><dd>9 endpoint</dd>
         </dl>
@@ -229,7 +229,7 @@ footer{margin-top:64px;padding-top:18px;border-top:1px solid var(--line);color:v
         <div class="flow">
           <div class="step"><span class="badge b-wait">Menunggu Konfirmasi</span><span class="who">Karyawan: Ajukan Retur</span><p>Pilih asset milik sendiri, alasan dan keterangan per asset.</p><span class="db">pengajuan / proses · asset tidak berubah</span></div>
           <div class="step"><span class="badge b-draft">Dikonfirmasi</span><span class="who">Admin: Setujui / Tolak / Ganti Asset</span><p>Pilih asset pengganti bila perlu, lalu metode serah terima: Dijadwalkan atau Serahkan Langsung.</p><span class="db">disetujui / proses · pengganti → proses</span></div>
-          <div class="step"><span class="badge b-done">Diterima</span><span class="who">Admin: Terima Asset</span><p>Admin memilih lokasi gudang tiap asset lalu menyelesaikan transaksi.</p><span class="db">lama → tersedia/rusak @gudang pilihan admin · pengganti → terpakai @karyawan · asset_log</span></div>
+          <div class="step"><span class="badge b-done">Diterima</span><span class="who">Admin: Terima Asset</span><p>Admin memilih lokasi gudang tiap asset lalu menyelesaikan transaksi.</p><span class="db">lama → tersedia/rusak @gudang pilihan admin · pengganti → terpakai @karyawan · asset_trx_log</span></div>
         </div>
         <div class="loop"><span class="badge b-bad">Ditolak</span><span>Terjadi bila admin menolak <strong>semua</strong> asset (<code>ditolak / selesai</code>). Transaksi ditolak tetap tampil di tab <strong>Pengajuan</strong>.</span></div>
       </div>
@@ -300,11 +300,11 @@ footer{margin-top:64px;padding-top:18px;border-top:1px solid var(--line);color:v
 </tr>
 <tr>
 <td>Versi Dokumen</td>
-<td>1.7</td>
+<td>1.8</td>
 </tr>
 <tr>
 <td>Tanggal Dokumentasi</td>
-<td>2026-10-20</td>
+<td>2026-10-22</td>
 </tr>
 <tr>
 <td>Dokumen terkait</td>
@@ -352,7 +352,7 @@ footer{margin-top:64px;padding-top:18px;border-top:1px solid var(--line);color:v
 </tr>
 <tr>
 <td>Log</td>
-<td><code>asset_log</code> (<code>jenis_log = retur_karyawan</code>) untuk asset lama dan asset pengganti</td>
+<td><code>asset_trx_log</code> (<code>jenis_log = retur_karyawan</code>) untuk asset lama dan asset pengganti</td>
 </tr>
 <tr>
 <td>Status</td>
@@ -385,8 +385,8 @@ Admin: Setujui / Tolak tiap asset (+ alasan)
       │  (semua ditolak → ditolak / selesai)
       ▼
 Admin: Terima Asset (pilih lokasi gudang per asset)
-   asset lama  → tersedia (tidak digunakan / tukar unit) atau rusak (rusak) @gudang pilihan admin + asset_log
-   pengganti   → terpakai @karyawan + asset_log                                      disetujui / selesai
+   asset lama  → tersedia (tidak digunakan / tukar unit) atau rusak (rusak) @gudang pilihan admin + asset_trx_log
+   pengganti   → terpakai @karyawan + asset_trx_log                                      disetujui / selesai
 </code></pre></div>
 <hr />
 <h2 id="s4"><span class="sec-no">04</span>Ringkasan Fitur</h2>
@@ -410,7 +410,7 @@ Admin: Terima Asset (pilih lokasi gudang per asset)
 <li>Menyimpan pengajuan retur per asset dengan alasan dan keterangan.</li>
 <li>Mencatat keputusan admin per asset dan asset pengganti (item anak).</li>
 <li>Mengunci asset pengganti (<code class="chip chip-wait">proses</code>) sampai diserahkan.</li>
-<li>Memperbarui <code>asset_data</code> dan <code>asset_log</code> saat serah terima.</li>
+<li>Memperbarui <code>asset_data</code> dan <code>asset_trx_log</code> saat serah terima.</li>
 <li>Mencegah asset yang sedang diretur diproses di Kerusakan/Upgrade.</li>
 </ul>
 <hr />
@@ -612,7 +612,7 @@ Admin: Terima Asset (pilih lokasi gudang per asset)
 <h3>BR-012 — Finalisasi hanya oleh admin (v1.4)</h3>
 <p>Hanya untuk <code>disetujui</code> + <code class="chip chip-wait">proses</code>; asset asal masih dipegang karyawan; pengganti masih <code class="chip chip-wait">proses</code> @gudang → "Retur asset belum dikonfirmasi atau sudah selesai." / "Asset pengganti sudah tidak siap diserahterimakan."</p>
 <h3>BR-013 — Dampak finalisasi</h3>
-<p>Asset asal disetujui: <code class="chip chip-bad">rusak</code> → <code>status_asset = rusak</code> + <code>ket_rusak = ket_retur</code>; lainnya → <code class="chip chip-neutral">tersedia</code>; semua ke <code>gudang</code>. Pengganti → <code class="chip chip-done">terpakai</code> @karyawan. <code>asset_log retur_karyawan</code> untuk keduanya. Header <code>selesai</code>, <code>tgl/jam_serah_terima = now</code>.</p>
+<p>Asset asal disetujui: <code class="chip chip-bad">rusak</code> → <code>status_asset = rusak</code> + <code>ket_rusak = ket_retur</code>; lainnya → <code class="chip chip-neutral">tersedia</code>; semua ke <code>gudang</code>. Pengganti → <code class="chip chip-done">terpakai</code> @karyawan. <code>asset_trx_log retur_karyawan</code> untuk keduanya. Header <code>selesai</code>, <code>tgl/jam_serah_terima = now</code>.</p>
 <h3>BR-013a — Lokasi gudang tujuan per asset (v1.4)</h3>
 <p>Pada Terima Asset admin wajib memilih <strong>lokasi gudang untuk setiap asset asal yang disetujui</strong>: <code>items[]</code> memuat tiap item (<code>id_asset_trx_retur_item</code>) tepat satu kali dengan <code>id_asset_lokasi_m</code> bertipe <code>gudang</code> pada company yang sama → "Lokasi gudang tujuan setiap asset wajib dipilih." / "Lokasi gudang tujuan tidak valid." / "Lokasi gudang tujuan asset tidak sesuai." Lokasi ditulis ke <code>asset_data.id_asset_lokasi_m</code> dan <code>asset_trx_retur_karyawan_item.id_asset_lokasi_m_tujuan</code>. Asset pengganti yang keluar ke karyawan di-set NULL lokasinya (kolom FK ke asset_lokasi_m; nilai '' ditolak database) (<code>id_asset_lokasi_m = NULL</code>). Route karyawan <code>POST /asset/karyawan/retur/{id}/terima</code> <strong>dihapus</strong>.</p>
 <h3>BR-014 — Retur aktif mengunci asset untuk Kerusakan &amp; Upgrade</h3>
@@ -632,7 +632,7 @@ Admin: Terima Asset (pilih lokasi gudang per asset)
                                                      [disetujui/proses atau ditolak/selesai · notif karyawan]
 3. Serah terima fisik sesuai jadwal / langsung
 4. Admin: Detail → Terima Asset → dialog Lokasi Tujuan Asset (gudang per asset)
-                                                     [disetujui/selesai · asset diperbarui · asset_log · notif pihak lain]
+                                                     [disetujui/selesai · asset diperbarui · asset_trx_log · notif pihak lain]
 </code></pre></div>
 <hr />
 <h2 id="s11"><span class="sec-no">11</span>Flow Berdasarkan Role</h2>
@@ -673,7 +673,7 @@ Admin: Terima Asset (pilih lokasi gudang per asset)
     L --&gt; M[Admin: Terima Asset dan pilih lokasi gudang per asset]
     M --&gt; N[Asset lama ke gudang: tersedia atau rusak]
     M --&gt; O[Asset pengganti ke karyawan: terpakai]
-    N --&gt; P[asset_log retur_karyawan, disetujui / selesai]
+    N --&gt; P[asset_trx_log retur_karyawan, disetujui / selesai]
     O --&gt; P
 </pre></div>
 <hr />
@@ -706,7 +706,7 @@ Admin: Terima Asset (pilih lokasi gudang per asset)
     CA-&gt;&gt;R: terimaAdmin() lalu finalizeHandover()
     R-&gt;&gt;DB: UPDATE asset lama gudang tersedia atau rusak, id_asset_lokasi_m
     R-&gt;&gt;DB: UPDATE asset pengganti terpakai karyawan
-    R-&gt;&gt;DB: INSERT asset_log retur_karyawan, UPDATE header selesai
+    R-&gt;&gt;DB: INSERT asset_trx_log retur_karyawan, UPDATE header selesai
     CA-&gt;&gt;N: retur.diterima_admin (karyawan)
 </pre></div>
 <hr />
@@ -863,7 +863,7 @@ Admin: Terima Asset (pilih lokasi gudang per asset)
 <td>Admin &amp; mutex</td>
 </tr>
 <tr>
-<td><code>asset_log</code></td>
+<td><code>asset_trx_log</code></td>
 <td>Log</td>
 <td><code>retur_karyawan</code></td>
 </tr>
@@ -884,8 +884,8 @@ Admin: Terima Asset (pilih lokasi gudang per asset)
     ASSET_TRX_RETUR_KARYAWAN_ITEM |o--o| ASSET_TRX_RETUR_KARYAWAN_ITEM : &quot;parent_id (pengganti)&quot;
     ASSET_DATA ||--o{ ASSET_TRX_RETUR_KARYAWAN_ITEM : &quot;id_asset_data&quot;
     DATA_KARYAWAN ||--o{ ASSET_TRX_RETUR_KARYAWAN : &quot;id_karyawan (logis)&quot;
-    ASSET_DATA ||--o{ ASSET_LOG : &quot;id_asset_data&quot;
-    ASSET_TRX_RETUR_KARYAWAN ||--o{ ASSET_LOG : &quot;id_transaksi (logis)&quot;
+    ASSET_DATA ||--o{ ASSET_TRX_LOG : &quot;id_asset_data&quot;
+    ASSET_TRX_RETUR_KARYAWAN ||--o{ ASSET_TRX_LOG : &quot;id_transaksi (logis)&quot;
 
     ASSET_TRX_RETUR_KARYAWAN {
         varchar id_asset_trx_retur_karyawan PK
@@ -915,8 +915,8 @@ Admin: Terima Asset (pilih lokasi gudang per asset)
         varchar id_pemegang_asset
         varchar ket_rusak
     }
-    ASSET_LOG {
-        varchar id_asset_log PK
+    ASSET_TRX_LOG {
+        varchar id_asset_trx_log PK
         varchar id_asset_data FK
         enum jenis_log
         varchar id_transaksi
@@ -1154,10 +1154,10 @@ Admin: Terima Asset (pilih lokasi gudang per asset)
 </tr>
 </tbody>
 </table></div>
-<h3>18.3 asset_data &amp; asset_log</h3>
+<h3>18.3 asset_data &amp; asset_trx_log</h3>
 <ul>
 <li><code>asset_data</code>: <code>pemegang_asset</code>, <code>id_pemegang_asset</code>, <code>status_asset</code> (terpakai/dipinjam/tersedia/rusak/proses), <code>ket_rusak</code>, <code>kondisi_awal</code>, <code>tgl_update</code>, <code>user_update</code>.</li>
-<li><code>asset_log</code> (<code>jenis_log = retur_karyawan</code>, <code>nama_tabel_transaksi = asset_trx_retur_karyawan</code>):</li>
+<li><code>asset_trx_log</code> (<code>jenis_log = retur_karyawan</code>, <code>nama_tabel_transaksi = asset_trx_retur_karyawan</code>):</li>
 </ul>
 <div class="table-wrap"><table>
 <thead>
@@ -1653,7 +1653,7 @@ INSERT notif_data
 <p>Pesan umum validasi: "Data penerimaan retur belum lengkap." Database impact:</p>
 <div class="code"><span class="code-lang">Alur</span><pre><code class="language-text">UPDATE asset_data (asal → tersedia/rusak @gudang + id_asset_lokasi_m; pengganti → terpakai @karyawan, id_asset_lokasi_m = NULL)
 UPDATE asset_trx_retur_karyawan_item (id_asset_lokasi_m_tujuan)
-INSERT asset_log (retur_karyawan)
+INSERT asset_trx_log (retur_karyawan)
 UPDATE asset_trx_retur_karyawan (status_transaksi selesai, tgl/jam_serah_terima)
 INSERT notif_data
 </code></pre></div>
@@ -2134,7 +2134,7 @@ INSERT notif_data
 <td>Terima Asset + Lokasi Tujuan Asset</td>
 <td><code>items[].id_asset_lokasi_m</code></td>
 <td><code>resolveItemLocations</code> + <code>finalizeHandover</code></td>
-<td>header / item / asset_data / asset_log</td>
+<td>header / item / asset_data / asset_trx_log</td>
 <td>selesai, tgl/jam_serah_terima / status &amp; pemegang / retur_karyawan</td>
 </tr>
 </tbody>
@@ -2415,7 +2415,7 @@ INSERT notif_data
 <tr>
 <td>Perubahan asset</td>
 <td style="text-align: center;">✅</td>
-<td><code>asset_log retur_karyawan</code> (asal &amp; pengganti)</td>
+<td><code>asset_trx_log retur_karyawan</code> (asal &amp; pengganti)</td>
 </tr>
 <tr>
 <td>Histori status</td>
@@ -2911,7 +2911,7 @@ Retur (pengajuan → disetujui → selesai) ──► Notifikasi
       ↓ Terima Asset
 Asset lama → gudang (tersedia / rusak)  ·  Asset pengganti (dari gudang) → karyawan
       ↓
-asset_log retur_karyawan
+asset_trx_log retur_karyawan
 
 Terkait:
   - Kerusakan &amp; Upgrade: menolak asset yang sedang diretur (hasActiveReturAsset)
@@ -3023,9 +3023,747 @@ Admin: Ganti Asset → pilih laptop pengganti
   → konfirmasiAdmin(): itemRequiresReplacement = true → INSERT item (parent_id) → asset_data pengganti = proses
 Admin: Terima Asset (pilih gudang per asset)
   → finalizeHandover(): asset lama → tersedia @gudang pilihan admin, pengganti → terpakai @karyawan (lokasi dikosongkan)
-  → asset_log retur_karyawan (2 baris)
+  → asset_trx_log retur_karyawan (2 baris)
   → Detail: items[].asset_pengganti → UI &quot;Asset Pengganti&quot;
 </code></pre></div>
+<h3>45.4 Walkthrough Lengkap dengan Contoh Data</h3>
+<p>Bagian ini mengikuti <strong>satu retur dari pengajuan sampai asset diterima gudang</strong>, langkah demi langkah: apa yang dilakukan pengguna di mobile, apa yang dikirim, apa yang diproses API, dan apa yang tersimpan di database. Data bersifat <strong>sintetis</strong>, tetapi format ID, nama kolom, urutan proses, label status, dan pesan diambil dari kode (<code>AssetReturKaryawan_m</code>, <code>AssetKaryawanRetur_c</code>, <code>AssetAdminRetur_c</code>, <code>AssetNotification</code>).</p>
+<p><strong>Skenario:</strong> Rina memegang laptop dan keyboard. Ia meretur laptop karena rusak <strong>dengan pengganti</strong>, dan keyboard karena <strong>tidak digunakan</strong>. Admin menyetujui keduanya, memilih laptop pengganti, dan menjadwalkan serah terima. Admin lalu menerima asset dan memilih gudang tujuan per asset.</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th style="text-align: center;">Langkah</th>
+<th>Pelaku</th>
+<th>Aksi</th>
+<th>Endpoint</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: center;">0</td>
+<td>Karyawan</td>
+<td>Membuka form, memuat asset milik sendiri</td>
+<td>API-006 <code>GET /asset/karyawan/retur/options</code></td>
+</tr>
+<tr>
+<td style="text-align: center;">1</td>
+<td>Karyawan</td>
+<td><strong>Ajukan Retur</strong> (2 asset, alasan berbeda)</td>
+<td>API-008 <code>POST /asset/karyawan/retur</code></td>
+</tr>
+<tr>
+<td style="text-align: center;">2</td>
+<td>Admin</td>
+<td>Memuat opsi pengganti</td>
+<td>API-001 <code>GET /asset/retur-karyawan/options</code></td>
+</tr>
+<tr>
+<td style="text-align: center;">3</td>
+<td>Admin</td>
+<td>Setujui kedua asset, pilih pengganti, jadwalkan, <strong>Submit</strong></td>
+<td>API-004 <code>POST /asset/retur-karyawan/{id}/konfirmasi</code></td>
+</tr>
+<tr>
+<td style="text-align: center;">4</td>
+<td>Admin</td>
+<td><strong>Terima Asset</strong> + lokasi gudang per asset</td>
+<td>API-005 <code>POST /asset/retur-karyawan/{id}/terima</code></td>
+</tr>
+</tbody>
+</table></div>
+<h4>Data awal</h4>
+<p>Company <code>CMP001</code>. Pengajuan 22 Oktober 2026, periode ID <code>202610</code>. Belum ada retur, log, atau notifikasi pada periode ini.</p>
+<p><strong><code>data_karyawan</code></strong></p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>id_karyawan</th>
+<th>nik</th>
+<th>nama_lengkap</th>
+<th>Peran</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>KRY0004</td>
+<td>EMP-004</td>
+<td>Rina Contoh</td>
+<td>Pemohon retur, pemegang asset</td>
+</tr>
+<tr>
+<td>KRY0099</td>
+<td>ADM-001</td>
+<td>Siti Admin</td>
+<td>Admin Asset (aktor)</td>
+</tr>
+<tr>
+<td>KRY0100</td>
+<td>ADM-002</td>
+<td>Rudi Admin</td>
+<td>Admin Asset lain (ikut menerima notifikasi)</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong><code>asset_data</code></strong></p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Kode</th>
+<th>id_asset_data</th>
+<th>nama_asset</th>
+<th>status_asset</th>
+<th>pemegang_asset</th>
+<th>id_pemegang_asset</th>
+<th>id_asset_lokasi_m</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>A12</td>
+<td>CMP00120260100012 (LPT-0012)</td>
+<td>Laptop 14 inch</td>
+<td>terpakai</td>
+<td>karyawan</td>
+<td>KRY0004</td>
+<td>NULL</td>
+</tr>
+<tr>
+<td>A13</td>
+<td>CMP00120260100013 (KBD-0003)</td>
+<td>Keyboard Mekanik</td>
+<td>terpakai</td>
+<td>karyawan</td>
+<td>KRY0004</td>
+<td>NULL</td>
+</tr>
+<tr>
+<td>A15</td>
+<td>CMP00120260100015 (LPT-0015)</td>
+<td>Laptop 14 inch</td>
+<td>tersedia</td>
+<td>gudang</td>
+<td><code>''</code></td>
+<td>CMP001202601001 (Gudang Pusat)</td>
+</tr>
+</tbody>
+</table></div>
+<p>Semua <code>kondisi_awal = normal</code>. Lokasi gudang tujuan retur: <code>CMP001202610001</code> = Gudang Servis (untuk asset rusak) dan <code>CMP001202601001</code> = Gudang Pusat.</p>
+<p>Penomoran: header dan item <code>id_company + YYYYMM + 3 digit</code>, <code>no_trx = KRY04-YYYYMMNNN</code>; log dan notifikasi 5 digit. <strong>Pengajuan retur tidak mengubah <code>asset_data</code></strong>; asset hanya dijaga lewat pengecekan retur aktif.</p>
+<hr />
+<h4>Langkah 0 — Karyawan membuka form</h4>
+<p><strong>Mobile:</strong> Asset Saya → menu <strong>Pengembalian</strong> → <strong>+</strong> → <code>/asset_tambah_retur</code> → <code>LoadAssetReturOptions</code> → <code>AssetReturApi.getOptions()</code>.</p>
+<p><strong>Dikirim</strong></p>
+<div class="code"><span class="code-lang">HTTP</span><pre><code class="language-http">GET /asset/karyawan/retur/options
+Authorization: Bearer &lt;access_token_rina&gt;
+</code></pre></div>
+<p><strong>Diproses API</strong> (<code>AssetReturKaryawan_m::getOptions</code>): asset yang dipegang karyawan sendiri (<code>pemegang_asset = karyawan</code>, <code>id_pemegang_asset = KRY0004</code>), <strong>bukan <code>dipinjam</code></strong>, tidak sedang di retur aktif, dan tidak sedang di Upgrade atau Kerusakan; ditambah daftar alasan.</p>
+<p><strong>Database:</strong> hanya <code>SELECT</code>.</p>
+<p><strong>Diterima mobile:</strong> <code>alasan_retur[]</code> (rusak = Asset Rusak, tidak_digunakan = Asset Tidak Digunakan, tukar_unit = Tukar Unit) dan <code>assets[]</code> (A12, A13) seperti API-006.</p>
+<h4>Langkah 1 — Rina mengajukan retur</h4>
+<p><strong>Mobile:</strong> Rina memilih kedua asset. Laptop: alasan <strong>Asset Rusak</strong>, <strong>Dengan Pengganti</strong>, keterangan "Mati mendadak saat dipakai". Keyboard: <strong>Asset Tidak Digunakan</strong>. Catatan tambahan diisi, lalu <strong>Ajukan Retur</strong> → <code>AssetReturApi.store(AssetReturRequest)</code>.</p>
+<p><strong>Dikirim</strong></p>
+<div class="code"><span class="code-lang">HTTP</span><pre><code class="language-http">POST /asset/karyawan/retur
+</code></pre></div>
+<div class="code"><span class="code-lang">JSON</span><pre><code class="language-json">{
+  &quot;keterangan&quot;: &quot;Laptop sering mati mendadak&quot;,
+  &quot;items&quot;: [
+    { &quot;id_asset_data&quot;: &quot;CMP00120260100012&quot;, &quot;alasan_retur&quot;: &quot;rusak&quot;,
+      &quot;rusak_dengan_pengganti&quot;: 2, &quot;ket_retur&quot;: &quot;Mati mendadak saat dipakai&quot; },
+    { &quot;id_asset_data&quot;: &quot;CMP00120260100013&quot;, &quot;alasan_retur&quot;: &quot;tidak_digunakan&quot;,
+      &quot;rusak_dengan_pengganti&quot;: 0, &quot;ket_retur&quot;: &quot;&quot; }
+  ]
+}
+</code></pre></div>
+<p><strong>Diproses API</strong> (<code>AssetKaryawanRetur_c::storeReturSaya</code> → <code>AssetReturKaryawan_m::store</code>, satu <code>DB::transaction</code>)
+1. Validasi: <code>items</code> minimal 1; <code>id_asset_data</code> unik; <code>alasan_retur</code> ∈ rusak/tidak_digunakan/tukar_unit; <code>rusak_dengan_pengganti</code> ∈ 0/1/2; <code>ket_retur</code> maks 255.
+2. <code>lockCompany</code>; <code>findActiveKaryawan("KRY0004")</code> (<code>id_karyawan</code> dari JWT).
+3. <code>normalizeItems</code> menerapkan aturan per alasan: <strong>rusak</strong> wajib memilih 1 atau 2 dan keterangan; <strong>tidak_digunakan</strong> dipaksa <code>rusak_dengan_pengganti = 0</code>; <strong>tukar_unit</strong> wajib alasan.
+4. Asset diambil <code>FOR UPDATE</code> dengan syarat dipegang karyawan ini; jumlah harus sama.
+5. Asset tidak boleh <code>dipinjam</code> (gunakan Pengembalian Peminjaman), tidak boleh di retur aktif lain, offboarding, pemeliharaan, upgrade, atau laporan kerusakan.
+6. Generate ID: header urutan 1 → <code>CMP001202610001</code>, <code>no_trx = KRY04-202610001</code>; item mulai urutan 1.
+7. INSERT header (<code>pengajuan</code> / <code>proses</code>, jadwal nol, <code>flag_jadwalkan = '0'</code>) dan INSERT item (<code>parent_id</code> NULL, <code>status_approval</code> NULL, snapshot nama/deskripsi/kategori).
+8. Setelah commit: notifikasi <code>retur.diajukan</code> ke seluruh admin.</p>
+<p><strong>Hasil database</strong></p>
+<p><code>asset_trx_retur_karyawan</code></p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Kolom</th>
+<th>Nilai</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>id_asset_trx_retur_karyawan</td>
+<td>CMP001202610001</td>
+</tr>
+<tr>
+<td>no_trx</td>
+<td>KRY04-202610001</td>
+</tr>
+<tr>
+<td>keterangan / ket_tolak</td>
+<td>Laptop sering mati mendadak / <code>''</code></td>
+</tr>
+<tr>
+<td>id_karyawan / nik_karyawan / nama_karyawan</td>
+<td>KRY0004 / EMP-004 / Rina Contoh</td>
+</tr>
+<tr>
+<td>tgl_pengajuan</td>
+<td>2026-10-22</td>
+</tr>
+<tr>
+<td>tgl_pengambilan / jam_pengambilan / flag_jadwalkan</td>
+<td>0000-00-00 / 00:00:00 / 0</td>
+</tr>
+<tr>
+<td>tgl_serah_terima / jam_serah_terima / keterangan_serah_terima</td>
+<td>0000-00-00 / 00:00:00 / <code>''</code></td>
+</tr>
+<tr>
+<td>status_approval / status_transaksi</td>
+<td><strong>pengajuan</strong> / <strong>proses</strong></td>
+</tr>
+<tr>
+<td>user_approval / tgl_approval</td>
+<td><code>''</code> / NULL</td>
+</tr>
+<tr>
+<td>tgl_input / user_input</td>
+<td>2026-10-22 09:00:00 / EMP-004 - Rina Contoh</td>
+</tr>
+</tbody>
+</table></div>
+<p><code>asset_trx_retur_karyawan_item</code></p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>id_asset_trx_retur_item</th>
+<th>parent_id</th>
+<th>id_asset_data</th>
+<th>nama_asset</th>
+<th>alasan_retur</th>
+<th style="text-align: center;">rusak_dengan_pengganti</th>
+<th>ket_retur</th>
+<th>status_approval</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>CMP001202610001</td>
+<td>NULL</td>
+<td>A12</td>
+<td>Laptop 14 inch</td>
+<td>rusak</td>
+<td style="text-align: center;">2</td>
+<td>Mati mendadak saat dipakai</td>
+<td>NULL</td>
+</tr>
+<tr>
+<td>CMP001202610002</td>
+<td>NULL</td>
+<td>A13</td>
+<td>Keyboard Mekanik</td>
+<td>tidak_digunakan</td>
+<td style="text-align: center;">0</td>
+<td><code>''</code></td>
+<td>NULL</td>
+</tr>
+</tbody>
+</table></div>
+<p><code>asset_data</code>: <strong>tidak berubah</strong> (A12 dan A13 tetap <code>terpakai</code> @karyawan).</p>
+<p><code>notif_data</code> (2 baris, satu per admin)</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>id_notif</th>
+<th>id_karyawan</th>
+<th>id_ref</th>
+<th>rute</th>
+<th>ket_notif_id</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>CMP00120261000001</td>
+<td>KRY0099</td>
+<td>CMP001202610001</td>
+<td>asset_admin_detail_retur</td>
+<td>Rina Contoh mengajukan retur asset KRY04-202610001.</td>
+</tr>
+<tr>
+<td>CMP00120261000002</td>
+<td>KRY0100</td>
+<td>CMP001202610001</td>
+<td>asset_admin_detail_retur</td>
+<td>Rina Contoh mengajukan retur asset KRY04-202610001.</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>Diterima mobile</strong> (HTTP 201)</p>
+<div class="code"><span class="code-lang">JSON</span><pre><code class="language-json">{ &quot;code&quot;: &quot;CREATED&quot;, &quot;message&quot;: &quot;Pengajuan retur asset berhasil dikirim.&quot;,
+  &quot;data&quot;: { &quot;id&quot;: &quot;CMP001202610001&quot;, &quot;no_trx&quot;: &quot;KRY04-202610001&quot;, &quot;status_approval&quot;: &quot;pengajuan&quot;,
+            &quot;status_transaksi&quot;: &quot;proses&quot;, &quot;status_label&quot;: &quot;Menunggu Konfirmasi&quot;, &quot;tab&quot;: &quot;pengajuan&quot; } }
+</code></pre></div>
+<h4>Langkah 2 — Admin membuka detail dan memuat opsi pengganti</h4>
+<p><strong>Mobile:</strong> notifikasi membuka <code>/asset_admin_detail_retur</code> → <code>LoadAssetReturAdminDetail(id)</code> (<code>GET /asset/retur-karyawan/CMP001202610001</code>) dan <code>LoadAssetReturAdminOptions</code> (<code>GET /asset/retur-karyawan/options</code>).</p>
+<p><strong>Diproses API:</strong> detail hanya <code>SELECT</code> dan memuat item, <code>lokasi_gudang[]</code>, serta <code>karyawan.id_cabang</code>. Opsi pengganti memakai <code>AssetAdmin_m::getOnboardingOptions</code>: asset <code>tersedia</code> di <code>gudang</code> (A15) dan pohon kategori. <strong>Database:</strong> tidak berubah.</p>
+<h4>Langkah 3 — Admin memutuskan per asset</h4>
+<p><strong>Mobile:</strong> admin menekan <strong>Setujui</strong> pada keyboard, dan untuk laptop <strong>Ganti Asset</strong> → memilih LPT-0015. <strong>Konfirmasi Asset</strong> → sheet <strong>Konfirmasi Retur Asset</strong>: Metode <strong>Dijadwalkan</strong>, tanggal 23 Okt 2026, jam 10:00, catatan "Bawa charger" → <strong>Submit</strong> → <code>AssetReturAdminApi.konfirmasi</code>.</p>
+<p><strong>Dikirim</strong></p>
+<div class="code"><span class="code-lang">HTTP</span><pre><code class="language-http">POST /asset/retur-karyawan/CMP001202610001/konfirmasi
+</code></pre></div>
+<div class="code"><span class="code-lang">JSON</span><pre><code class="language-json">{
+  &quot;items&quot;: [
+    { &quot;id_item&quot;: &quot;CMP001202610001&quot;, &quot;status_item&quot;: &quot;disetujui&quot;, &quot;ket_tolak&quot;: &quot;&quot;,
+      &quot;id_asset_pengganti&quot;: &quot;CMP00120260100015&quot; },
+    { &quot;id_item&quot;: &quot;CMP001202610002&quot;, &quot;status_item&quot;: &quot;disetujui&quot;, &quot;ket_tolak&quot;: &quot;&quot; }
+  ],
+  &quot;metode_serah_terima&quot;: &quot;dijadwalkan&quot;,
+  &quot;tgl_pengambilan&quot;: &quot;2026-10-23&quot;,
+  &quot;jam_pengambilan&quot;: &quot;10:00&quot;,
+  &quot;keterangan_serah_terima&quot;: &quot;Bawa charger&quot;
+}
+</code></pre></div>
+<p><strong>Diproses API</strong> (<code>AssetAdminRetur_c::konfirmasiReturKaryawan</code> → <code>konfirmasiAdmin</code>)
+1. Validasi <code>items</code> (id unik, <code>status_item</code> ∈ disetujui/ditolak, <code>ket_tolak</code> wajib bila ditolak, <code>id_asset_pengganti</code> unik); <code>metode_serah_terima</code> ∈ dijadwalkan/langsung; tanggal <code>Y-m-d</code> dan jam <code>H:i</code>. Cek admin.
+2. <code>lockCompany</code>; header <code>FOR UPDATE</code>, harus <code>pengajuan</code> + <code>proses</code> ("Retur asset sudah tidak menunggu konfirmasi."). Item asal <code>FOR UPDATE</code>.
+3. <strong>Seluruh item asal</strong> harus diputuskan. Asset asal masih dipegang Rina dan bukan pinjaman.
+4. Per item disetujui, aturan pengganti (<code>itemRequiresReplacement</code>): laptop (rusak dengan pengganti = 2) <strong>wajib</strong> punya pengganti; keyboard (tidak digunakan) <strong>dilarang</strong> punya pengganti. Pengganti harus unik dan <code>tersedia</code> @gudang (<code>getLockedAssets</code>); tidak ada syarat kategori sama.
+5. Karena ada yang disetujui: metode wajib valid; bila <code>dijadwalkan</code>, tanggal dan jam wajib dan tanggal tidak boleh sebelum <code>tgl_pengajuan</code> (23 ≥ 22 lolos).
+6. UPDATE tiap item asal (<code>status_approval</code>, <code>ket_tolak</code>).
+7. INSERT item pengganti: <code>parent_id</code> = item laptop, <code>status_approval = disetujui</code>, <code>alasan_retur</code> disalin dari item asal, <code>rusak_dengan_pengganti = 0</code>. Urutan item lanjut dari yang terakhir (→ 3).
+8. UPDATE <code>asset_data</code> pengganti → <code>proses</code>.
+9. UPDATE header: <code>status_approval = disetujui</code>, <code>status_transaksi</code> tetap <code>proses</code>, <code>flag_jadwalkan = 1</code>, jadwal, <code>keterangan_serah_terima</code>, <code>user_approval</code>, <code>tgl_approval</code>.
+10. Notifikasi <code>retur.dikonfirmasi</code> ke karyawan.</p>
+<p><strong>Hasil database</strong></p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Tabel</th>
+<th>Perubahan</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>item <code>…001</code> (laptop)</td>
+<td>status_approval NULL → <strong>disetujui</strong>; ket_tolak <code>''</code></td>
+</tr>
+<tr>
+<td>item <code>…002</code> (keyboard)</td>
+<td>status_approval NULL → <strong>disetujui</strong>; ket_tolak <code>''</code></td>
+</tr>
+<tr>
+<td>item baru</td>
+<td><code>CMP001202610003</code>: parent_id <strong>CMP001202610001</strong>, id_asset_data A15, nama_asset Laptop 14 inch, status_approval disetujui, alasan_retur rusak, rusak_dengan_pengganti 0, ket_retur <code>''</code>, user_input = ADM-001 - Siti Admin</td>
+</tr>
+<tr>
+<td>asset_data A15</td>
+<td>status_asset <code>tersedia → proses</code>; user_update = ADM-001 - Siti Admin</td>
+</tr>
+<tr>
+<td>header</td>
+<td>status_approval <code>pengajuan → disetujui</code>; status_transaksi tetap proses; flag_jadwalkan 1; tgl_pengambilan 2026-10-23; jam_pengambilan 10:00:00; keterangan_serah_terima = Bawa charger; user_approval = ADM-001 - Siti Admin; tgl_approval = 2026-10-22 11:00:00</td>
+</tr>
+<tr>
+<td>asset_data A12, A13</td>
+<td>Tidak berubah (masih <code>terpakai</code> @karyawan)</td>
+</tr>
+<tr>
+<td>notif_data</td>
+<td>+ <code>CMP00120261000003</code>: KRY0004, id_ref <code>CMP001202610001</code>, rute <code>asset_detail_retur</code>, "Retur asset KRY04-202610001 telah dikonfirmasi admin."</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>Diterima mobile</strong> (HTTP 200)</p>
+<div class="code"><span class="code-lang">JSON</span><pre><code class="language-json">{ &quot;code&quot;: &quot;UPDATED&quot;, &quot;message&quot;: &quot;Retur asset berhasil dikonfirmasi.&quot;,
+  &quot;data&quot;: { &quot;id&quot;: &quot;CMP001202610001&quot;, &quot;no_trx&quot;: &quot;KRY04-202610001&quot;, &quot;status_approval&quot;: &quot;disetujui&quot;,
+            &quot;status_transaksi&quot;: &quot;proses&quot;, &quot;status_label&quot;: &quot;Dikonfirmasi&quot;, &quot;tab&quot;: &quot;dikonfirmasi&quot;,
+            &quot;jumlah_disetujui&quot;: 2, &quot;jumlah_ditolak&quot;: 0, &quot;jumlah_pengganti&quot;: 1 } }
+</code></pre></div>
+<p>Kartu Rina menampilkan "Jadwal Serah Terima Retur Asset: 23 Okt 2026, jam 10:00". Karyawan <strong>tidak</strong> punya tombol Terima Asset (dihapus v1.4); penyelesaian hanya oleh admin.</p>
+<h4>Langkah 4 — Admin menerima asset</h4>
+<p><strong>Mobile:</strong> setelah serah terima fisik, admin membuka detail (status Dikonfirmasi) → <strong>Terima Asset</strong> → dialog <strong>Lokasi Tujuan Asset</strong>: laptop → <strong>Gudang Servis</strong>, keyboard → <strong>Gudang Pusat</strong> (tombol aktif setelah semua asset asal dipilih) → <code>AssetReturAdminApi.terima</code>.</p>
+<p><strong>Dikirim</strong></p>
+<div class="code"><span class="code-lang">HTTP</span><pre><code class="language-http">POST /asset/retur-karyawan/CMP001202610001/terima
+</code></pre></div>
+<div class="code"><span class="code-lang">JSON</span><pre><code class="language-json">{
+  &quot;items&quot;: [
+    { &quot;id_asset_trx_retur_item&quot;: &quot;CMP001202610001&quot;, &quot;id_asset_lokasi_m&quot;: &quot;CMP001202610001&quot; },
+    { &quot;id_asset_trx_retur_item&quot;: &quot;CMP001202610002&quot;, &quot;id_asset_lokasi_m&quot;: &quot;CMP001202601001&quot; }
+  ]
+}
+</code></pre></div>
+<p><code>items[]</code> hanya memuat <strong>item asal</strong> yang disetujui, masing-masing tepat satu kali.</p>
+<p><strong>Diproses API</strong> (<code>terimaAdmin</code> → <code>finalizeHandover</code>)
+1. Cek admin ("Pengguna tidak terdaftar sebagai admin asset."); <code>lockCompany</code>.
+2. Header harus <code>disetujui</code> + <code>proses</code> ("Retur asset belum dikonfirmasi atau sudah selesai.").
+3. Item asal yang disetujui (min 1); <code>resolveItemLocations</code>: tiap item asal punya lokasi bertipe <code>gudang</code>, company yang sama, tepat satu kali.
+4. Semua asset dikunci. Asset asal masih dipegang Rina dan bukan <code>dipinjam</code>; asset pengganti harus masih <code>proses</code> @gudang ("Asset pengganti sudah tidak siap diserahterimakan.").
+5. Per item asal: UPDATE <code>asset_data</code> (<strong>rusak</strong> → <code>status_asset = rusak</code> dan <code>ket_rusak = ket_retur</code>; selain itu <code>tersedia</code>; keduanya <code>gudang</code>, <code>id_pemegang_asset = ''</code>, <code>id_asset_lokasi_m</code> pilihan admin), UPDATE item <code>id_asset_lokasi_m_tujuan</code>, siapkan log.
+6. Bila ada pengganti: UPDATE <code>asset_data</code> pengganti → <code>terpakai</code>, <code>karyawan</code>, <code>id_pemegang_asset = KRY0004</code>, <strong><code>id_asset_lokasi_m = NULL</code></strong>, siapkan log.
+7. INSERT <code>asset_trx_log</code>; UPDATE header: <code>status_transaksi = selesai</code>, <code>tgl_serah_terima</code> dan <code>jam_serah_terima</code> = <strong>waktu Terima Asset diklik</strong>.
+8. Notifikasi <code>retur.diterima_admin</code> ke karyawan.</p>
+<p><strong>Hasil database</strong></p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Tabel</th>
+<th>Perubahan</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>asset_data A12 (laptop rusak)</td>
+<td>status_asset <code>terpakai → rusak</code>; pemegang_asset <code>karyawan → gudang</code>; id_pemegang_asset <code>KRY0004 → ''</code>; id_asset_lokasi_m <code>NULL → CMP001202610001</code>; ket_rusak = Mati mendadak saat dipakai; user_update = ADM-001 - Siti Admin</td>
+</tr>
+<tr>
+<td>asset_data A13 (keyboard)</td>
+<td>status_asset <code>terpakai → tersedia</code>; pemegang_asset gudang; id_pemegang_asset <code>''</code>; id_asset_lokasi_m <code>NULL → CMP001202601001</code>; ket_rusak <code>''</code></td>
+</tr>
+<tr>
+<td>asset_data A15 (pengganti)</td>
+<td>status_asset <code>proses → terpakai</code>; pemegang_asset <code>gudang → karyawan</code>; id_pemegang_asset <code>'' → KRY0004</code>; id_asset_lokasi_m <code>CMP001202601001 → NULL</code></td>
+</tr>
+<tr>
+<td>item <code>…001</code> / <code>…002</code></td>
+<td>id_asset_lokasi_m_tujuan = CMP001202610001 / CMP001202601001</td>
+</tr>
+<tr>
+<td>header</td>
+<td>status_transaksi <code>proses → selesai</code>; tgl_serah_terima 2026-10-23; jam_serah_terima 10:15:00; tgl_update/user_update = waktu itu / ADM-001 - Siti Admin; status_approval tetap disetujui</td>
+</tr>
+</tbody>
+</table></div>
+<p><code>asset_trx_log</code> (3 baris; urutan mengikuti item asal, pengganti dicatat tepat setelah asal-nya)</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>id_asset_trx_log</th>
+<th>id_asset_data</th>
+<th>jenis_log</th>
+<th>kondisi awal → akhir</th>
+<th>posisi awal → akhir</th>
+<th>id_pemegang / nama_pemegang</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>CMP00120261000001</td>
+<td>A12</td>
+<td>retur_karyawan</td>
+<td>normal → <strong>rusak</strong></td>
+<td>karyawan → gudang</td>
+<td><code>''</code> / <code>''</code></td>
+</tr>
+<tr>
+<td>CMP00120261000002</td>
+<td>A15 (pengganti)</td>
+<td>retur_karyawan</td>
+<td>normal → normal</td>
+<td>gudang → karyawan</td>
+<td>KRY0004 / Rina Contoh</td>
+</tr>
+<tr>
+<td>CMP00120261000003</td>
+<td>A13</td>
+<td>retur_karyawan</td>
+<td>normal → normal</td>
+<td>karyawan → gudang</td>
+<td><code>''</code> / <code>''</code></td>
+</tr>
+</tbody>
+</table></div>
+<p>Semua baris: <code>id_transaksi = CMP001202610001</code>, <code>nama_tabel_transaksi = asset_trx_retur_karyawan</code>, <code>user_input = ADM-001 - Siti Admin</code>.</p>
+<p><code>notif_data</code>: <code>CMP00120261000004</code> ke KRY0004, id_ref <code>CMP001202610001</code>, rute <code>asset_detail_retur</code>, "Asset retur KRY04-202610001 telah diterima admin."</p>
+<p><strong>Diterima mobile</strong> (HTTP 200)</p>
+<div class="code"><span class="code-lang">JSON</span><pre><code class="language-json">{ &quot;code&quot;: &quot;UPDATED&quot;, &quot;message&quot;: &quot;Retur asset berhasil diterima.&quot;,
+  &quot;data&quot;: { &quot;id&quot;: &quot;CMP001202610001&quot;, &quot;no_trx&quot;: &quot;KRY04-202610001&quot;, &quot;status_approval&quot;: &quot;disetujui&quot;,
+            &quot;status_transaksi&quot;: &quot;selesai&quot;, &quot;status_label&quot;: &quot;Selesai&quot;, &quot;tab&quot;: &quot;diterima&quot;,
+            &quot;jumlah_diterima&quot;: 2, &quot;jumlah_pengganti&quot;: 1 } }
+</code></pre></div>
+<p>Laptop pengganti kini muncul di Asset Saya Rina, sedangkan laptop rusak menjadi kandidat Perbaikan, Garansi, atau Disposal.</p>
+<hr />
+<h4>Kondisi akhir data</h4>
+<p><code>asset_trx_retur_karyawan</code></p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>id</th>
+<th>no_trx</th>
+<th>status_approval</th>
+<th>status_transaksi</th>
+<th>tgl_approval</th>
+<th>tgl_serah_terima</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>CMP001202610001</td>
+<td>KRY04-202610001</td>
+<td>disetujui</td>
+<td>selesai</td>
+<td>2026-10-22 11:00:00</td>
+<td>2026-10-23 10:15:00</td>
+</tr>
+</tbody>
+</table></div>
+<p><code>asset_trx_retur_karyawan_item</code></p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>id</th>
+<th>parent_id</th>
+<th>asset</th>
+<th>alasan</th>
+<th>status_approval</th>
+<th>id_asset_lokasi_m_tujuan</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>CMP001202610001</td>
+<td>NULL</td>
+<td>A12 laptop</td>
+<td>rusak (dengan pengganti)</td>
+<td>disetujui</td>
+<td>CMP001202610001</td>
+</tr>
+<tr>
+<td>CMP001202610002</td>
+<td>NULL</td>
+<td>A13 keyboard</td>
+<td>tidak_digunakan</td>
+<td>disetujui</td>
+<td>CMP001202601001</td>
+</tr>
+<tr>
+<td>CMP001202610003</td>
+<td>CMP001202610001</td>
+<td>A15 laptop pengganti</td>
+<td>rusak (salinan)</td>
+<td>disetujui</td>
+<td>–</td>
+</tr>
+</tbody>
+</table></div>
+<p><code>asset_data</code>: A12 → <code>rusak</code> @gudang servis; A13 → <code>tersedia</code> @gudang pusat; A15 → <code>terpakai</code> @KRY0004. <code>asset_trx_log</code>: 3 baris. <code>notif_data</code>: 4 baris.</p>
+<p><code>jumlah_asset</code> pada daftar hanya menghitung <strong>item asal</strong> (2), bukan pengganti.</p>
+<hr />
+<h4>Variasi</h4>
+<p><strong>Semua asset ditolak.</strong> Pada langkah 3, bila kedua item <code>ditolak</code> (alasan wajib per item): metode serah terima tidak diminta, header <code>status_approval = ditolak</code>, <code>status_transaksi = selesai</code>, <code>ket_tolak = "Seluruh asset retur ditolak."</code>, tidak ada pengganti, <code>asset_data</code> tidak berubah, notifikasi <code>retur.ditolak</code> ke karyawan, message "Retur asset berhasil ditolak.". Item yang ditolak tidak boleh memiliki pengganti.</p>
+<p><strong>Tolak sebagian.</strong> Bila hanya keyboard ditolak: header tetap <code>disetujui</code>/<code>proses</code>; pada langkah 4, <code>items[]</code> hanya memuat item asal yang <strong>disetujui</strong>, dan keyboard tidak disentuh (tetap <code>terpakai</code> @karyawan).</p>
+<p><strong>Serahkan langsung.</strong> <code>metode_serah_terima = "langsung"</code>: <code>flag_jadwalkan = 0</code>, <code>tgl_pengambilan</code> dan <code>jam_pengambilan</code> tetap <code>0000-00-00</code>/<code>00:00:00</code>; mobile menampilkan info serah langsung. Alurnya selanjutnya sama.</p>
+<p><strong>Tukar unit.</strong> Alasan <code>tukar_unit</code> wajib alasan dan selalu butuh pengganti; hasil asset asal saat diterima menjadi <code>tersedia</code> (bukan <code>rusak</code>), kecuali alasannya <code>rusak</code>.</p>
+<p><strong>Rusak tanpa pengganti.</strong> <code>rusak_dengan_pengganti = 1</code>: admin tidak boleh memilih pengganti; asset asal menjadi <code>rusak</code> saat diterima, karyawan tidak mendapat asset baru.</p>
+<hr />
+<h4>Kasus gagal yang umum</h4>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Situasi</th>
+<th>Langkah</th>
+<th style="text-align: center;">HTTP</th>
+<th>Pesan</th>
+<th>Perubahan database</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Asset bukan milik karyawan</td>
+<td>1</td>
+<td style="text-align: center;">422</td>
+<td>Satu atau beberapa asset bukan milik karyawan atau sudah tidak dapat diretur.</td>
+<td>Tidak ada</td>
+</tr>
+<tr>
+<td>Asset pinjaman</td>
+<td>1, 3, 4</td>
+<td style="text-align: center;">422</td>
+<td>Asset pinjaman tidak dapat diretur. Gunakan pengembalian peminjaman.</td>
+<td>Tidak ada</td>
+</tr>
+<tr>
+<td>Asset sedang di retur lain</td>
+<td>1</td>
+<td style="text-align: center;">422</td>
+<td>Satu atau beberapa asset sedang diproses pada retur lain.</td>
+<td>Tidak ada</td>
+</tr>
+<tr>
+<td>Asset di offboarding / pemeliharaan / upgrade / kerusakan</td>
+<td>1</td>
+<td style="text-align: center;">422</td>
+<td>Satu atau beberapa asset sedang diproses pada offboarding. / …pemeliharaan. / …upgrade. / …laporan kerusakan.</td>
+<td>Tidak ada</td>
+</tr>
+<tr>
+<td>Rusak tanpa pilihan pengganti</td>
+<td>1</td>
+<td style="text-align: center;">422</td>
+<td>Asset rusak wajib memilih tanpa atau dengan pengganti.</td>
+<td>Tidak ada</td>
+</tr>
+<tr>
+<td>Rusak tanpa keterangan</td>
+<td>1</td>
+<td style="text-align: center;">422</td>
+<td>Keterangan kerusakan asset wajib diisi.</td>
+<td>Tidak ada</td>
+</tr>
+<tr>
+<td>Tukar unit tanpa alasan</td>
+<td>1</td>
+<td style="text-align: center;">422</td>
+<td>Alasan tukar unit wajib diisi.</td>
+<td>Tidak ada</td>
+</tr>
+<tr>
+<td>Konfirmasi dua kali</td>
+<td>3</td>
+<td style="text-align: center;">422</td>
+<td>Retur asset sudah tidak menunggu konfirmasi.</td>
+<td>Tidak ada</td>
+</tr>
+<tr>
+<td>Ada item belum diputuskan</td>
+<td>3</td>
+<td style="text-align: center;">422</td>
+<td>Seluruh asset retur wajib dikonfirmasi.</td>
+<td>Tidak ada</td>
+</tr>
+<tr>
+<td>Tolak tanpa alasan</td>
+<td>3</td>
+<td style="text-align: center;">422</td>
+<td>Alasan penolakan asset wajib diisi.</td>
+<td>Tidak ada</td>
+</tr>
+<tr>
+<td>Asset sudah tidak dipegang karyawan</td>
+<td>3, 4</td>
+<td style="text-align: center;">422</td>
+<td>Satu atau beberapa asset sudah tidak dipegang oleh karyawan.</td>
+<td>Tidak ada</td>
+</tr>
+<tr>
+<td>Pengganti wajib tetapi kosong</td>
+<td>3</td>
+<td style="text-align: center;">422</td>
+<td>Asset pengganti wajib dipilih untuk retur ini.</td>
+<td>Tidak ada</td>
+</tr>
+<tr>
+<td>Pengganti pada alasan yang tidak butuh</td>
+<td>3</td>
+<td style="text-align: center;">422</td>
+<td>Alasan retur ini tidak memerlukan asset pengganti.</td>
+<td>Tidak ada</td>
+</tr>
+<tr>
+<td>Pengganti ditolak karena item ditolak</td>
+<td>3</td>
+<td style="text-align: center;">422</td>
+<td>Asset yang ditolak tidak boleh memiliki asset pengganti.</td>
+<td>Tidak ada</td>
+</tr>
+<tr>
+<td>Pengganti tidak tersedia</td>
+<td>3</td>
+<td style="text-align: center;">422</td>
+<td>Satu atau beberapa asset pengganti tidak tersedia.</td>
+<td>Tidak ada</td>
+</tr>
+<tr>
+<td>Metode / jadwal tidak valid</td>
+<td>3</td>
+<td style="text-align: center;">422</td>
+<td>Metode serah terima retur tidak valid. / Tanggal dan jam serah terima wajib diisi. / Tanggal serah terima tidak boleh sebelum tanggal pengajuan.</td>
+<td>Tidak ada</td>
+</tr>
+<tr>
+<td>Terima sebelum dikonfirmasi atau sesudah selesai</td>
+<td>4</td>
+<td style="text-align: center;">422</td>
+<td>Retur asset belum dikonfirmasi atau sudah selesai.</td>
+<td>Tidak ada</td>
+</tr>
+<tr>
+<td>Pengganti sudah tidak <code>proses</code></td>
+<td>4</td>
+<td style="text-align: center;">422</td>
+<td>Asset pengganti sudah tidak siap diserahterimakan.</td>
+<td>Tidak ada</td>
+</tr>
+<tr>
+<td>Lokasi gudang tidak lengkap atau tidak valid</td>
+<td>4</td>
+<td style="text-align: center;">422</td>
+<td>Lokasi gudang tujuan setiap asset wajib dipilih. / …tidak valid. / …tidak sesuai.</td>
+<td>Tidak ada</td>
+</tr>
+<tr>
+<td>Karyawan memanggil Terima (dihapus v1.4)</td>
+<td>4</td>
+<td style="text-align: center;">404</td>
+<td>Route tidak ada.</td>
+<td>Tidak ada</td>
+</tr>
+<tr>
+<td>Pengguna bukan admin asset</td>
+<td>2–4</td>
+<td style="text-align: center;">403 / 422</td>
+<td>Pengguna tidak memiliki akses admin asset. / Pengguna tidak terdaftar sebagai admin asset.</td>
+<td>Tidak ada</td>
+</tr>
+<tr>
+<td>Token kedaluwarsa</td>
+<td>semua</td>
+<td style="text-align: center;">401</td>
+<td>Token telah expired. Mobile me-refresh token sekali lalu mengulang request.</td>
+<td>Tidak ada</td>
+</tr>
+</tbody>
+</table></div>
+<p>Semua pelanggaran aturan dilempar sebagai <code>InvalidArgumentException</code> di dalam <code>DB::transaction</code>, sehingga seluruh perubahan request itu dibatalkan.</p>
+<h4>Ringkasan siapa mengerjakan apa</h4>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Tahap</th>
+<th>Mobile</th>
+<th>API</th>
+<th>Database</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Ajukan</td>
+<td>Pilih asset, alasan, pengganti rusak, keterangan; <code>AssetReturRequest</code></td>
+<td>Validasi kepemilikan, cek retur/offboarding/pemeliharaan/upgrade/kerusakan, insert</td>
+<td>header, item, <code>notif_data</code> (asset <strong>tidak</strong> dikunci)</td>
+</tr>
+<tr>
+<td>Konfirmasi</td>
+<td>Setujui/tolak/ganti per asset, sheet metode serah terima</td>
+<td>Aturan pengganti, jadwal, insert item pengganti, reservasi pengganti</td>
+<td>item, item pengganti, <code>asset_data</code> (pengganti → proses), header, <code>notif_data</code></td>
+</tr>
+<tr>
+<td>Terima Asset</td>
+<td>Dialog lokasi gudang per asset</td>
+<td>Validasi lokasi, pindahkan asset asal ke gudang, serahkan pengganti, log</td>
+<td><code>asset_data</code>, item (lokasi tujuan), <code>asset_trx_log</code>, header, <code>notif_data</code></td>
+</tr>
+<tr>
+<td>Tampilan</td>
+<td>JSON → model → widget; stepper dan timeline per asset</td>
+<td><code>returStatusMetadata</code>, <code>alasan_label</code>, <code>asset_pengganti</code> bersarang</td>
+<td><code>SELECT</code> saja</td>
+</tr>
+</tbody>
+</table></div>
 <hr />
 <h2 id="s46"><span class="sec-no">46</span>Ringkasan Database Impact</h2>
 <div class="table-wrap"><table>
@@ -3058,7 +3796,7 @@ Admin: Terima Asset (pilih gudang per asset)
 </tr>
 <tr>
 <td>Terima Asset</td>
-<td>asset_log, notif</td>
+<td>asset_trx_log, notif</td>
 <td>asset_data asal → tersedia/rusak @gudang + lokasi, pengganti → terpakai @karyawan (lokasi NULL), item lokasi tujuan, header → selesai</td>
 <td>–</td>
 </tr>
@@ -3111,6 +3849,11 @@ Admin: Terima Asset (pilih gudang per asset)
 </tr>
 </thead>
 <tbody>
+<tr>
+<td>1.8</td>
+<td>2026-10-22</td>
+<td>Menambah §45.4 <em>Walkthrough Lengkap dengan Contoh Data</em> (ajukan dengan alasan berbeda, konfirmasi admin dengan pengganti dan jadwal, Terima Asset dengan lokasi gudang per asset; variasi tolak semua/sebagian, serahkan langsung, tukar unit, rusak tanpa pengganti; kasus gagal). Sinkronisasi kode: tabel log ternyata <code>asset_trx_log</code> (<code>id_asset_trx_log</code>), bukan <code>asset_log</code>.</td>
+</tr>
 <tr>
 <td>1.7</td>
 <td>2026-10-20</td>

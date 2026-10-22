@@ -196,7 +196,7 @@ footer{margin-top:64px;padding-top:18px;border-top:1px solid var(--line);color:v
       </div>
       <div class="tag" aria-label="Identitas dokumen">
         <dl>
-          <dt>Kode</dt><dd>ALK-RGN06</dd><dt>Modul</dt><dd>Ruangan</dd><dt>Versi</dt><dd>1.0 · 15 Okt 2026</dd><dt>Stack</dt><dd>Lumen 10 · Flutter</dd><dt>API</dt><dd>9 endpoint</dd>
+          <dt>Kode</dt><dd>ALK-RGN06</dd><dt>Modul</dt><dd>Ruangan</dd><dt>Versi</dt><dd>1.1 · 22 Okt 2026</dd><dt>Stack</dt><dd>Lumen 10 · Flutter</dd><dt>API</dt><dd>9 endpoint</dd>
         </dl>
         <div class="barcode" aria-hidden="true"></div>
         <div class="trx">RGN06-YYYYMMNNN</div>
@@ -299,7 +299,7 @@ footer{margin-top:64px;padding-top:18px;border-top:1px solid var(--line);color:v
 </tr>
 <tr>
 <td>Versi dokumen</td>
-<td>1.0 — 15 Oktober 2026</td>
+<td>1.1 — 22 Oktober 2026</td>
 </tr>
 <tr>
 <td>Dokumen terkait</td>
@@ -345,7 +345,7 @@ footer{margin-top:64px;padding-top:18px;border-top:1px solid var(--line);color:v
 </tr>
 <tr>
 <td>Log</td>
-<td><code>asset_trx_log</code> dengan <code>jenis_log = retur_ruangan</code> (bukan <code>asset_log</code>)</td>
+<td><code>asset_trx_log</code> dengan <code>jenis_log = retur_ruangan</code> (tabel <code>asset_trx_log</code>, sama dengan KRY04)</td>
 </tr>
 <tr>
 <td>Endpoint</td>
@@ -2496,9 +2496,9 @@ GET /asset/karyawan/pic-ruangan/retur?tab=dikonfirmasi                   (PIC)
 </tr>
 <tr>
 <td>INC-10</td>
-<td>Dokumen KRY04 menyebut log di <code>asset_log</code></td>
-<td>Kode KRY04 dan RGN06 sama-sama menulis <code>asset_trx_log</code></td>
-<td>⚠️ Dokumen KRY04 perlu diselaraskan</td>
+<td>Dokumen KRY04 versi lama menyebut log di tabel lama</td>
+<td>Kode KRY04 dan RGN06 sama-sama menulis <code>asset_trx_log</code>; dokumen KRY04 sudah dikoreksi pada versi 1.8</td>
+<td>✅ Selaras</td>
 </tr>
 </tbody>
 </table></div>
@@ -2738,7 +2738,7 @@ GET /asset/karyawan/pic-ruangan/retur?tab=dikonfirmasi                   (PIC)
 <li>Tanggal/jam NULL (bukan <code>0000-00-00</code>); <code>nullableDateValue</code>/<code>nullableTimeValue</code> mengubah NULL dan nilai nol menjadi <code>""</code> untuk mobile.</li>
 <li><code>id_asset_lokasi_m_tujuan</code> dan <code>parent_id</code> NULL pada item asal; kode memeriksa <code>parent_id</code> NULL <strong>atau</strong> <code>''</code> untuk keamanan.</li>
 <li><code>asset_data</code> tidak dikunci saat pengajuan; konsistensi dijaga lewat <code>hasActiveReturRuanganAsset</code> dan penyaringan opsi. Flow lain yang ingin menghormati retur ruangan harus memanggil helper tersebut.</li>
-<li>Log memakai <code>asset_trx_log</code> (<code>jenis_log='retur_ruangan'</code>). Dokumen KRY04 menulis <code>asset_log</code>; kode KRY04 menulis <code>asset_trx_log</code>.</li>
+<li>Log memakai <code>asset_trx_log</code> (<code>jenis_log='retur_ruangan'</code>). Dokumen KRY04 sudah dikoreksi (v1.8) dan selaras dengan kode.</li>
 <li>Mengubah enum <code>jenis_log</code> harus mempertahankan seluruh nilai lama (lihat blok 3 SQL).</li>
 <li><code>tests/Routing</code> memuat angka jumlah route yang ditulis keras (506); hasil nyata 537 sehingga 4 test gagal. Penyebab selisih tidak diselidiki di sini.</li>
 <li>Pemformatan: hanya <code>dart format</code> pada file Dart yang diubah.</li>
@@ -2813,6 +2813,710 @@ GET /asset/karyawan/pic-ruangan/retur?tab=dikonfirmasi                   (PIC)
 </tr>
 </tbody>
 </table></div>
+<h3>45.4 Walkthrough Lengkap dengan Contoh Data</h3>
+<p>Walkthrough berikut mengikuti satu retur dari awal sampai selesai: PIC Ruangan mengajukan tiga asset dengan alasan berbeda, Admin/HR memutuskan per asset (dua disetujui, satu ditolak, satu mendapat pengganti), lalu Admin/HR menerima asset dengan memilih gudang tujuan per asset. Setiap langkah menjelaskan apa yang dilakukan di mobile, apa yang dikirim, apa yang diproses API, apa yang tersimpan di database, dan apa yang diterima mobile. Data bersifat <strong>sintetis</strong>, tetapi nama kolom, urutan proses, dan pesan diambil dari kode (<code>AssetReturRuangan_m</code>, <code>AssetKaryawanReturRuangan_c</code>, <code>AssetAdminReturRuangan_c</code>, <code>AssetNotification</code>).</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th style="text-align: center;">Langkah</th>
+<th>Pelaku</th>
+<th>Aksi</th>
+<th>Endpoint</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: center;">0</td>
+<td>PIC Ruangan</td>
+<td>Memilih ruangan, memuat asset yang boleh diretur</td>
+<td>API-06 <code>GET /asset/karyawan/pic-ruangan/retur/options?id_asset_lokasi_m=…</code></td>
+</tr>
+<tr>
+<td style="text-align: center;">1</td>
+<td>PIC Ruangan</td>
+<td><strong>Ajukan Retur</strong> 3 asset</td>
+<td>API-08 <code>POST /asset/karyawan/pic-ruangan/retur</code></td>
+</tr>
+<tr>
+<td style="text-align: center;">2</td>
+<td>Admin/HR</td>
+<td>Membuka detail dan opsi pengganti</td>
+<td>API-01 <code>GET /asset/retur-ruangan/options</code>, API-03 <code>GET /asset/retur-ruangan/{id}</code></td>
+</tr>
+<tr>
+<td style="text-align: center;">3</td>
+<td>Admin/HR</td>
+<td><strong>Konfirmasi</strong> per asset (setujui, tolak, pengganti, metode)</td>
+<td>API-04 <code>POST /asset/retur-ruangan/{id}/konfirmasi</code></td>
+</tr>
+<tr>
+<td style="text-align: center;">4</td>
+<td>Admin/HR</td>
+<td><strong>Terima Asset</strong> dan pilih gudang per asset</td>
+<td>API-05 <code>POST /asset/retur-ruangan/{id}/terima</code></td>
+</tr>
+<tr>
+<td style="text-align: center;">5</td>
+<td>PIC Ruangan</td>
+<td>Memantau status di tab Diterima</td>
+<td>API-07/09</td>
+</tr>
+</tbody>
+</table></div>
+<h4>Data awal</h4>
+<p>Company <code>CMP001</code>. Tanggal 22 Oktober 2026, periode ID <code>202610</code>.</p>
+<p><strong><code>data_karyawan</code></strong> (semua aktif)</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>id_karyawan</th>
+<th>nik</th>
+<th>nama_lengkap</th>
+<th>Peran</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>KRY0099</td>
+<td>ADM-001</td>
+<td>Siti Admin</td>
+<td>Admin Asset</td>
+</tr>
+<tr>
+<td>KRY0030</td>
+<td>EMP-030</td>
+<td>Dewi PIC</td>
+<td>PIC Ruang Meeting Lt.2</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong><code>asset_lokasi_m</code></strong>: <code>LOK0007</code> "Ruang Meeting Lt.2" (<code>tipe = ruangan</code>, <code>status_aktif = 1</code>, cabang "Jakarta", departemen "Operasional"), <code>asset_lokasi_pic_m</code> menunjuk <code>KRY0030</code>. Gudang: <code>LOK0001</code> "Gudang Pusat" dan <code>LOK0002</code> "Gudang Cadangan" (<code>tipe = gudang</code>).</p>
+<p><strong><code>asset_data</code></strong></p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>id_asset_data</th>
+<th>nama_asset</th>
+<th>status / pemegang / lokasi</th>
+<th>Peran dalam skenario</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>AST0401</td>
+<td>Laptop Dell 14</td>
+<td>terpakai / ruangan / LOK0007</td>
+<td>Rusak, minta pengganti</td>
+</tr>
+<tr>
+<td>AST0402</td>
+<td>Proyektor Epson</td>
+<td>terpakai / ruangan / LOK0007</td>
+<td>Tidak digunakan, disetujui</td>
+</tr>
+<tr>
+<td>AST0403</td>
+<td>Printer HP</td>
+<td>terpakai / ruangan / LOK0007</td>
+<td>Tidak digunakan, ditolak Admin</td>
+</tr>
+<tr>
+<td>AST0501</td>
+<td>Laptop Lenovo 14</td>
+<td>tersedia / gudang / LOK0001</td>
+<td>Asset pengganti AST0401</td>
+</tr>
+</tbody>
+</table></div>
+<p>Penomoran: header dan item memakai <code>id_company + YYYYMM + 3 digit</code> (urut per tabel); <code>no_trx = RGN06-YYYYMMNNN</code> (unik per company); <code>asset_trx_log</code> dan notifikasi memakai 5 digit. <strong>Pengajuan tidak mengunci <code>asset_data</code></strong>: asset tetap <code>terpakai</code> sampai Terima Asset; penjagaannya lewat pengecekan retur aktif.</p>
+<hr />
+<h4>Langkah 0 — PIC memilih ruangan dan asset</h4>
+<p><strong>Mobile:</strong> halaman <strong>PIC Ruangan</strong> → <strong>Retur Asset</strong> → <strong>Ajukan Retur Asset Ruangan</strong>. Setelah ruangan dipilih, layar memanggil API-06.</p>
+<p><strong>Dikirim</strong></p>
+<div class="code"><span class="code-lang">HTTP</span><pre><code class="language-http">GET /asset/karyawan/pic-ruangan/retur/options?id_asset_lokasi_m=LOK0007
+Authorization: Bearer &lt;access_token_dewi&gt;
+</code></pre></div>
+<p><strong>Diproses API:</strong> <code>getOptionsPic</code> memastikan ruangan aktif dan milik PIC login (selain itu <code>403 FORBIDDEN</code>: "Ruangan tidak ditemukan, tidak aktif, atau Anda bukan PIC ruangan ini."), lalu menampilkan asset <code>terpakai</code> di ruangan itu <strong>kecuali</strong> yang sedang terkunci di retur aktif, onboarding <code>proses</code>, penambahan <code>proses</code>, atau upgrade aktif. <strong>Database:</strong> hanya <code>SELECT</code>.</p>
+<p><strong>Diterima mobile:</strong> AST0401, AST0402, AST0403 dengan nama dan kategori, ditambah pilihan alasan (<code>rusak</code>, <code>tidak_digunakan</code>, <code>tukar_unit</code>).</p>
+<h4>Langkah 1 — PIC mengajukan retur tiga asset</h4>
+<p><strong>Mobile:</strong> Dewi menambahkan tiga asset, memilih alasan per asset (untuk Laptop: <strong>Asset Rusak</strong> → <strong>Dengan Pengganti</strong> + keterangan), mengisi catatan tambahan, lalu <strong>Ajukan Retur</strong>.</p>
+<p><strong>Dikirim</strong></p>
+<div class="code"><span class="code-lang">HTTP</span><pre><code class="language-http">POST /asset/karyawan/pic-ruangan/retur
+Authorization: Bearer &lt;access_token_dewi&gt;
+</code></pre></div>
+<div class="code"><span class="code-lang">JSON</span><pre><code class="language-json">{ &quot;id_asset_lokasi_m&quot;: &quot;LOK0007&quot;,
+  &quot;keterangan&quot;: &quot;Penataan ulang ruang meeting&quot;,
+  &quot;items&quot;: [
+    { &quot;id_asset_data&quot;: &quot;AST0401&quot;, &quot;alasan_retur&quot;: &quot;rusak&quot;, &quot;rusak_dengan_pengganti&quot;: 2, &quot;ket_retur&quot;: &quot;Layar mati total&quot; },
+    { &quot;id_asset_data&quot;: &quot;AST0402&quot;, &quot;alasan_retur&quot;: &quot;tidak_digunakan&quot;, &quot;ket_retur&quot;: &quot;Tidak dipakai lagi&quot; },
+    { &quot;id_asset_data&quot;: &quot;AST0403&quot;, &quot;alasan_retur&quot;: &quot;tidak_digunakan&quot; } ] }
+</code></pre></div>
+<p><strong>Diproses API</strong> (<code>AssetKaryawanReturRuangan_c::storeReturRuangan</code> → <code>AssetReturRuangan_m::store</code>, satu <code>DB::transaction(…, 3)</code>)
+1. Validasi controller: <code>id_asset_lokasi_m</code> ("Ruangan wajib dipilih."), <code>items</code> minimal satu ("Minimal satu asset wajib dipilih."), <code>id_asset_data</code> wajib dan tidak kembar ("Asset retur wajib dipilih." / "Asset yang sama tidak boleh dipilih lebih dari sekali."), <code>alasan_retur</code> ("Alasan retur setiap asset wajib dipilih." / "Alasan retur asset tidak valid."), <code>rusak_dengan_pengganti</code> ∈ 0/1/2 ("Pilihan pengganti asset rusak tidak valid."), <code>ket_retur</code> maksimal 255.
+2. <code>lockCompany</code>; karyawan aktif ("Karyawan tidak ditemukan atau tidak aktif.").
+3. <code>findRuanganPic</code>: ruangan aktif dan PIC-nya pengaju ("Ruangan tidak ditemukan, tidak aktif, atau Anda bukan PIC ruangan ini.").
+4. <code>normalizeItems</code> menerapkan aturan per alasan: rusak wajib memilih tanpa/dengan pengganti ("Asset rusak wajib memilih tanpa atau dengan pengganti.") dan keterangan ("Keterangan kerusakan asset wajib diisi."); tukar unit wajib keterangan ("Alasan tukar unit wajib diisi."); selain rusak, <code>rusak_dengan_pengganti</code> dipaksa 0.
+5. Asset dibaca <code>FOR UPDATE</code> dengan syarat <code>pemegang_asset = ruangan</code> dan lokasi = ruangan ini ("Satu atau beberapa asset bukan milik ruangan atau sudah tidak dapat diretur.").
+6. Cek lintas flow: retur aktif lain ("Satu atau beberapa asset sedang diproses pada retur lain."), onboarding ruangan ("…pada onboarding ruangan."), penambahan ruangan ("…pada penambahan asset ruangan."), upgrade ruangan ("…pada upgrade ruangan."); status harus <code>terpakai</code> ("Satu atau beberapa asset tidak berstatus terpakai dan tidak dapat diretur.").
+7. Nomor: <code>CMP001202610001</code>, <code>RGN06-202610001</code>. INSERT header dan tiga item. <strong>Tidak ada UPDATE <code>asset_data</code>.</strong>
+8. Controller mengirim <code>retur_ruangan.diajukan</code> ke semua admin asset.</p>
+<p><strong>Hasil database</strong></p>
+<p><code>asset_trx_retur_ruangan</code> (1 baris)</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Kolom</th>
+<th>Nilai</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>id_asset_trx_retur_ruangan / no_trx</td>
+<td>CMP001202610001 / RGN06-202610001</td>
+</tr>
+<tr>
+<td>id_asset_lokasi_m / nama_asset_ruangan</td>
+<td>LOK0007 / Ruang Meeting Lt.2</td>
+</tr>
+<tr>
+<td>nama_cabang / nama_departemen</td>
+<td>Jakarta / Operasional</td>
+</tr>
+<tr>
+<td>id_karyawan_pic / nama_pic / nik_pic</td>
+<td>KRY0030 / Dewi PIC / EMP-030</td>
+</tr>
+<tr>
+<td>id_karyawan / nik_karyawan / nama_karyawan</td>
+<td>KRY0030 / EMP-030 / Dewi PIC (pengaju)</td>
+</tr>
+<tr>
+<td>keterangan</td>
+<td>Penataan ulang ruang meeting</td>
+</tr>
+<tr>
+<td>tgl_pengajuan</td>
+<td>2026-10-22</td>
+</tr>
+<tr>
+<td>status_approval / status_transaksi</td>
+<td><strong>pengajuan</strong> / <strong>proses</strong></td>
+</tr>
+<tr>
+<td>flag_jadwalkan</td>
+<td>0</td>
+</tr>
+<tr>
+<td>tgl_pengambilan / jam_pengambilan / tgl_serah_terima / jam_serah_terima</td>
+<td>NULL</td>
+</tr>
+<tr>
+<td>ket_tolak / user_approval / tgl_approval</td>
+<td><code>''</code> / <code>''</code> / NULL</td>
+</tr>
+<tr>
+<td>tgl_input / user_input</td>
+<td>2026-10-22 08:30:00 / EMP-030 - Dewi PIC</td>
+</tr>
+</tbody>
+</table></div>
+<p><code>asset_trx_retur_ruangan_item</code> (3 item asal; <code>parent_id</code> NULL)</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>id_asset_trx_retur_item</th>
+<th>id_asset_data</th>
+<th>alasan_retur</th>
+<th style="text-align: center;">rusak_dengan_pengganti</th>
+<th>ket_retur</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>CMP001202610001</td>
+<td>AST0401</td>
+<td>rusak</td>
+<td style="text-align: center;">2</td>
+<td>Layar mati total</td>
+</tr>
+<tr>
+<td>CMP001202610002</td>
+<td>AST0402</td>
+<td>tidak_digunakan</td>
+<td style="text-align: center;">0</td>
+<td>Tidak dipakai lagi</td>
+</tr>
+<tr>
+<td>CMP001202610003</td>
+<td>AST0403</td>
+<td>tidak_digunakan</td>
+<td style="text-align: center;">0</td>
+<td><code>''</code></td>
+</tr>
+</tbody>
+</table></div>
+<p><code>asset_data</code>: <strong>tidak berubah</strong> (ketiganya tetap <code>terpakai</code> di <code>LOK0007</code>).</p>
+<p><code>notif_data</code>: satu baris per admin asset, rute <code>asset_admin_detail_retur_ruangan</code>, judul "Pengajuan Retur Asset Ruangan", isi "Dewi PIC mengajukan retur asset untuk Ruang Meeting Lt.2 (RGN06-202610001).". Push FCM ikut dikirim; kegagalan push hanya dicatat di log.</p>
+<p><strong>Diterima mobile</strong> (HTTP 201)</p>
+<div class="code"><span class="code-lang">JSON</span><pre><code class="language-json">{ &quot;code&quot;: &quot;CREATED&quot;, &quot;message&quot;: &quot;Pengajuan retur asset ruangan berhasil dikirim.&quot;,
+  &quot;data&quot;: { &quot;id&quot;: &quot;CMP001202610001&quot;, &quot;no_trx&quot;: &quot;RGN06-202610001&quot;,
+            &quot;status_approval&quot;: &quot;pengajuan&quot;, &quot;status_transaksi&quot;: &quot;proses&quot;,
+            &quot;status_label&quot;: &quot;Menunggu Konfirmasi&quot;, &quot;tab&quot;: &quot;pengajuan&quot; } }
+</code></pre></div>
+<p>Retur muncul di tab <strong>Pengajuan</strong> milik PIC.</p>
+<h4>Langkah 2 — Admin membuka detail dan opsi pengganti</h4>
+<p><strong>Mobile:</strong> Ruangan → <strong>Retur</strong> → tab <strong>Pengajuan</strong> → detail. Detail menampilkan tiap asset dengan alasannya; <code>AssetAdminReturRuangan</code> memuat opsi pengganti.</p>
+<p><strong>Dikirim</strong></p>
+<div class="code"><span class="code-lang">HTTP</span><pre><code class="language-http">GET /asset/retur-ruangan/options
+GET /asset/retur-ruangan/CMP001202610001
+Authorization: Bearer &lt;access_token_admin&gt;
+</code></pre></div>
+<p><strong>Diproses API:</strong> hanya admin asset (selain itu <code>403 FORBIDDEN</code>). <code>getAdminOptions</code> mengembalikan asset <code>tersedia</code> di gudang dan kategori; <code>getDetailAdmin</code> menggabungkan header, item, pasangan asal–pengganti lewat <code>parent_id</code>, dan <code>lokasi_gudang[]</code>. <strong>Database:</strong> hanya <code>SELECT</code>.</p>
+<p><strong>Diterima mobile:</strong> AST0501 muncul sebagai kandidat pengganti. Tombol aksi: Tolak, Setujui, Ganti Asset per asset.</p>
+<h4>Langkah 3 — Admin memutuskan per asset</h4>
+<p><strong>Mobile:</strong> Siti <strong>menyetujui</strong> AST0401 dan memilih AST0501 sebagai pengganti, <strong>menyetujui</strong> AST0402, <strong>menolak</strong> AST0403 dengan alasan, memilih metode <strong>Dijadwalkan</strong> (24 Okt 2026 pukul 10:00), lalu mengonfirmasi.</p>
+<p><strong>Dikirim</strong></p>
+<div class="code"><span class="code-lang">HTTP</span><pre><code class="language-http">POST /asset/retur-ruangan/CMP001202610001/konfirmasi
+</code></pre></div>
+<div class="code"><span class="code-lang">JSON</span><pre><code class="language-json">{ &quot;items&quot;: [
+    { &quot;id_item&quot;: &quot;CMP001202610001&quot;, &quot;status_item&quot;: &quot;disetujui&quot;, &quot;id_asset_pengganti&quot;: &quot;AST0501&quot; },
+    { &quot;id_item&quot;: &quot;CMP001202610002&quot;, &quot;status_item&quot;: &quot;disetujui&quot; },
+    { &quot;id_item&quot;: &quot;CMP001202610003&quot;, &quot;status_item&quot;: &quot;ditolak&quot;, &quot;ket_tolak&quot;: &quot;Masih dipakai rapat mingguan&quot; } ],
+  &quot;metode_serah_terima&quot;: &quot;dijadwalkan&quot;,
+  &quot;tgl_pengambilan&quot;: &quot;2026-10-24&quot;, &quot;jam_pengambilan&quot;: &quot;10:00&quot;,
+  &quot;keterangan_serah_terima&quot;: &quot;Bawa troli&quot; }
+</code></pre></div>
+<p><strong>Diproses API</strong> (<code>konfirmasiReturRuangan</code> → <code>konfirmasiAdmin</code>)
+1. Validasi controller: <code>items</code> ("Keputusan asset retur wajib diisi."), <code>status_item</code> hanya <code>disetujui</code>/<code>ditolak</code>, <code>ket_tolak</code> wajib bila ditolak ("Alasan penolakan asset wajib diisi."), <code>metode_serah_terima</code> ∈ <code>dijadwalkan|langsung</code> ("Metode serah terima retur tidak valid."), tanggal <code>Y-m-d</code> dan jam <code>H:i</code> wajib bila dijadwalkan.
+2. <code>lockCompany</code>; aktor harus admin asset ("Pengguna tidak terdaftar sebagai admin asset."); header <code>FOR UPDATE</code> ("Retur asset tidak ditemukan."); harus <code>pengajuan</code>/<code>proses</code> ("Retur asset sudah tidak menunggu konfirmasi.").
+3. Keputusan harus mencakup <strong>seluruh</strong> item asal, tidak kurang dan tidak lebih ("Seluruh asset retur wajib dikonfirmasi."). Asset asal harus masih dipegang ruangan ini ("Satu atau beberapa asset sudah tidak dipegang oleh ruangan.").
+4. Per item: keputusan bukan <code>disetujui</code>/<code>ditolak</code> → "Keputusan asset harus disetujui atau ditolak."; ditolak tanpa alasan ditolak; ditolak dengan pengganti → "Asset yang ditolak tidak boleh memiliki asset pengganti."; disetujui yang membutuhkan pengganti (tukar unit, atau rusak dengan pengganti = 2) tanpa pengganti → "Asset pengganti wajib dipilih untuk retur ini."; disetujui yang tidak membutuhkan pengganti tetapi diberi → "Alasan retur ini tidak memerlukan asset pengganti."; pengganti kembar → "Asset pengganti yang sama tidak boleh dipilih lebih dari sekali.".
+5. Pengganti dikunci lewat <code>getLockedAssets</code> (harus <code>tersedia</code> di gudang; "Satu atau beberapa asset pengganti tidak tersedia.").
+6. Bila ada yang disetujui, metode wajib valid; dijadwalkan butuh tanggal dan jam ("Tanggal dan jam serah terima wajib diisi."), format benar ("Format jadwal serah terima tidak valid."), tanggal tidak sebelum <code>tgl_pengajuan</code> ("Tanggal serah terima tidak boleh sebelum tanggal pengajuan.").
+7. UPDATE keputusan tiap item asal; INSERT item pengganti (<code>parent_id</code> = item asal); UPDATE pengganti → <code>proses</code>; UPDATE header.
+8. Controller mengirim <code>retur_ruangan.dikonfirmasi</code> (atau <code>ditolak</code> bila semua ditolak) ke PIC.</p>
+<p><strong>Hasil database</strong></p>
+<p><code>asset_trx_retur_ruangan_item</code></p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>id_asset_trx_retur_item</th>
+<th>id_asset_data</th>
+<th>parent_id</th>
+<th>status_approval</th>
+<th>ket_tolak</th>
+<th style="text-align: center;">rusak_dengan_pengganti</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>CMP001202610001</td>
+<td>AST0401</td>
+<td>NULL</td>
+<td><strong>disetujui</strong></td>
+<td><code>''</code></td>
+<td style="text-align: center;">2</td>
+</tr>
+<tr>
+<td>CMP001202610002</td>
+<td>AST0402</td>
+<td>NULL</td>
+<td><strong>disetujui</strong></td>
+<td><code>''</code></td>
+<td style="text-align: center;">0</td>
+</tr>
+<tr>
+<td>CMP001202610003</td>
+<td>AST0403</td>
+<td>NULL</td>
+<td><strong>ditolak</strong></td>
+<td>Masih dipakai rapat mingguan</td>
+<td style="text-align: center;">0</td>
+</tr>
+<tr>
+<td><strong>CMP001202610004</strong> (baru)</td>
+<td>AST0501</td>
+<td>CMP001202610001</td>
+<td>disetujui</td>
+<td><code>''</code></td>
+<td style="text-align: center;">0</td>
+</tr>
+</tbody>
+</table></div>
+<p>Baris pengganti menyalin <code>alasan_retur</code> item asal (<code>rusak</code>), <code>rusak_dengan_pengganti = 0</code>, <code>ket_retur = ''</code>, <code>user_input</code> = admin.</p>
+<p><code>asset_data</code>: hanya <strong>AST0501</strong> berubah, <code>status_asset</code> tersedia → <strong>proses</strong> (<code>user_update = ADM-001 - Siti Admin</code>). AST0401–AST0403 tetap <code>terpakai</code> di ruangan.</p>
+<p><code>asset_trx_retur_ruangan</code> (header)</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Kolom</th>
+<th>Sebelum</th>
+<th>Sesudah</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>status_approval</td>
+<td>pengajuan</td>
+<td><strong>disetujui</strong></td>
+</tr>
+<tr>
+<td>status_transaksi</td>
+<td>proses</td>
+<td>proses (tidak berubah)</td>
+</tr>
+<tr>
+<td>flag_jadwalkan</td>
+<td>0</td>
+<td><strong>1</strong></td>
+</tr>
+<tr>
+<td>tgl_pengambilan / jam_pengambilan</td>
+<td>NULL / NULL</td>
+<td>2026-10-24 / 10:00:00</td>
+</tr>
+<tr>
+<td>keterangan_serah_terima</td>
+<td><code>''</code></td>
+<td>Bawa troli</td>
+</tr>
+<tr>
+<td>ket_tolak</td>
+<td><code>''</code></td>
+<td><code>''</code> (hanya diisi "Seluruh asset retur ditolak." bila semua ditolak)</td>
+</tr>
+<tr>
+<td>user_approval / tgl_approval</td>
+<td><code>''</code> / NULL</td>
+<td>ADM-001 - Siti Admin / 2026-10-22 10:00:00</td>
+</tr>
+<tr>
+<td>tgl_update / user_update</td>
+<td>NULL / <code>''</code></td>
+<td>2026-10-22 10:00:00 / ADM-001 - Siti Admin</td>
+</tr>
+</tbody>
+</table></div>
+<p><code>notif_data</code>: baris untuk KRY0030, rute <code>asset_pic_ruangan_retur</code>, judul "Retur Asset Ruangan Dikonfirmasi", isi "Retur asset RGN06-202610001 untuk Ruang Meeting Lt.2 telah dikonfirmasi admin.".</p>
+<p><strong>Diterima mobile</strong> (HTTP 200; pesan "Retur asset ruangan berhasil dikonfirmasi.")</p>
+<div class="code"><span class="code-lang">JSON</span><pre><code class="language-json">{ &quot;code&quot;: &quot;UPDATED&quot;, &quot;message&quot;: &quot;Retur asset ruangan berhasil dikonfirmasi.&quot;,
+  &quot;data&quot;: { &quot;id&quot;: &quot;CMP001202610001&quot;, &quot;no_trx&quot;: &quot;RGN06-202610001&quot;,
+            &quot;status_approval&quot;: &quot;disetujui&quot;, &quot;status_transaksi&quot;: &quot;proses&quot;,
+            &quot;status_label&quot;: &quot;Dikonfirmasi&quot;, &quot;tab&quot;: &quot;dikonfirmasi&quot;,
+            &quot;jumlah_disetujui&quot;: 2, &quot;jumlah_ditolak&quot;: 1, &quot;jumlah_pengganti&quot;: 1 } }
+</code></pre></div>
+<p>Transaksi pindah ke tab <strong>Dikonfirmasi</strong>; tombol <strong>Terima Asset</strong> muncul untuk Admin/HR.</p>
+<h4>Langkah 4 — Admin menerima asset dan memilih gudang</h4>
+<p>Pada 24 Okt, laptop rusak dan proyektor tiba. Siti memilih gudang tujuan <strong>per asset asal yang disetujui</strong>: Laptop rusak ke <code>LOK0001</code>, proyektor ke <code>LOK0002</code>.</p>
+<p><strong>Dikirim</strong></p>
+<div class="code"><span class="code-lang">HTTP</span><pre><code class="language-http">POST /asset/retur-ruangan/CMP001202610001/terima
+</code></pre></div>
+<div class="code"><span class="code-lang">JSON</span><pre><code class="language-json">{ &quot;items&quot;: [
+    { &quot;id_asset_trx_retur_item&quot;: &quot;CMP001202610001&quot;, &quot;id_asset_lokasi_m&quot;: &quot;LOK0001&quot; },
+    { &quot;id_asset_trx_retur_item&quot;: &quot;CMP001202610002&quot;, &quot;id_asset_lokasi_m&quot;: &quot;LOK0002&quot; } ] }
+</code></pre></div>
+<p><strong>Diproses API</strong> (<code>terimaReturRuangan</code> → <code>terimaAdmin</code>)
+1. Validasi: <code>items</code> wajib, id tidak kembar, gudang wajib ("Lokasi gudang tujuan setiap asset wajib dipilih." / "Lokasi gudang tujuan wajib dipilih.").
+2. <code>lockCompany</code>, admin asset, header <code>FOR UPDATE</code>; harus <code>disetujui</code>/<code>proses</code> ("Retur asset belum dikonfirmasi atau sudah selesai.").
+3. Item asal yang <code>disetujui</code> dipetakan ke gudang lewat <code>resolveItemLocations</code>: setiap item tepat satu kali ("Lokasi gudang tujuan asset tidak sesuai."), semua item terisi, dan lokasi harus bertipe <code>gudang</code> pada company yang sama ("Lokasi gudang tujuan tidak valid."). Item yang ditolak <strong>tidak</strong> dimasukkan. Tidak ada item disetujui → "Tidak ada asset retur yang dapat diterima.".
+4. Semua asset terkait dikunci <code>FOR UPDATE</code>; asset asal harus masih dipegang ruangan ("Satu atau beberapa asset sudah tidak dipegang oleh ruangan.") dan pengganti harus masih <code>proses</code> di gudang ("Asset pengganti sudah tidak siap diserahterimakan.").
+5. Per asset asal: UPDATE <code>asset_data</code> ke gudang (rusak → <code>rusak</code> + <code>ket_rusak</code>, selain itu <code>tersedia</code>), simpan <code>id_asset_lokasi_m_tujuan</code> di item, siapkan log. Bila ada pengganti: UPDATE <code>asset_data</code> → <code>terpakai</code> di ruangan, siapkan log.
+6. INSERT semua baris <code>asset_trx_log</code> sekaligus, lalu UPDATE header → <code>status_transaksi = selesai</code>.
+7. Controller mengirim <code>retur_ruangan.diterima_admin</code> ke PIC.</p>
+<p><strong>Hasil database</strong></p>
+<p><code>asset_data</code></p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>id_asset_data</th>
+<th>Kolom</th>
+<th>Sebelum</th>
+<th>Sesudah</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>AST0401</td>
+<td>status_asset</td>
+<td>terpakai</td>
+<td><strong>rusak</strong></td>
+</tr>
+<tr>
+<td></td>
+<td>pemegang_asset / id_pemegang_asset</td>
+<td>ruangan / LOK0007</td>
+<td><strong>gudang</strong> / <code>''</code></td>
+</tr>
+<tr>
+<td></td>
+<td>id_asset_lokasi_m</td>
+<td>LOK0007</td>
+<td><strong>LOK0001</strong></td>
+</tr>
+<tr>
+<td></td>
+<td>ket_rusak</td>
+<td><code>''</code></td>
+<td>Layar mati total</td>
+</tr>
+<tr>
+<td>AST0402</td>
+<td>status_asset</td>
+<td>terpakai</td>
+<td><strong>tersedia</strong></td>
+</tr>
+<tr>
+<td></td>
+<td>pemegang_asset / id_asset_lokasi_m</td>
+<td>ruangan / LOK0007</td>
+<td><strong>gudang</strong> / <strong>LOK0002</strong></td>
+</tr>
+<tr>
+<td>AST0501 (pengganti)</td>
+<td>status_asset</td>
+<td>proses</td>
+<td><strong>terpakai</strong></td>
+</tr>
+<tr>
+<td></td>
+<td>pemegang_asset / id_pemegang_asset</td>
+<td>gudang / <code>''</code></td>
+<td><strong>ruangan</strong> / <strong>LOK0007</strong></td>
+</tr>
+<tr>
+<td></td>
+<td>id_asset_lokasi_m</td>
+<td>LOK0001</td>
+<td><strong>LOK0007</strong></td>
+</tr>
+<tr>
+<td>AST0403 (ditolak)</td>
+<td>semua kolom</td>
+<td>terpakai @ LOK0007</td>
+<td>tidak berubah</td>
+</tr>
+</tbody>
+</table></div>
+<p><code>asset_trx_retur_ruangan_item</code>: kolom <code>id_asset_lokasi_m_tujuan</code> terisi <code>LOK0001</code> pada <code>CMP001202610001</code> dan <code>LOK0002</code> pada <code>CMP001202610002</code>.</p>
+<p><code>asset_trx_log</code> (3 baris; nomor contoh dengan asumsi log pertama periode 202610)</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>id_asset_trx_log</th>
+<th>id_asset_data</th>
+<th>kondisi awal → akhir</th>
+<th>posisi awal → akhir</th>
+<th>id_pemegang / nama_pemegang</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>CMP00120261000001</td>
+<td>AST0401</td>
+<td>(kondisi_awal asset) → rusak</td>
+<td>ruangan → gudang</td>
+<td><code>''</code> / <code>''</code></td>
+</tr>
+<tr>
+<td>CMP00120261000002</td>
+<td>AST0501</td>
+<td>normal → normal</td>
+<td>gudang → ruangan</td>
+<td>LOK0007 / Ruang Meeting Lt.2</td>
+</tr>
+<tr>
+<td>CMP00120261000003</td>
+<td>AST0402</td>
+<td>(kondisi_awal asset) → normal</td>
+<td>ruangan → gudang</td>
+<td><code>''</code> / <code>''</code></td>
+</tr>
+</tbody>
+</table></div>
+<p>Semua baris memakai <code>jenis_log = retur_ruangan</code>, <code>id_transaksi = CMP001202610001</code>, <code>nama_tabel_transaksi = asset_trx_retur_ruangan</code>. Urutan log mengikuti urutan item: asset asal, pengganti miliknya, lalu item berikutnya.</p>
+<p><code>asset_trx_retur_ruangan</code> (header): <code>status_transaksi</code> proses → <strong>selesai</strong>; <code>tgl_serah_terima = 2026-10-24</code>, <code>jam_serah_terima</code> = waktu penerimaan (misalnya 10:05:00); <code>tgl_update</code>/<code>user_update</code> diperbarui. <code>status_approval</code> tetap <code>disetujui</code>.</p>
+<p><code>notif_data</code>: baris untuk KRY0030, judul "Retur Asset Ruangan Diterima", isi "Asset retur RGN06-202610001 untuk Ruang Meeting Lt.2 telah diterima admin.".</p>
+<p><strong>Diterima mobile</strong> (HTTP 200)</p>
+<div class="code"><span class="code-lang">JSON</span><pre><code class="language-json">{ &quot;code&quot;: &quot;UPDATED&quot;, &quot;message&quot;: &quot;Retur asset ruangan berhasil diterima.&quot;,
+  &quot;data&quot;: { &quot;id&quot;: &quot;CMP001202610001&quot;, &quot;no_trx&quot;: &quot;RGN06-202610001&quot;,
+            &quot;status_approval&quot;: &quot;disetujui&quot;, &quot;status_transaksi&quot;: &quot;selesai&quot;,
+            &quot;status_label&quot;: &quot;Selesai&quot;, &quot;tab&quot;: &quot;diterima&quot;,
+            &quot;jumlah_diterima&quot;: 2, &quot;jumlah_pengganti&quot;: 1 } }
+</code></pre></div>
+<h4>Langkah 5 — PIC memantau</h4>
+<p>PIC tidak memiliki aksi terima, ubah, atau batal. Dewi hanya membuka daftar <code>GET /asset/karyawan/pic-ruangan/retur?tab=diterima</code> dan detail <code>GET …/retur/CMP001202610001</code>. Akses dibatasi ke ruangan yang <strong>saat ini</strong> dipegang PIC (join <code>asset_lokasi_pic_m</code>); PIC lain mendapat <code>404 NOT_FOUND</code> ("Retur asset ruangan tidak ditemukan."). Detail PIC tidak menyertakan <code>lokasi_gudang[]</code>. Banner pada halaman <strong>PIC Ruangan</strong> hilang setelah transaksi selesai.</p>
+<h4>Kondisi akhir</h4>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Objek</th>
+<th>Keadaan</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Header <code>CMP001202610001</code></td>
+<td><code>disetujui</code> + <code>selesai</code>, tab <strong>Diterima</strong></td>
+</tr>
+<tr>
+<td>Item</td>
+<td>4 baris: AST0401 (disetujui), AST0402 (disetujui), AST0403 (ditolak), AST0501 (pengganti AST0401)</td>
+</tr>
+<tr>
+<td>AST0401</td>
+<td><code>rusak</code> di <code>LOK0001</code></td>
+</tr>
+<tr>
+<td>AST0402</td>
+<td><code>tersedia</code> di <code>LOK0002</code></td>
+</tr>
+<tr>
+<td>AST0501</td>
+<td><code>terpakai</code> di <code>LOK0007</code></td>
+</tr>
+<tr>
+<td>AST0403</td>
+<td>tetap <code>terpakai</code> di <code>LOK0007</code></td>
+</tr>
+<tr>
+<td><code>asset_trx_log</code></td>
+<td>3 baris <code>retur_ruangan</code></td>
+</tr>
+</tbody>
+</table></div>
+<h4>Variasi</h4>
+<ul>
+<li><strong>Semua asset ditolak:</strong> tidak ada metode serah terima yang diperlukan; header menjadi <code>status_approval = ditolak</code>, <code>status_transaksi = selesai</code>, <code>ket_tolak = "Seluruh asset retur ditolak."</code>; tidak ada pengganti, <code>asset_data</code> tidak berubah, PIC dinotifikasi <code>retur_ruangan.ditolak</code> (judul "Retur Asset Ruangan Ditolak"). Respons: "Retur asset ruangan berhasil ditolak.", tab <code>pengajuan</code>, label "Ditolak". Terima Asset tidak dapat dijalankan karena status bukan <code>disetujui</code>.</li>
+<li><strong>Metode Langsung:</strong> <code>metode_serah_terima = "langsung"</code>, tanpa tanggal dan jam; <code>flag_jadwalkan = 0</code>, <code>tgl_pengambilan</code>/<code>jam_pengambilan</code> tetap NULL. Terima Asset dapat dilakukan kapan saja setelah konfirmasi.</li>
+<li><strong>Tukar unit:</strong> <code>alasan_retur = tukar_unit</code> (keterangan wajib) selalu membutuhkan pengganti saat disetujui. Asal kembali ke gudang sebagai <code>tersedia</code> (bukan <code>rusak</code>) dan pengganti masuk ke ruangan. Tidak ada syarat kategori yang sama.</li>
+<li><strong>Rusak tanpa pengganti:</strong> <code>rusak_dengan_pengganti = 1</code>; Admin tidak boleh memberi pengganti ("Alasan retur ini tidak memerlukan asset pengganti."). Asal kembali ke gudang sebagai <code>rusak</code>.</li>
+<li><strong>Tidak digunakan:</strong> asal kembali sebagai <code>tersedia</code>; keterangan opsional; pengganti dilarang.</li>
+</ul>
+<h4>Kasus gagal</h4>
+<p>Semua kesalahan aturan bisnis dilempar sebagai <code>InvalidArgumentException</code> di dalam transaksi, sehingga seluruh perubahan di-rollback dan controller membalas <code>BUSINESS_RULE_VIOLATION</code> dengan pesan di bawah.</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Situasi</th>
+<th>Langkah</th>
+<th>Pesan</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Ruangan nonaktif atau bukan milik PIC</td>
+<td>0, 1</td>
+<td>Ruangan tidak ditemukan, tidak aktif, atau Anda bukan PIC ruangan ini.</td>
+</tr>
+<tr>
+<td>Asset bukan milik ruangan atau sudah berpindah</td>
+<td>1</td>
+<td>Satu atau beberapa asset bukan milik ruangan atau sudah tidak dapat diretur.</td>
+</tr>
+<tr>
+<td>Asset sudah ada di retur aktif lain</td>
+<td>1</td>
+<td>Satu atau beberapa asset sedang diproses pada retur lain.</td>
+</tr>
+<tr>
+<td>Asset sedang di onboarding / penambahan / upgrade ruangan</td>
+<td>1</td>
+<td>Satu atau beberapa asset sedang diproses pada onboarding ruangan. / …penambahan asset ruangan. / …upgrade ruangan.</td>
+</tr>
+<tr>
+<td>Asset tidak berstatus <code>terpakai</code></td>
+<td>1</td>
+<td>Satu atau beberapa asset tidak berstatus terpakai dan tidak dapat diretur.</td>
+</tr>
+<tr>
+<td>Rusak tanpa pilihan pengganti / tanpa keterangan</td>
+<td>1</td>
+<td>Asset rusak wajib memilih tanpa atau dengan pengganti. / Keterangan kerusakan asset wajib diisi.</td>
+</tr>
+<tr>
+<td>Tukar unit tanpa alasan</td>
+<td>1</td>
+<td>Alasan tukar unit wajib diisi.</td>
+</tr>
+<tr>
+<td>Admin tidak memutuskan semua item</td>
+<td>3</td>
+<td>Seluruh asset retur wajib dikonfirmasi.</td>
+</tr>
+<tr>
+<td>Ditolak tanpa alasan / ditolak dengan pengganti</td>
+<td>3</td>
+<td>Alasan penolakan asset wajib diisi. / Asset yang ditolak tidak boleh memiliki asset pengganti.</td>
+</tr>
+<tr>
+<td>Pengganti wajib tidak dipilih / dipilih padahal tidak perlu</td>
+<td>3</td>
+<td>Asset pengganti wajib dipilih untuk retur ini. / Alasan retur ini tidak memerlukan asset pengganti.</td>
+</tr>
+<tr>
+<td>Pengganti kembar atau tidak tersedia</td>
+<td>3</td>
+<td>Asset pengganti yang sama tidak boleh dipilih lebih dari sekali. / Satu atau beberapa asset pengganti tidak tersedia.</td>
+</tr>
+<tr>
+<td>Metode atau jadwal salah</td>
+<td>3</td>
+<td>Metode serah terima retur tidak valid. / Tanggal dan jam serah terima wajib diisi. / Tanggal serah terima tidak boleh sebelum tanggal pengajuan.</td>
+</tr>
+<tr>
+<td>Konfirmasi ulang</td>
+<td>3</td>
+<td>Retur asset sudah tidak menunggu konfirmasi.</td>
+</tr>
+<tr>
+<td>Terima sebelum dikonfirmasi atau sesudah selesai</td>
+<td>4</td>
+<td>Retur asset belum dikonfirmasi atau sudah selesai.</td>
+</tr>
+<tr>
+<td>Gudang tidak lengkap atau bukan gudang</td>
+<td>4</td>
+<td>Lokasi gudang tujuan setiap asset wajib dipilih. / Lokasi gudang tujuan asset tidak sesuai. / Lokasi gudang tujuan tidak valid.</td>
+</tr>
+<tr>
+<td>Pengganti sudah tidak <code>proses</code> di gudang</td>
+<td>4</td>
+<td>Asset pengganti sudah tidak siap diserahterimakan.</td>
+</tr>
+<tr>
+<td>Bukan admin asset</td>
+<td>3, 4</td>
+<td>Pengguna tidak terdaftar sebagai admin asset.</td>
+</tr>
+</tbody>
+</table></div>
+<h4>Ringkasan siapa mengerjakan apa</h4>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Pihak</th>
+<th>Tugas dalam alur ini</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Mobile PIC</strong></td>
+<td>Memilih ruangan dan asset, mengisi alasan per asset, mengirim pengajuan, memantau status (tanpa aksi lain)</td>
+</tr>
+<tr>
+<td><strong>Mobile Admin/HR</strong></td>
+<td>Memutuskan per asset, memilih pengganti dan metode serah terima, memilih gudang per asset saat Terima Asset</td>
+</tr>
+<tr>
+<td><strong>API</strong></td>
+<td>Validasi, pembatasan ruangan milik PIC, pengecekan flow lain, penguncian asset dan pengganti, penomoran, pemetaan gudang, perubahan <code>asset_data</code>, <code>asset_trx_log</code>, notifikasi bilingual</td>
+</tr>
+<tr>
+<td><strong>Database</strong></td>
+<td>Menyimpan header, item asal dan pengganti (<code>parent_id</code>), keputusan per item, gudang tujuan, status asset, log, dan notifikasi</td>
+</tr>
+</tbody>
+</table></div>
 <h2 id="s46"><span class="sec-no">46</span>Ringkasan Database Impact</h2>
 <div class="table-wrap"><table>
 <thead>
@@ -2872,6 +3576,11 @@ GET /asset/karyawan/pic-ruangan/retur?tab=dikonfirmasi                   (PIC)
 <td>1.0</td>
 <td>15 Oktober 2026</td>
 <td>Dokumen awal ALK-RGN06: skema 2 tabel, API admin (5) dan PIC (4), mobile (pemakaian ulang halaman KRY04), notifikasi, ringkasan admin dan beranda PIC, test.</td>
+</tr>
+<tr>
+<td>1.1</td>
+<td>22 Okt 2026</td>
+<td>Menambah §45.4 walkthrough lengkap (pengajuan PIC, keputusan per asset dengan pengganti, Terima Asset dengan gudang per asset), variasi, dan tabel kasus gagal.</td>
 </tr>
 </tbody>
 </table></div>

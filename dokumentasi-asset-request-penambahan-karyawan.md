@@ -17,8 +17,8 @@
 | Database | Struktur mengacu `API/diagram-asset.dbml` + migrations. ⚠️ Asumsi: MySQL/MariaDB |
 | Mobile | Flutter (package `professional_flutter_3_35`), `flutter_bloc`, `dio` |
 | Web | ⚠️ Belum ditemukan: tidak ada source web di workspace |
-| Versi Dokumen | 1.4 |
-| Tanggal Dokumentasi | 2026-10-20 |
+| Versi Dokumen | 1.5 |
+| Tanggal Dokumentasi | 2026-10-22 |
 | Dokumen terkait | `dokumentasi-asset-onboarding-karyawan.md` (fitur serupa, banyak helper bersama); `sql-pengajuan-karyawan-jenis-asset-bebas.sql` (SQL manual v1.4, wajib dijalankan sebelum deploy API) |
 
 ---
@@ -40,7 +40,7 @@
 | Detail Transaction | `asset_trx_request_karyawan_item` |
 | Pembeda alur | Kolom `sumber_pengajuan`: `admin` = **Penambahan** (inisiatif admin), `karyawan` = **Pengajuan** (permintaan karyawan) |
 | Asset Master | `asset_data` |
-| Log | `asset_log` (`jenis_log = request_karyawan`) |
+| Log | `asset_trx_log` (`jenis_log = request_karyawan`) |
 | Initial Status | `draft` atau `proses` |
 | Final Status | `dikonfirmasi` (UI: "Selesai") atau `ditolak` (hanya Pengajuan) |
 | Approval | Hanya pada **Pengajuan**: Admin **Tolak** atau **Setujui (alokasi asset)** |
@@ -64,7 +64,7 @@ Admin: pilih karyawan + asset + jadwal            Karyawan: ketik jenis asset (t
               ▼                                                  ▼
   status dikonfirmasi ("Selesai")                     status tetap proses ("Butuh Proses")
   semua asset → terpakai, pemegang karyawan           TIDAK ada asset diserahkan
-  + asset_log                                         ⚠️ tidak ada mekanisme lanjutan (RISK-001)
+  + asset_trx_log                                         ⚠️ tidak ada mekanisme lanjutan (RISK-001)
 ```
 
 ---
@@ -87,7 +87,7 @@ Kedua jalur berakhir di **konfirmasi karyawan**: tiap asset dinilai Normal atau 
 - Admin dapat menyetujui atau menolak permintaan dengan alasan yang tersimpan.
 - Admin dapat memberikan asset tambahan tanpa menunggu permintaan.
 - Penyerahan asset dijadwalkan (tanggal & jam) dan diverifikasi fisik oleh karyawan.
-- Setiap perpindahan asset ke karyawan tercatat di `asset_log`.
+- Setiap perpindahan asset ke karyawan tercatat di `asset_trx_log`.
 
 ### 5.2 Tujuan Sistem
 - Menyimpan pengajuan/penambahan dengan nomor `KRY-03-1-...`.
@@ -104,7 +104,7 @@ Kedua jalur berakhir di **konfirmasi karyawan**: tiap asset dinilai Normal atau 
 |---|---|---|
 | Admin Asset | Terdaftar di `asset_admin` + karyawan aktif (`data_karyawan.status` ∈ '1'–'4') | Membuat penambahan; meninjau, menolak, dan mengalokasikan pengajuan |
 | Karyawan | User login (JWT) | Membuat pengajuan; mengonfirmasi asset yang diterima |
-| System | Backend + FCM | Validasi, lock, penomoran, update `asset_data`, `asset_log`, notifikasi |
+| System | Backend + FCM | Validasi, lock, penomoran, update `asset_data`, `asset_trx_log`, notifikasi |
 
 > Admin Asset berperan sebagai **approver** untuk Pengajuan. Tidak ada approver lain.
 
@@ -189,7 +189,7 @@ Detail/konfirmasi memfilter `id_karyawan = ctx.id_karyawan`, bukan draft, dan un
 → "Seluruh asset penambahan wajib dicek." / "Alasan kerusakan wajib diisi." / "Tidak ada asset penambahan yang perlu dicek."
 
 ### BR-015 — Serah terima all-or-nothing
-Asset baru diserahkan (`terpakai`, pemegang karyawan, `asset_log`) **hanya jika seluruh item Normal**. Jika ada Rusak, status tetap `proses` dan **tidak ada asset** yang berubah.
+Asset baru diserahkan (`terpakai`, pemegang karyawan, `asset_trx_log`) **hanya jika seluruh item Normal**. Jika ada Rusak, status tetap `proses` dan **tidak ada asset** yang berubah.
 
 ### BR-016 — Tidak ada tindak lanjut asset rusak
 ⚠️ Belum ditemukan: endpoint ganti/tarik/batal untuk transaksi request. Lihat RISK-001.
@@ -209,7 +209,7 @@ Admin: Asset Karyawan → Penambahan → (+)
   → Submit ke Karyawan : status proses, asset_data → proses, notif ke karyawan
 Karyawan: Asset Saya → banner "Penambahan Asset" → Konfirmasi Penambahan Asset
   → Normal/Rusak tiap asset → Konfirmasi Asset
-  → semua Normal : status dikonfirmasi, asset → terpakai/karyawan, asset_log, notif admin
+  → semua Normal : status dikonfirmasi, asset → terpakai/karyawan, asset_trx_log, notif admin
   → ada Rusak    : status proses (tgl_approval terisi), tidak ada perubahan asset, notif admin "Laporan Asset Rusak"
 ```
 
@@ -245,7 +245,7 @@ Karyawan: Pengajuan (tab Dikonfirmasi, "Menunggu Konfirmasi") → Konfirmasi Pen
 Peran approver dijalankan Admin Asset pada Pengajuan (§11.1 langkah 3).
 
 ### 11.4 System
-Lock `master_company`, generate ID/nomor, validasi asset & kategori, reservasi asset saat dikirim, penentuan status/label/tab, serah terima + `asset_log` saat semua normal, notifikasi setelah commit.
+Lock `master_company`, generate ID/nomor, validasi asset & kategori, reservasi asset saat dikirim, penentuan status/label/tab, serah terima + `asset_trx_log` saat semua normal, notifikasi setelah commit.
 
 ---
 
@@ -272,7 +272,7 @@ flowchart TD
     A4 --> C1[Karyawan: Konfirmasi Asset]
     B9 --> C1
     C1 --> C2{Semua item Normal?}
-    C2 -->|Ya| C3[status dikonfirmasi - Selesai, asset terpakai, asset_log, notif admin]
+    C2 -->|Ya| C3[status dikonfirmasi - Selesai, asset terpakai, asset_trx_log, notif admin]
     C2 -->|Tidak| C4[status proses - Butuh Proses, asset tetap proses, notif admin]
     C4 --> C5[Tidak ada tindak lanjut di sistem]
 ```
@@ -331,7 +331,7 @@ sequenceDiagram
     R->>DB: UPDATE header status, user_approval, tgl_approval
     alt semua item normal
         R->>DB: UPDATE asset_data terpakai, pemegang karyawan
-        R->>DB: INSERT asset_log request_karyawan
+        R->>DB: INSERT asset_trx_log request_karyawan
         C->>N: penambahan.dikonfirmasi (admin)
     else ada item rusak
         C->>N: penambahan.rusak (admin)
@@ -435,7 +435,7 @@ Status `asset_data.status_asset`:
 | `data_karyawan`, `master_cabang`, `master_departemen`, `master_jabatan` | Master HR | Karyawan aktif, jabatan, cabang, departemen |
 | `asset_admin` | Master akses | Admin asset |
 | `master_company` | Master | Lock transaksi |
-| `asset_log` | Log | Histori serah terima (`request_karyawan`) |
+| `asset_trx_log` | Log | Histori serah terima (`request_karyawan`) |
 | `notif_data`, `users` | Notifikasi | Inbox & token FCM |
 
 > ⚠️ Belum ditemukan: migration `CREATE TABLE` untuk tabel request; struktur mengacu DBML + migrations `2026_09_16_000003`, `2026_09_17_000004`, `2026_09_17_000008`.
@@ -453,8 +453,8 @@ erDiagram
     ASSET_KATEGORI_M |o--o{ ASSET_TRX_REQUEST_KARYAWAN : "id_asset_kategori_m (legacy, nullable)"
     ASSET_KATEGORI_M ||--o{ ASSET_DATA : "id_asset_kategori_m"
     DATA_KARYAWAN ||--o{ ASSET_TRX_REQUEST_KARYAWAN : "id_karyawan (logis)"
-    ASSET_DATA ||--o{ ASSET_LOG : "id_asset_data"
-    ASSET_TRX_REQUEST_KARYAWAN ||--o{ ASSET_LOG : "id_transaksi (logis)"
+    ASSET_DATA ||--o{ ASSET_TRX_LOG : "id_asset_data"
+    ASSET_TRX_REQUEST_KARYAWAN ||--o{ ASSET_TRX_LOG : "id_transaksi (logis)"
 
     ASSET_TRX_REQUEST_KARYAWAN {
         varchar id_asset_trx_request_karyawan PK
@@ -483,15 +483,15 @@ erDiagram
         enum pemegang_asset
         varchar id_pemegang_asset
     }
-    ASSET_LOG {
-        varchar id_asset_log PK
+    ASSET_TRX_LOG {
+        varchar id_asset_trx_log PK
         varchar id_asset_data FK
         enum jenis_log
         varchar id_transaksi
     }
 ```
 
-Relasi logis (tanpa `ref` DBML): `id_karyawan` → `data_karyawan`, `id_asset_kategori_m` (header, legacy/nullable) → `asset_kategori_m`, `asset_log.id_transaksi` → header. Semua JOIN mencocokkan `id_company`. Kolom item `parent_id` ada di DBML tetapi selalu `''` (tidak ada penggantian).
+Relasi logis (tanpa `ref` DBML): `id_karyawan` → `data_karyawan`, `id_asset_kategori_m` (header, legacy/nullable) → `asset_kategori_m`, `asset_trx_log.id_transaksi` → header. Semua JOIN mencocokkan `id_company`. Kolom item `parent_id` ada di DBML tetapi selalu `''` (tidak ada penggantian).
 
 ---
 
@@ -535,7 +535,7 @@ Relasi logis (tanpa `ref` DBML): `id_karyawan` → `data_karyawan`, `id_asset_ka
 ### 18.3 asset_data (field yang dipakai)
 `id_asset_data`, `id_asset_kategori_m` (snapshot kategori; tidak lagi dipakai membatasi alokasi), `nama_asset`, `deskripsi`, `kode_asset`, `merek`, `status_asset` (tersedia → proses → terpakai), `pemegang_asset` (gudang → karyawan), `id_pemegang_asset`, `kondisi_awal` (disalin ke log), `tgl_update`, `user_update`.
 
-### 18.4 asset_log (diisi saat semua normal)
+### 18.4 asset_trx_log (diisi saat semua normal)
 `jenis_log = request_karyawan`, `id_transaksi` = ID header, `nama_tabel_transaksi = asset_trx_request_karyawan`, `kondisi_awal` = `asset_data.kondisi_awal`, `kondisi_akhir = normal`, `posisi_awal` = pemegang sebelumnya (`gudang`), `posisi_akhir = pemegang_asset = karyawan`, `id_pemegang`, `nama_pemegang`, `user_input` = karyawan.
 
 ---
@@ -613,7 +613,7 @@ Lock → admin → header syarat sama dengan tolak → asset tersedia di gudang 
 4. UPDATE item.
 5. `semuaNormal` atas **seluruh** item → `dikonfirmasi`, selain itu tetap `proses`.
 6. UPDATE header `status_approval`, `user_approval`, `tgl_approval = now`.
-7. **Jika semua normal**: UPDATE `asset_data` terpakai/karyawan/id_pemegang_asset + INSERT `asset_log` per asset.
+7. **Jika semua normal**: UPDATE `asset_data` terpakai/karyawan/id_pemegang_asset + INSERT `asset_trx_log` per asset.
 8. **Jika ada rusak**: tidak ada perubahan `asset_data` (tetap `proses`).
 9. Notifikasi `penambahan.dikonfirmasi` / `penambahan.rusak`.
 
@@ -636,6 +636,7 @@ Lock → admin → header syarat sama dengan tolak → asset tersedia di gudang 
 | status_asset | proses | terpakai | Konfirmasi, **semua** item normal |
 | pemegang_asset | gudang | karyawan | Konfirmasi, semua normal |
 | id_pemegang_asset | '' | id_karyawan | Konfirmasi, semua normal |
+| id_asset_lokasi_m | lokasi gudang | NULL | Konfirmasi, semua normal |
 | tgl_update / user_update | – | now / karyawan atau admin | Setiap update di atas |
 | status_asset (item rusak / normal saat ada rusak) | proses | **proses (tidak berubah)** | Konfirmasi ada rusak |
 | ket_rusak, kondisi_awal | – | **tidak diubah** | – |
@@ -971,7 +972,7 @@ Database impact:
 UPDATE asset_trx_request_karyawan_item (status_item, ket_rusak)
 UPDATE asset_trx_request_karyawan (status_approval, user_approval, tgl_approval)
 UPDATE asset_data (terpakai, pemegang karyawan)   -- hanya jika semua normal
-INSERT asset_log (request_karyawan)                -- hanya jika semua normal
+INSERT asset_trx_log (request_karyawan)                -- hanya jika semua normal
 INSERT notif_data (semua admin)
 ```
 ```json
@@ -1159,7 +1160,7 @@ Menu **Pengajuan**; banner **Penambahan Asset** untuk transaksi pertama yang men
 | Normal / Rusak | `statusByItem` | `items[].status_item` | `$statusByItem` | item | status_item |
 | Report Kerusakan | `ketRusakByItem` | `items[].ket_rusak` | `$ketRusakByItem` | item | ket_rusak |
 | (JWT admin) | – | Authorization | `$actor` | header/item | user_input, user_update, user_approval |
-| (JWT karyawan konfirmasi) | – | Authorization | `$karyawan` | header / asset_data / asset_log | user_approval, tgl_approval / id_pemegang_asset / id_pemegang |
+| (JWT karyawan konfirmasi) | – | Authorization | `$karyawan` | header / asset_data / asset_trx_log | user_approval, tgl_approval / id_pemegang_asset / id_pemegang |
 
 ---
 
@@ -1243,8 +1244,8 @@ ENUM `sumber_pengajuan`, `status_approval`, `status_item`; UNIQUE `no_trx` (DBML
 | Alasan penolakan | ✅ | `ket_tolak` |
 | Histori status | ❌ | ⚠️ Belum ditemukan |
 | Draft alokasi sebelumnya | ❌ | Item dihapus & ditulis ulang |
-| Asset log serah terima | ✅ | `asset_log` (`request_karyawan`) hanya saat semua normal |
-| Laporan rusak | ⚠️ | Hanya `status_item`/`ket_rusak` di item; tanpa `asset_log`, tanpa perubahan `asset_data` |
+| Asset log serah terima | ✅ | `asset_trx_log` (`request_karyawan`) hanya saat semua normal |
+| Laporan rusak | ⚠️ | Hanya `status_item`/`ket_rusak` di item; tanpa `asset_trx_log`, tanpa perubahan `asset_data` |
 | Error sistem | ✅ | `Log::error` |
 
 ---
@@ -1346,7 +1347,7 @@ Mekanisme sama dengan modul asset lain: INSERT `notif_data` + push FCM, dipanggi
 |---|---|---|---|---|
 | TC-01 | Penambahan dikirim | Admin, karyawan aktif, asset tersedia | Isi form lengkap → Submit ke Karyawan | 201; `sumber=admin`, `proses`; item `belum_dicek`; asset `proses`; notif karyawan |
 | TC-02 | Penambahan multi kategori | 2 asset beda kategori | Submit | `nama_kategori = Multi Kategori`, `id_asset_kategori_m = ''` |
-| TC-03 | Konfirmasi penambahan normal | TC-01 | Karyawan Normal semua → Konfirmasi | `dikonfirmasi`; asset `terpakai`/karyawan; `asset_log request_karyawan`; notif admin |
+| TC-03 | Konfirmasi penambahan normal | TC-01 | Karyawan Normal semua → Konfirmasi | `dikonfirmasi`; asset `terpakai`/karyawan; `asset_trx_log request_karyawan`; notif admin |
 | TC-04 | Pengajuan dikirim | Karyawan aktif | Ketik jenis asset + alasan → Submit ke Admin | 201; `sumber=karyawan`; tanpa item; `nama_kategori` = teks jenis asset, `id_asset_kategori_m`/`urgensi` NULL; notif semua admin |
 | TC-05 | Tolak pengajuan | TC-04 | Tolak + alasan | `ditolak`; `ket_tolak`; notif karyawan; tab Ditolak (karyawan) / Selesai (admin) |
 | TC-06 | Draft alokasi | TC-04 | Setujui → pilih asset → Simpan Draft | Label "Draft Alokasi"; asset tetap `tersedia`; karyawan belum melihat asset |
@@ -1562,7 +1563,7 @@ Bergantung pada / dipakai oleh:
 - **Sisa `urgensi` di kode**: `store()` Penambahan admin masih menulis `urgensi = ''` (kolom nullable) dan mobile `AssetRequestKaryawanRequest` masih mengirim `''`; dibiarkan agar kontrak Penambahan tidak berubah.
 - **Reservasi hanya saat kirim**; draft tidak mengunci asset (beda dengan onboarding).
 - **Jam** dikirim `H:i`, disimpan `H:i:s`; tanggal kosong disimpan `0000-00-00` dan diabaikan mobile lewat `hasSchedule`.
-- **`asset_log.jenis_log = request_karyawan`** — dipakai Offboarding untuk menelusuri asal asset.
+- **`asset_trx_log.jenis_log = request_karyawan`** — dipakai Offboarding untuk menelusuri asal asset.
 - **Technical debt**: RISK-001/003 (RISK-002 sudah diperbaiki), enum ganda, `parent_id`/`diganti` tidak terpakai.
 
 ---
@@ -1592,7 +1593,7 @@ Admin memilih asset di Setujui Pengajuan Asset
 Karyawan memilih Normal → statusByItem → JSON items[].status_item
   → konfirmasiKaryawan: semua normal
   → UPDATE asset_data: terpakai, pemegang_asset = karyawan, id_pemegang_asset = id_karyawan
-  → INSERT asset_log (request_karyawan)
+  → INSERT asset_trx_log (request_karyawan)
   → asset tampil di Asset Saya
 ```
 
@@ -1603,6 +1604,567 @@ asset_trx_request_karyawan.ket_tolak
   → AssetRequestKaryawanRecord.ketTolak
   → UI "Alasan Penolakan" (detail admin & karyawan)
 ```
+
+### 45.4 Walkthrough Lengkap dengan Contoh Data
+
+Bagian ini mengikuti **dua transaksi dari awal sampai selesai**, langkah demi langkah: apa yang dilakukan pengguna di mobile, apa yang dikirim, apa yang diproses API, dan apa yang tersimpan di database. Data bersifat **sintetis**, tetapi format ID, nama kolom, urutan proses, label status, dan pesan diambil dari kode (`AssetRequestKaryawan_m`, `AssetAdminPenambahan_c`, `AssetAdminPengajuan_c`, `AssetKaryawanPengajuan_c`, `AssetKaryawanPenambahan_c`, `AssetNotification`).
+
+Dua jalur memakai **tabel yang sama** (`asset_trx_request_karyawan` + `_item`); pembedanya `sumber_pengajuan`.
+
+| Skenario | Jalur | Ringkasan |
+|---|---|---|
+| **A. Penambahan** | Admin → Karyawan (`sumber_pengajuan = admin`) | Admin memberi laptop dan mouse kepada Sari: draft, publish, Sari mengonfirmasi semua Normal |
+| **B. Pengajuan** | Karyawan → Admin → Karyawan (`sumber_pengajuan = karyawan`) | Dewi mengajukan monitor: draft, kirim, admin mengalokasikan (draft lalu kirim), Dewi mengonfirmasi |
+
+#### Data awal
+
+Company `CMP001`. Tanggal kejadian 22 Oktober 2026, periode ID `202610`. Belum ada transaksi request, log, atau notifikasi pada periode ini.
+
+**`data_karyawan`**
+
+| id_karyawan | nik | nama_lengkap | Peran |
+|---|---|---|---|
+| KRY0099 | ADM-001 | Siti Admin | Admin Asset (aktor) |
+| KRY0100 | ADM-002 | Rudi Admin | Admin Asset lain (ikut menerima notifikasi) |
+| KRY0002 | EMP-002 | Sari Contoh | Penerima Penambahan (skenario A) |
+| KRY0003 | EMP-003 | Dewi Contoh | Pemohon Pengajuan (skenario B) |
+
+KRY0099 dan KRY0100 terdaftar di `asset_admin`.
+
+**`asset_data`** (semua `status_asset = tersedia`, `pemegang_asset = gudang`, `id_pemegang_asset = ''`, `kondisi_awal = normal`)
+
+| Kode | id_asset_data | nama_asset | kategori | deskripsi |
+|---|---|---|---|---|
+| A5 | CMP00120260100005 (LPT-0005) | Laptop 14 inch | Laptop (`CMP001202601002`) | Charger, tas |
+| A6 | CMP00120260100006 (MSE-0002) | Mouse Wireless | Aksesoris (`CMP001202601003`) | `''` |
+| A7 | CMP00120260100007 (MON-0001) | Monitor 24 inch | Monitor (`CMP001202601004`) | Kabel HDMI |
+
+Penomoran ID bersama untuk kedua jalur: header `id_company + YYYYMM + 3 digit`, item `id_company + YYYYMM + 3 digit`, `no_trx = KRY-03-1-YYYYMMNNN`, log dan notifikasi 5 digit.
+
+---
+
+### Skenario A — Penambahan oleh Admin
+
+#### Langkah A0 — Admin membuka form dan memuat opsi
+
+**Mobile:** route `/asset_admin_add_penambahan_karyawan` → `LoadAssetRequestKaryawanOptions` → `AssetRequestKaryawanApi.getOptions()`.
+
+**Dikirim**
+```http
+GET /asset/penambahan-karyawan/options
+Authorization: Bearer <access_token_admin>
+```
+
+**Diproses API:** `jwt.api` + `jwt.ctx` → `accessError()` (harus admin asset) → `AssetRequestKaryawan_m::getOptions` → `AssetAdmin_m::getOnboardingOptions(excludeEmployeesWithOnboarding: false)`. Berbeda dari Onboarding, **semua karyawan aktif** muncul (termasuk yang sudah pernah di-onboarding). Asset yang tampil: `tersedia` + `gudang`.
+
+**Database:** hanya `SELECT`.
+
+**Diterima mobile:** `karyawan[]`, `kategori_asset[]` (pohon), `assets[]` (A5, A6, A7) seperti API-001. Dipakai untuk bottom sheet **Pilih Karyawan** dan pohon **Tambah Asset**.
+
+#### Langkah A1 — Admin menyimpan draft (1 asset)
+
+**Mobile:** admin memilih Sari Contoh, menambah **Laptop 14 inch**, mengisi jadwal 29 Okt 2026 pukul 09:00 dan catatan, lalu **Simpan Draft** → `AssetRequestKaryawanApi.store(AssetRequestKaryawanRequest)` dengan `isDraft: true`.
+
+**Dikirim**
+```http
+POST /asset/penambahan-karyawan
+```
+```json
+{
+  "id_karyawan": "KRY0002",
+  "asset_ids": ["CMP00120260100005"],
+  "tgl_serah_terima": "2026-10-29",
+  "jam_serah_terima": "09:00",
+  "keterangan_serah_terima": "Ambil di ruang IT",
+  "keterangan": "",
+  "urgensi": "",
+  "is_draft": true
+}
+```
+(`urgensi` legacy, mobile masih mengirim `''`.)
+
+**Diproses API** (`AssetAdminPenambahan_c::savePenambahanKaryawan` → `AssetRequestKaryawan_m::store`, satu `DB::transaction`)
+1. Validasi request, lalu `accessError()`.
+2. `lockCompany("CMP001")`.
+3. `requestLockedAssets`: A5 harus `tersedia` + `gudang` (`FOR UPDATE`); jumlah harus sama.
+4. `hasActiveOnboardingAsset` dan `hasActiveRequestAsset` (hanya header `proses` yang mengunci): lolos.
+5. `findActiveKaryawan("KRY0002")` dan `findAssetAdmin("KRY0099")` → `user_input = "ADM-001 - Siti Admin"`.
+6. Karena `is_draft = true`, jadwal boleh kosong (di sini terisi).
+7. Generate ID header: urutan 1 → `CMP001202610001`, `no_trx = KRY-03-1-202610001`.
+8. Kategori: semua asset satu kategori → `id_asset_kategori_m = CMP001202601002`, `nama_kategori = Laptop`.
+9. INSERT header (`draft`), INSERT item.
+10. **Draft tidak mengunci asset** dan tidak mengirim notifikasi.
+
+**Hasil database**
+
+`asset_trx_request_karyawan`
+
+| Kolom | Nilai |
+|---|---|
+| id_asset_trx_request_karyawan | CMP001202610001 |
+| no_trx | KRY-03-1-202610001 |
+| sumber_pengajuan | **admin** |
+| id_asset_kategori_m / nama_kategori | CMP001202601002 / Laptop |
+| keterangan / urgensi / ket_tolak | `''` / `''` / `''` |
+| id_karyawan / nik_karyawan / nama_karyawan | KRY0002 / EMP-002 / Sari Contoh |
+| tgl_pengajuan | 2026-10-22 |
+| tgl_serah_terima / jam_serah_terima | 2026-10-29 / 09:00:00 |
+| keterangan_serah_terima | Ambil di ruang IT |
+| status_approval | **draft** |
+| user_approval / tgl_approval | `''` / NULL |
+| tgl_input / user_input | 2026-10-22 09:00:00 / ADM-001 - Siti Admin |
+| tgl_update / user_update | NULL / `''` |
+
+`asset_trx_request_karyawan_item`
+
+| id_asset_trx_request_item | parent_id | id_asset_trx_request | id_asset_data | nama_asset | deskripsi_asset | kategori_asset | status_item |
+|---|---|---|---|---|---|---|---|
+| CMP001202610001 | `''` | CMP001202610001 | A5 | Laptop 14 inch | Charger, tas | Laptop | belum_dicek |
+
+`asset_data`: **tidak berubah** (A5 tetap `tersedia`).
+
+**Diterima mobile** (HTTP 201)
+```json
+{
+  "code": "CREATED",
+  "message": "Draft penambahan asset berhasil disimpan.",
+  "data": { "id": "CMP001202610001", "no_trx": "KRY-03-1-202610001",
+            "status_approval": "draft", "status_label": "Draft", "tab": "pending" }
+}
+```
+
+#### Langkah A2 — Admin menambah mouse lalu publish
+
+**Mobile:** admin membuka draft (kartu tab **Pending**), menambah **Mouse Wireless**, menekan **Submit ke Karyawan** → `AssetRequestKaryawanApi.update(id, request)`.
+
+**Dikirim**
+```http
+PUT /asset/penambahan-karyawan/CMP001202610001
+```
+```json
+{
+  "id_karyawan": "KRY0002",
+  "asset_ids": ["CMP00120260100005", "CMP00120260100006"],
+  "tgl_serah_terima": "2026-10-29",
+  "jam_serah_terima": "09:00",
+  "keterangan_serah_terima": "Ambil di ruang IT",
+  "keterangan": "",
+  "urgensi": "",
+  "is_draft": false
+}
+```
+
+**Diproses API** (`store(data, id)` dengan `$idRequest` terisi)
+1. Header dicari dengan `sumber_pengajuan = admin`, `FOR UPDATE`; harus `draft`, selain itu 422 "Hanya draft penambahan langsung yang dapat diperbarui."
+2. Validasi asset (A5 dan A6 `tersedia` + `gudang`, tidak aktif di onboarding/penambahan lain), karyawan, admin. Jadwal **wajib** karena `is_draft = false`.
+3. ID header dan `no_trx` **dipertahankan**; `tgl_pengajuan` dan `tgl_input` juga dipertahankan.
+4. Kategori: dua kategori berbeda (Laptop dan Aksesoris) → `id_asset_kategori_m = ''`, `nama_kategori = 'Multi Kategori'`.
+5. UPDATE header → `proses`; `nextSequence` item dihitung **sebelum** item lama dihapus (terakhir `…001` → mulai `2`), lalu DELETE item lama dan INSERT item baru.
+6. Karena bukan draft: UPDATE `asset_data` A5 dan A6 → `proses`.
+7. Controller memanggil `AssetNotification::send('penambahan.dikirim', …)` setelah commit.
+
+**Hasil database**
+
+Header (kolom yang berubah)
+
+| Kolom | Sebelum | Sesudah |
+|---|---|---|
+| id_asset_kategori_m / nama_kategori | CMP001202601002 / Laptop | `''` / Multi Kategori |
+| status_approval | draft | **proses** |
+| tgl_approval | NULL | NULL |
+| tgl_update / user_update | NULL / `''` | 2026-10-22 09:10:00 / ADM-001 - Siti Admin |
+
+Item: baris `…001` **dihapus** dan diganti (ID lama tidak dipakai ulang):
+
+| id_asset_trx_request_item | id_asset_data | nama_asset | deskripsi_asset | kategori_asset | status_item |
+|---|---|---|---|---|---|
+| CMP001202610002 | A5 | Laptop 14 inch | Charger, tas | Laptop | belum_dicek |
+| CMP001202610003 | A6 | Mouse Wireless | `''` | Aksesoris | belum_dicek |
+
+`asset_data`: A5 dan A6 `status_asset` **tersedia → proses** (`tgl_update` 09:10:00, `user_update` ADM-001 - Siti Admin).
+
+`notif_data` (1 baris)
+
+| Kolom | Nilai |
+|---|---|
+| id_notif | CMP00120261000001 |
+| id_karyawan | KRY0002 |
+| jenis / flag_baca | asset / 0 |
+| id_ref | CMP001202610001 |
+| rute | asset_konfirmasi_penambahan |
+| ket_notif_id | Anda menerima penambahan asset KRY-03-1-202610001. |
+| ket_notif_en | You received asset addition KRY-03-1-202610001. |
+
+**Diterima mobile** (HTTP 200)
+```json
+{
+  "code": "UPDATED",
+  "message": "Penambahan asset berhasil dikirim ke karyawan.",
+  "data": { "id": "CMP001202610001", "no_trx": "KRY-03-1-202610001",
+            "status_approval": "proses", "status_label": "Menunggu Diterima", "tab": "pending" }
+}
+```
+
+#### Langkah A3 — Sari mengonfirmasi: semua Normal
+
+**Mobile**
+- Push membuka `/asset_konfirmasi_penambahan` → `LoadAssetKonfirmasiPenambahan(id)` → `GET /asset/karyawan/penambahan/CMP001202610001` (API-014). Detail berisi 2 item `belum_dicek`, `perlu_dicek: true`, jadwal serah terima, dan `karyawan` (nik, nama, jabatan, cabang, divisi).
+- Sari memilih **Normal** pada keduanya, **Konfirmasi Asset** → `SubmitAssetKonfirmasiPenambahan` → `AssetSayaApi.konfirmasiPenambahan`.
+
+**Dikirim**
+```http
+POST /asset/karyawan/penambahan/CMP001202610001/konfirmasi
+```
+```json
+{
+  "items": [
+    { "id_item": "CMP001202610002", "status_item": "normal" },
+    { "id_item": "CMP001202610003", "status_item": "normal" }
+  ]
+}
+```
+`ket_rusak` hanya ikut dikirim untuk item rusak.
+
+**Diproses API** (`AssetKaryawanPenambahan_c::konfirmasiPenambahanSaya` → `AssetRequestKaryawan_m::konfirmasiKaryawan`)
+1. Validasi `items` (id unik, `status_item` ∈ normal/rusak, `ket_rusak` wajib bila rusak).
+2. `lockCompany`; header diambil dengan `id_karyawan = KRY0002` + `FOR UPDATE`; harus `proses`. Untuk Pengajuan, `tgl_approval` wajib terisi (jalur ini `admin`, jadi tidak diperiksa).
+3. Karyawan harus aktif. Item dikunci; item pending = `belum_dicek` = `…002` dan `…003`; jumlah dan ID yang dikirim harus sama persis.
+4. UPDATE item: `status_item = normal`, `ket_rusak = ''`.
+5. `semuaNormal` dihitung atas **seluruh item** → true → status `dikonfirmasi`.
+6. UPDATE header: `status_approval`, `user_approval`, `tgl_approval = now`, `tgl_update`, `user_update`.
+7. **Karena semua normal**: asset dikunci, UPDATE `asset_data` → `terpakai`, `karyawan`, `id_pemegang_asset = KRY0002`, `id_asset_lokasi_m = NULL`; INSERT `asset_trx_log` satu baris per asset.
+8. Controller memanggil `AssetNotification::send('penambahan.dikonfirmasi', …)` ke seluruh admin.
+
+**Hasil database**
+
+| Tabel | Perubahan |
+|---|---|
+| item `…002`, `…003` | status_item `belum_dicek → normal`, ket_rusak `''` |
+| header | status_approval `proses → dikonfirmasi`; user_approval = EMP-002 - Sari Contoh; tgl_approval = 2026-10-22 10:00:00; tgl_update/user_update diisi yang sama |
+| asset_data A5, A6 | status_asset `proses → terpakai`; pemegang_asset `gudang → karyawan`; id_pemegang_asset `'' → KRY0002`; id_asset_lokasi_m → NULL |
+
+`asset_trx_log` (2 baris, urutan sesuai `id_asset_data` pada transaksi)
+
+| id_asset_trx_log | id_asset_data | jenis_log | id_transaksi | nama_tabel_transaksi | kondisi awal → akhir | posisi awal → akhir | id_pemegang / nama_pemegang | user_input |
+|---|---|---|---|---|---|---|---|---|
+| CMP00120261000001 | A5 | request_karyawan | CMP001202610001 | asset_trx_request_karyawan | normal → normal | gudang → karyawan | KRY0002 / Sari Contoh | EMP-002 - Sari Contoh |
+| CMP00120261000002 | A6 | request_karyawan | CMP001202610001 | asset_trx_request_karyawan | normal → normal | gudang → karyawan | KRY0002 / Sari Contoh | EMP-002 - Sari Contoh |
+
+`notif_data` (2 baris, satu per admin)
+
+| id_notif | id_karyawan | id_ref | rute | ket_notif_id |
+|---|---|---|---|---|
+| CMP00120261000002 | KRY0099 | CMP001202610001 | asset_admin_detail_penambahan_karyawan | Asset KRY-03-1-202610001 telah dikonfirmasi oleh Sari Contoh. |
+| CMP00120261000003 | KRY0100 | CMP001202610001 | asset_admin_detail_penambahan_karyawan | Asset KRY-03-1-202610001 telah dikonfirmasi oleh Sari Contoh. |
+
+Rute admin dipilih dari `sumber_pengajuan` header (`admin` → detail penambahan, `karyawan` → detail pengajuan).
+
+**Diterima mobile** (HTTP 200)
+```json
+{
+  "code": "UPDATED",
+  "message": "Penambahan asset berhasil dikonfirmasi.",
+  "data": { "id": "CMP001202610001", "no_trx": "KRY-03-1-202610001",
+            "status_approval": "dikonfirmasi", "status_label": "Selesai", "tab": "selesai" }
+}
+```
+Laptop dan mouse kini muncul di Asset Saya Sari.
+
+#### Variasi A — ada asset rusak (all-or-nothing)
+
+Bila pada langkah A3 laptop dinilai **Rusak** ("Ada garis pada layar") dan mouse **Normal**:
+
+```json
+{ "items": [
+  { "id_item": "CMP001202610002", "status_item": "rusak", "ket_rusak": "Ada garis pada layar" },
+  { "id_item": "CMP001202610003", "status_item": "normal" } ] }
+```
+
+| Tabel | Hasil |
+|---|---|
+| item `…002` / `…003` | `rusak` + ket_rusak / `normal` |
+| header | status_approval **tetap proses**; `tgl_approval` = waktu konfirmasi; user_approval = EMP-002 - Sari Contoh |
+| asset_data A5 **dan** A6 | **Tidak berubah**: keduanya tetap `proses` di gudang (mouse yang Normal pun belum diserahkan) |
+| asset_trx_log | **Tidak ada baris** |
+| notif_data | `penambahan.rusak` ke setiap admin: "Sari Contoh melaporkan asset rusak pada KRY-03-1-202610001." |
+
+Respons: message "Laporan kerusakan penambahan asset berhasil dikirim.", `status_label = "Isu Rusak"`, `tab = "dikonfirmasi"`. Tidak ada endpoint lanjutan, sehingga kedua asset tertahan di `proses` (RISK-001). Ini berbeda dari Onboarding yang menyerahkan item Normal per item dan menyediakan penggantian.
+
+---
+
+### Skenario B — Pengajuan oleh Karyawan
+
+#### Langkah B1 — Dewi menyimpan draft pengajuan
+
+**Mobile:** Asset Saya → **Pengajuan** → (+) → route `/asset_tambah_pengajuan`. Dewi mengetik **Jenis Asset** (teks bebas, maks 150) dan **Alasan**, lalu **Simpan Draft** → `AssetPengajuanKaryawanApi.store(AssetPengajuanKaryawanRequest)`.
+
+**Dikirim**
+```http
+POST /asset/karyawan/pengajuan
+Authorization: Bearer <access_token_dewi>
+```
+```json
+{ "jenis_asset": "Monitor 24 inch", "keterangan": "Monitor lama bergaris dan sering mati", "is_draft": true }
+```
+
+**Diproses API** (`AssetKaryawanPengajuan_c::storePengajuanSaya` → `AssetRequestKaryawan_m::storePengajuanKaryawan`)
+1. Validasi: `jenis_asset` (string, maks 150) dan `keterangan` wajib hanya bila bukan draft; `is_draft` boolean. Field `id_asset_kategori_m` dan `urgensi` dari klien lama diabaikan.
+2. `lockCompany`; `findActiveKaryawan("KRY0003")` (tanpa cek admin: pengguna biasa).
+3. Generate ID: `nextSequence` header → urutan 2 (urutan 1 dipakai skenario A) → `CMP001202610002`, `no_trx = KRY-03-1-202610002`.
+4. INSERT header saja (**tanpa item**); `nama_kategori` = teks jenis asset; `id_asset_kategori_m` dan `urgensi` = NULL (butuh SQL v1.4 agar kolom nullable).
+5. Draft: tidak ada notifikasi.
+
+**Hasil database** — `asset_trx_request_karyawan` (satu baris baru)
+
+| Kolom | Nilai |
+|---|---|
+| id_asset_trx_request_karyawan | CMP001202610002 |
+| no_trx | KRY-03-1-202610002 |
+| sumber_pengajuan | **karyawan** |
+| id_asset_kategori_m / urgensi | **NULL** / NULL |
+| nama_kategori | Monitor 24 inch (teks bebas dari karyawan) |
+| keterangan | Monitor lama bergaris dan sering mati |
+| id_karyawan / nik_karyawan / nama_karyawan | KRY0003 / EMP-003 / Dewi Contoh |
+| tgl_pengajuan | 2026-10-22 |
+| tgl_serah_terima / jam_serah_terima / keterangan_serah_terima | 0000-00-00 / 00:00:00 / `''` |
+| status_approval | **draft** |
+| user_approval / tgl_approval | `''` / NULL |
+| tgl_input / user_input | 2026-10-22 11:00:00 / EMP-003 - Dewi Contoh |
+
+`asset_trx_request_karyawan_item` dan `asset_data`: tidak berubah.
+
+**Diterima mobile** (HTTP 201)
+```json
+{ "code": "CREATED", "message": "Draft pengajuan asset berhasil disimpan.",
+  "data": { "id": "CMP001202610002", "no_trx": "KRY-03-1-202610002",
+            "status_approval": "draft", "status_label": "Draft", "tab": "pengajuan" } }
+```
+
+#### Langkah B2 — Dewi mengirim pengajuan ke admin
+
+**Mobile:** kartu draft di tab **Pengajuan** → `LoadAssetPengajuanKaryawanDraft(id)` mengisi form → **Submit ke Admin** → `AssetPengajuanKaryawanApi.update(id, request)`.
+
+**Dikirim**
+```http
+PUT /asset/karyawan/pengajuan/CMP001202610002
+```
+```json
+{ "jenis_asset": "Monitor 24 inch", "keterangan": "Monitor lama bergaris dan sering mati", "is_draft": false }
+```
+
+**Diproses API** (`updatePengajuanKaryawan`)
+1. Header dicari dengan `id_karyawan = KRY0003` dan `sumber_pengajuan = karyawan` (bukan milik pemanggil → 404 "Pengajuan asset tidak ditemukan.").
+2. Syarat draft: `status_approval = draft`, `tgl_approval` NULL, `user_approval` kosong, belum punya item; selain itu 422 "Pengajuan asset sudah tidak dapat diubah karena bukan draft."
+3. Saat kirim, `jenis_asset` dan `keterangan` wajib.
+4. UPDATE header: `keterangan`, `urgensi = NULL`, `status_approval = proses`, `tgl_update`, `user_update`, `tgl_pengajuan = hari ini`; `nama_kategori` ditimpa bila key `jenis_asset` dikirim.
+5. Controller memanggil `AssetNotification::send('pengajuan.diajukan', …)` ke seluruh admin.
+
+**Hasil database**
+
+| Tabel | Perubahan |
+|---|---|
+| header | status_approval `draft → proses`; tgl_pengajuan 2026-10-22; tgl_update 11:05:00; user_update = EMP-003 - Dewi Contoh; tgl_approval tetap NULL |
+| item, asset_data | Tidak berubah |
+| notif_data | + `CMP00120261000004` (KRY0099) dan `CMP00120261000005` (KRY0100), rute `asset_admin_detail_pengajuan_karyawan`, id_ref `CMP001202610002`, ket_notif_id "Dewi Contoh mengajukan asset KRY-03-1-202610002." |
+
+**Diterima mobile** (HTTP 200)
+```json
+{ "code": "UPDATED", "message": "Pengajuan asset berhasil dikirim ke admin.",
+  "data": { "id": "CMP001202610002", "no_trx": "KRY-03-1-202610002",
+            "status_approval": "proses", "status_label": "Menunggu Konfirmasi", "tab": "pengajuan" } }
+```
+Dari sudut pandang admin, label transaksi ini **"Menunggu Diterima"**, tab `pengajuan` (belum disetujui, tanpa item).
+
+#### Langkah B3 — Admin meninjau pengajuan
+
+**Mobile:** notifikasi membuka `/asset_admin_detail_pengajuan_karyawan` → `LoadAssetPengajuanAdminDetail(id)` → `GET /asset/pengajuan-karyawan/CMP001202610002`. Daftar (`GET /asset/pengajuan-karyawan?tab=pengajuan`) menampilkan transaksi `proses` yang belum disetujui; draft karyawan tidak pernah tampil di sisi admin.
+
+**Diproses API:** `getDetailPengajuanAdmin`, hanya `SELECT`. Jenis asset dibaca dari `nama_kategori` dan dikirim sebagai `nama_kategori` serta `nama_asset`; `id_asset_kategori_m` = `''`.
+
+Tombol **Tolak** dan **Setujui** tampil karena status `proses` dan tab `pengajuan`.
+
+#### Langkah B4 — Admin menyimpan draft alokasi
+
+**Mobile:** **Setujui** → route `/asset_admin_setujui_pengajuan_karyawan` → `LoadAssetPengajuanAdminOptions(id)` → `GET /asset/pengajuan-karyawan/CMP001202610002/options` (seluruh stok gudang, tanpa filter kategori; hanya bila pengajuan `proses` dan belum disetujui, selain itu 404). Admin memilih **Monitor 24 inch (A7)**, mengisi jadwal, lalu **Simpan Draft** → `AssetPengajuanAdminApi.allocate`.
+
+**Dikirim**
+```http
+POST /asset/pengajuan-karyawan/CMP001202610002/alokasi
+```
+```json
+{ "asset_ids": ["CMP00120260100007"], "tgl_serah_terima": "2026-10-30", "jam_serah_terima": "10:00",
+  "keterangan_serah_terima": "Serah terima di ruang IT lantai 2", "is_draft": true }
+```
+
+**Diproses API** (`alokasikanPengajuanAdmin`)
+1. Validasi dan cek admin; `lockCompany`.
+2. Header (sumber karyawan, `FOR UPDATE`) harus `proses` **dan** `tgl_approval` NULL; selain itu 422 "Pengajuan asset sudah tidak dapat dialokasikan."
+3. A7 harus `tersedia` + `gudang`; tidak aktif di onboarding atau penambahan lain (transaksi ini dikecualikan). Jenis asset yang diajukan tidak dibandingkan dengan kategori A7.
+4. Jadwal boleh kosong untuk draft.
+5. `nextSequence` item → 4; DELETE item lama (tidak ada), INSERT item.
+6. UPDATE header: jadwal, `ket_tolak = ''`, `user_approval = ''`, `tgl_approval = NULL` (draft), `tgl_update`, `user_update`.
+7. Draft: `asset_data` **tidak diubah**, tidak ada notifikasi.
+
+**Hasil database**
+
+| Tabel | Perubahan |
+|---|---|
+| item (baru) | `CMP001202610004`, id_asset_trx_request = `CMP001202610002`, id_asset_data = A7, nama_asset = Monitor 24 inch, deskripsi_asset = Kabel HDMI, kategori_asset = Monitor, status_item = belum_dicek, user_input = ADM-001 - Siti Admin |
+| header | tgl_serah_terima 2026-10-30; jam_serah_terima 10:00:00; keterangan_serah_terima = Serah terima di ruang IT lantai 2; tgl_update 13:00:00; user_update = ADM-001 - Siti Admin; **status_approval tetap proses, tgl_approval tetap NULL** |
+| asset_data A7 | Tidak berubah (`tersedia`) |
+
+**Diterima mobile** (HTTP 200)
+```json
+{ "code": "UPDATED", "message": "Draft alokasi pengajuan asset berhasil disimpan.",
+  "data": { "id": "CMP001202610002", "no_trx": "KRY-03-1-202610002", "status_approval": "proses",
+            "status_label": "Draft Alokasi", "tab": "pengajuan", "jumlah_asset": 1 } }
+```
+Dewi **belum** melihat jadwal atau asset: untuk karyawan, sebelum disetujui `items = []`, jadwal kosong, `jumlah_asset = 0`.
+
+#### Langkah B5 — Admin mengirim alokasi (Submit ke PIC)
+
+**Dikirim**
+```http
+POST /asset/pengajuan-karyawan/CMP001202610002/alokasi
+```
+```json
+{ "asset_ids": ["CMP00120260100007"], "tgl_serah_terima": "2026-10-30", "jam_serah_terima": "10:00",
+  "keterangan_serah_terima": "Serah terima di ruang IT lantai 2", "is_draft": false }
+```
+
+**Diproses API:** sama dengan B4, dengan perbedaan:
+- jadwal **wajib** (kosong → 422 "Tanggal serah terima wajib diisi." / "Jam serah terima wajib diisi.");
+- `nextSequence` item → terakhir `…004` → **5**, item lama `…004` dihapus lalu diganti `…005`;
+- header: `user_approval = ADM-001 - Siti Admin`, `tgl_approval = now` (pengajuan **dianggap disetujui**);
+- UPDATE `asset_data` A7 → `proses`;
+- `AssetNotification::send('pengajuan.disetujui', …)`.
+
+**Hasil database**
+
+| Tabel | Perubahan |
+|---|---|
+| item | `CMP001202610004` dihapus; `CMP001202610005` (A7, belum_dicek) |
+| header | user_approval = ADM-001 - Siti Admin; **tgl_approval = 2026-10-22 13:30:00**; status_approval tetap `proses` |
+| asset_data A7 | status_asset `tersedia → proses` |
+| notif_data | + `CMP00120261000006`: id_karyawan KRY0003, id_ref `CMP001202610002`, rute `asset_konfirmasi_pengajuan`, ket_notif_id "Pengajuan asset KRY-03-1-202610002 disetujui. Silakan cek dan konfirmasi asset." |
+
+**Diterima mobile** (HTTP 200, code `SUCCESS` karena bukan draft)
+```json
+{ "code": "SUCCESS", "message": "Pengajuan asset berhasil disetujui.",
+  "data": { "id": "CMP001202610002", "no_trx": "KRY-03-1-202610002", "status_approval": "proses",
+            "status_label": "Menunggu Konfirmasi", "tab": "proses", "jumlah_asset": 1 } }
+```
+
+#### Langkah B6 — Dewi mengonfirmasi asset
+
+**Mobile:** push membuka `/asset_konfirmasi_pengajuan` (`isPengajuan: true`) → `LoadAssetKonfirmasiPenambahan(id)` → `GET /asset/karyawan/penambahan/CMP001202610002`. Sekarang item, jadwal, jenis asset, dan alasan tampil. Dewi memilih **Normal** → **Konfirmasi Asset**.
+
+**Dikirim**
+```http
+POST /asset/karyawan/penambahan/CMP001202610002/konfirmasi
+```
+```json
+{ "items": [ { "id_item": "CMP001202610005", "status_item": "normal" } ] }
+```
+Endpoint konfirmasi **sama** untuk kedua jalur.
+
+**Diproses API:** `konfirmasiKaryawan` seperti langkah A3, ditambah syarat Pengajuan: `tgl_approval` harus terisi, jika tidak 422 "Pengajuan asset belum disubmit oleh admin."
+
+**Hasil database**
+
+| Tabel | Perubahan |
+|---|---|
+| item `…005` | status_item `belum_dicek → normal` |
+| header | status_approval `proses → dikonfirmasi`; user_approval = EMP-003 - Dewi Contoh (**menimpa** nama admin); tgl_approval = 2026-10-22 15:00:00 (**menimpa** waktu persetujuan admin) |
+| asset_data A7 | `proses → terpakai`; pemegang_asset `gudang → karyawan`; id_pemegang_asset = KRY0003; id_asset_lokasi_m → NULL |
+| asset_trx_log | + `CMP00120261000003`: A7, jenis_log request_karyawan, id_transaksi `CMP001202610002`, posisi gudang → karyawan, id_pemegang KRY0003, nama_pemegang Dewi Contoh, user_input EMP-003 - Dewi Contoh |
+| notif_data | + `CMP00120261000007` (KRY0099) dan `CMP00120261000008` (KRY0100), rute `asset_admin_detail_pengajuan_karyawan`, "Asset KRY-03-1-202610002 telah dikonfirmasi oleh Dewi Contoh." |
+
+**Diterima mobile** (HTTP 200): `status_approval: "dikonfirmasi"`, `status_label: "Selesai"`, `tab: "selesai"`.
+
+Karena `tgl_approval` dan `user_approval` ditimpa, pelaku dan waktu persetujuan admin **tidak tersimpan** setelah konfirmasi; hanya `tgl_update` pada langkah-langkah sebelumnya yang pernah memuat jejaknya.
+
+#### Variasi B — admin menolak pengajuan
+
+Pada langkah B3, admin menekan **Tolak** dan mengisi alasan.
+
+```http
+POST /asset/pengajuan-karyawan/CMP001202610002/tolak
+```
+```json
+{ "ket_tolak": "Stok monitor belum tersedia bulan ini" }
+```
+
+**Diproses API** (`tolakPengajuanAdmin`): header harus `proses` dan belum disetujui; alasan wajib (maks 255); **DELETE** seluruh item (draft alokasi bila ada); UPDATE header.
+
+| Tabel | Hasil |
+|---|---|
+| item | Dihapus semua |
+| header | status_approval = **ditolak**; ket_tolak = Stok monitor belum tersedia bulan ini; user_approval = ADM-001 - Siti Admin; tgl_approval = waktu tolak; tgl_update/user_update diisi |
+| asset_data | Tidak berubah (tidak pernah dikunci) |
+| notif_data | + 1 baris ke KRY0003: rute `asset_detail_pengajuan`, "Pengajuan asset KRY-03-1-202610002 ditolak admin." |
+
+Respons: code `UPDATED`, "Pengajuan asset berhasil ditolak.", `status_label = "Ditolak"`, `tab = "selesai"` (di sisi karyawan tab `ditolak`). Status `ditolak` bersifat final.
+
+---
+
+### Kondisi akhir data
+
+`asset_trx_request_karyawan`
+
+| id | no_trx | sumber | nama_kategori | status_approval | user_approval | tgl_approval |
+|---|---|---|---|---|---|---|
+| CMP001202610001 | KRY-03-1-202610001 | admin | Multi Kategori | dikonfirmasi | EMP-002 - Sari Contoh | 2026-10-22 10:00:00 |
+| CMP001202610002 | KRY-03-1-202610002 | karyawan | Monitor 24 inch | dikonfirmasi | EMP-003 - Dewi Contoh | 2026-10-22 15:00:00 |
+
+`asset_trx_request_karyawan_item`
+
+| id | header | asset | status_item |
+|---|---|---|---|
+| CMP001202610002 | CMP001202610001 | A5 Laptop | normal |
+| CMP001202610003 | CMP001202610001 | A6 Mouse | normal |
+| CMP001202610005 | CMP001202610002 | A7 Monitor | normal |
+
+ID item `…001` dan `…004` pernah ada dan sudah dihapus; nomornya **tidak dipakai ulang** (menggerus kapasitas 999/bulan, RISK-004).
+
+`asset_data`: A5, A6 → `terpakai`/`karyawan`/`KRY0002`; A7 → `terpakai`/`karyawan`/`KRY0003`. `asset_trx_log`: 3 baris. `notif_data`: 8 baris (1 penambahan dikirim, 2 dikonfirmasi, 2 pengajuan diajukan, 1 disetujui, 2 dikonfirmasi).
+
+---
+
+### Kasus gagal yang umum
+
+| Situasi | Langkah | HTTP | Pesan | Perubahan database |
+|---|---|:---:|---|---|
+| Asset bukan `tersedia` + `gudang` | A1 / A2 / B4 / B5 | 422 | Satu atau beberapa asset tidak tersedia untuk penambahan. / …tidak tersedia. | Tidak ada |
+| Asset ada di onboarding aktif | A1 / A2 / B4 / B5 | 422 | Satu atau beberapa asset sedang diproses pada onboarding. | Tidak ada |
+| Asset ada di penambahan/pengajuan `proses` lain | A1 / A2 / B4 / B5 | 422 | Satu atau beberapa asset sedang diproses pada penambahan lain. | Tidak ada |
+| Kirim penambahan tanpa jadwal | A2 / B5 | 422 | Tanggal serah terima wajib diisi. / Jam serah terima wajib diisi. | Tidak ada |
+| Format jam bukan `H:i` | A1 / A2 / B4 / B5 | 422 | Format jam serah terima harus HH:MM. | Tidak ada |
+| Edit penambahan yang bukan draft / bukan sumber admin | A2 | 422 | Hanya draft penambahan langsung yang dapat diperbarui. | Tidak ada |
+| Kirim pengajuan tanpa jenis asset / alasan | B2 | 422 | Jenis asset wajib diisi. / Alasan pengajuan wajib diisi. (induk: Data pengajuan asset belum lengkap.) | Tidak ada |
+| Edit pengajuan yang bukan draft | B2 | 422 | Pengajuan asset sudah tidak dapat diubah karena bukan draft. | Tidak ada |
+| Alokasi/tolak pengajuan yang sudah disetujui atau ditolak | B4 / B5 / tolak | 422 | Pengajuan asset sudah tidak dapat dialokasikan. / …tidak menunggu persetujuan. | Tidak ada |
+| Tolak tanpa alasan | tolak | 422 | Alasan penolakan wajib diisi. | Tidak ada |
+| Konfirmasi pengajuan yang belum disetujui admin | B6 | 422 | Pengajuan asset belum disubmit oleh admin. | Tidak ada |
+| Konfirmasi dua kali | A3 / B6 | 422 | Penambahan asset sudah tidak menunggu konfirmasi. | Tidak ada |
+| Tidak semua item dinilai | A3 / B6 | 422 | Seluruh asset penambahan wajib dicek. | Tidak ada |
+| Rusak tanpa alasan | A3 / B6 | 422 | Alasan kerusakan wajib diisi. | Tidak ada |
+| Pengguna bukan admin asset | A0–A2, B3–B5 | 403 | Pengguna tidak memiliki akses admin asset. | Tidak ada |
+| Karyawan membuka transaksi orang lain / draft | A3 / B6 | 404 / 422 | Penambahan asset tidak ditemukan. | Tidak ada |
+| Token kedaluwarsa | semua | 401 | Token telah expired. Mobile me-refresh token sekali lalu mengulang request. | Tidak ada |
+
+Semua pelanggaran aturan dilempar sebagai `InvalidArgumentException` di dalam `DB::transaction`, sehingga seluruh perubahan request itu dibatalkan. Pesan tersedia dalam bahasa Indonesia dan Inggris mengikuti header `locale` (respons `en` memakai teks Inggris, mis. "Asset addition confirmed successfully.").
+
+#### Ringkasan siapa mengerjakan apa
+
+| Tahap | Mobile | API | Database |
+|---|---|---|---|
+| Opsi / pilih asset | Bottom sheet, state lokal | `getOptions` (SELECT) | Tidak berubah |
+| Simpan / kirim penambahan | Rakit `AssetRequestKaryawanRequest` → `toJson` | Validasi, lock, cek asset & karyawan, ID, insert/update, reservasi hanya saat kirim | header, item, `asset_data → proses` (kirim), `notif_data` (kirim) |
+| Simpan / kirim pengajuan | `AssetPengajuanKaryawanRequest` (`jenis_asset`, `keterangan`) | Validasi, ID, insert/update header tanpa item | header, `notif_data` (kirim) |
+| Tolak / alokasi | Bottom sheet alasan / form setujui | Validasi status & asset, ganti item, tentukan approval | item, header, `asset_data → proses` (kirim alokasi), `notif_data` |
+| Konfirmasi | `_statusByItem`, `_ketRusakByItem`; sama untuk kedua jalur | Hitung `semuaNormal`; serah terima hanya bila semua normal | item, header, `asset_data`, `asset_trx_log`, `notif_data` |
+| Tampilan | JSON → model → widget; label dari `status_label` dan `tab` | `requestStatusMetadata` / `pengajuanStatusMetadata` / `pengajuanAdminStatusMetadata` | `SELECT` saja |
 
 ---
 
@@ -1616,7 +2178,7 @@ asset_trx_request_karyawan.ket_tolak
 | Tolak | notif | header (ditolak) | item (draft alokasi) |
 | Alokasi draft | item | header (jadwal) | item lama |
 | Alokasi kirim (approval) | item, notif | header (jadwal, approval), asset_data → proses | item lama |
-| Konfirmasi semua normal | asset_log, notif | item, header (dikonfirmasi), asset_data → terpakai/karyawan | – |
+| Konfirmasi semua normal | asset_trx_log, notif | item, header (dikonfirmasi), asset_data → terpakai/karyawan | – |
 | Konfirmasi ada rusak | notif | item, header (tetap proses) | – |
 
 ---
@@ -1670,6 +2232,7 @@ asset_trx_request_karyawan.ket_tolak
 
 | Version | Date | Changes |
 |---|---|---|
+| 1.5 | 2026-10-22 | Menambah §45.4 *Walkthrough Lengkap dengan Contoh Data* untuk Penambahan (admin) dan Pengajuan (karyawan): aksi mobile, request, proses API, isi database per langkah, notifikasi, variasi rusak/tolak, kasus gagal. Sinkronisasi kode: tabel log ternyata `asset_trx_log` (`id_asset_trx_log`), bukan `asset_log`; konfirmasi semua normal juga mengosongkan `asset_data.id_asset_lokasi_m`; pesan API kini dua bahasa mengikuti header `locale`. |
 | 1.4 | 2026-10-20 | Pengajuan karyawan: **Jenis Asset teks bebas** (`jenis_asset`, maks 150) menggantikan pilihan kategori; **Urgensi dihapus** dari form, validasi, response, dan options. `id_asset_kategori_m`/`urgensi` dari klien lama diabaikan dan disimpan NULL; `nama_kategori` = teks jenis asset (BR-007, BR-008, API-010/012/017, §18, §21, §24, §26-§31). Persetujuan admin **tidak lagi dibatasi kategori** (BR-011, API-007/009). SQL manual `sql-pengajuan-karyawan-jenis-asset-bebas.sql` (kolom nullable) **belum dijalankan; jalankan sebelum deploy API**. Kartu Data Karyawan menampilkan Jabatan, Cabang, Departemen (`karyawan.jabatan`). Mobile: tombol bentuk pil, perbaikan nilai awal jadwal/jam layar Setujui. Kompatibilitas: submit klien lama tanpa `jenis_asset` -> 422; draft lama mempertahankan `nama_kategori`. Tes: API 99 lulus, mobile 38 lulus. Ditambah TC-39..TC-41, RISK-012/013, INC-12. |
 | 1.3 | 2026-10-12 | Mobile: stepper alur status (`AssetAlurStepper.pengajuan`) di detail penambahan/pengajuan admin dan detail pengajuan karyawan (§26.3, 26.5, 26.9). Teks langkah di grup JSON `alur`. Tidak ada perubahan API. |
 | 1.2 | 2026-10-12 | Sinkronisasi dengan kode: **edit/kirim draft** kini tersedia — `PUT /asset/penambahan-karyawan/{id}` dan `PUT /asset/karyawan/pengajuan/{id}` (API-016, API-017); mobile membuka draft untuk diubah (Ubah Draft). RISK-003 diturunkan menjadi RENDAH (hapus draft belum ada); jumlah endpoint menjadi 10 admin + 7 karyawan (17). Path mobile mengikuti struktur folder baru |

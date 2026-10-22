@@ -18,7 +18,7 @@
 | Mobile | Flutter (`professional_flutter_3_35`), `flutter_bloc`, `dio` |
 | Web | ⚠️ Belum ditemukan: tidak ada source web di workspace |
 | Test otomatis | API `tests/Asset/AssetRequestRuanganTest.php` (12 test) · Mobile `test/asset/asset_request_ruangan_test.dart` (11 test) |
-| Versi dokumen | 1.0 — 14 Oktober 2026 |
+| Versi dokumen | 1.1 — 22 Oktober 2026 |
 | Dokumen terkait | Onboarding Ruangan (ALK-RGN01), Request & Penambahan Karyawan (KRY-03-1), Master Lokasi & PIC Ruangan |
 
 ## 2. Daftar Isi
@@ -649,6 +649,362 @@ Perbandingan dengan dokumen bisnis RGN04 v1.0.
 | Aset rusak diganti | BR-13, BR-14 | API-08 | Panel Pengganti | TC-10 |
 | Selesai: aset terpakai | BR-15 | API-09 | Konfirmasi | TC-09 |
 
+### 45.4 Walkthrough Lengkap dengan Contoh Data
+
+Walkthrough berikut mengikuti **Jalur A**: PIC Ruangan mengajukan penambahan aset, Admin/HR menyetujui, serah terima gagal sebagian sehingga ada satu ronde penggantian, lalu selesai. Sesudahnya dijelaskan variasi penolakan dan **Jalur B** (Admin/HR langsung). Setiap langkah menjelaskan apa yang dilakukan di mobile, apa yang dikirim, apa yang diproses API, apa yang tersimpan di database, dan apa yang diterima mobile. Data bersifat **sintetis**, tetapi nama kolom, urutan proses, dan pesan diambil dari kode (`AssetRequestRuangan_m`, `AssetAdminRequestRuangan_c`, `AssetKaryawanRequestRuangan_c`, `AssetNotification`).
+
+| Langkah | Pelaku | Aksi | Endpoint |
+|:---:|---|---|---|
+| 0 | PIC Ruangan | Membuka form pengajuan, memuat opsi | API-10 `GET /asset/karyawan/pic-ruangan/request/options` |
+| 1 | PIC Ruangan | **Ajukan** penambahan monitor | API-12 `POST /asset/karyawan/pic-ruangan/request` |
+| 2 | Admin/HR | **Setujui** dengan memilih 2 aset dan jadwal | API-03 `GET …/{id}`, API-05 `POST /asset/request-ruangan/{id}/setujui` |
+| 3 | Admin/HR | **Ubah Jadwal** sebelum PIC menerima | API-07 `PUT /asset/request-ruangan/{id}/jadwal` |
+| 4 | PIC Ruangan | Mengirim checklist (1 normal, 1 rusak) | API-13, API-14 `POST …/request/{id}/terima` |
+| 5 | Admin/HR | **Jadwalkan Pengganti** | API-08 `POST /asset/request-ruangan/{id}/pengganti` |
+| 6 | PIC Ruangan | Mengirim checklist ronde 2 | API-14 |
+| 7 | Admin/HR | **Konfirmasi Selesai** | API-09 `POST /asset/request-ruangan/{id}/konfirmasi` |
+
+#### Data awal
+
+Company `CMP001`. Tanggal 22 Oktober 2026, periode ID `202610`.
+
+**`data_karyawan`** (semua aktif)
+
+| id_karyawan | nik | nama_lengkap | Peran |
+|---|---|---|---|
+| KRY0099 | ADM-001 | Siti Admin | Admin Asset |
+| KRY0030 | EMP-030 | Dewi PIC | PIC Ruang Meeting Lt.2 |
+
+**`asset_lokasi_m`**: `LOK0007` "Ruang Meeting Lt.2" (`tipe = ruangan`, `status_aktif = 1`, cabang "Jakarta", departemen "Operasional"). **`asset_lokasi_pic_m`** menunjuk `LOK0007` → `KRY0030`. Ruangan sudah beroperasi: ada onboarding `dikonfirmasi` untuk `LOK0007` (syarat BR-02; tanpa itu ruangan tidak muncul di opsi).
+
+**`asset_kategori_m`**: `KAT-MON` "Monitor".
+
+**`asset_data`** (semua `tersedia`, `pemegang_asset = gudang`, `id_asset_lokasi_m = LOK0001`)
+
+| id_asset_data | nama_asset | Peran dalam skenario |
+|---|---|---|
+| AST0201 | Monitor LG 24" | Dipilih Admin, normal |
+| AST0202 | Monitor Dell 24" | Dipilih Admin, ternyata rusak |
+| AST0203 | Monitor Samsung 24" | Pengganti |
+
+Penomoran: header, item, dan jadwal memakai `id_company + YYYYMM + 3 digit` (urut per tabel); `no_trx = RGN04-YYYYMMNNN`; `asset_trx_log` dan notifikasi memakai 5 digit. Satu tabel melayani dua jalur, dibedakan kolom `sumber_pengajuan` (`karyawan` = Jalur A, `admin` = Jalur B).
+
+---
+
+#### Langkah 0 — PIC membuka form pengajuan
+
+**Mobile:** halaman **PIC Ruangan** → kartu Penambahan/Request → **Ajukan** (`AssetPicRuanganBloc`, `assetPicRuanganApi`).
+
+**Dikirim**
+```http
+GET /asset/karyawan/pic-ruangan/request/options
+Authorization: Bearer <access_token_dewi>
+```
+
+**Diproses API:** `getOptionsPic` hanya membaca: ruangan aktif yang **dimiliki PIC login** (join `asset_lokasi_pic_m`) dan sudah beroperasi, daftar kategori, dan pilihan urgensi (`normal`, `secepatnya`, `mendesak`). **Database:** hanya `SELECT`.
+
+**Diterima mobile:** `LOK0007` sebagai satu-satunya ruangan pilihan, kategori (termasuk Monitor), dan tiga pilihan urgensi.
+
+#### Langkah 1 — PIC mengajukan penambahan monitor
+
+**Mobile:** Dewi memilih ruangan, jenis aset **Monitor**, urgensi **Mendesak**, mengisi alasan, lalu **Kirim**.
+
+**Dikirim**
+```http
+POST /asset/karyawan/pic-ruangan/request
+Authorization: Bearer <access_token_dewi>
+```
+```json
+{ "id_asset_lokasi_m": "LOK0007", "id_asset_kategori_m": "KAT-MON",
+  "keterangan": "Tim bertambah dua orang", "urgensi": "mendesak" }
+```
+
+**Diproses API** (`AssetKaryawanRequestRuangan_c` → `AssetRequestRuangan_m::ajukanPic`, satu `DB::transaction(…, 3)`)
+1. Validasi controller: `id_asset_lokasi_m` ("Ruangan wajib dipilih."), `id_asset_kategori_m` ("Jenis aset wajib dipilih."), `keterangan` ("Alasan wajib diisi.", maksimal 1000), `urgensi` ("Urgensi wajib dipilih." / "Urgensi pengajuan tidak valid.").
+2. `lockCompany`; karyawan harus aktif ("Karyawan tidak ditemukan atau tidak aktif.").
+3. `findRuanganTujuan` dengan filter PIC: ruangan harus aktif, punya PIC, **milik Dewi**, dan sudah beroperasi ("Ruangan tujuan tidak ditemukan, tidak aktif, atau belum memiliki aset.").
+4. Kategori harus ada ("Jenis aset tidak ditemukan."), alasan tidak kosong ("Alasan wajib diisi."), urgensi salah satu dari tiga nilai ("Urgensi wajib dipilih.").
+5. Nomor header: `nextHeaderId` → `CMP001202610001`, `RGN04-202610001`.
+6. INSERT header saja (belum ada item, jadwal, dan **belum ada aset yang dikunci**).
+7. Controller mengirim `request_ruangan.diajukan` ke semua admin asset.
+
+**Hasil database**
+
+`asset_trx_request_ruangan` (1 baris)
+
+| Kolom | Nilai |
+|---|---|
+| id_asset_trx_request_ruangan / no_trx | CMP001202610001 / RGN04-202610001 |
+| sumber_pengajuan | **karyawan** |
+| id_asset_lokasi_m / nama_asset_ruangan | LOK0007 / Ruang Meeting Lt.2 |
+| nama_cabang / nama_departemen | Jakarta / Operasional |
+| id_karyawan_pic / nama_pic / nik_pic | KRY0030 / Dewi PIC / EMP-030 |
+| id_asset_kategori_m / nama_kategori | KAT-MON / Monitor |
+| keterangan / urgensi | Tim bertambah dua orang / mendesak |
+| id_karyawan / nik_karyawan / nama_karyawan | KRY0030 / EMP-030 / Dewi PIC (pengaju) |
+| tgl_pengajuan | 2026-10-22 |
+| tgl_serah_terima / jam_serah_terima | NULL / NULL |
+| status_approval | **proses** |
+| user_approval / tgl_approval / ket_tolak | `''` / NULL / `''` |
+| tgl_input / user_input | 2026-10-22 08:30:00 / EMP-030 - Dewi PIC |
+
+Tabel item dan jadwal masih kosong; `asset_data` tidak berubah. Karena belum ada baris jadwal, fase turunan = **menunggu_persetujuan**.
+
+`notif_data`: satu baris per admin asset (misalnya KRY0099), rute `asset_admin_detail_request_ruangan`, judul "Pengajuan Penambahan Asset Ruangan", isi "Dewi PIC mengajukan penambahan asset untuk Ruang Meeting Lt.2 (RGN04-202610001).". Push FCM dikirim; kegagalan push hanya dicatat di log.
+
+**Diterima mobile** (HTTP 201)
+```json
+{ "code": "CREATED", "message": "Pengajuan penambahan asset berhasil dikirim ke Admin/HR.",
+  "data": { "id": "CMP001202610001", "no_trx": "RGN04-202610001", "fase": "menunggu_persetujuan" } }
+```
+
+#### Langkah 2 — Admin menyetujui dan memilih aset
+
+**Mobile:** tab **Pengajuan** menampilkan RGN04-202610001; Siti membuka detail (`GET /asset/request-ruangan/CMP001202610001` dan opsi aset), memilih Monitor LG dan Monitor Dell, jadwal 23 Okt 2026 pukul 09:00, lalu **Setujui**.
+
+**Dikirim**
+```http
+POST /asset/request-ruangan/CMP001202610001/setujui
+Authorization: Bearer <access_token_admin>
+```
+```json
+{ "asset_ids": ["AST0201", "AST0202"], "tanggal": "2026-10-23", "jam": "09:00", "catatan": "Bawa kunci ruangan" }
+```
+
+**Diproses API** (`setujuiRequestRuangan` → `setujui`)
+1. Validasi: `asset_ids` wajib, minimal satu, tidak kembar ("Minimal satu asset wajib dipilih." / "Asset yang sama tidak boleh dipilih lebih dari sekali."), `tanggal` `Y-m-d`, `jam` `H:i`.
+2. `lockCompany`, admin ("Pengguna tidak terdaftar sebagai admin asset."), `lockHeader` (ada dan `status_approval = proses`: "Penambahan aset tidak ditemukan." / "Penambahan aset sudah selesai.").
+3. Fase harus `menunggu_persetujuan` ("Pengajuan sudah tidak menunggu persetujuan.").
+4. `alokasikan`: `getLockedAssets` (aset `tersedia` di gudang, `FOR UPDATE`; "Satu atau beberapa asset tidak tersedia untuk dialokasikan."), `parseJadwalValue` ("Tanggal serah terima tidak boleh sebelum tanggal pengajuan."), INSERT 2 item ronde 1, INSERT jadwal ronde 1, UPDATE header (jadwal + catatan), UPDATE `asset_data` → `proses`.
+5. UPDATE header: `user_approval`, `tgl_approval`, `tgl_update`, `user_update`. **`status_approval` tetap `proses`**; yang berubah adalah fase turunan karena jadwal sudah ada.
+6. Controller mengirim `request_ruangan.disetujui` ke PIC.
+
+**Hasil database**
+
+`asset_trx_request_ruangan_item` (2 baris)
+
+| id_asset_trx_request_item | id_asset_trx_request | id_asset_data | nama_asset | ronde | parent_id | status_item |
+|---|---|---|---|:---:|---|---|
+| CMP001202610001 | CMP001202610001 | AST0201 | Monitor LG 24" | 1 | `''` | belum_dicek |
+| CMP001202610002 | CMP001202610001 | AST0202 | Monitor Dell 24" | 1 | `''` | belum_dicek |
+
+`asset_trx_request_ruangan_jadwal` (1 baris)
+
+| id_…_jadwal | ronde | tanggal | jam | tgl_terima_pic | keterangan |
+|---|:---:|---|---|---|---|
+| CMP001202610001 | 1 | 2026-10-23 | 09:00:00 | NULL | `''` |
+
+`asset_trx_request_ruangan` (header)
+
+| Kolom | Sebelum | Sesudah |
+|---|---|---|
+| tgl_serah_terima / jam_serah_terima | NULL / NULL | 2026-10-23 / 09:00:00 |
+| keterangan_serah_terima | `''` | Bawa kunci ruangan |
+| user_approval | `''` | ADM-001 - Siti Admin |
+| tgl_approval | NULL | 2026-10-22 09:00:00 |
+| status_approval | proses | proses (tidak berubah) |
+
+`asset_data` (AST0201 dan AST0202): `status_asset` tersedia → **proses**; pemegang dan lokasi tetap gudang `LOK0001`; `user_update = ADM-001 - Siti Admin`.
+
+`notif_data`: baris untuk KRY0030, rute `asset_pic_ruangan_request`, judul "Pengajuan Disetujui", isi "Pengajuan penambahan asset RGN04-202610001 untuk Ruang Meeting Lt.2 disetujui. Cek jadwal serah terima.".
+
+**Diterima mobile** (HTTP 200): `{ "code": "UPDATED", "message": "Pengajuan disetujui dan dijadwalkan ke PIC Ruangan.", "data": { "id": "CMP001202610001", "no_trx": "RGN04-202610001", "fase": "menunggu_serah_terima" } }`. Transaksi pindah dari tab **Pengajuan** ke **Proses**.
+
+#### Langkah 3 — Admin mengubah jadwal
+
+**Dikirim**
+```http
+PUT /asset/request-ruangan/CMP001202610001/jadwal
+```
+```json
+{ "tanggal": "2026-10-24", "jam": "13:30", "keterangan": "Ruangan belum siap" }
+```
+
+**Diproses API** (`updateJadwal`): `lockCompany`, admin, `lockHeader`; fase harus `menunggu_serah_terima` ("Jadwal hanya dapat diubah sebelum PIC Ruangan menerima asset."); `rondeSaatIni` = 1; `parseJadwalValue`; INSERT jadwal baru (append-only, ronde 1); UPDATE jadwal terkini di header; controller mengirim `request_ruangan.jadwal_diubah` ke PIC.
+
+**Hasil database**
+
+`asset_trx_request_ruangan_jadwal` (riwayat bertambah)
+
+| id_…_jadwal | ronde | tanggal | jam | tgl_terima_pic | keterangan |
+|---|:---:|---|---|---|---|
+| CMP001202610001 | 1 | 2026-10-23 | 09:00:00 | NULL | `''` |
+| **CMP001202610002** | 1 | **2026-10-24** | **13:30:00** | NULL | Ruangan belum siap |
+
+Header: `tgl_serah_terima = 2026-10-24`, `jam_serah_terima = 13:30:00`, `tgl_update`/`user_update` diperbarui. Item dan `asset_data` tidak berubah. `notif_data` untuk KRY0030: "Jadwal Serah Terima Diperbarui" / "Jadwal serah terima RGN04-202610001 telah diperbarui.".
+
+**Diterima mobile** (HTTP 200): `message` "Jadwal serah terima berhasil diperbarui.", `data = { id, no_trx }`.
+
+#### Langkah 4 — PIC mengirim checklist (satu rusak)
+
+**Mobile:** Dewi membuka detail dari notifikasi, menilai **Normal** pada Monitor LG dan **Rusak** pada Monitor Dell dengan keterangan, lalu **Terima & Kirim Checklist**.
+
+**Dikirim**
+```http
+POST /asset/karyawan/pic-ruangan/request/CMP001202610001/terima
+Authorization: Bearer <access_token_dewi>
+```
+```json
+{ "items": [
+  { "id_item": "CMP001202610001", "status_item": "normal" },
+  { "id_item": "CMP001202610002", "status_item": "rusak", "ket_rusak": "Layar bergaris vertikal" } ] }
+```
+
+**Diproses API** (`terimaRequestRuangan` → `AssetRequestRuangan_m::terima`)
+1. Validasi controller: `items` wajib ("Kondisi item wajib diisi."), id tidak kembar ("Item yang sama tidak boleh dikirim lebih dari sekali."), `status_item` wajib dan hanya `normal`/`rusak` ("Kondisi setiap item wajib dipilih." / "Kondisi item harus normal atau rusak."), `ket_rusak` wajib bila rusak ("Keterangan kerusakan wajib diisi.").
+2. `lockCompany`; header dicari dengan filter `id_karyawan_pic` = pengguna login (`FOR UPDATE`): milik PIC lain atau tidak ada → "Penambahan aset tidak ditemukan.".
+3. Fase harus `menunggu_serah_terima` ("Penambahan aset sudah tidak menunggu serah terima."); karyawan aktif.
+4. Semua item ronde berjalan wajib dicek, tidak kurang dan tidak berlebih ("Seluruh item pada serah terima wajib dicek."); rusak tanpa keterangan ditolak.
+5. UPDATE `status_item`/`ket_rusak` per item, isi `tgl_terima_pic` pada jadwal terakhir, sentuh header. **`asset_data` tidak diubah** oleh PIC.
+6. Controller mengirim `request_ruangan.diterima` ke admin.
+
+**Hasil database**
+
+| Tabel | Perubahan |
+|---|---|
+| `…_item` `CMP001202610001` (Monitor LG) | status_item belum_dicek → **normal** |
+| `…_item` `CMP001202610002` (Monitor Dell) | status_item → **rusak**, `ket_rusak = Layar bergaris vertikal` |
+| `…_jadwal` `CMP001202610002` | `tgl_terima_pic = 2026-10-24 13:40:00` (fase → **menunggu_review**) |
+| Header | `tgl_update = 2026-10-24 13:40:00`, `user_update = EMP-030 - Dewi PIC` |
+| `notif_data` (admin) | "Serah Terima Diterima PIC": "Dewi PIC telah menerima asset RGN04-202610001 dan mengirim checklist kondisi." |
+
+**Diterima mobile** (HTTP 200)
+```json
+{ "code": "UPDATED", "message": "Serah terima dikirim. Kerusakan akan ditindaklanjuti admin.",
+  "data": { "id": "CMP001202610001", "no_trx": "RGN04-202610001", "ada_rusak": true, "fase": "menunggu_review" } }
+```
+
+#### Langkah 5 — Admin menjadwalkan pengganti
+
+**Dikirim**
+```http
+POST /asset/request-ruangan/CMP001202610001/pengganti
+```
+```json
+{ "items": [ { "id_item": "CMP001202610002", "id_asset_data": "AST0203" } ],
+  "tanggal": "2026-10-26", "jam": "10:00", "keterangan": "Unit pengganti monitor" }
+```
+
+**Diproses API** (`jadwalkanPengganti`)
+1. Validasi: "Asset pengganti wajib dipilih.", pengganti tidak kembar.
+2. `lockCompany`, admin, `lockHeader`; fase harus `menunggu_review` ("Pengganti hanya dapat dijadwalkan setelah PIC Ruangan mengirim checklist.").
+3. `asetRusakRondeIni` kosong → "Tidak ada asset rusak yang perlu diganti."; pilihan admin harus cocok penuh dengan daftar rusak → "Seluruh asset rusak wajib diberi asset pengganti."; pengganti kembar → "Asset pengganti yang sama tidak boleh dipilih lebih dari sekali."; pengganti harus `tersedia` di gudang → "Satu atau beberapa asset pengganti tidak tersedia.".
+4. UPDATE aset rusak → `rusak`; INSERT item ronde 2 (`parent_id` = item rusak); INSERT jadwal ronde 2; UPDATE header; UPDATE pengganti → `proses`.
+5. Controller mengirim `request_ruangan.pengganti` ke PIC.
+
+**Hasil database**
+
+| Tabel | Perubahan |
+|---|---|
+| `asset_data` AST0202 | status_asset proses → **rusak**, `ket_rusak = Layar bergaris vertikal`, `id_pemegang_asset = ''`, tetap di gudang |
+| `asset_data` AST0203 | tersedia → **proses** |
+| `…_item` (baru) `CMP001202610003` | `id_asset_data = AST0203`, `ronde = 2`, `parent_id = CMP001202610002`, `belum_dicek` |
+| `…_jadwal` (baru) `CMP001202610003` | ronde 2, 2026-10-26, 10:00:00, `tgl_terima_pic = NULL`, keterangan "Unit pengganti monitor" |
+| Header | `tgl_serah_terima = 2026-10-26`, `jam_serah_terima = 10:00:00`; fase kembali **menunggu_serah_terima** |
+| `notif_data` (PIC) | "Asset Pengganti": "Asset pengganti untuk RGN04-202610001 dijadwalkan. Cek jadwal serah terima baru." |
+
+**Diterima mobile** (HTTP 200): `message` "Asset pengganti berhasil dijadwalkan ke PIC Ruangan.", `data = { id, no_trx, ronde: 2, jumlah_pengganti: 1 }`.
+
+#### Langkah 6 — PIC mengirim checklist ronde 2
+
+Checklist ronde 2 hanya berisi item pengganti.
+```json
+{ "items": [ { "id_item": "CMP001202610003", "status_item": "normal" } ] }
+```
+Proses sama dengan langkah 4 dengan `ronde = 2`. **Hasil database:** item `CMP001202610003` → `normal`; jadwal `CMP001202610003` → `tgl_terima_pic = 2026-10-26 10:20:00`; fase **menunggu_review**; notifikasi `request_ruangan.diterima` ke admin. **Diterima mobile:** "Serah terima berhasil dikirim.", `ada_rusak = false`.
+
+#### Langkah 7 — Admin mengonfirmasi selesai
+
+**Dikirim**
+```http
+POST /asset/request-ruangan/CMP001202610001/konfirmasi
+```
+(tanpa body)
+
+**Diproses API** (`konfirmasi`)
+1. `lockCompany`, admin, `lockHeader`; fase harus `menunggu_review` ("Penambahan aset belum menunggu review Admin/HR.").
+2. Tidak boleh ada aset rusak pada ronde berjalan ("Masih ada asset rusak. Jadwalkan penggantian sebelum menyelesaikan penambahan.").
+3. `asetAktif`: item yang belum digantikan → AST0201 dan AST0203 (AST0202 tidak ikut). Aset dikunci dan harus `proses`/`gudang` ("Satu atau beberapa asset tidak dapat diserahkan ke ruangan.").
+4. UPDATE `asset_data`, INSERT `asset_trx_log` per aset (jenis `penambahan_ruangan`), UPDATE header → `dikonfirmasi`.
+5. Controller mengirim `request_ruangan.selesai` ke PIC.
+
+**Hasil database**
+
+| Tabel | Perubahan |
+|---|---|
+| `asset_data` AST0201, AST0203 | status_asset **terpakai**, pemegang_asset **ruangan**, id_pemegang_asset dan id_asset_lokasi_m = **LOK0007** |
+| `asset_data` AST0202 | tidak berubah (`rusak`, di gudang) |
+| `asset_trx_log` (2 baris) | `CMP00120261000001` (AST0201) dan `CMP00120261000002` (AST0203): `jenis_log = penambahan_ruangan`, `id_transaksi = CMP001202610001`, `nama_tabel_transaksi = asset_trx_request_ruangan`, normal → normal, gudang → ruangan, pemegang `LOK0007` / Ruang Meeting Lt.2 (nomor contoh dengan asumsi log pertama periode 202610) |
+| Header | `status_approval` proses → **dikonfirmasi**, `user_approval = ADM-001 - Siti Admin`, `tgl_approval = 2026-10-26 11:00:00` |
+| `notif_data` (PIC) | "Serah Terima Selesai": "Penambahan asset RGN04-202610001 telah dikonfirmasi dan selesai." |
+
+**Diterima mobile** (HTTP 200)
+```json
+{ "code": "UPDATED", "message": "Penambahan asset ke ruangan berhasil diselesaikan.",
+  "data": { "id": "CMP001202610001", "no_trx": "RGN04-202610001", "status_approval": "dikonfirmasi", "jumlah_asset": 2 } }
+```
+
+#### Kondisi akhir
+
+| Objek | Keadaan |
+|---|---|
+| Header `CMP001202610001` | `dikonfirmasi`, `sumber_pengajuan = karyawan`, 2 ronde, fase `selesai` |
+| Item | 3 baris: AST0201 normal, AST0202 rusak (digantikan), AST0203 normal (ronde 2) |
+| Jadwal | 3 baris: ronde 1 dua versi, ronde 2 |
+| AST0201, AST0203 | `terpakai` di `LOK0007` |
+| AST0202 | `rusak`, di gudang |
+| `asset_trx_log` | 2 baris `penambahan_ruangan` |
+
+#### Variasi
+
+**Penolakan (Jalur A).** Setelah langkah 1, Admin menolak:
+```http
+POST /asset/request-ruangan/CMP001202610001/tolak
+```
+```json
+{ "ket_tolak": "Stok monitor kosong" }
+```
+Proses `tolak`: admin, `lockHeader`, fase harus `menunggu_persetujuan` ("Pengajuan sudah tidak menunggu persetujuan."), alasan tidak kosong ("Alasan penolakan wajib diisi."). Header: `status_approval` → **ditolak**, `ket_tolak = Stok monitor kosong`, `user_approval`, `tgl_approval`, `tgl_update`, `user_update` terisi. **Tidak ada item, jadwal, atau perubahan `asset_data`.** PIC dinotifikasi `request_ruangan.ditolak` ("Pengajuan Ditolak": "Pengajuan penambahan asset RGN04-202610001 untuk Ruang Meeting Lt.2 ditolak. Lihat alasan penolakan."). Respons `UPDATED`, "Pengajuan penambahan asset ditolak.", `data = { id, no_trx, status_approval: "ditolak", fase: "ditolak" }`. Transaksi ditolak tidak dapat diproses lagi karena `lockHeader` menolak status selain `proses`.
+
+**Jalur B (Admin langsung).** Admin memakai tombol **Tambah Asset** dan memanggil `POST /asset/request-ruangan` dengan `{ "id_asset_lokasi_m": "LOK0007", "asset_ids": ["AST0201","AST0202"], "tanggal": "2026-10-23", "jam": "09:00", "catatan": "…", "keterangan": "" }`. `storeAdmin` memvalidasi ruangan aktif yang sudah beroperasi, mengambil PIC dari master ("PIC Ruangan tidak ditemukan atau tidak aktif." bila nonaktif; Admin tidak dapat memilih PIC lain), lalu dalam satu transaksi: INSERT header `sumber_pengajuan = admin` (tanpa kategori/urgensi; pembuat = admin), `alokasikan` (item, jadwal, `asset_data` → `proses`). Respons `CREATED`, "Penambahan asset ke ruangan berhasil dikirim ke PIC Ruangan.", `fase = menunggu_serah_terima`, notifikasi `request_ruangan.dikirim`. Langkah 3 dan seterusnya sama dengan Jalur A. `user_approval` dan `tgl_approval` baru terisi saat konfirmasi.
+
+#### Kasus gagal
+
+Semua kesalahan aturan bisnis dilempar sebagai `InvalidArgumentException` di dalam transaksi, sehingga seluruh perubahan di-rollback dan controller membalas `BUSINESS_RULE_VIOLATION` dengan pesan di bawah.
+
+| Situasi | Langkah | Pesan |
+|---|---|---|
+| Ruangan bukan milik PIC, nonaktif, atau belum beroperasi | 1, Jalur B | Ruangan tujuan tidak ditemukan, tidak aktif, atau belum memiliki aset. |
+| Kategori tidak ada | 1 | Jenis aset tidak ditemukan. |
+| Alasan kosong / urgensi di luar daftar | 1 | Alasan wajib diisi. / Urgensi wajib dipilih. |
+| Pengguna bukan admin asset | 2–7 | Pengguna tidak terdaftar sebagai admin asset. |
+| Setujui/tolak setelah diproses | 2 | Pengajuan sudah tidak menunggu persetujuan. |
+| Alasan penolakan kosong | Variasi | Alasan penolakan wajib diisi. |
+| Aset bukan `tersedia`/bukan di gudang | 2, Jalur B | Satu atau beberapa asset tidak tersedia untuk dialokasikan. |
+| Tanggal sebelum hari ini | 2, 3, 5 | Tanggal serah terima tidak boleh sebelum tanggal pengajuan. |
+| Ubah jadwal setelah PIC menerima | 3 | Jadwal hanya dapat diubah sebelum PIC Ruangan menerima asset. |
+| ID salah atau milik PIC lain | 4, 6 | Penambahan aset tidak ditemukan. |
+| Transaksi sudah selesai/ditolak | 3, 5, 7 | Penambahan aset sudah selesai. |
+| PIC mengirim checklist dua kali | 4, 6 | Penambahan aset sudah tidak menunggu serah terima. |
+| Item checklist kurang atau tidak cocok | 4, 6 | Seluruh item pada serah terima wajib dicek. |
+| Rusak tanpa keterangan | 4, 6 | Keterangan kerusakan wajib diisi. |
+| Pengganti sebelum checklist | 5 | Pengganti hanya dapat dijadwalkan setelah PIC Ruangan mengirim checklist. |
+| Tidak ada aset rusak | 5 | Tidak ada asset rusak yang perlu diganti. |
+| Pengganti tidak mencakup semua rusak | 5 | Seluruh asset rusak wajib diberi asset pengganti. |
+| Pengganti tidak tersedia | 5 | Satu atau beberapa asset pengganti tidak tersedia. |
+| Konfirmasi sebelum checklist | 7 | Penambahan aset belum menunggu review Admin/HR. |
+| Konfirmasi saat masih ada rusak | 7 | Masih ada asset rusak. Jadwalkan penggantian sebelum menyelesaikan penambahan. |
+| Status aset berubah sejak dialokasikan | 7 | Satu atau beberapa asset tidak dapat diserahkan ke ruangan. |
+
+#### Ringkasan siapa mengerjakan apa
+
+| Pihak | Tugas dalam alur ini |
+|---|---|
+| **Mobile PIC** | Memuat opsi, mengirim pengajuan, menampilkan jadwal, mengumpulkan penilaian Normal/Rusak, mengirim checklist |
+| **Mobile Admin/HR** | Mereview tab Pengajuan, memilih aset dan jadwal, menolak dengan alasan, mengubah jadwal, menjadwalkan pengganti, mengonfirmasi |
+| **API** | Validasi, penguncian company dan aset, pembatasan ruangan milik PIC, penomoran, penurunan fase dari data (ada tidaknya jadwal dan `tgl_terima_pic`), perubahan `asset_data`, `asset_trx_log`, notifikasi bilingual |
+| **Database** | Menyimpan satu header untuk dua jalur, item per ronde (rantai `parent_id`), riwayat jadwal append-only, status aset, log, dan notifikasi |
+
 ## 46. Ringkasan Database Impact
 
 | Tabel | Operasi |
@@ -679,3 +1035,4 @@ Perbandingan dengan dokumen bisnis RGN04 v1.0.
 | Versi | Tanggal | Perubahan |
 |---|---|---|
 | 1.0 | 14 Oktober 2026 | Dokumen awal ALK-RGN04: skema satu tabel dua jalur, API admin dan PIC, mobile, notifikasi, test. |
+| 1.1 | 22 Okt 2026 | Menambah §45.4 walkthrough lengkap Jalur A (mobile → payload → proses API → hasil database), variasi penolakan dan Jalur B, tabel kasus gagal; log aset ditulis ke `asset_trx_log`. |

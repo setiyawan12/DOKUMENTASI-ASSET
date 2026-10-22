@@ -18,8 +18,8 @@
 | Database | Relasional; struktur mengacu `API/diagram-asset.dbml` + migrations. ⚠️ Asumsi: MySQL/MariaDB (sintaks `ON UPDATE CURRENT_TIMESTAMP`, `lockForUpdate`) |
 | Mobile | Flutter (package `professional_flutter_3_35`, app v3.11.0), `flutter_bloc ^7.0.0`, `dio ^5.9.0` |
 | Web | ⚠️ Belum ditemukan: tidak ada source web di workspace |
-| Versi Dokumen | 1.2 |
-| Tanggal Dokumentasi | 2026-10-12 |
+| Versi Dokumen | 1.3 |
+| Tanggal Dokumentasi | 2026-10-22 |
 | Menggantikan | `Claude outputs/alur-onboarding-asset-karyawan.md` (usang — lihat §39) |
 
 ---
@@ -87,7 +87,7 @@
 | Main Transaction | `asset_trx_onboarding_karyawan` |
 | Detail Transaction | `asset_trx_onboarding_karyawan_item` (self-reference `parent_id` untuk asset pengganti) |
 | Asset Master | `asset_data` |
-| Log | `asset_log` (`jenis_log = onboarding_karyawan`) |
+| Log | `asset_trx_log` (`jenis_log = onboarding_karyawan`) |
 | Initial Status | `draft` (Simpan Draft) atau `proses` (Submit ke Karyawan) |
 | Final Status | `dikonfirmasi` (label UI **"Selesai"**) |
 | Approval | **Tidak ada** approval/reject oleh approver. "Konfirmasi" dilakukan karyawan penerima |
@@ -111,7 +111,7 @@ UPDATE asset_data.status_asset = 'proses'   (asset ter-reservasi)
    ↓  notifikasi "Onboarding Asset Baru" (jika bukan draft)
 Karyawan → Asset Saya → Konfirmasi Asset Baru (Normal / Rusak per asset)
    ↓
-Asset Normal → asset_data: terpakai, pemegang = karyawan  + INSERT asset_log
+Asset Normal → asset_data: terpakai, pemegang = karyawan  + INSERT asset_trx_log
 Asset Rusak  → asset_data: rusak, tetap di gudang → status "Isu Rusak"
    ↓  (jika ada rusak) Admin → Ganti Asset Yang Rusak → item pengganti → karyawan cek lagi
 Semua item aktif Normal → status_approval = dikonfirmasi ("Selesai")
@@ -131,7 +131,7 @@ Cara kerja berdasarkan kode:
 - **Serah terima** terjadi ketika karyawan mengonfirmasi: setiap asset dinilai **Normal** atau **Rusak**. Asset **Normal langsung berpindah** ke karyawan (per item, parsial). Asset **Rusak** tetap di gudang berstatus `rusak`.
 - **Penggantian**: bila ada asset rusak, Admin memilih asset pengganti; karyawan mengecek ulang hanya asset pengganti. Siklus ini dapat berulang.
 - **Transaksi selesai** (`dikonfirmasi`) ketika seluruh item aktif (item yang tidak digantikan) berstatus normal.
-- **Pemegang asset** berubah pada `asset_data.pemegang_asset = 'karyawan'` dan `id_pemegang_asset = id_karyawan`; histori dicatat ke `asset_log`.
+- **Pemegang asset** berubah pada `asset_data.pemegang_asset = 'karyawan'` dan `id_pemegang_asset = id_karyawan`; histori dicatat ke `asset_trx_log`.
 
 ---
 
@@ -143,7 +143,7 @@ Cara kerja berdasarkan kode:
 - Karyawan wajib memeriksa kondisi fisik dan menyatakan tanggung jawab atas asset ("Dengan menerima asset ini, saya menyatakan telah memeriksa kondisi dan bertanggung jawab atas asset tersebut.").
 - Asset rusak saat serah terima tidak dibebankan ke karyawan, tetap di gudang dengan status rusak, dan dapat diganti.
 - Asset yang sedang diproses tidak dapat dipakai oleh transaksi lain (peminjaman, penambahan, onboarding lain).
-- Setiap perpindahan asset ke karyawan dapat ditelusuri (asset_log).
+- Setiap perpindahan asset ke karyawan dapat ditelusuri (asset_trx_log).
 
 ### 5.2 Tujuan Sistem
 
@@ -151,7 +151,7 @@ Cara kerja berdasarkan kode:
 - Menyimpan daftar asset beserta snapshot nama/deskripsi/kategori.
 - Mereservasi asset (`status_asset = proses`) selama transaksi berjalan.
 - Mencatat hasil pengecekan per item (`normal`/`rusak` + alasan).
-- Memindahkan pemegang asset ke karyawan dan mencatat `asset_log`.
+- Memindahkan pemegang asset ke karyawan dan mencatat `asset_trx_log`.
 - Menyediakan mekanisme asset pengganti berbentuk pohon (`parent_id`).
 - Mengirim notifikasi inbox + push FCM ke pihak terkait.
 
@@ -163,7 +163,7 @@ Cara kerja berdasarkan kode:
 |---|---|---|
 | Admin Asset | Terdaftar di `asset_admin` dan karyawan aktif (`data_karyawan.status` ∈ '1','2','3','4') | Membuat/mengedit/menghapus draft, mengirim onboarding, melihat daftar & detail, memilih asset pengganti |
 | Karyawan (penerima) | User login (JWT) yang dipilih sebagai `id_karyawan` pada transaksi | Menerima notifikasi, mengecek asset (Normal/Rusak), mengonfirmasi |
-| System | Backend + FCM | Validasi, penguncian, penomoran, update `asset_data`, insert `asset_log`, notifikasi |
+| System | Backend + FCM | Validasi, penguncian, penomoran, update `asset_data`, insert `asset_trx_log`, notifikasi |
 
 > Tidak ada role **Approver**. Status `ditolak` ada di database tetapi tidak pernah di-set (lihat §39).
 
@@ -285,8 +285,10 @@ Cara kerja berdasarkan kode:
 - ID header dan ID item: 3 digit urut per company per bulan (maks. 999); ID log: 5 digit.
 - **Error:** "Nomor transaksi untuk periode ini sudah mencapai batas."
 
-### BR-020 — Daftar pilihan karyawan (UI) mengecualikan karyawan yang masih memiliki onboarding draft/proses/ditolak
-- Hanya diterapkan pada endpoint options, **tidak** divalidasi saat simpan (lihat RISK-003).
+### BR-020 — Satu karyawan hanya boleh punya satu onboarding seumur hidup
+- Endpoint options mengecualikan karyawan yang sudah punya baris onboarding **berstatus apa pun** (draft, proses, ditolak, dikonfirmasi); baris draft milik transaksi yang sedang diedit dikecualikan lewat `exclude_onboarding_id`.
+- Aturan ini juga divalidasi saat simpan dan ubah draft lewat `AssetAdmin_m::assertKaryawanBelumPernahOnboarding`.
+- **Error:** "Karyawan ini sudah pernah menerima onboarding asset." (422). Menghapus draft membebaskan karyawan kembali.
 
 ### BR-021 — Asset dalam onboarding aktif terkunci untuk modul lain
 - Peminjaman dan Penambahan/Request asset memanggil `hasActiveOnboardingAsset` → "Satu atau beberapa asset sedang diproses pada onboarding."
@@ -334,7 +336,7 @@ Tambah (+) → Pilih Karyawan → Tambah Asset (kategori → asset) → Catatan 
 ### 11.1 Admin Asset
 1. Buka halaman admin **Asset Karyawan**, pilih aksi **On Board** → halaman **On Boarding Asset** (tab Proses/Dikonfirmasi/Selesai).
 2. Tekan **+** → form **On Boarding Asset**.
-3. **Pilih Karyawan** (bottom sheet, cari nama/NIK). Hanya karyawan aktif tanpa onboarding aktif yang muncul.
+3. **Pilih Karyawan** (bottom sheet, cari nama/NIK). Hanya karyawan aktif yang belum pernah punya onboarding yang muncul.
 4. **Tambah Asset**: pilih kategori (pohon kategori), lalu asset (cari nama/kode/merek). Ulangi untuk asset lain; asset bisa dihapus dari daftar.
 5. Isi **Catatan Tambahan**.
 6. Tekan **Simpan Draft** (status draft) atau **Submit ke Karyawan** (status proses + notifikasi).
@@ -355,7 +357,7 @@ Tambah (+) → Pilih Karyawan → Tambah Asset (kategori → asset) → Catatan 
 - Validasi request & aturan bisnis; lock `master_company` per transaksi.
 - Generate ID & nomor transaksi.
 - Reservasi/pelepasan asset (`tersedia ⇄ proses`).
-- Pada konfirmasi: update item, update `asset_data`, insert `asset_log`, tentukan status header.
+- Pada konfirmasi: update item, update `asset_data`, insert `asset_trx_log`, tentukan status header.
 - Hitung label/tab turunan (`status_label`, `tab`, `isu_rusak`, `perlu_dicek`, `diganti`).
 - Kirim notifikasi inbox (`notif_data`) + push FCM setelah transaksi DB selesai.
 
@@ -387,7 +389,7 @@ flowchart TD
     O --> P[Karyawan: Konfirmasi Asset Baru]
     P --> Q[Nilai Normal / Rusak]
     Q --> R[POST konfirmasi]
-    R --> S[Item normal: asset terpakai, pemegang karyawan, asset_log]
+    R --> S[Item normal: asset terpakai, pemegang karyawan, asset_trx_log]
     R --> T[Item rusak: asset status rusak di gudang]
     S --> U{Semua item aktif normal?}
     T --> U
@@ -460,7 +462,7 @@ sequenceDiagram
     M->>DB: UPDATE asset_data rusak (item rusak)
     M->>DB: UPDATE header status/user_approval/tgl_approval
     M->>DB: UPDATE asset_data terpakai + pemegang (item normal)
-    M->>DB: INSERT asset_log (item normal)
+    M->>DB: INSERT asset_trx_log (item normal)
     M->>DB: COMMIT
     C->>N: onboarding.dikonfirmasi / onboarding.rusak (ke semua admin)
     C-->>Bloc: 200 UPDATED {status_approval, status_label, tab}
@@ -567,7 +569,7 @@ Status `asset_data.status_asset` akibat onboarding:
 | `master_cabang`, `master_departemen` | Master | Nama cabang/divisi pada detail |
 | `asset_admin` | Master akses | Daftar admin asset per company |
 | `master_company` | Master | Dipakai sebagai lock (`SELECT ... FOR UPDATE`) |
-| `asset_log` | Log | Histori perpindahan asset ke karyawan |
+| `asset_trx_log` | Log | Histori perpindahan asset ke karyawan |
 | `notif_data` | Notifikasi | Inbox notifikasi |
 | `users` | Auth | `token_fcm`, `lang` untuk push notif; user JWT |
 
@@ -585,8 +587,8 @@ erDiagram
     ASSET_TRX_ONBOARDING_KARYAWAN_ITEM |o--o{ ASSET_TRX_ONBOARDING_KARYAWAN_ITEM : "parent_id (pengganti)"
     ASSET_DATA ||--o{ ASSET_TRX_ONBOARDING_KARYAWAN_ITEM : "id_asset_data"
     ASSET_KATEGORI_M ||--o{ ASSET_DATA : "id_asset_kategori_m"
-    ASSET_DATA ||--o{ ASSET_LOG : "id_asset_data"
-    ASSET_TRX_ONBOARDING_KARYAWAN ||--o{ ASSET_LOG : "id_transaksi (logis)"
+    ASSET_DATA ||--o{ ASSET_TRX_LOG : "id_asset_data"
+    ASSET_TRX_ONBOARDING_KARYAWAN ||--o{ ASSET_TRX_LOG : "id_transaksi (logis)"
     DATA_KARYAWAN ||--o{ ASSET_TRX_ONBOARDING_KARYAWAN : "id_karyawan (logis)"
     DATA_KARYAWAN ||--o| ASSET_ADMIN : "id_karyawan"
     DATA_KARYAWAN ||--o{ ASSET_DATA : "id_pemegang_asset (logis)"
@@ -618,8 +620,8 @@ erDiagram
         varchar id_pemegang_asset
         varchar id_company
     }
-    ASSET_LOG {
-        varchar id_asset_log PK
+    ASSET_TRX_LOG {
+        varchar id_asset_trx_log PK
         varchar id_asset_data FK
         enum jenis_log
         varchar id_transaksi
@@ -627,7 +629,7 @@ erDiagram
     }
 ```
 
-Relasi **logis** (tanpa `ref` di DBML, hanya lewat query): `id_karyawan` → `data_karyawan`, `id_pemegang_asset` → `data_karyawan`, `asset_log.id_transaksi` → header, `parent_id` → item. ⚠️ Belum ditemukan: apakah FK fisik dibuat di database (tidak ada migration create table).
+Relasi **logis** (tanpa `ref` di DBML, hanya lewat query): `id_karyawan` → `data_karyawan`, `id_pemegang_asset` → `data_karyawan`, `asset_trx_log.id_transaksi` → header, `parent_id` → item. ⚠️ Belum ditemukan: apakah FK fisik dibuat di database (tidak ada migration create table).
 
 ---
 
@@ -681,17 +683,17 @@ Relasi **logis** (tanpa `ref` di DBML, hanya lewat query): `id_karyawan` → `da
 | kode_asset, nama_asset, merek, deskripsi | varchar | Tampilan & snapshot |
 | id_asset_kategori_m | varchar(50) | Kategori/picker |
 | status_asset | enum(tersedia, terpakai, dipinjam, rusak, dalam_perbaikan, dalam_proses_klaim, disposed, proses) | Filter ketersediaan & di-UPDATE |
-| kondisi_awal | enum(normal, rusak, belum_dicek) | Dikirim di options; disalin ke `asset_log.kondisi_awal` |
+| kondisi_awal | enum(normal, rusak, belum_dicek) | Dikirim di options; disalin ke `asset_trx_log.kondisi_awal` |
 | ket_rusak | varchar(255) | Di-UPDATE saat item rusak |
 | pemegang_asset | enum(gudang, ruangan, karyawan) | Filter `gudang` & di-UPDATE `karyawan` |
 | id_pemegang_asset | varchar(150) | `id_karyawan` pemegang (migration `2026_09_14_000002`) |
 | id_company, tgl_update, user_update | – | Isolasi company & audit |
 
-### 18.4 asset_log (yang diisi fitur)
+### 18.4 asset_trx_log (yang diisi fitur)
 
 | Field | Nilai dari onboarding |
 |---|---|
-| id_asset_log | `id_company + YYYYMM + 5 digit` |
+| id_asset_trx_log | `id_company + YYYYMM + 5 digit` |
 | id_asset_data | Asset yang diserahkan |
 | jenis_log | `onboarding_karyawan` |
 | id_transaksi | ID header onboarding |
@@ -796,7 +798,7 @@ Lock → cek admin → header `draft` → asset `proses → tersedia` → **DELE
 7. Item rusak → **UPDATE asset_data** `status_asset='rusak'`, `id_pemegang_asset=''`, `ket_rusak` (hanya jika masih `proses` & `gudang`).
 8. Hitung `semuaNormal` atas **seluruh item aktif** → status `dikonfirmasi` atau tetap `proses`.
 9. **UPDATE header** `status_approval`, `user_approval`, `tgl_approval = now`, `tgl_update`, `user_update`.
-10. Item normal ronde ini: lock `asset_data`; lewati jika sudah dipegang karyawan ini; selain itu wajib `proses`+`gudang` → **UPDATE** `terpakai`/`karyawan`/`id_pemegang_asset`; **INSERT asset_log** per asset.
+10. Item normal ronde ini: lock `asset_data`; lewati jika sudah dipegang karyawan ini; selain itu wajib `proses`+`gudang` → **UPDATE** `terpakai`/`karyawan`/`id_pemegang_asset`; **INSERT asset_trx_log** per asset.
 11. COMMIT; notifikasi `onboarding.dikonfirmasi` atau `onboarding.rusak` ke semua admin; response 200 `UPDATED`.
 
 ### 21.5 Ganti Asset Rusak — `gantiAssetRusakOnboarding`
@@ -809,7 +811,7 @@ Lock → cek admin → header `draft` → asset `proses → tersedia` → **DELE
 7. Notifikasi `onboarding.pengganti` ke karyawan; response 200 `UPDATED`.
 
 ### 21.6 Query baca
-- **Options**: karyawan aktif tanpa onboarding draft/proses/ditolak; asset gudang yang `tersedia` (plus asset `proses` milik draft yang sedang diedit) dan tidak punya item `belum_dicek` di onboarding `proses`; kategori yang dipakai asset beserta seluruh parent-nya.
+- **Options**: karyawan aktif yang belum punya onboarding berstatus apa pun (kecuali transaksi `exclude_onboarding_id`); asset gudang yang `tersedia` (plus asset `proses` milik draft yang sedang diedit) dan tidak punya item `belum_dicek` di onboarding `proses`; kategori yang dipakai asset beserta seluruh parent-nya.
 - **List**: JOIN item, `COUNT` item (termasuk pengganti) → `jumlah_asset`; urut `tgl_input DESC`; filter tab (§14).
 - **Detail**: header + karyawan (cabang/divisi dari master) + item + flag turunan.
 
@@ -827,6 +829,7 @@ Lock → cek admin → header `draft` → asset `proses → tersedia` → **DELE
 | status_asset | proses | rusak | Konfirmasi item Rusak |
 | id_pemegang_asset | – | '' | Konfirmasi item Rusak |
 | ket_rusak | – | alasan dari karyawan | Konfirmasi item Rusak |
+| id_asset_lokasi_m | lokasi gudang | NULL | Konfirmasi item Normal |
 | tgl_update / user_update | – | now / `nik - nama` pelaku | Setiap UPDATE di atas |
 | kondisi_awal, status_rusak, tgl_keluar | – | **Tidak diubah** | – |
 
@@ -835,8 +838,8 @@ asset tersedia @gudang
       ↓ create onboarding
 status_asset = proses (terkunci)
       ↓ karyawan konfirmasi
- ├─ Normal → status_asset = terpakai, pemegang_asset = karyawan, id_pemegang_asset = id_karyawan, + asset_log
- └─ Rusak  → status_asset = rusak, tetap gudang, ket_rusak = alasan (tanpa asset_log)
+ ├─ Normal → status_asset = terpakai, pemegang_asset = karyawan, id_pemegang_asset = id_karyawan, + asset_trx_log
+ └─ Rusak  → status_asset = rusak, tetap gudang, ket_rusak = alasan (tanpa asset_trx_log)
 ```
 
 ---
@@ -1254,7 +1257,7 @@ UPDATE asset_trx_onboarding_karyawan_item (status_item, ket_rusak)
 UPDATE asset_data (rusak → status rusak)
 UPDATE asset_trx_onboarding_karyawan (status_approval, user_approval, tgl_approval)
 UPDATE asset_data (normal → terpakai, pemegang karyawan)
-INSERT asset_log (per asset normal)
+INSERT asset_trx_log (per asset normal)
 INSERT notif_data (semua admin asset)
 ```
 **Success (200):**
@@ -1447,7 +1450,7 @@ Bottom sheet Pilih Karyawan → _selectedEmployee.idKaryawan → AssetOnboarding
 | Kelengkapan pengganti | `pilihan.kelengkapan` | `items[].kelengkapan` | `$pengganti['kelengkapan']` | asset_trx_onboarding_karyawan_item | deskripsi_asset |
 | Normal / Rusak | `_statusByItem` | `items[].status_item` | `$statusByItem` | asset_trx_onboarding_karyawan_item | status_item |
 | Report Kerusakan | `_ketRusakByItem` | `items[].ket_rusak` | `$ketRusakByItem` | item / asset_data | ket_rusak / ket_rusak |
-| Konfirmasi (user karyawan) | JWT | Authorization | `$karyawan` | header / asset_data / asset_log | user_approval, tgl_approval / id_pemegang_asset / id_pemegang, nama_pemegang |
+| Konfirmasi (user karyawan) | JWT | Authorization | `$karyawan` | header / asset_data / asset_trx_log | user_approval, tgl_approval / id_pemegang_asset / id_pemegang, nama_pemegang |
 
 ---
 
@@ -1554,8 +1557,8 @@ Lihat tabel per API di §24 dan Business Rules §9.
 | User/waktu konfirmasi | ✅ (terakhir saja) | `user_approval`, `tgl_approval` — tertimpa tiap ronde konfirmasi |
 | Pelaku & waktu perubahan status item | ❌ | Tabel item tidak punya kolom update |
 | History status transaksi | ❌ | ⚠️ Belum ditemukan tabel histori status |
-| Asset log serah terima | ✅ | `asset_log` untuk setiap asset **normal** yang diserahkan |
-| Asset log asset rusak | ❌ | Tidak ada insert `asset_log` untuk item rusak |
+| Asset log serah terima | ✅ | `asset_trx_log` untuk setiap asset **normal** yang diserahkan |
+| Asset log asset rusak | ❌ | Tidak ada insert `asset_trx_log` untuk item rusak |
 | Histori penggantian | ✅ (struktural) | Baris item lama tetap ada; pengganti terhubung via `parent_id` |
 | Error sistem | ✅ | `Log::error` (Laravel log) dengan id_company, user_id, id_onboarding |
 | Snapshot data | ✅ | nik/nama karyawan di header; nama/deskripsi/kategori asset di item |
@@ -1690,8 +1693,8 @@ Tidak ada tombol selesai. Onboarding otomatis pindah ke tab **Selesai** ketika k
 | TC-03 | Edit draft | Draft ada | Lanjutkan Draft → ganti asset → Simpan Draft | Asset lama `tersedia`, asset baru `proses`; item diganti ID baru |
 | TC-04 | Publish draft | Draft ada | Lanjutkan Draft → isi catatan → Publish ke Karyawan | Status proses; notif karyawan |
 | TC-05 | Hapus draft | Draft ada | Hapus → konfirmasi | Header & item terhapus; asset `tersedia` |
-| TC-06 | Konfirmasi semua normal | TC-01 | Karyawan pilih Normal semua → Konfirmasi Asset | Status dikonfirmasi "Selesai"; asset `terpakai`, pemegang karyawan; 2 baris asset_log; notif admin "Dikonfirmasi" |
-| TC-07 | Konfirmasi ada rusak | TC-01 | Asset A Rusak + alasan, B Normal | Status proses "Isu Rusak" (tab Dikonfirmasi); A `rusak` di gudang; B `terpakai` + asset_log; notif admin "Laporan Asset Rusak" |
+| TC-06 | Konfirmasi semua normal | TC-01 | Karyawan pilih Normal semua → Konfirmasi Asset | Status dikonfirmasi "Selesai"; asset `terpakai`, pemegang karyawan; 2 baris asset_trx_log; notif admin "Dikonfirmasi" |
+| TC-07 | Konfirmasi ada rusak | TC-01 | Asset A Rusak + alasan, B Normal | Status proses "Isu Rusak" (tab Dikonfirmasi); A `rusak` di gudang; B `terpakai` + asset_trx_log; notif admin "Laporan Asset Rusak" |
 | TC-08 | Ganti asset rusak | TC-07; asset C tersedia berdeskripsi | Detail → Ganti Asset Yang Rusak → Ganti Asset (C) → Submit | Item pengganti `parent_id=A`; C `proses`; status "Menunggu Diterima"; notif karyawan |
 | TC-09 | Konfirmasi pengganti | TC-08 | Karyawan hanya mengecek C → Normal | Status "Selesai"; C `terpakai`; B tidak diproses ulang |
 | TC-10 | Pengganti rusak lagi | TC-08 | C Rusak | Tetap Isu Rusak; admin dapat mengganti C (pengganti bersarang) |
@@ -1763,7 +1766,7 @@ Tidak ada tombol selesai. Onboarding otomatis pindah ke tab **Selesai** ketika k
 | INC-03 | Kolom DB | `user_approval`/`tgl_approval` diisi karyawan saat konfirmasi (bukan approval); `tgl_approval` dipakai sebagai flag ronde | Penamaan menyesatkan | Dokumentasikan / rename saat refactor |
 | INC-04 | Dok lama ↔ Source | Dok lama: "all-or-nothing". Source: item normal langsung diserahkan per ronde (parsial) | Ekspektasi bisnis berbeda | Konfirmasi ke bisnis; dokumen ini mengikuti source |
 | INC-05 | Dok lama ↔ Source | Dok lama tidak memuat PUT/DELETE draft & konfirmasi, menyebut "tidak ada notifikasi", "draft buntu", status numerik | Dok lama usang | Arsipkan dok lama, pakai dokumen ini |
-| INC-06 | Backend options ↔ store | Options mengecualikan karyawan dengan onboarding aktif, tetapi store/update tidak memvalidasi | Duplikasi onboarding via API/race | Tambah validasi di model |
+| INC-06 | Backend options ↔ store | Options dan store/update sama-sama menolak karyawan yang sudah punya onboarding (**sudah diperbaiki**, `assertKaryawanBelumPernahOnboarding`) | Race antar dua request dicegah `lockCompany` | – |
 | INC-07 | Mobile ↔ Backend | Ganti rusak mengirim `kelengkapan = asset.deskripsi` otomatis; backend mewajibkan | Submit gagal bila deskripsi kosong, user tidak bisa mengisi | Beri input kelengkapan (atau nullable di backend) |
 | INC-08 | Mobile | `HalamanAssetAdminPilihPengganti` + route `/asset_admin_pilih_pengganti` + `NavigateToAssetAdminPilihPengganti` tidak pernah dipakai | Dead code | Hapus atau pakai kembali untuk input kelengkapan |
 | INC-09 | Mobile | Tombol di Detail draft berlabel "Simpan Draft" tetapi membuka form edit | UX membingungkan | Ganti label "Lanjutkan Draft" |
@@ -1774,7 +1777,7 @@ Tidak ada tombol selesai. Onboarding otomatis pindah ke tab **Selesai** ketika k
 | INC-14 | Mobile model | `parseAssetOnboardingApproval` memetakan nilai tak dikenal → `proses` | Status invalid tersembunyi | Tambahkan nilai unknown |
 | INC-15 | Backend | Konstanta `Asset_m::STATUS_DRAFT…STATUS_DISETUJUI` (0–3) legacy, tidak dipakai onboarding | Kebingungan developer | Bersihkan setelah cek modul lain |
 | INC-16 | DB | Tidak ada migration CREATE TABLE onboarding; FK hanya di DBML | Sulit memastikan constraint | Tambah migration baseline |
-| INC-17 | Backend | Item rusak tidak menghasilkan `asset_log`; `status_rusak` tidak diisi | Histori kerusakan tidak lengkap | Tambah log/isi field |
+| INC-17 | Backend | Item rusak tidak menghasilkan `asset_trx_log`; `status_rusak` tidak diisi | Histori kerusakan tidak lengkap | Tambah log/isi field |
 
 ---
 
@@ -1794,7 +1797,7 @@ Tidak ada tombol selesai. Onboarding otomatis pindah ke tab **Selesai** ketika k
 | Asset normal lalu diretur sebelum onboarding selesai | Ronde berikutnya hanya memproses item pengganti (komentar kode) | Aman | – | – |
 | >999 transaksi/item per bulan | 422 batas nomor | Operasional terhenti | – | Perbesar digit |
 | Notifikasi gagal | Transaksi tetap sukses | Karyawan tidak tahu | Banner Asset Saya | Retry/queue |
-| Karyawan punya >1 onboarding aktif (via API) | Semua tampil di Asset Saya | Duplikasi | – | Validasi backend (INC-06) |
+| Karyawan punya >1 onboarding (via API) | 422 "Karyawan ini sudah pernah menerima onboarding asset." | Tidak ada duplikasi | – | Sudah divalidasi backend (INC-06) |
 
 ---
 
@@ -1816,11 +1819,9 @@ Tidak ada tombol selesai. Onboarding otomatis pindah ke tab **Selesai** ketika k
 **Current Handling:** Tidak ada (perlu intervensi DB).
 **Recommendation:** Endpoint batal yang melepas reservasi.
 
-### RISK-003 — Duplikasi onboarding per karyawan
+### RISK-003 — Duplikasi onboarding per karyawan (SUDAH DIPERBAIKI)
 **Lokasi:** `storeOnboardingKaryawan`, `updateOnboardingDraft`.
-**Masalah:** Aturan "satu onboarding aktif per karyawan" hanya di options.
-**Impact:** Dua transaksi aktif untuk karyawan sama.
-**Recommendation:** Validasi di model dalam transaksi.
+**Status:** `assertKaryawanBelumPernahOnboarding` kini memvalidasi di model dalam transaksi (lihat BR-020). Catatan: aturannya lebih ketat daripada "satu aktif", yaitu satu onboarding per karyawan seumur hidup, sehingga karyawan yang pernah `dikonfirmasi` tidak bisa diberi onboarding kedua.
 
 ### RISK-004 — Kapasitas penomoran 3 digit
 **Lokasi:** `nextSequence`/`ensureSequenceCapacity` (header & item).
@@ -1844,7 +1845,7 @@ Tidak ada tombol selesai. Onboarding otomatis pindah ke tab **Selesai** ketika k
 Lihat INC-01. Query list/options tetap memperhitungkannya.
 
 ### RISK-008 — Audit item & asset rusak tidak lengkap
-**Lokasi:** Tabel item (tanpa kolom update), konfirmasi item rusak (tanpa asset_log).
+**Lokasi:** Tabel item (tanpa kolom update), konfirmasi item rusak (tanpa asset_trx_log).
 **Impact:** Sulit menelusuri siapa/kapan item dinilai rusak (hanya `user_approval` terakhir).
 **Recommendation:** Tambah log/histori.
 
@@ -1877,7 +1878,7 @@ Asset Data (terpakai, pemegang karyawan) ──► Asset Log (onboarding_karyawa
       ↓
 Modul lain yang bergantung:
   - Peminjaman & Penambahan/Request: menolak asset yang aktif di onboarding
-  - Offboarding: menelusuri sumber asset karyawan (asset_log / onboarding dikonfirmasi) → jenis "onboarding"
+  - Offboarding: menelusuri sumber asset karyawan (asset_trx_log / onboarding dikonfirmasi) → jenis "onboarding"
   - Asset Saya: daftar asset & banner onboarding
 ```
 
@@ -1988,7 +1989,7 @@ AssetKaryawan_m::konfirmasiOnboardingKaryawan
        ↓
 UPDATE asset_trx_onboarding_karyawan_item.status_item = 'normal'
 UPDATE asset_data: status_asset = 'terpakai', pemegang_asset = 'karyawan', id_pemegang_asset = 'KRY0001'
-INSERT asset_log (jenis_log = onboarding_karyawan, posisi gudang → karyawan)
+INSERT asset_trx_log (jenis_log = onboarding_karyawan, posisi gudang → karyawan)
        ↓
 Asset menjadi milik (dipegang) karyawan → tampil di Asset Saya (API-008 assets[])
 ```
@@ -2002,6 +2003,602 @@ API: items[].kelengkapan
 UI: "Kelengkapan" pada Detail / Konfirmasi Asset Baru
 ```
 
+### 45.4 Walkthrough Lengkap dengan Contoh Data
+
+Bagian ini mengikuti **satu transaksi dari awal sampai selesai**, langkah demi langkah: apa yang dilakukan pengguna di mobile, apa yang dikirim, apa yang diproses API, dan apa yang tersimpan di database. Semua data di bawah ini **sintetis**, tetapi format ID, nama kolom, urutan proses, dan pesan diambil dari kode (`AssetAdmin_m`, `AssetKaryawan_m`, `Asset_m`, `AssetNotification`).
+
+**Skenario:** Admin Asset menyerahkan laptop dan mouse kepada karyawan baru. Karyawan menemukan laptop rusak, admin menggantinya, lalu karyawan menerima pengganti sehingga onboarding selesai.
+
+| Langkah | Pelaku | Aksi | Endpoint |
+|:---:|---|---|---|
+| 0 | Admin | Membuka form tambah, mobile memuat opsi | API-001 `GET /asset/onboarding-karyawan/options` |
+| 1 | Admin | **Simpan Draft** (1 asset) | API-003 `POST /asset/onboarding-karyawan` |
+| 2 | Admin | Lanjutkan draft, tambah mouse, **Publish ke Karyawan** | API-004 `PUT /asset/onboarding-karyawan/{id}` |
+| 3 | Karyawan | Membuka notifikasi, melihat detail | API-009 `GET /asset/karyawan/onboarding/{id}` |
+| 4 | Karyawan | Laptop **Rusak**, mouse **Normal**, **Konfirmasi Asset** | API-010 `POST /asset/karyawan/onboarding/{id}/konfirmasi` |
+| 5 | Admin | Membuka detail (status Isu Rusak) | API-006 `GET /asset/onboarding-karyawan/{id}` |
+| 6 | Admin | **Ganti Asset Yang Rusak** | API-007 `POST /asset/onboarding-karyawan/{id}/ganti-asset` |
+| 7 | Karyawan | Pengganti **Normal**, **Konfirmasi Asset** | API-010 |
+
+#### Data awal (sebelum langkah 0)
+
+Company `CMP001`. Tanggal kejadian 22 Oktober 2026, sehingga periode ID adalah `202610`. Belum ada onboarding, log, atau notifikasi pada periode ini.
+
+**`data_karyawan`**
+
+| id_karyawan | nik | nama_lengkap | Peran dalam skenario |
+|---|---|---|---|
+| KRY0099 | ADM-001 | Siti Admin | Admin Asset yang membuat onboarding (aktor) |
+| KRY0100 | ADM-002 | Rudi Admin | Admin Asset lain (ikut menerima notifikasi) |
+| KRY0001 | EMP-001 | Budi Contoh | Karyawan penerima |
+
+KRY0099 dan KRY0100 terdaftar di `asset_admin` untuk `CMP001`.
+
+**`asset_data`**
+
+| id_asset_data | kode_asset | nama_asset | deskripsi | status_asset | pemegang_asset | id_pemegang_asset | kondisi_awal |
+|---|---|---|---|---|---|---|---|
+| CMP00120260100001 | LPT-0001 | Laptop 14 inch | Charger, tas | tersedia | gudang | `''` | normal |
+| CMP00120260100002 | MSE-0001 | Mouse Wireless | `''` | tersedia | gudang | `''` | normal |
+| CMP00120260100003 | LPT-0002 | Laptop 14 inch | Charger, tas | tersedia | gudang | `''` | normal |
+
+Singkatan pada tabel berikutnya: **A1** = `…00001` (laptop pertama), **A2** = `…00002` (mouse), **A3** = `…00003` (laptop pengganti).
+
+---
+
+#### Langkah 0 — Admin membuka form, mobile memuat opsi
+
+**Mobile**
+- Route `/asset_admin_add_onboarding_karyawan` → `AssetOnboardingBloc` menerima `LoadAssetOnboardingOptions`.
+- `AssetOnboardingApi.getOptions()` memanggil API tanpa `exclude_onboarding_id` (form baru, bukan edit draft).
+
+**Dikirim**
+```http
+GET /asset/onboarding-karyawan/options
+Authorization: Bearer <access_token_admin>
+```
+
+**Diproses API**
+1. `JwtAuth` memvalidasi token, `ResolveContext` membentuk `ctx` (`id_karyawan = KRY0099`, `id_company = CMP001`).
+2. `accessError()` memastikan KRY0099 ada di `asset_admin`.
+3. `AssetAdmin_m::getOnboardingOptions`:
+   - karyawan aktif **yang belum pernah punya baris onboarding apa pun** (semua status, lihat BR-020) → KRY0001 lolos;
+   - asset `tersedia` di `gudang` dan tidak punya item `belum_dicek` pada onboarding `proses` → A1, A2, A3;
+   - kategori yang dipakai asset beserta parent-nya.
+
+**Database:** hanya `SELECT`, tidak ada perubahan data.
+
+**Diterima mobile** (ringkas, lengkap di API-001)
+```json
+{
+  "code": "SUCCESS",
+  "message": "Data opsi onboarding berhasil ditemukan.",
+  "data": {
+    "karyawan": [ { "id_karyawan": "KRY0001", "nik": "EMP-001", "nama_karyawan": "Budi Contoh" } ],
+    "kategori_asset": [
+      { "id_asset_kategori_m": "CMP001202601001", "parent_id": "", "flag_parent": 1, "nama_kategori": "Elektronik" },
+      { "id_asset_kategori_m": "CMP001202601002", "parent_id": "CMP001202601001", "flag_parent": 0, "nama_kategori": "Laptop" }
+    ],
+    "assets": [
+      { "id_asset_data": "CMP00120260100001", "kode_asset": "LPT-0001", "nama_asset": "Laptop 14 inch",
+        "id_asset_kategori_m": "CMP001202601002", "kategori_asset": "Laptop", "merek": "MerekX",
+        "deskripsi": "Charger, tas", "kondisi_awal": "normal" }
+    ]
+  }
+}
+```
+Mobile memetakan ke `AssetOnboardingEmployee`, `AssetOnboardingCategory`, `AssetOnboardingAsset`; hasilnya muncul di bottom sheet **Pilih Karyawan** dan pohon kategori **Tambah Asset**.
+
+---
+
+#### Langkah 1 — Admin menyimpan draft (1 asset)
+
+**Mobile**
+- Admin memilih Budi Contoh, menambah **Laptop 14 inch (LPT-0001)**, mengisi Catatan Tambahan, menekan **Simpan Draft**.
+- Bloc: `SubmitAssetOnboarding(isDraft: true)` → `AssetOnboardingApi.store(AssetOnboardingRequest)` → `request.toJson()`.
+
+**Dikirim**
+```http
+POST /asset/onboarding-karyawan
+Authorization: Bearer <access_token_admin>
+Content-Type: application/json
+```
+```json
+{
+  "id_karyawan": "KRY0001",
+  "asset_ids": ["CMP00120260100001"],
+  "keterangan": "Onboarding karyawan baru divisi IT",
+  "is_draft": true
+}
+```
+
+**Diproses API** (`AssetAdminOnboarding_c::storeOnboardingKaryawan` → `AssetAdmin_m::storeOnboardingKaryawan`, satu `DB::transaction`)
+1. Validasi request: `id_karyawan` wajib, `asset_ids` minimal 1 dan unik, `is_draft` boolean. `keterangan` boleh kosong karena draft.
+2. `accessError()`: pengguna harus admin asset.
+3. `lockCompany("CMP001")` → `SELECT … FOR UPDATE` pada `master_company`, transaksi asset company ini diserialkan.
+4. `getLockedAssets`: A1 harus `tersedia` + `gudang`; jumlah hasil harus sama dengan jumlah `asset_ids`.
+5. `hasActiveOnboardingAsset`: A1 tidak boleh ada di onboarding lain yang masih aktif.
+6. `findActiveKaryawan("KRY0001")` → ditemukan dan aktif.
+7. `assertKaryawanBelumPernahOnboarding`: belum ada baris onboarding untuk KRY0001 → lolos.
+8. `findAssetAdmin("KRY0099")` → `user_input = "ADM-001 - Siti Admin"`.
+9. `nextSequence` header: belum ada ID berawalan `CMP001202610` → urutan 1 → `id = CMP001202610001`, `no_trx = KRY01-202610001`.
+10. INSERT header (status `draft`), `nextSequence` item → 1, INSERT item per asset, UPDATE `asset_data` → `proses`.
+11. Karena `is_draft = true`, controller **tidak** mengirim notifikasi.
+
+**Hasil database**
+
+`asset_trx_onboarding_karyawan`
+
+| Kolom | Nilai |
+|---|---|
+| id_asset_trx_onboarding_karyawan | CMP001202610001 |
+| no_trx | KRY01-202610001 |
+| tgl_onboarding | 2026-10-22 |
+| keterangan | Onboarding karyawan baru divisi IT |
+| ket_tolak | `''` |
+| id_karyawan / nik_karyawan / nama_karyawan | KRY0001 / EMP-001 / Budi Contoh |
+| status_approval | **draft** |
+| user_approval / tgl_approval | `''` / NULL |
+| id_company | CMP001 |
+| tgl_input / user_input | 2026-10-22 09:00:00 / ADM-001 - Siti Admin |
+| tgl_update / user_update | NULL / `''` |
+
+`asset_trx_onboarding_karyawan_item`
+
+| id_asset_trx_onboarding_item | parent_id | id_asset_trx_onboarding | id_asset_data | nama_asset | deskripsi_asset | kategori_asset | status_item | ket_rusak |
+|---|---|---|---|---|---|---|---|---|
+| CMP001202610001 | `''` | CMP001202610001 | A1 | Laptop 14 inch | Charger, tas | Laptop | belum_dicek | `''` |
+
+`asset_data`: A1 `status_asset` **tersedia → proses**, `tgl_update` = 09:00:00, `user_update` = ADM-001 - Siti Admin. A2 dan A3 tidak berubah.
+
+**Diterima mobile** (HTTP 201)
+```json
+{
+  "code": "CREATED",
+  "message": "Draft onboarding asset berhasil disimpan.",
+  "data": { "id": "CMP001202610001", "no_trx": "KRY01-202610001", "status_approval": "draft" }
+}
+```
+Mobile menampilkan `message` sebagai snackbar dan kembali ke list; kartu draft muncul di tab **Proses** dengan badge **Draft**.
+
+---
+
+#### Langkah 2 — Admin melanjutkan draft, menambah mouse, lalu publish
+
+**Mobile**
+- Admin menekan **Lanjutkan Draft** → route `/asset_admin_add_onboarding_karyawan` dengan `draftId = CMP001202610001`.
+- Bloc: `LoadAssetOnboardingDraft(id)` memanggil **dua** endpoint: options dengan `?exclude_onboarding_id=CMP001202610001` (supaya A1 yang sedang `proses` milik draft ini tetap muncul), dan detail `GET /asset/onboarding-karyawan/CMP001202610001` untuk mengisi form.
+- Admin menambah **Mouse Wireless**, menekan **Publish ke Karyawan** → `UpdateAssetOnboardingDraft` → `AssetOnboardingApi.updateDraft(id, request)`.
+
+**Dikirim**
+```http
+PUT /asset/onboarding-karyawan/CMP001202610001
+```
+```json
+{
+  "id_karyawan": "KRY0001",
+  "asset_ids": ["CMP00120260100001", "CMP00120260100002"],
+  "keterangan": "Onboarding karyawan baru divisi IT",
+  "is_draft": false
+}
+```
+`keterangan` kini wajib karena `is_draft = false`.
+
+**Diproses API** (`AssetAdmin_m::updateOnboardingDraft`)
+1. Validasi dan cek admin seperti langkah 1; `lockCompany`.
+2. Header dikunci `FOR UPDATE`, harus berstatus `draft`.
+3. Asset lama (A1) yang masih `proses` dikembalikan ke `tersedia` (melepas reservasi).
+4. Validasi asset baru: A1 dan A2 `tersedia` + `gudang`, tidak aktif di onboarding lain (draft ini dikecualikan).
+5. Karyawan dicek aktif; `assertKaryawanBelumPernahOnboarding` dijalankan dengan pengecualian ID transaksi ini sendiri, sehingga draft tidak menolak dirinya.
+6. `nextSequence` item dihitung **sebelum** item lama dihapus: ID terakhir `…001` → mulai dari **2**. Karena itu item tidak memakai ulang `…001`.
+7. DELETE semua item lama, INSERT item baru.
+8. UPDATE header: `tgl_onboarding` hari ini, `keterangan`, data karyawan, `status_approval = proses`, `user_approval = ''`, `tgl_approval = NULL`, `tgl_update`, `user_update`.
+9. UPDATE `asset_data` A1 dan A2 → `proses`.
+10. Commit. Controller memanggil `AssetNotification::send('onboarding.dikirim', 'CMP001', 'CMP001202610001')`.
+
+**Notifikasi** (`AssetNotification::send`, dijalankan setelah commit)
+- Penerima: karyawan pemilik transaksi (KRY0001).
+- INSERT `notif_data`, lalu push FCM bila `users.token_fcm` terisi.
+
+**Hasil database**
+
+Header `asset_trx_onboarding_karyawan` (kolom yang berubah)
+
+| Kolom | Sebelum | Sesudah |
+|---|---|---|
+| status_approval | draft | **proses** |
+| tgl_approval | NULL | NULL (tetap, menandai belum pernah dicek) |
+| tgl_update | NULL | 2026-10-22 09:10:00 |
+| user_update | `''` | ADM-001 - Siti Admin |
+
+Item: baris `CMP001202610001` **dihapus**, diganti dua baris baru:
+
+| id_asset_trx_onboarding_item | parent_id | id_asset_data | nama_asset | deskripsi_asset | status_item |
+|---|---|---|---|---|---|
+| CMP001202610002 | `''` | A1 | Laptop 14 inch | Charger, tas | belum_dicek |
+| CMP001202610003 | `''` | A2 | Mouse Wireless | `''` | belum_dicek |
+
+(Urutan penomoran mengikuti urutan hasil query asset, yang tidak memakai `ORDER BY`; penomoran bisa tertukar.)
+
+`asset_data`: A1 `tersedia → proses` lalu tetap `proses`; A2 `tersedia → proses`.
+
+`notif_data` (1 baris)
+
+| Kolom | Nilai |
+|---|---|
+| id_notif | CMP00120261000001 |
+| id_karyawan | KRY0001 |
+| jenis | asset |
+| id_ref | CMP001202610001 |
+| rute | asset_konfirmasi_onboarding |
+| ket_notif / ket_notif_id | Anda menerima onboarding asset KRY01-202610001. |
+| ket_notif_en | You received asset onboarding KRY01-202610001. |
+| flag_baca | 0 |
+| id_company | CMP001 |
+
+**Diterima mobile** (HTTP 200)
+```json
+{
+  "code": "UPDATED",
+  "message": "Onboarding asset berhasil dipublish ke karyawan.",
+  "data": { "id": "CMP001202610001", "no_trx": "KRY01-202610001", "status_approval": "proses" }
+}
+```
+Kartu pindah dari **Draft** ke **Menunggu Diterima** di list admin.
+
+---
+
+#### Langkah 3 — Karyawan membuka notifikasi dan melihat detail
+
+**Mobile**
+- Push FCM dengan route `/asset_konfirmasi_onboarding` dan `id_ref = CMP001202610001` (atau banner **On Boarding Asset** di Asset Saya, API-008).
+- `AssetKonfirmasiOnboardingBloc` menerima `LoadAssetKonfirmasiOnboarding(id)` → `AssetSayaApi.getOnboardingDetail(id)`.
+
+**Dikirim**
+```http
+GET /asset/karyawan/onboarding/CMP001202610001
+Authorization: Bearer <access_token_budi>
+```
+
+**Diproses API** (`AssetKaryawan_m::getDetailOnboardingSaya`)
+1. `ctx.id_karyawan = KRY0001`.
+2. Header dicari dengan `id_karyawan = KRY0001` **dan** bukan draft; transaksi milik orang lain atau draft menghasilkan 404.
+3. Item dibaca. `perlu_dicek` dihitung oleh `pendingItemIds`: karena `tgl_approval` masih NULL, **semua item aktif** perlu dicek.
+
+**Database:** hanya `SELECT`.
+
+**Diterima mobile** (`data`, ringkas)
+```json
+{
+  "id": "CMP001202610001",
+  "no_trx": "KRY01-202610001",
+  "tgl_onboarding": "2026-10-22",
+  "keterangan": "Onboarding karyawan baru divisi IT",
+  "status_approval": "proses",
+  "status_label": "Menunggu Diterima",
+  "tab": "proses",
+  "isu_rusak": false,
+  "karyawan": { "nik": "EMP-001", "nama_karyawan": "Budi Contoh", "cabang": "Kantor Pusat", "divisi": "IT" },
+  "items": [
+    { "id_item": "CMP001202610002", "parent_id": "", "id_asset_data": "CMP00120260100001", "kode_asset": "LPT-0001",
+      "nama_asset": "Laptop 14 inch", "kategori_asset": "Laptop", "kelengkapan": "Charger, tas",
+      "status_item": "belum_dicek", "ket_rusak": "", "perlu_dicek": true, "diganti": false },
+    { "id_item": "CMP001202610003", "parent_id": "", "id_asset_data": "CMP00120260100002", "kode_asset": "MSE-0001",
+      "nama_asset": "Mouse Wireless", "kategori_asset": "Aksesoris", "kelengkapan": "",
+      "status_item": "belum_dicek", "ket_rusak": "", "perlu_dicek": true, "diganti": false }
+  ]
+}
+```
+Layar **Konfirmasi Asset Baru** menampilkan kedua item dengan pilihan **Normal / Rusak** karena `perlu_dicek = true`.
+
+---
+
+#### Langkah 4 — Karyawan mengonfirmasi: laptop rusak, mouse normal
+
+**Mobile**
+- Karyawan memilih **Rusak** pada laptop dan mengetik "Ada garis pada layar" (maks 255 karakter), memilih **Normal** pada mouse.
+- Validasi mobile: semua item `perlu_dicek` harus dinilai, alasan wajib bila Rusak.
+- `SubmitAssetKonfirmasiOnboarding` → `AssetSayaApi.konfirmasiOnboarding(id, AssetKonfirmasiOnboardingRequest)`. `ket_rusak` hanya dikirim untuk item rusak.
+
+**Dikirim**
+```http
+POST /asset/karyawan/onboarding/CMP001202610001/konfirmasi
+```
+```json
+{
+  "items": [
+    { "id_item": "CMP001202610002", "status_item": "rusak", "ket_rusak": "Ada garis pada layar" },
+    { "id_item": "CMP001202610003", "status_item": "normal" }
+  ]
+}
+```
+
+**Diproses API** (`AssetKaryawanOnboarding_c::konfirmasiOnboardingSaya` → `AssetKaryawan_m::konfirmasiOnboardingKaryawan`, satu transaksi)
+1. Validasi: `items` wajib; `id_item` unik; `status_item` hanya `normal` atau `rusak`; `ket_rusak` wajib bila rusak.
+2. `lockCompany`; header diambil dengan `id_karyawan = KRY0001` + `FOR UPDATE`, harus berstatus `proses`.
+3. Karyawan harus aktif.
+4. Item yang perlu dinilai (`pendingItemIds`, `tgl_approval` NULL → semua item aktif): `…002` dan `…003`. Jumlah dan ID item yang dikirim harus sama persis ("Seluruh asset pada onboarding wajib dicek.").
+5. Item rusak tanpa alasan ditolak ("Alasan kerusakan wajib diisi.").
+6. UPDATE tiap item: `status_item`, `ket_rusak` (kosong untuk normal).
+7. Item rusak: UPDATE `asset_data` (hanya bila masih `proses` dan `gudang`) → `status_asset = rusak`, `id_pemegang_asset = ''`, `ket_rusak` = alasan. Asset tetap di gudang.
+8. Status header dihitung dari **semua item aktif** (item yang sudah diganti tidak dihitung). Laptop `rusak` → `semuaNormal = false` → status tetap **proses**.
+9. UPDATE header: `user_approval`, `tgl_approval = now` (mulai sekarang dianggap "sudah pernah dicek"), `tgl_update`, `user_update`.
+10. Item normal (mouse): `asset_data` dikunci, harus `proses` + `gudang` → `terpakai`, pemegang `karyawan`, `id_pemegang_asset = KRY0001`, `id_asset_lokasi_m = NULL`. INSERT `asset_trx_log` per asset normal.
+11. Commit, lalu `AssetNotification::send('onboarding.rusak', …)` ke seluruh admin asset di company (semua baris `asset_admin`).
+
+**Hasil database**
+
+Item (kolom yang berubah)
+
+| id_asset_trx_onboarding_item | status_item | ket_rusak |
+|---|---|---|
+| CMP001202610002 (laptop A1) | belum_dicek → **rusak** | Ada garis pada layar |
+| CMP001202610003 (mouse A2) | belum_dicek → **normal** | `''` |
+
+Tabel item tidak punya `tgl_update`/`user_update`, jadi pelaku perubahan hanya terbaca dari header.
+
+Header
+
+| Kolom | Sebelum | Sesudah |
+|---|---|---|
+| status_approval | proses | proses (masih ada item rusak) |
+| user_approval | `''` | EMP-001 - Budi Contoh |
+| tgl_approval | NULL | 2026-10-22 10:00:00 |
+| tgl_update / user_update | 09:10:00 / ADM-001 - Siti Admin | 10:00:00 / EMP-001 - Budi Contoh |
+
+`asset_data`
+
+| Asset | Kolom | Sebelum | Sesudah |
+|---|---|---|---|
+| A1 (laptop) | status_asset | proses | **rusak** |
+| A1 | pemegang_asset / id_pemegang_asset | gudang / `''` | gudang / `''` (tidak berubah) |
+| A1 | ket_rusak | `''` | Ada garis pada layar |
+| A2 (mouse) | status_asset | proses | **terpakai** |
+| A2 | pemegang_asset | gudang | **karyawan** |
+| A2 | id_pemegang_asset | `''` | **KRY0001** |
+| A2 | id_asset_lokasi_m | (nilai sebelumnya) | NULL |
+
+`asset_trx_log` (1 baris, hanya untuk mouse; laptop rusak tidak masuk log)
+
+| Kolom | Nilai |
+|---|---|
+| id_asset_trx_log | CMP00120261000001 (`id_company + YYYYMM + 5 digit`) |
+| id_asset_data | CMP00120260100002 |
+| jenis_log | onboarding_karyawan |
+| id_transaksi | CMP001202610001 |
+| nama_tabel_transaksi | asset_trx_onboarding_karyawan |
+| kondisi_awal / kondisi_akhir | normal / normal |
+| posisi_awal / posisi_akhir | gudang / karyawan |
+| pemegang_asset | karyawan |
+| id_pemegang / nama_pemegang | KRY0001 / Budi Contoh |
+| id_company | CMP001 |
+| tgl_input / user_input | 2026-10-22 10:00:00 / EMP-001 - Budi Contoh |
+
+`notif_data` (2 baris, satu per admin; urutan `id_notif` lanjutan dari notifikasi sebelumnya)
+
+| id_notif | id_karyawan | id_ref | rute | ket_notif_id |
+|---|---|---|---|---|
+| CMP00120261000002 | KRY0099 | CMP001202610001 | asset_admin_detail_onboarding | Budi Contoh melaporkan asset rusak pada onboarding KRY01-202610001. |
+| CMP00120261000003 | KRY0100 | CMP001202610001 | asset_admin_detail_onboarding | Budi Contoh melaporkan asset rusak pada onboarding KRY01-202610001. |
+
+`jenis = asset`, `flag_baca = 0`, `id_company = CMP001`. Bahasa Inggris tersimpan di `ket_notif_en`.
+
+**Diterima mobile** (HTTP 200)
+```json
+{
+  "code": "UPDATED",
+  "message": "Laporan kerusakan asset berhasil dikirim ke admin.",
+  "data": {
+    "id": "CMP001202610001",
+    "no_trx": "KRY01-202610001",
+    "status_approval": "proses",
+    "status_label": "Isu Rusak",
+    "tab": "dikonfirmasi"
+  }
+}
+```
+Mobile menampilkan snackbar dan kembali. Banner onboarding hilang dari Asset Saya (tidak ada lagi item `perlu_dicek`), dan **mouse sudah muncul** di daftar asset karyawan.
+
+---
+
+#### Langkah 5 — Admin melihat detail dengan status Isu Rusak
+
+**Mobile:** notifikasi membuka `/asset_admin_detail_onboarding`; `AssetOnboardingDetailBloc` menerima `LoadAssetOnboardingDetail(id)` → `GET /asset/onboarding-karyawan/CMP001202610001`.
+
+**Diproses API:** `AssetAdmin_m::getDetailOnboardingKaryawan` → `SELECT` header, karyawan (cabang/divisi dari master), item. `isu_rusak` bernilai true bila ada item aktif `rusak` yang belum diganti.
+
+**Diterima mobile** (ringkas; field header seperti API-006)
+```json
+{
+  "status_approval": "proses", "status_label": "Isu Rusak", "tab": "dikonfirmasi", "isu_rusak": true,
+  "items": [
+    { "id_item": "CMP001202610002", "status_item": "rusak", "ket_rusak": "Ada garis pada layar", "perlu_dicek": false, "diganti": false },
+    { "id_item": "CMP001202610003", "status_item": "normal", "ket_rusak": "", "perlu_dicek": false, "diganti": false }
+  ]
+}
+```
+Karena `isu_rusak = true`, tombol bawah berubah menjadi **Ganti Asset Yang Rusak**.
+
+---
+
+#### Langkah 6 — Admin mengganti asset yang rusak
+
+**Mobile**
+- Tombol membuka `/asset_admin_ganti_rusak` dengan argumen `AssetOnboardingKaryawanDetail`; `AssetGantiRusakBloc` menerima `LoadAssetPenggantiOptions` (memanggil options API-001 lagi).
+- Admin menekan **Ganti Asset** pada laptop rusak dan memilih LPT-0002. Event `PilihAssetPengganti`. `kelengkapan` otomatis diisi dari `deskripsi` asset ("Charger, tas") dan tidak dapat diedit.
+- **Submit ke Karyawan** → `SubmitAssetGantiRusak` → `AssetOnboardingApi.gantiAsset(id, AssetGantiAssetRequest)`.
+
+**Dikirim**
+```http
+POST /asset/onboarding-karyawan/CMP001202610001/ganti-asset
+```
+```json
+{
+  "items": [
+    { "id_item": "CMP001202610002", "id_asset_data": "CMP00120260100003", "kelengkapan": "Charger, tas" }
+  ]
+}
+```
+
+**Diproses API** (`AssetAdmin_m::gantiAssetRusakOnboarding`)
+1. Validasi: `items` minimal 1; `id_item` dan `id_asset_data` unik; `kelengkapan` wajib (maks 255). Cek admin dan `lockCompany`.
+2. Header dikunci. Syarat penggantian: status `proses`, `tgl_approval` terisi, dan **tidak ada item yang masih menunggu dicek**. Bila tidak: "Asset rusak hanya dapat diganti setelah karyawan selesai mengecek asset."
+3. Item rusak yang dikirim (`…002`) harus berstatus `rusak` dan belum punya pengganti (`NOT EXISTS` item dengan `parent_id` = item itu).
+4. A3 harus `tersedia` + `gudang` dan tidak aktif di onboarding lain.
+5. `nextSequence` item → ID terakhir `…003` → **`…004`**. INSERT item pengganti dengan `parent_id = CMP001202610002` dan `deskripsi_asset` = `kelengkapan` yang dikirim.
+6. UPDATE `asset_data` A3 → `proses`. UPDATE header `status_approval = proses`, `tgl_update`, `user_update` (`tgl_approval` **tidak** di-reset).
+7. Commit, notifikasi `onboarding.pengganti` ke karyawan.
+
+**Hasil database**
+
+Item baru
+
+| id_asset_trx_onboarding_item | parent_id | id_asset_data | nama_asset | deskripsi_asset | kategori_asset | status_item | user_input |
+|---|---|---|---|---|---|---|---|
+| CMP001202610004 | **CMP001202610002** | A3 | Laptop 14 inch | Charger, tas | Laptop | belum_dicek | ADM-001 - Siti Admin |
+
+Item `…002` (laptop rusak) **tidak diubah**: tetap `rusak`, dan kini dianggap sudah diganti karena ada anak dengan `parent_id` miliknya.
+
+`asset_data`: A3 `tersedia → proses`. A1 tetap `rusak` di gudang.
+
+Header: `status_approval` tetap `proses`, `tgl_update` = 2026-10-22 11:00:00, `user_update` = ADM-001 - Siti Admin.
+
+`notif_data` (1 baris): `id_notif = CMP00120261000004`, `id_karyawan = KRY0001`, `rute = asset_konfirmasi_onboarding`, `ket_notif_id` = "Asset pengganti onboarding KRY01-202610001 siap dicek."
+
+**Diterima mobile** (HTTP 200)
+```json
+{
+  "code": "UPDATED",
+  "message": "Asset pengganti berhasil dikirim ke karyawan.",
+  "data": { "id": "CMP001202610001", "id_karyawan": "KRY0001", "no_trx": "KRY01-202610001",
+            "status_approval": "proses", "jumlah_pengganti": 1 }
+}
+```
+
+---
+
+#### Langkah 7 — Karyawan mengonfirmasi asset pengganti
+
+**Mobile:** push "Asset Pengganti" membuka `/asset_konfirmasi_onboarding`. Detail (API-009) kini berisi:
+
+| id_item | parent_id | status_item | perlu_dicek | diganti | Tampil di layar |
+|---|---|---|:---:|:---:|---|
+| CMP001202610002 | `''` | rusak | false | true | Read-only, dengan Report Kerusakan |
+| CMP001202610003 | `''` | normal | false | false | Read-only |
+| CMP001202610004 | CMP001202610002 | belum_dicek | **true** | false | Bersarang sebagai Asset Pengganti, pilihan Normal/Rusak aktif |
+
+Karyawan memilih **Normal** pada pengganti lalu **Konfirmasi Asset**.
+
+**Dikirim**
+```http
+POST /asset/karyawan/onboarding/CMP001202610001/konfirmasi
+```
+```json
+{ "items": [ { "id_item": "CMP001202610004", "status_item": "normal" } ] }
+```
+Hanya item yang `perlu_dicek` yang dikirim; item lain tidak boleh disertakan karena jumlah dan ID harus sama persis.
+
+**Diproses API** (`konfirmasiOnboardingKaryawan`, ronde kedua)
+1. Header `proses`, `tgl_approval` sudah terisi → `pendingItemIds` hanya mengembalikan item aktif berstatus `belum_dicek` = `…004`.
+2. UPDATE item `…004` → `normal`.
+3. Item aktif = semua item yang **belum diganti**: `…003` (normal) dan `…004` (normal). Laptop lama `…002` dikeluarkan karena sudah punya pengganti. `semuaNormal = true` → status header **dikonfirmasi**.
+4. UPDATE header: `status_approval = dikonfirmasi`, `user_approval`, `tgl_approval = now`, `tgl_update`, `user_update`.
+5. Hanya item yang dicek pada ronde ini yang diserahkan: A3 → `terpakai`, `karyawan`, `KRY0001`, `id_asset_lokasi_m = NULL`. Mouse tidak disentuh lagi.
+6. INSERT `asset_trx_log` untuk A3.
+7. Commit, notifikasi `onboarding.dikonfirmasi` ke seluruh admin asset.
+
+**Hasil database**
+
+| Tabel | Perubahan |
+|---|---|
+| item `…004` | status_item `belum_dicek → normal` |
+| header | status_approval `proses → dikonfirmasi`; tgl_approval = 2026-10-22 13:00:00; user_approval/user_update = EMP-001 - Budi Contoh |
+| asset_data A3 | status_asset `proses → terpakai`; pemegang_asset `gudang → karyawan`; id_pemegang_asset `'' → KRY0001`; id_asset_lokasi_m → NULL |
+| asset_trx_log | + `CMP00120261000002`: A3 `CMP00120260100003`, jenis_log `onboarding_karyawan`, id_transaksi `CMP001202610001`, posisi gudang → karyawan, kondisi normal → normal, id_pemegang KRY0001, nama_pemegang Budi Contoh, user_input EMP-001 - Budi Contoh |
+| notif_data | + `CMP00120261000005` (KRY0099) dan `CMP00120261000006` (KRY0100): "Onboarding asset KRY01-202610001 telah dikonfirmasi oleh Budi Contoh.", rute `asset_admin_detail_onboarding` |
+
+**Diterima mobile** (HTTP 200)
+```json
+{
+  "code": "UPDATED",
+  "message": "Asset berhasil dikonfirmasi.",
+  "data": { "id": "CMP001202610001", "no_trx": "KRY01-202610001",
+            "status_approval": "dikonfirmasi", "status_label": "Selesai", "tab": "selesai" }
+}
+```
+Transaksi pindah ke tab **Selesai** di list admin, dan stepper alur mencapai langkah terakhir.
+
+---
+
+#### Kondisi akhir seluruh data
+
+`asset_trx_onboarding_karyawan`
+
+| id | no_trx | status_approval | user_approval | tgl_approval |
+|---|---|---|---|---|
+| CMP001202610001 | KRY01-202610001 | **dikonfirmasi** | EMP-001 - Budi Contoh | 2026-10-22 13:00:00 |
+
+`asset_trx_onboarding_karyawan_item`
+
+| id | parent_id | asset | status_item | ket_rusak | Peran |
+|---|---|---|---|---|---|
+| CMP001202610002 | `''` | A1 laptop | rusak | Ada garis pada layar | Item awal, sudah diganti |
+| CMP001202610003 | `''` | A2 mouse | normal | `''` | Item awal, diterima |
+| CMP001202610004 | CMP001202610002 | A3 laptop | normal | `''` | Pengganti `…002`, diterima |
+
+(`CMP001202610001` pernah ada pada langkah 1, dihapus pada langkah 2, dan **tidak dipakai ulang**.)
+
+`asset_data`
+
+| Asset | status_asset | pemegang_asset | id_pemegang_asset | ket_rusak |
+|---|---|---|---|---|
+| A1 LPT-0001 | rusak | gudang | `''` | Ada garis pada layar |
+| A2 MSE-0001 | terpakai | karyawan | KRY0001 | `''` |
+| A3 LPT-0002 | terpakai | karyawan | KRY0001 | `''` |
+
+`asset_trx_log`: 2 baris (A2 dan A3). `notif_data`: 6 baris (1 pengiriman, 2 laporan rusak, 1 pengganti, 2 dikonfirmasi). Aset A1 yang rusak tidak punya baris log dan kini menjadi kandidat modul Perbaikan/Garansi/Disposal.
+
+Pada Asset Saya karyawan (API-008), `assets[]` berisi A2 dan A3 dan `jumlah_asset = 2`.
+
+---
+
+#### Skenario variasi
+
+**Semua normal sekali jalan.** Pada langkah 4, bila kedua item dinilai `normal`: `semuaNormal = true`, header langsung `dikonfirmasi`, kedua asset `terpakai`/`karyawan`, 2 baris `asset_trx_log`, notif `onboarding.dikonfirmasi` ke admin, `status_label = "Selesai"`, `tab = "selesai"`. Langkah 5–7 tidak terjadi.
+
+**Menghapus draft (API-005).** `DELETE /asset/onboarding-karyawan/CMP001202610001` saat masih `draft`: asset `proses` dikembalikan ke `tersedia`, item dan header di-DELETE, tanpa notifikasi. Response `DELETED` dengan `id` dan `no_trx`. Karena barisnya terhapus, Budi kembali muncul di options dan boleh dibuatkan onboarding baru.
+
+**Kasus gagal yang umum**
+
+| Situasi | Langkah | HTTP | Pesan | Perubahan database |
+|---|---|:---:|---|---|
+| Karyawan sudah pernah punya onboarding (status apa pun) | 1 / 2 | 422 | Karyawan ini sudah pernah menerima onboarding asset. | Tidak ada (transaksi di-rollback) |
+| Asset sudah `proses` / bukan `gudang` | 1 / 2 / 6 | 422 | Satu atau beberapa asset tidak tersedia untuk onboarding. / …pengganti tidak tersedia. | Tidak ada |
+| Asset ada di onboarding aktif lain | 1 / 2 / 6 | 422 | Satu atau beberapa asset sedang diproses pada onboarding lain. | Tidak ada |
+| Publish tanpa `keterangan` | 1 / 2 | 422 | Data onboarding belum lengkap. (`errors.keterangan`) | Tidak ada |
+| Edit/hapus transaksi yang sudah `proses` | 2 / hapus | 422 | Hanya onboarding berstatus draft yang dapat diubah / dihapus. | Tidak ada |
+| Item rusak tanpa alasan | 4 | 422 | Alasan kerusakan wajib diisi. | Tidak ada |
+| Tidak semua item yang perlu dicek dikirim | 4 / 7 | 422 | Seluruh asset pada onboarding wajib dicek. | Tidak ada |
+| Konfirmasi dua kali | 4 / 7 | 422 | Onboarding asset sudah tidak menunggu konfirmasi. | Tidak ada |
+| Konfirmasi saat hanya menunggu pengganti | 4 | 422 | Tidak ada asset yang perlu dicek. Asset rusak sedang menunggu penggantian dari admin. | Tidak ada |
+| Ganti asset sebelum karyawan mengecek | 6 | 422 | Asset rusak hanya dapat diganti setelah karyawan selesai mengecek asset. | Tidak ada |
+| Item rusak sudah diganti / bukan rusak | 6 | 422 | Satu atau beberapa asset rusak tidak valid atau sudah diganti. | Tidak ada |
+| Pengguna bukan admin asset | 0–2, 5, 6 | 403 | Pengguna tidak memiliki akses admin asset. | Tidak ada |
+| Karyawan membuka transaksi orang lain / draft | 3 / 4 / 7 | 404 / 422 | Onboarding asset tidak ditemukan. | Tidak ada |
+| Token kedaluwarsa | semua | 401 | Token telah expired. Mobile me-refresh token sekali, lalu mengulang request. | Tidak ada |
+
+Semua error bisnis dilempar sebagai `InvalidArgumentException` di dalam `DB::transaction`, sehingga seluruh perubahan pada request itu dibatalkan. Mobile menampilkan `message` (atau `errors` pertama) di snackbar.
+
+#### Ringkasan siapa mengerjakan apa
+
+| Tahap | Mobile | API | Database |
+|---|---|---|---|
+| Pilih karyawan & asset | Bottom sheet, state lokal, tanpa request tulis | `getOnboardingOptions` (SELECT) | Tidak berubah |
+| Simpan / Publish | Rakit `AssetOnboardingRequest` → `toJson` | Validasi, lock company, cek asset & karyawan, generate ID, insert, reservasi asset | header, item, `asset_data` → `proses`, `notif_data` (publish) |
+| Cek & konfirmasi | Kumpulkan `_statusByItem`, `_ketRusakByItem`, validasi lokal | Validasi, tentukan item pending, update item, serah terima asset normal, hitung status header | item, `asset_data`, header, `asset_trx_log`, `notif_data` |
+| Ganti rusak | Pilih pengganti, kirim `items[]` | Validasi syarat, insert item pengganti (`parent_id`), reservasi asset | item, `asset_data` → `proses`, header, `notif_data` |
+| Tampilan | Map JSON → model → widget; badge dari `status_approval` + `isu_rusak` | `statusMetadata` menghasilkan `status_label` dan `tab` | `SELECT` saja |
+
 ---
 
 ## 46. Ringkasan Database Impact
@@ -2013,7 +2610,7 @@ UI: "Kelengkapan" pada Detail / Konfirmasi Asset Baru
 | Delete draft | – | asset_data (→ tersedia) | item, header |
 | Approval | ⚠️ Tidak ada | – | – |
 | Pilih asset | (bagian dari Create/Update) | – | – |
-| Serah terima / Konfirmasi | asset_log (item normal), notif_data | item (status_item, ket_rusak), asset_data (normal → terpakai/karyawan; rusak → rusak), header (status, user_approval, tgl_approval) | – |
+| Serah terima / Konfirmasi | asset_trx_log (item normal), notif_data | item (status_item, ket_rusak), asset_data (normal → terpakai/karyawan; rusak → rusak), header (status, user_approval, tgl_approval) | – |
 | Ganti asset rusak | item pengganti, notif_data | asset_data (pengganti → proses), header (tgl_update) | – |
 | Selesai | (terjadi dalam Konfirmasi saat semua item aktif normal) | header.status_approval = dikonfirmasi | – |
 
@@ -2027,7 +2624,7 @@ UI: "Kelengkapan" pada Detail / Konfirmasi Asset Baru
 - [x] Index list header & item
 - [x] Master relation (DBML ref; ⚠️ FK fisik belum terverifikasi)
 - [x] Status enum
-- [x] Log (asset_log untuk serah terima normal)
+- [x] Log (asset_trx_log untuk serah terima normal)
 - [ ] Migration CREATE TABLE baseline
 - [ ] Log untuk item rusak / histori status
 
@@ -2042,7 +2639,7 @@ UI: "Kelengkapan" pada Detail / Konfirmasi Asset Baru
 - [x] Notifikasi
 - [ ] Approve/Reject
 - [ ] Pembatalan onboarding berjalan
-- [ ] Validasi satu onboarding aktif per karyawan
+- [x] Validasi satu onboarding per karyawan (`assertKaryawanBelumPernahOnboarding`)
 
 ### Mobile
 - [x] List (tab, pagination, refresh)
@@ -2075,6 +2672,7 @@ UI: "Kelengkapan" pada Detail / Konfirmasi Asset Baru
 
 | Version | Date | Changes |
 |---|---|---|
+| 1.3 | 2026-10-22 | Menambah §45.4 *Walkthrough Lengkap dengan Contoh Data* (aksi mobile, request, proses API, isi database per langkah, notifikasi, kasus gagal). Sinkronisasi kode: tabel log ternyata `asset_trx_log` (`id_asset_trx_log`), bukan `asset_log`; aturan satu onboarding per karyawan kini divalidasi di API (BR-020, RISK-003); serah terima mengosongkan `asset_data.id_asset_lokasi_m`. |
 | 1.2 | 2026-10-12 | Mobile: stepper alur status (`AssetAlurStepper.onboarding`) di detail on boarding admin (§26.3). Teks langkah di grup JSON `alur`. Tidak ada perubahan API. |
 | 1.1 | 2026-10-12 | Sinkronisasi dengan kode 12 Okt 2026: path file mobile mengikuti struktur folder baru (`UI/Modul/Asset/<Fitur>/` berhuruf kapital, model di `Repository/Model/Asset/`). `AssetOnboardingWidgets.dart` dan `labelStatusOnboarding` sudah dihapus (tidak terpakai); `formatTanggalAsset` kini di `Shared/Widgets/AssetCommonWidgets.dart`. Endpoint `GET /asset/karyawan/data/{id}` didokumentasikan (API-011). |
 | 1.0 | 2026-09-26 | Initial documentation — disusun dari source lokal API (Lumen) & MOBILE (Flutter); menggantikan `alur-onboarding-asset-karyawan.md` |

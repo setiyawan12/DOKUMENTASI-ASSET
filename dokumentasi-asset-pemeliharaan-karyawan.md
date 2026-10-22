@@ -18,8 +18,8 @@
 | Mobile | Flutter (`professional_flutter_3_35`), `flutter_bloc`, `dio` |
 | Web | ⚠️ Belum ditemukan: tidak ada source web di workspace |
 | Test otomatis | API `tests/Asset/AssetPemeliharaanKaryawanTest.php` (7 test) · Mobile `test/asset/asset_pemeliharaan_test.dart` (8 test) |
-| Versi Dokumen | 1.2 |
-| Tanggal Dokumentasi | 2026-10-20 |
+| Versi Dokumen | 1.3 |
+| Tanggal Dokumentasi | 2026-10-22 |
 | Dokumen terkait | Upgrade (KRY03), Kerusakan (KRY06), Retur (KRY04), Offboarding (KRY02), Request/Penambahan (KRY-03-1, unit pengganti), PML02 Perbaikan & PML04 Disposal (sudah diimplementasikan, tetapi belum dipicu otomatis dari hasil 4–5) |
 
 ---
@@ -42,7 +42,7 @@
 | Main Transaction | `asset_trx_pemeliharaan_karyawan` |
 | Detail Transaction | `asset_trx_pemeliharaan_karyawan_item` (satu baris per asset) + `asset_trx_pemeliharaan_karyawan_jadwal` (riwayat negosiasi & jadwal) |
 | Asset Master | `asset_data` (`flag_pemeliharaan`, `interval_pemeliharaan`, `jadwal_pemeliharaan`) |
-| Log | `asset_log` `jenis_log = pemeliharaan_karyawan` |
+| Log | `asset_trx_log` `jenis_log = pemeliharaan_karyawan` |
 | Status | `fase_pemeliharaan`: `konfirmasi_jadwal → penjadwalan → [menunggu_pengambilan] → pelaksanaan → menunggu_review → [menunggu_pengembalian] → selesai` |
 | Hasil PM | 5 tingkat per item: normal · perlu tindak lanjut · komponen rusak tidak segera · komponen rusak perlu segera · tidak dapat diperbaiki. Hasil akhir = item **terberat** |
 | Tindak lanjut | Hasil 1–3: jadwal PM berikutnya otomatis. Hasil 4–5: asset ditarik ke gudang (`rusak`), opsional unit pengganti lewat Penambahan |
@@ -96,7 +96,7 @@ Checklist hasil PM dinilai **per item asset** (unit utama & kelengkapan) dengan 
 - Menampilkan asset jatuh tempo yang belum punya PM aktif.
 - Menyimpan riwayat negosiasi jadwal (usulan admin, usulan karyawan, konfirmasi).
 - Mengunci asset dari Upgrade, Kerusakan, Retur, dan Offboarding selama PM aktif.
-- Memperbarui `asset_data` (status, pemegang, `jadwal_pemeliharaan`) dan mencatat `asset_log`.
+- Memperbarui `asset_data` (status, pemegang, `jadwal_pemeliharaan`) dan mencatat `asset_trx_log`.
 
 ---
 
@@ -171,7 +171,7 @@ Dicek saat membuat PM: pemeliharaan aktif (fase ≠ `selesai`), upgrade aktif, l
 Hanya fase `penjadwalan` → "Jadwal pemeliharaan belum disepakati karyawan." Asset harus masih `terpakai` di karyawan.
 - Vendor: `id_asset_vendor_m` dari master **atau** `nama_vendor` teks → "Vendor tidak ditemukan." / "Vendor / teknisi wajib diisi."
 - Lokasi wajib → "Lokasi pemeliharaan wajib diisi."
-- **Hadir langsung**: PIC Pendamping wajib karyawan aktif (boleh pemegang) → "PIC Pendamping wajib dipilih dari karyawan aktif."; fase → `pelaksanaan`; pendamping dicatat ke `asset_pendamping_m` bila belum ada.
+- **Hadir langsung**: PIC Pendamping **ditentukan otomatis** = pemegang asset (harus karyawan aktif, "Karyawan pemegang aset tidak aktif."); `id_pic_pendamping` pada request diabaikan; fase → `pelaksanaan`; pendamping dicatat ke `asset_pendamping_m` bila belum ada.
 - **Diserahkan**: jadwal pengambilan wajib; fase → `menunggu_pengambilan`.
 
 ### BR-006 — Pengambilan (mekanisme diserahkan, Fase 2C)
@@ -324,7 +324,7 @@ sequenceDiagram
     A->>M: Simpan Review
     M->>CA: POST /asset/pemeliharaan-karyawan/{id}/review
     CA->>PM: review()
-    PM->>DB: jadwal_pemeliharaan berikutnya atau asset ditarik + asset_log
+    PM->>DB: jadwal_pemeliharaan berikutnya atau asset ditarik + asset_trx_log
     PM->>DB: header selesai (atau menunggu_pengembalian)
     CA->>N: pemeliharaan.selesai / pengembalian / ditarik (karyawan)
 ```
@@ -378,7 +378,7 @@ stateDiagram-v2
 | `asset_pendamping_m` | Master PIC Pendamping (diisi otomatis) |
 | `asset_vendor_m` | Master vendor (dibaca) |
 | `asset_data` | `flag_pemeliharaan`, `interval_pemeliharaan`, `jadwal_pemeliharaan`, status & pemegang |
-| `asset_log` | Jejak perpindahan (`pemeliharaan_karyawan`) |
+| `asset_trx_log` | Jejak perpindahan (`pemeliharaan_karyawan`) |
 
 > ⚠️ Kolom PML01 berasal dari **SQL manual** (`sql-pml01-pemeliharaan-karyawan.sql`) yang menyesuaikan tabel yang sudah ada di DB (kosong saat ditulis). Tidak ada migration Lumen.
 
@@ -393,7 +393,7 @@ erDiagram
     asset_trx_pemeliharaan_karyawan }o--o| asset_vendor_m : "id_asset_vendor_m"
     asset_trx_pemeliharaan_karyawan }o--o| asset_pendamping_m : "id_asset_pendamping_m"
     asset_trx_pemeliharaan_karyawan_item }o--|| asset_data : "id_asset_data"
-    asset_data ||--o{ asset_log : "id_asset_data"
+    asset_data ||--o{ asset_trx_log : "id_asset_data"
 ```
 
 Relasi logis (tanpa FK): `id_karyawan` / `id_pic_pendamping` → `data_karyawan`; `id_trx_request_pengganti` → `asset_trx_request_karyawan`; `id_trx_tindak_lanjut` + `nama_tabel_tindak_lanjut` → PML02/PML04 (⚠️ belum terisi).
@@ -413,7 +413,7 @@ Relasi logis (tanpa FK): `id_karyawan` / `id_pic_pendamping` → `data_karyawan`
 | `id_karyawan`, `nik_karyawan`, `nama_karyawan` | varchar | Pemegang asset (snapshot) |
 | `nama_cabang`, `nama_departemen` | varchar | Snapshot karyawan |
 | `id_asset_pendamping_m` | varchar NULL, FK | Master pendamping |
-| `id_pic_pendamping`, `nama_pic_pendamping`, `nik_pic_pendamping` | varchar | Kosong untuk mekanisme diserahkan |
+| `id_pic_pendamping`, `nama_pic_pendamping`, `nik_pic_pendamping` | varchar | Hadir langsung: pemegang asset. Diserahkan: admin yang mengatur (otomatis) |
 | `id_asset_vendor_m` | varchar NULL, FK | NULL bila vendor teks bebas |
 | `nama_vendor`, `keterangan_vendor` | varchar(255) | Nama & kontak vendor |
 | `tgl_pemeliharaan`, `jam_pemeliharaan` | date/time NULL | Jadwal PM disepakati |
@@ -455,7 +455,7 @@ Format JSON `checklist_pengambilan` / `checklist_pengembalian`: `[{id_item, nama
 | `keterangan` | varchar(255) | Catatan / alasan usulan alternatif |
 | `user_input`, `tgl_input` | – | Pelaku & waktu |
 
-### 18.4 asset_log (`jenis_log = pemeliharaan_karyawan`)
+### 18.4 asset_trx_log (`jenis_log = pemeliharaan_karyawan`)
 Dicatat saat **serahkan** (karyawan → gudang), **terima** (gudang → karyawan), dan **asset ditarik** (hasil 4/5, `kondisi_akhir = rusak`). `id_pemegang`/`nama_pemegang` diisi hanya bila posisi akhir karyawan.
 
 ---
@@ -484,7 +484,7 @@ AssetAdminPemeliharaan_c (10 endpoint)        AssetKaryawanPemeliharaan_c (6 end
 AssetPemeliharaanKaryawan_m extends Asset_m
    ↓   ↔ AssetUpgradeKaryawan_m / AssetRusakKaryawan_m / AssetReturKaryawan_m / AssetOffboardingKaryawan_m (cek flow lain)
    ↓   → AssetRequestKaryawan_m::store (unit pengganti)
-DB (header, item, jadwal, asset_pendamping_m, asset_data, asset_log)
+DB (header, item, jadwal, asset_pendamping_m, asset_data, asset_trx_log)
 ```
 
 | Layer | File | Isi |
@@ -539,7 +539,7 @@ Fase `menunggu_pengembalian` → asset `dalam_perbaikan` di karyawan → checkli
 
 ## 22. Dampak terhadap asset_data
 
-| Tahap | status_asset | pemegang | Kolom lain | asset_log |
+| Tahap | status_asset | pemegang | Kolom lain | asset_trx_log |
 |---|---|---|---|---|
 | Buat PM s/d penjadwalan | tetap `terpakai` | karyawan | – | – |
 | Serahkan (diserahkan) | `dalam_perbaikan` | tetap karyawan | – | karyawan → gudang |
@@ -548,7 +548,7 @@ Fase `menunggu_pengembalian` → asset `dalam_perbaikan` di karyawan → checkli
 | Review hasil 4–5 | `rusak` | `gudang` (`id_pemegang_asset` kosong) | `kondisi_awal = rusak`, `ket_rusak`, `status_rusak` | karyawan/gudang → gudang, kondisi_akhir rusak |
 | Unit pengganti | `proses` (oleh Penambahan) | gudang → karyawan saat penambahan dikonfirmasi | – | log Penambahan |
 
-> Mekanisme hadir langsung dengan hasil 1–3 **tidak** menulis `asset_log`; jejaknya ada di transaksi PM dan `jadwal_pemeliharaan` baru.
+> Mekanisme hadir langsung dengan hasil 1–3 **tidak** menulis `asset_trx_log`; jejaknya ada di transaksi PM dan `jadwal_pemeliharaan` baru.
 
 ---
 
@@ -637,7 +637,7 @@ Validasi: `id_asset_data` wajib, `tgl_jadwal` `Y-m-d` wajib, `jam_jadwal` `H:i` 
 }
 ```
 
-`nama_vendor` wajib bila `id_asset_vendor_m` kosong; `lokasi_pemeliharaan` wajib; `id_pic_pendamping` wajib untuk hadir langsung; `tgl_jadwal`/`jam_jadwal` (pengambilan) wajib untuk diserahkan. Notif hadir: `pemeliharaan.pendamping` (ke pendamping) + `pemeliharaan.dijadwalkan` (ke karyawan); diserahkan: `pemeliharaan.pengambilan`.
+`nama_vendor` wajib bila `id_asset_vendor_m` kosong; `lokasi_pemeliharaan` wajib; `id_pic_pendamping` boleh dikirim tetapi **diabaikan** (PIC Pendamping otomatis: pemegang untuk hadir langsung, admin pengatur untuk diserahkan); `tgl_jadwal`/`jam_jadwal` (pengambilan) wajib untuk diserahkan. Notif hadir: `pemeliharaan.pendamping` (ke pendamping) + `pemeliharaan.dijadwalkan` (ke karyawan); diserahkan: `pemeliharaan.pengambilan`.
 
 ### API-007 — Checklist pengambilan & API-015 — Terima
 
@@ -819,7 +819,7 @@ Segmented mekanisme, dropdown vendor master + "Isi nama vendor manual", keterang
 ### 31.1 Mobile
 - Sheet jadwal: tanggal (≥ hari ini) & jam wajib.
 - Checklist hasil: semua item wajib dipilih ("Pilih hasil untuk setiap item."); keterangan temuan wajib untuk hasil selain normal.
-- Sheet pelaksanaan: vendor (manual) wajib, lokasi wajib, PIC Pendamping wajib untuk hadir langsung.
+- Sheet pelaksanaan: vendor (manual) wajib, lokasi wajib; PIC Pendamping tidak dipilih (otomatis pemegang asset untuk hadir langsung).
 - Review: tanggal rencana penggantian wajib untuk hasil 3.
 - Checklist kondisi: semua item wajib, rusak wajib keterangan.
 
@@ -848,11 +848,11 @@ Segmented mekanisme, dropdown vendor master + "Isi nama vendor manual", keterang
 |---|---|
 | Setiap usulan/konfirmasi/perubahan jadwal | Baris `…_jadwal` (`user_input`, `tgl_input`, `label_alur`) |
 | Setiap mutasi header | `tgl_update`, `user_update` (`nik - nama`) |
-| Serah karyawan | `tgl_pelepasan`, `user_pelepasan` + `asset_log` |
+| Serah karyawan | `tgl_pelepasan`, `user_pelepasan` + `asset_trx_log` |
 | Pengisi hasil | `tgl_hasil`, `user_hasil` |
 | Review | `tgl_review`, `user_review`, `keterangan_review` |
-| Terima karyawan | `tgl_diterima`, `user_diterima` + `asset_log` |
-| Asset ditarik | `asset_log` (kondisi_akhir rusak), `asset_data.user_update` |
+| Terima karyawan | `tgl_diterima`, `user_diterima` + `asset_trx_log` |
+| Asset ditarik | `asset_trx_log` (kondisi_akhir rusak), `asset_data.user_update` |
 
 ---
 
@@ -954,12 +954,12 @@ Banner **Terima Aset Hasil PM** → isi checklist kondisi → **Terima Aset**.
 | TC-09 | Hadir langsung: pemegang bukan pendamping kirim hasil | 422 "Hanya PIC Pendamping…" |
 | TC-10 | Hasil selain normal tanpa keterangan | 422 |
 | TC-11 | Hasil campuran (normal + komponen rusak tidak segera) | Hasil akhir = komponen_rusak_tidak_segera |
-| TC-12 | Review hasil 2 hadir langsung | `selesai`, `jadwal_pemeliharaan` = hari ini + interval, tanpa asset_log |
+| TC-12 | Review hasil 2 hadir langsung | `selesai`, `jadwal_pemeliharaan` = hari ini + interval, tanpa asset_trx_log |
 | TC-13 | Review hasil 3 tanpa rencana penggantian | 422 |
 | TC-14 | Diserahkan: serahkan sebelum checklist | 422 "Aset belum siap diserahkan…" |
 | TC-15 | Diserahkan: serahkan | Asset `dalam_perbaikan`, pemegang tetap karyawan |
 | TC-16 | Diserahkan: review tanpa jadwal pengembalian | 422 |
-| TC-17 | Diserahkan: terima dengan checklist | Asset `terpakai`, 2 asset_log, PM selesai |
+| TC-17 | Diserahkan: terima dengan checklist | Asset `terpakai`, 2 asset_trx_log, PM selesai |
 | TC-18 | Review hasil 5 tanpa pengganti | Asset `rusak` @gudang, `nama_tabel_tindak_lanjut = asset_trx_disposal` |
 | TC-19 | Review hasil 4 dengan unit pengganti tersedia | Penambahan dibuat, `flag_unit_pengganti = 1`, notif penambahan |
 | TC-20 | Watchlist tampil pada PM berikutnya | Monitoring menampilkan `watchlist` |
@@ -1037,7 +1037,7 @@ asset_data (flag_pemeliharaan, interval, jadwal) + asset_data_item (komponen che
       ↓
 Pemeliharaan PML01 (konfirmasi_jadwal → … → selesai) ──► Notifikasi (karyawan / admin / pendamping)
       ↓
-asset_data (dalam_perbaikan ↔ terpakai | rusak @gudang, jadwal_pemeliharaan baru), asset_log pemeliharaan_karyawan
+asset_data (dalam_perbaikan ↔ terpakai | rusak @gudang, jadwal_pemeliharaan baru), asset_trx_log pemeliharaan_karyawan
       ↓ (hasil 4–5)
 Penambahan KRY-03-1 (unit pengganti) · PML02 / PML04 (ada, belum terhubung otomatis)
 
@@ -1093,16 +1093,385 @@ Aturan silang:
 | Monitoring (Jalur B) | HalamanMonitoringPemeliharaan | API-001 | getMonitoring | asset_data |
 | Konfirmasi jadwal (2B) | Detail: Setujui / Usulkan Lain | API-004, 005, 012 | store, updateJadwal, konfirmasiJadwal | header, jadwal |
 | Mekanisme + Fase 3 | Sheet Atur Pelaksanaan | API-006 | aturPelaksanaan | header, asset_pendamping_m |
-| Pengambilan (2C) | Checklist + Serahkan | API-007, 013 | checklistPengambilan, pelepasan | header, asset_data, asset_log |
+| Pengambilan (2C) | Checklist + Serahkan | API-007, 013 | checklistPengambilan, pelepasan | header, asset_data, asset_trx_log |
 | Pelaksanaan (4) | Checklist Hasil | API-008, 014 | hasil | item |
-| Review (6) | Form Review | API-009 | review | item, asset_data, asset_log, request |
-| Pengembalian (5) | Checklist + Terima | API-015 | terima | header, asset_data, asset_log |
+| Review (6) | Form Review | API-009 | review | item, asset_data, asset_trx_log, request |
+| Pengembalian (5) | Checklist + Terima | API-015 | terima | header, asset_data, asset_trx_log |
+
+### 45.4 Walkthrough Lengkap dengan Contoh Data
+
+Bagian ini mengikuti **satu pemeliharaan (PM) dengan mekanisme Karyawan Hadir Langsung dari usulan jadwal sampai selesai**, langkah demi langkah: apa yang dilakukan pengguna di mobile, apa yang dikirim, apa yang diproses API, dan apa yang tersimpan di database. Data bersifat **sintetis**, tetapi format ID, nama kolom, urutan proses, label status, dan pesan diambil dari kode (`AssetPemeliharaanKaryawan_m`, `AssetAdminPemeliharaan_c`, `AssetKaryawanPemeliharaan_c`, `AssetNotification`). Mekanisme **Diserahkan ke Admin** dijelaskan pada bagian Variasi.
+
+**Skenario:** Laptop Wulan jatuh tempo pemeliharaan enam bulanan. Admin mengusulkan jadwal, Wulan mengusulkan jadwal lain, admin mengusulkan ulang, lalu Wulan menyetujui. Admin mengatur pelaksanaan (hadir langsung, vendor, lokasi). Wulan sebagai PIC Pendamping mengisi checklist hasil: unit normal tetapi adaptor "komponen rusak tidak segera". Admin mereview dan jadwal PM berikutnya dihitung otomatis.
+
+| Langkah | Pelaku | Aksi | Endpoint |
+|:---:|---|---|---|
+| 0 | Admin | Membuka **Jatuh Tempo Pemeliharaan** | API-001 `GET /asset/pemeliharaan-karyawan/monitoring` |
+| 1 | Admin | **Usulkan Jadwal** (membuat PM) | API-004 `POST /asset/pemeliharaan-karyawan` |
+| 2 | Karyawan | **Usulkan Jadwal Lain** | API-012 `POST /asset/karyawan/pemeliharaan/{id}/jadwal` (`revisi`) |
+| 3 | Admin | Usulkan jadwal ulang | API-005 `PUT /asset/pemeliharaan-karyawan/{id}/jadwal` |
+| 4 | Karyawan | **Setujui Jadwal** | API-012 (`konfirmasi`) |
+| 5 | Admin | **Atur Pelaksanaan** (hadir langsung) | API-006 `POST /asset/pemeliharaan-karyawan/{id}/pelaksanaan` |
+| 6 | PIC Pendamping | **Checklist Hasil** | API-014 `POST /asset/karyawan/pemeliharaan/{id}/hasil` |
+| 7 | Admin | **Review & Tindak Lanjut** | API-009 `POST /asset/pemeliharaan-karyawan/{id}/review` |
+
+#### Data awal
+
+Company `CMP001`. PM dibuat 22 Oktober 2026, periode ID `202610`. Belum ada PM, pendamping, log, atau notifikasi pada periode ini.
+
+**`data_karyawan`**
+
+| id_karyawan | nik | nama_lengkap | Cabang / Departemen | Peran |
+|---|---|---|---|---|
+| KRY0011 | EMP-011 | Wulan Contoh | Kantor Pusat / IT | Pemegang asset dan PIC Pendamping |
+| KRY0099 | ADM-001 | Siti Admin | – | Admin Asset (aktor) |
+| KRY0100 | ADM-002 | Rudi Admin | – | Admin Asset lain (ikut menerima notifikasi) |
+
+**`asset_data`** A30: `CMP00120260100030` (LTP-2026-0001), Laptop Kerja, kategori Laptop, `status_asset = terpakai`, `pemegang_asset = karyawan`, `id_pemegang_asset = KRY0011`, `flag_pemeliharaan = 1`, `interval_pemeliharaan = 6` (bulan), `jadwal_pemeliharaan = 2026-10-30`, `kondisi_awal = normal`.
+
+**Komponen** (`asset_data_item`): `CMP001ITEM0401` Unit Utama (`aset_utama`) dan `CMP001ITEM0402` Adaptor (`kelengkapan`).
+
+Penomoran: header, item, dan baris jadwal `id_company + YYYYMM + 3 digit`, `no_trx = PML01-2-YYYYMMNNN`; `asset_pendamping_m` 3 digit; log dan notifikasi 5 digit.
+
+---
+
+#### Langkah 0 — Admin membuka daftar jatuh tempo
+
+**Mobile:** Asset Karyawan → **Jatuh Tempo Pemeliharaan** → `AssetPemeliharaanAdminApi.getMonitoring()`.
+
+**Dikirim**
+```http
+GET /asset/pemeliharaan-karyawan/monitoring
+Authorization: Bearer <access_token_admin>
+```
+
+**Diproses API** (`AssetPemeliharaanKaryawan_m::getMonitoring`): asset dengan `flag_pemeliharaan = 1`, dipegang karyawan aktif, `terpakai`, `jadwal_pemeliharaan` ≤ hari ini + 14, **tanpa PM aktif** (fase ≠ `selesai`); diurutkan jadwal terdekat. `sisa_hari` negatif berarti terlambat. `watchlist` memuat hasil PM selesai terakhir bila hasilnya "perlu tindak lanjut" atau "komponen rusak tidak segera".
+
+**Database:** hanya `SELECT`.
+
+**Diterima mobile** (ringkas)
+```json
+{ "code": "SUCCESS",
+  "data": { "records": [ {
+    "id_asset_data": "CMP00120260100030", "kode_asset": "LTP-2026-0001", "nama_asset": "Laptop Kerja",
+    "kategori_asset": "Laptop", "interval_pemeliharaan": 6, "jadwal_pemeliharaan": "2026-10-30", "sisa_hari": 8,
+    "karyawan": { "id_karyawan": "KRY0011", "nik": "EMP-011", "nama_karyawan": "Wulan Contoh" },
+    "watchlist": null } ] } }
+```
+
+#### Langkah 1 — Admin membuat PM dan mengusulkan jadwal
+
+**Mobile:** admin memilih asset → **Usulkan Jadwal**, mengisi tanggal 30 Okt 2026 pukul 10:00 → `AssetPemeliharaanAdminApi.store`.
+
+**Dikirim**
+```http
+POST /asset/pemeliharaan-karyawan
+```
+```json
+{ "id_asset_data": "CMP00120260100030", "tgl_jadwal": "2026-10-30", "jam_jadwal": "10:00",
+  "keterangan_jadwal": "PM rutin 6 bulan" }
+```
+
+**Diproses API** (`AssetAdminPemeliharaan_c::storePemeliharaanKaryawan` → `store`, satu `DB::transaction`)
+1. Validasi: `id_asset_data`, `tgl_jadwal` (`Y-m-d`), `jam_jadwal` (`H:i`) wajib. Cek admin, `lockCompany`.
+2. Jadwal tanggal ≥ hari ini. Asset diambil `FOR UPDATE`: dipegang karyawan, `terpakai`, `flag_pemeliharaan = 1`.
+3. `assetBlockMessage`: tidak ada PM aktif lain, upgrade, laporan kerusakan, retur, atau offboarding atas asset itu.
+4. Pemegang harus karyawan aktif (cabang dan departemen diambil untuk snapshot).
+5. Generate ID: header urutan 1 → `CMP001202610001`, `no_trx = PML01-2-202610001`.
+6. INSERT header (`fase_pemeliharaan = konfirmasi_jadwal`, `mekanisme_pelaksanaan = hadir_langsung` sebagai nilai awal, `status = proses`), INSERT item (hasil NULL), INSERT baris jadwal pertama (`jenis_jadwal = pemeliharaan`, `jenis_alur = menunggu`, `label_alur = admin`).
+7. **`asset_data` tidak berubah.** Notifikasi `pemeliharaan.usulan_jadwal` ke karyawan.
+
+**Hasil database**
+
+`asset_trx_pemeliharaan_karyawan`
+
+| Kolom | Nilai |
+|---|---|
+| id_asset_trx_pemeliharaan_karyawan / no_trx | CMP001202610001 / PML01-2-202610001 |
+| mekanisme_pelaksanaan / fase_pemeliharaan / status | hadir_langsung / **konfirmasi_jadwal** / proses |
+| id_karyawan / nik_karyawan / nama_karyawan | KRY0011 / EMP-011 / Wulan Contoh |
+| nama_cabang / nama_departemen | Kantor Pusat / IT |
+| id_pic_pendamping / nama_pic_pendamping | `''` / `''` (diisi saat Atur Pelaksanaan) |
+| nama_vendor / lokasi_pemeliharaan | `''` / `''` |
+| tgl_input / user_input | 2026-10-22 09:00:00 / ADM-001 - Siti Admin |
+
+`asset_trx_pemeliharaan_karyawan_item`: `CMP001202610001`, A30, Laptop Kerja, `status_item_pendamping = NULL`.
+
+`asset_trx_pemeliharaan_karyawan_jadwal` (1 baris)
+
+| id | jenis_jadwal | tanggal / jam | jenis_alur | label_alur | keterangan | user_input |
+|---|---|---|---|---|---|---|
+| CMP001202610001 | pemeliharaan | 2026-10-30 / 10:00:00 | **menunggu** | admin | PM rutin 6 bulan | ADM-001 - Siti Admin |
+
+`notif_data`: `CMP00120261000001` ke KRY0011, id_ref `CMP001202610001`, rute `asset_detail_pemeliharaan`, "Admin mengusulkan jadwal pemeliharaan PML01-2-202610001. Silakan konfirmasi."
+
+**Diterima mobile** (HTTP 201)
+```json
+{ "code": "CREATED", "data": { "id": "CMP001202610001", "no_trx": "PML01-2-202610001",
+  "mekanisme_pelaksanaan": "hadir_langsung", "fase_pemeliharaan": "konfirmasi_jadwal",
+  "status_label": "Konfirmasi Jadwal", "tab": "jadwal" } }
+```
+
+#### Langkah 2 — Wulan mengusulkan jadwal lain
+
+**Mobile:** banner di Asset Saya → detail → **Usulkan Jadwal Lain**, tanggal 2 Nov 2026 pukul 13:00, alasan "Sedang dinas luar" → `AssetPemeliharaanApi.konfirmasiJadwal`.
+
+**Dikirim**
+```http
+POST /asset/karyawan/pemeliharaan/CMP001202610001/jadwal
+```
+```json
+{ "aksi": "revisi", "tgl_jadwal": "2026-11-02", "jam_jadwal": "13:00", "keterangan_jadwal": "Sedang dinas luar" }
+```
+
+**Diproses API** (`konfirmasiJadwalPemeliharaanSaya` → `konfirmasiJadwal`)
+1. Karyawan aktif; header milik Wulan. Fase harus `konfirmasi_jadwal` **dan** baris jadwal PM terakhir adalah usulan admin berstatus `menunggu` ("Tidak ada usulan jadwal yang perlu dikonfirmasi.").
+2. `aksi = revisi`: tanggal, jam, dan alasan wajib ("Alasan usulan jadwal alternatif wajib diisi.").
+3. INSERT baris jadwal (`revisi`, `label_alur = karyawan`). **Fase tetap `konfirmasi_jadwal`**; admin wajib mengusulkan ulang.
+4. Notifikasi `pemeliharaan.jadwal_revisi` ke admin.
+
+**Hasil database**
+
+| Tabel | Perubahan |
+|---|---|
+| jadwal (baru) | `CMP001202610002`: pemeliharaan, 2026-11-02 / 13:00:00, jenis_alur **revisi**, label_alur karyawan, keterangan = Sedang dinas luar, user_input = EMP-011 - Wulan Contoh |
+| header | tgl_update/user_update = EMP-011 - Wulan Contoh; fase tetap `konfirmasi_jadwal` |
+| notif_data | + `CMP00120261000002` (KRY0099) dan `CMP00120261000003` (KRY0100), rute `asset_admin_detail_pemeliharaan`, "Wulan Contoh mengusulkan jadwal alternatif untuk pemeliharaan PML01-2-202610001." |
+
+**Diterima mobile** (HTTP 200): ringkasan fase yang sama (`konfirmasi_jadwal`).
+
+#### Langkah 3 — Admin mengusulkan jadwal ulang
+
+**Dikirim**
+```http
+PUT /asset/pemeliharaan-karyawan/CMP001202610001/jadwal
+```
+```json
+{ "tgl_jadwal": "2026-11-03", "jam_jadwal": "09:00", "keterangan_jadwal": "Disesuaikan kehadiran vendor" }
+```
+
+**Diproses API** (`updateJadwalPemeliharaan` → `updateJadwal`): fase menentukan jenis jadwal. Pada `konfirmasi_jadwal`, jenisnya `pemeliharaan` sehingga INSERT baris jadwal `menunggu` baru; kolom tanggal header **tidak** diubah. Tanggal tidak boleh sebelum tanggal transaksi dibuat. Pada fase lain: `menunggu_pengambilan` mengubah jadwal pengambilan, `menunggu_pengembalian` jadwal pengembalian, selain itu 422 "Jadwal tidak dapat diubah pada tahap ini.". Notifikasi `pemeliharaan.usulan_jadwal` (fase konfirmasi) atau `pemeliharaan.jadwal_diubah` (fase lain).
+
+**Hasil database:** jadwal baru `CMP001202610003` (pemeliharaan, 2026-11-03 / 09:00:00, **menunggu**, admin); notifikasi `CMP00120261000004` ke KRY0011 ("Admin mengusulkan jadwal pemeliharaan PML01-2-202610001. Silakan konfirmasi.").
+
+#### Langkah 4 — Wulan menyetujui jadwal
+
+**Dikirim**
+```http
+POST /asset/karyawan/pemeliharaan/CMP001202610001/jadwal
+```
+```json
+{ "aksi": "konfirmasi" }
+```
+
+**Diproses API** (`konfirmasiJadwal`): usulan admin terakhir (`CMP001202610003`) terbuka. INSERT jadwal `konfirmasi` (`label_alur = karyawan`) dan UPDATE header: `fase_pemeliharaan = penjadwalan`, `tgl_pemeliharaan = 2026-11-03`, `jam_pemeliharaan = 09:00:00`. Notifikasi `pemeliharaan.jadwal_disetujui` ke admin.
+
+**Hasil database**
+
+| Tabel | Perubahan |
+|---|---|
+| jadwal (baru) | `CMP001202610004`: pemeliharaan, 2026-11-03 / 09:00:00, jenis_alur **konfirmasi**, label_alur karyawan |
+| header | fase `konfirmasi_jadwal → penjadwalan`; tgl_pemeliharaan 2026-11-03; jam_pemeliharaan 09:00:00 |
+| notif_data | + `CMP00120261000005` (KRY0099) dan `CMP00120261000006` (KRY0100), "Wulan Contoh menyetujui jadwal pemeliharaan PML01-2-202610001." |
+
+**Diterima mobile:** `fase_pemeliharaan = penjadwalan`, `status_label = "Penjadwalan"`, `tab = "jadwal"`.
+
+#### Langkah 5 — Admin mengatur pelaksanaan
+
+**Mobile:** sheet **Atur Pelaksanaan**: mekanisme **Karyawan Hadir Langsung**, vendor "Servis Laptop Contoh" (teks), lokasi → `AssetPemeliharaanAdminApi.aturPelaksanaan`.
+
+**Dikirim**
+```http
+POST /asset/pemeliharaan-karyawan/CMP001202610001/pelaksanaan
+```
+```json
+{
+  "mekanisme_pelaksanaan": "hadir_langsung",
+  "id_asset_vendor_m": "",
+  "nama_vendor": "Servis Laptop Contoh",
+  "keterangan_vendor": "0812-0000-0000",
+  "lokasi_pemeliharaan": "Ruang IT lantai 2",
+  "id_pic_pendamping": "KRY0011"
+}
+```
+Untuk mekanisme hadir langsung, mobile mengisi `id_pic_pendamping` dengan pemegang asset; **API tidak memakai nilai ini** (lihat catatan di bawah).
+
+**Diproses API** (`aturPelaksanaanPemeliharaan` → `aturPelaksanaan`)
+1. Validasi: `mekanisme_pelaksanaan` ∈ hadir_langsung/diserahkan_admin; `nama_vendor` wajib bila `id_asset_vendor_m` kosong; `lokasi_pemeliharaan` wajib; jadwal pengambilan wajib hanya untuk diserahkan.
+2. Fase harus `penjadwalan` ("Jadwal pemeliharaan belum disepakati karyawan."); asset masih `terpakai` di karyawan.
+3. Vendor dari master (`id_asset_vendor_m`) atau teks bebas.
+4. **PIC Pendamping ditentukan otomatis:** pemegang asset bila **hadir langsung**, admin yang mengatur bila **diserahkan**. Karyawan itu dicatat ke `asset_pendamping_m` bila belum ada.
+5. Hadir langsung → fase `pelaksanaan`. (Diserahkan → INSERT jadwal pengambilan dan fase `menunggu_pengambilan`.)
+6. Notifikasi `pemeliharaan.pendamping` (ke PIC Pendamping) lalu `pemeliharaan.dijadwalkan` (ke karyawan).
+
+**Hasil database**
+
+| Tabel | Perubahan |
+|---|---|
+| asset_pendamping_m (baru) | `CMP001202610001`: id_karyawan KRY0011, nama_karyawan Wulan Contoh, nik EMP-011, user_input = ADM-001 - Siti Admin |
+| header | mekanisme_pelaksanaan = hadir_langsung; id_asset_vendor_m `''`; nama_vendor = Servis Laptop Contoh; keterangan_vendor = 0812-0000-0000; lokasi_pemeliharaan = Ruang IT lantai 2; id_asset_pendamping_m = CMP001202610001; id_pic_pendamping = KRY0011; nama_pic_pendamping = Wulan Contoh; nik_pic_pendamping = EMP-011; fase `penjadwalan → pelaksanaan` |
+| asset_data A30 | **Tidak berubah** (`terpakai`) |
+| notif_data | + `CMP00120261000007` (KRY0011, rute `asset_detail_pemeliharaan`, "Anda ditunjuk sebagai PIC Pendamping pemeliharaan PML01-2-202610001.") dan `CMP00120261000008` (KRY0011, "Pemeliharaan PML01-2-202610001 telah dijadwalkan. Cek detail pelaksanaan.") |
+
+**Diterima mobile** (HTTP 200): `fase_pemeliharaan = pelaksanaan`, `status_label = "Pelaksanaan PM"`, `tab = "proses"`, message "Pelaksanaan pemeliharaan berhasil diatur.".
+
+#### Langkah 6 — PIC Pendamping mengisi checklist hasil
+
+**Mobile:** pada hari pelaksanaan Wulan (sebagai pendamping) membuka detail (`peran = pendamping`), menilai tiap komponen (5 tingkat) → `AssetPemeliharaanApi.hasil`.
+
+**Dikirim**
+```http
+POST /asset/karyawan/pemeliharaan/CMP001202610001/hasil
+```
+```json
+{
+  "items": [
+    { "id_item": "CMP001ITEM0401", "hasil": "normal", "keterangan": "" },
+    { "id_item": "CMP001ITEM0402", "hasil": "komponen_rusak_tidak_segera", "keterangan": "Adaptor panas" }
+  ],
+  "keterangan": "Dikerjakan vendor, dibersihkan"
+}
+```
+
+**Diproses API** (`hasilPemeliharaanSaya` → `hasil` dengan `id_karyawan`)
+1. Fase harus `pelaksanaan` ("Pemeliharaan belum berada pada tahap pelaksanaan.").
+2. Via karyawan: mekanisme harus hadir langsung **dan** `id_pic_pendamping` = penggunanya ("Hanya PIC Pendamping yang dapat mengisi hasil pemeliharaan."). Admin dapat mengisi lewat API-008 untuk semua mekanisme.
+3. Asset masih dipegang (`terpakai` untuk hadir langsung, `dalam_perbaikan` untuk diserahkan).
+4. `normalizeHasilChecklist`: **semua** komponen wajib dinilai ("Seluruh item aset wajib diperiksa."); `hasil` salah satu dari lima tingkat ("Hasil pemeriksaan item tidak valid."); selain `normal` wajib keterangan.
+5. Hasil akhir = **item terberat** (urutan: normal < perlu_tindak_lanjut < komponen_rusak_tidak_segera < komponen_rusak_perlu_segera < tidak_dapat_diperbaiki) → `komponen_rusak_tidak_segera`.
+6. UPDATE item (`status_item_pendamping`, `checklist_hasil`, `keterangan_konfirmasi`) dan header (`fase = menunggu_review`, `tgl_hasil`, `user_hasil`).
+7. Notifikasi `pemeliharaan.hasil` ke admin.
+
+**Hasil database**
+
+| Tabel | Perubahan |
+|---|---|
+| item `…001` | status_item_pendamping NULL → **komponen_rusak_tidak_segera**; checklist_hasil = `[{"id_item":"CMP001ITEM0401","nama_item":"Unit Utama","jenis":"aset_utama","hasil":"normal","keterangan":""},{"id_item":"CMP001ITEM0402","nama_item":"Adaptor","jenis":"kelengkapan","hasil":"komponen_rusak_tidak_segera","keterangan":"Adaptor panas"}]`; keterangan_konfirmasi = Dikerjakan vendor, dibersihkan |
+| header | fase `pelaksanaan → menunggu_review`; tgl_hasil = 2026-11-03 11:30:00; user_hasil = EMP-011 - Wulan Contoh |
+| asset_data A30 | Tidak berubah |
+| notif_data | + `CMP00120261000009` (KRY0099) dan `CMP00120261000010` (KRY0100), rute `asset_admin_detail_pemeliharaan`, "Hasil pemeliharaan PML01-2-202610001 telah dikirim dan menunggu review." |
+
+**Diterima mobile** (HTTP 200): `fase_pemeliharaan = menunggu_review`, `hasil = "komponen_rusak_tidak_segera"`.
+
+#### Langkah 7 — Admin mereview dan menentukan tindak lanjut
+
+**Mobile:** detail admin (`aksi.review = true`) → **Review**, mengisi keterangan dan tanggal rencana penggantian komponen → `AssetPemeliharaanAdminApi.review`.
+
+**Dikirim**
+```http
+POST /asset/pemeliharaan-karyawan/CMP001202610001/review
+```
+```json
+{ "keterangan_review": "Pantau adaptor", "tgl_rencana_penggantian_komponen": "2026-11-20" }
+```
+
+**Diproses API** (`reviewPemeliharaanKaryawan` → `review`)
+1. Fase harus `menunggu_review` ("Hasil pemeliharaan belum dikirim."); asset masih dipegang.
+2. Hasil ini **bukan** tingkat 4–5, sehingga asset **tetap dipakai**. `jadwalBerikutnya`: hasil 3 **wajib** tanggal rencana penggantian komponen ("Tanggal rencana penggantian komponen wajib diisi."); bila `interval_pemeliharaan > 0`, jadwal PM berikutnya = **tanggal review + interval bulan** (tanpa overflow akhir bulan), ditulis ke `asset_data.jadwal_pemeliharaan` dan `item.tgl_pemeliharaan_selanjutnya`.
+3. Mekanisme hadir langsung → header `selesai`. (Diserahkan → jadwal pengembalian wajib dan fase `menunggu_pengembalian`.)
+4. UPDATE header: `tgl_review`, `user_review`, `keterangan_review`, fase, `status = selesai`.
+5. Hadir langsung dengan hasil 1–3 **tidak menulis `asset_trx_log`**; jejaknya ada di transaksi PM dan `jadwal_pemeliharaan`.
+6. Notifikasi `pemeliharaan.selesai` ke karyawan.
+
+**Hasil database**
+
+| Tabel | Perubahan |
+|---|---|
+| item `…001` | tgl_rencana_penggantian_komponen = 2026-11-20; tgl_pemeliharaan_selanjutnya = 2027-05-03 00:00:00 |
+| asset_data A30 | **jadwal_pemeliharaan `2026-10-30 → 2027-05-03`** (review 2026-11-03 + 6 bulan); status tetap `terpakai` |
+| header | fase `menunggu_review → selesai`; status `proses → selesai`; tgl_review = 2026-11-03 14:00:00; user_review = ADM-001 - Siti Admin; keterangan_review = Pantau adaptor |
+| asset_trx_log | **Tidak ada baris** |
+| notif_data | + `CMP00120261000011`: KRY0011, rute `asset_detail_pemeliharaan`, "Pemeliharaan asset PML01-2-202610001 telah selesai." |
+
+**Diterima mobile** (HTTP 200)
+```json
+{ "code": "UPDATED", "data": { "id": "CMP001202610001", "no_trx": "PML01-2-202610001",
+  "fase_pemeliharaan": "selesai", "status_label": "Selesai", "tab": "selesai",
+  "hasil": "komponen_rusak_tidak_segera", "ditarik": false, "id_request_pengganti": "" } }
+```
+Pada pemantauan berikutnya asset ini muncul di `watchlist` karena hasil terakhirnya "komponen rusak tidak segera".
+
+---
+
+#### Kondisi akhir data
+
+`asset_trx_pemeliharaan_karyawan`: `CMP001202610001` / `PML01-2-202610001`, `fase_pemeliharaan = selesai`, `status = selesai`, mekanisme hadir langsung, vendor Servis Laptop Contoh, PIC Pendamping KRY0011.
+
+`asset_trx_pemeliharaan_karyawan_jadwal`: 4 baris (menunggu admin → revisi karyawan → menunggu admin → konfirmasi karyawan) sebagai riwayat negosiasi.
+
+`asset_data` A30: tetap `terpakai` @KRY0011, `jadwal_pemeliharaan = 2027-05-03`. `asset_pendamping_m`: 1 baris. `asset_trx_log`: 0 baris. `notif_data`: 11 baris.
+
+---
+
+#### Variasi
+
+**Mekanisme Diserahkan ke Admin.** Pada langkah 5, `mekanisme_pelaksanaan = diserahkan_admin` dengan jadwal pengambilan wajib: PIC Pendamping = admin pelaksana, fase `menunggu_pengambilan`, jadwal `pengambilan` ditambahkan, notifikasi `pemeliharaan.pengambilan`. Lanjutannya:
+1. **Checklist Pengambilan** (API-007, admin, semua komponen, rusak wajib keterangan; notifikasi `pemeliharaan.checklist_pengambilan`).
+2. **Serahkan Aset** (API-013, karyawan; hanya setelah checklist ada): `asset_data` → `dalam_perbaikan` (`pemegang_asset` tetap karyawan), INSERT `asset_trx_log` (karyawan → gudang), fase `pelaksanaan`, notifikasi `pemeliharaan.dilepas`.
+3. **Hasil** diisi admin dari laporan vendor (API-008).
+4. **Review** hasil 1–3: jadwal pengembalian wajib, fase `menunggu_pengembalian`, notifikasi `pemeliharaan.pengembalian`.
+5. **Terima Aset** (API-015, karyawan, checklist kondisi semua komponen): `asset_data` → `terpakai`, INSERT `asset_trx_log` (gudang → karyawan), fase `selesai`, `tgl_diterima`/`user_diterima`, notifikasi `pemeliharaan.diterima`.
+
+**Hasil 4–5 (asset ditarik).** Pada review, hasil `komponen_rusak_perlu_segera` atau `tidak_dapat_diperbaiki`: `asset_data` → `status_asset = rusak`, `kondisi_awal = rusak`, `ket_rusak` (keterangan hasil + review, maks 255), `status_rusak = "sudah tidak bisa di gunakan"`, `pemegang_asset = gudang`, `id_pemegang_asset = ''`; INSERT `asset_trx_log` (`kondisi_akhir = rusak`; posisi awal karyawan untuk hadir langsung, gudang untuk diserahkan); `nama_tabel_tindak_lanjut` = `asset_trx_perbaikan` (hasil 4) atau `asset_trx_disposal` (hasil 5), fase `selesai`, notifikasi `pemeliharaan.ditarik`. Transaksi Perbaikan atau Disposal **tidak dibuat otomatis**.
+
+**Unit pengganti (hasil 4–5, opsional).** Bila `id_asset_pengganti` dikirim, review memanggil `AssetRequestKaryawan_m::store` untuk membuat **Penambahan asset** (KRY-03-1) bagi karyawan yang sama dalam transaksi yang sama (`urgensi = mendesak`, jadwal serah terima dari admin, `keterangan` = "Unit pengganti pemeliharaan {no_trx}"). Item PM mendapat `flag_unit_pengganti = 1` dan `id_trx_request_pengganti`; aturan Penambahan berlaku (asset harus `tersedia` @gudang) dan notifikasi `penambahan.dikirim` ikut terkirim.
+
+**Hasil 1–2.** Hasil `normal` atau `perlu_tindak_lanjut`: tanpa tanggal rencana penggantian; jadwal PM berikutnya tetap dihitung bila interval > 0.
+
+**Interval 0.** Bila `interval_pemeliharaan = 0`, `jadwal_pemeliharaan` tidak diubah dan item tidak diberi `tgl_pemeliharaan_selanjutnya`.
+
+---
+
+#### Kasus gagal yang umum
+
+| Situasi | Langkah | HTTP | Pesan | Perubahan database |
+|---|---|:---:|---|---|
+| Asset bukan milik karyawan / tidak ditemukan | 1 | 422 | Asset tidak ditemukan atau tidak dipegang karyawan. | Tidak ada |
+| Asset bukan `terpakai` | 1 | 422 | Hanya asset berstatus terpakai yang dapat dipelihara. | Tidak ada |
+| `flag_pemeliharaan` tidak aktif | 1 | 422 | Asset tidak memiliki jadwal pemeliharaan aktif. | Tidak ada |
+| Pemegang tidak aktif | 1 | 422 | Karyawan pemegang asset tidak ditemukan atau tidak aktif. | Tidak ada |
+| Asset di PM / upgrade / kerusakan / retur / offboarding lain | 1 | 422 | Asset sedang diproses pada pemeliharaan lain. / …upgrade. / …laporan kerusakan. / …retur. / …offboarding. | Tidak ada |
+| Jadwal sebelum hari ini / tidak lengkap | 1, 3 | 422 | Tanggal dan jam serah terima wajib diisi. / Format jadwal serah terima tidak valid. | Tidak ada |
+| Menjawab usulan yang tidak ada | 2, 4 | 422 | Tidak ada usulan jadwal yang perlu dikonfirmasi. | Tidak ada |
+| Revisi tanpa alasan | 2 | 422 | Alasan usulan jadwal alternatif wajib diisi. | Tidak ada |
+| Ubah jadwal di fase yang salah | 3 | 422 | Jadwal tidak dapat diubah pada tahap ini. | Tidak ada |
+| Atur pelaksanaan sebelum jadwal disepakati | 5 | 422 | Jadwal pemeliharaan belum disepakati karyawan. | Tidak ada |
+| Mekanisme tidak valid | 5 | 422 | Mekanisme pelaksanaan tidak valid. | Tidak ada |
+| Vendor atau lokasi kosong | 5 | 422 | Vendor / teknisi wajib diisi. / Lokasi pemeliharaan wajib diisi. | Tidak ada |
+| Vendor master tidak ditemukan | 5 | 422 | Vendor tidak ditemukan. | Tidak ada |
+| Checklist pengambilan di fase salah / sudah ada | – | 422 | Checklist pengambilan tidak dapat diisi saat ini. | Tidak ada |
+| Serahkan sebelum checklist pengambilan | – | 422 | Aset belum siap diserahkan untuk pemeliharaan. | Tidak ada |
+| Hasil di luar fase pelaksanaan | 6 | 422 | Pemeliharaan belum berada pada tahap pelaksanaan. | Tidak ada |
+| Bukan PIC Pendamping | 6 | 422 | Hanya PIC Pendamping yang dapat mengisi hasil pemeliharaan. | Tidak ada |
+| Komponen belum semua dinilai | 6 | 422 | Seluruh item aset wajib diperiksa. | Tidak ada |
+| Hasil tidak valid / keterangan kosong | 6 | 422 | Hasil pemeriksaan item tidak valid. / Keterangan temuan wajib diisi untuk hasil selain normal. | Tidak ada |
+| Review sebelum hasil dikirim | 7 | 422 | Hasil pemeliharaan belum dikirim. | Tidak ada |
+| Hasil 3 tanpa tanggal rencana penggantian | 7 | 422 | Tanggal rencana penggantian komponen wajib diisi. | Tidak ada |
+| Terima sebelum dijadwalkan kembali | – | 422 | Aset belum dijadwalkan untuk dikembalikan. | Tidak ada |
+| Karyawan membuka PM bukan miliknya / bukan pendampingnya | – | 404 | Pemeliharaan asset tidak ditemukan. | Tidak ada |
+| Pengguna bukan admin asset | 0, 1, 3, 5, 7 | 403 / 422 | Pengguna tidak memiliki akses admin asset. / Pengguna tidak terdaftar sebagai admin asset. | Tidak ada |
+| Skema belum diterapkan | semua | 500 | Endpoint PML01 gagal sebelum SQL fase diterapkan (RISK-001). | Tidak ada |
+| Token kedaluwarsa | semua | 401 | Token telah expired. Mobile me-refresh token sekali lalu mengulang request. | Tidak ada |
+
+Semua pelanggaran aturan dilempar sebagai `InvalidArgumentException` di dalam `DB::transaction`, sehingga seluruh perubahan request itu dibatalkan. Pesan tersedia dalam bahasa Indonesia dan Inggris mengikuti header `locale`.
+
+#### Ringkasan siapa mengerjakan apa
+
+| Tahap | Mobile | API | Database |
+|---|---|---|---|
+| Jatuh tempo | Daftar asset jatuh tempo | `getMonitoring` dengan `sisa_hari` dan `watchlist` | `SELECT` saja |
+| Negosiasi jadwal | Usulkan, usulkan lain, setujui | Cek usulan terakhir, tambah baris riwayat jadwal | header, jadwal, `notif_data` |
+| Atur pelaksanaan | Mekanisme, vendor, lokasi (PIC Pendamping otomatis) | Tentukan pendamping, catat `asset_pendamping_m`, set fase | header, `asset_pendamping_m`, (jadwal), `notif_data` |
+| Pengambilan (diserahkan) | Checklist admin, Serahkan Aset | Asset → `dalam_perbaikan`, log | header, `asset_data`, `asset_trx_log`, `notif_data` |
+| Hasil | Checklist 5 tingkat per komponen | Hasil terberat, simpan JSON | item, header, `notif_data` |
+| Review | Keterangan, rencana penggantian, jadwal berikutnya, pengganti opsional | Hitung jadwal PM berikutnya, tarik asset (4–5), buat Penambahan | `asset_data`, item, header, (`asset_trx_log`), (Penambahan), `notif_data` |
+| Tampilan | JSON → model → widget; objek `aksi` per peran | `statusFase`, `peran`, `usulan_jadwal` | `SELECT` saja |
 
 ---
 
 ## 46. Ringkasan Database Impact
 
-| Aksi | Header | Item | Jadwal | asset_data | asset_log | Lain |
+| Aksi | Header | Item | Jadwal | asset_data | asset_trx_log | Lain |
 |---|---|---|---|---|---|---|
 | Buat PM | INSERT | INSERT | INSERT | – | – | – |
 | Usul/konfirmasi/revisi jadwal | UPDATE | – | INSERT | – | – | – |
@@ -1155,6 +1524,7 @@ Aturan silang:
 
 | Version | Date | Changes |
 |---|---|---|
+| 1.3 | 2026-10-22 | Menambah §45.4 *Walkthrough Lengkap dengan Contoh Data* (negosiasi jadwal, atur pelaksanaan hadir langsung, checklist hasil 5 tingkat, review dan jadwal PM berikutnya; variasi diserahkan ke admin, asset ditarik, unit pengganti; kasus gagal). Sinkronisasi kode: tabel log ternyata `asset_trx_log` (`id_asset_trx_log`), bukan `asset_log`; **PIC Pendamping kini ditentukan otomatis** oleh API (pemegang asset untuk hadir langsung, admin pengatur untuk diserahkan) dan `id_pic_pendamping` pada request diabaikan; mobile mengisinya dengan pemegang asset. |
 | 1.2 | 2026-10-20 | API `getDetail`: `karyawan.jabatan` ditambahkan (query terpisah `data_karyawan` + `master_jabatan` berdasarkan `id_karyawan` header; header tidak punya kolom jabatan; tanpa SQL/migrasi). Mobile: model karyawan membaca `jabatan`. Tes `AssetPemeliharaanKaryawanTest` meng-assert `karyawan.jabatan`. |
 | 1.1 | 2026-10-12 | Sinkronisasi dengan kode 12 Okt 2026: path file mobile mengikuti struktur folder baru (`UI/Modul/Asset/<Fitur>/` berhuruf kapital, model di `Repository/Model/Asset/`). |
 | 1.0 | 2026-09-28 | Initial documentation — disusun dari source lokal API & MOBILE setelah implementasi PML01 konteks karyawan; dibandingkan dengan dokumen bisnis PML01 V2.0 |

@@ -197,7 +197,7 @@ footer{margin-top:64px;padding-top:18px;border-top:1px solid var(--line);color:v
         <dl>
           <dt>Kode</dt><dd>KRY01</dd>
           <dt>Modul</dt><dd>Asset Management</dd>
-          <dt>Versi</dt><dd>1.2 · 12 Okt 2026</dd>
+          <dt>Versi</dt><dd>1.3 · 22 Okt 2026</dd>
           <dt>Stack</dt><dd>Lumen 10 · Flutter</dd>
           <dt>API</dt><dd>11 endpoint</dd>
         </dl>
@@ -218,7 +218,7 @@ footer{margin-top:64px;padding-top:18px;border-top:1px solid var(--line);color:v
         <div class="three">
           <div class="fact"><b>Siapa</b><p><strong>Admin Asset</strong> membuat dan mengirim onboarding. <strong>Karyawan penerima</strong> mengecek setiap asset. Tidak ada approver.</p></div>
           <div class="fact"><b>Apa yang terjadi</b><p>Asset yang dipilih langsung dikunci (<code>status_asset = proses</code>). Asset yang dinyatakan <em>Normal</em> langsung berpindah ke karyawan, per item.</p></div>
-          <div class="fact"><b>Hasil akhir</b><p><code>pemegang_asset = karyawan</code>, <code>id_pemegang_asset = id_karyawan</code>, dan satu baris <code>asset_log</code> per asset.</p></div>
+          <div class="fact"><b>Hasil akhir</b><p><code>pemegang_asset = karyawan</code>, <code>id_pemegang_asset = id_karyawan</code>, dan satu baris <code>asset_trx_log</code> per asset.</p></div>
         </div>
       </div>
 
@@ -254,8 +254,7 @@ footer{margin-top:64px;padding-top:18px;border-top:1px solid var(--line);color:v
           <li><span class="sev sev-h">TINGGI</span><span>Penggantian asset rusak <strong>gagal</strong> bila deskripsi asset pengganti kosong — kelengkapan diisi otomatis dan tidak bisa diedit. <a href="#s41">RISK-001</a></span></li>
           <li><span class="sev sev-h">TINGGI</span><span>Onboarding yang sudah dikirim <strong>tidak bisa dibatalkan</strong>; asset bisa tertahan di status <code>proses</code>. <a href="#s41">RISK-002</a></span></li>
           <li><span class="sev sev-m">SEDANG</span><span>Status <code>ditolak</code> dan kolom <code>ket_tolak</code> ada di database tetapi tidak pernah dipakai. <a href="#s39">INC-01</a></span></li>
-          <li><span class="sev sev-m">SEDANG</span><span>Backend tidak mencegah satu karyawan memiliki lebih dari satu onboarding aktif. <a href="#s41">RISK-003</a></span></li>
-          <li><span class="sev sev-m">SEDANG</span><span>Serah terima bersifat <strong>parsial per item</strong>, berbeda dengan dokumen lama ("all-or-nothing"). <a href="#s39">INC-04</a></span></li>
+                    <li><span class="sev sev-m">SEDANG</span><span>Serah terima bersifat <strong>parsial per item</strong>, berbeda dengan dokumen lama ("all-or-nothing"). <a href="#s39">INC-04</a></span></li>
         </ul>
       </div>
     </section>
@@ -300,11 +299,11 @@ footer{margin-top:64px;padding-top:18px;border-top:1px solid var(--line);color:v
 </tr>
 <tr>
 <td>Versi Dokumen</td>
-<td>1.2</td>
+<td>1.3</td>
 </tr>
 <tr>
 <td>Tanggal Dokumentasi</td>
-<td>2026-10-12</td>
+<td>2026-10-22</td>
 </tr>
 <tr>
 <td>Menggantikan</td>
@@ -348,7 +347,7 @@ footer{margin-top:64px;padding-top:18px;border-top:1px solid var(--line);color:v
 </tr>
 <tr>
 <td>Log</td>
-<td><code>asset_log</code> (<code>jenis_log = onboarding_karyawan</code>)</td>
+<td><code>asset_trx_log</code> (<code>jenis_log = onboarding_karyawan</code>)</td>
 </tr>
 <tr>
 <td>Initial Status</td>
@@ -387,7 +386,7 @@ UPDATE asset_data.status_asset = 'proses'   (asset ter-reservasi)
    ↓  notifikasi &quot;Onboarding Asset Baru&quot; (jika bukan draft)
 Karyawan → Asset Saya → Konfirmasi Asset Baru (Normal / Rusak per asset)
    ↓
-Asset Normal → asset_data: terpakai, pemegang = karyawan  + INSERT asset_log
+Asset Normal → asset_data: terpakai, pemegang = karyawan  + INSERT asset_trx_log
 Asset Rusak  → asset_data: rusak, tetap di gudang → status &quot;Isu Rusak&quot;
    ↓  (jika ada rusak) Admin → Ganti Asset Yang Rusak → item pengganti → karyawan cek lagi
 Semua item aktif Normal → status_approval = dikonfirmasi (&quot;Selesai&quot;)
@@ -403,7 +402,7 @@ Semua item aktif Normal → status_approval = dikonfirmasi (&quot;Selesai&quot;)
 <li><strong>Serah terima</strong> terjadi ketika karyawan mengonfirmasi: setiap asset dinilai <strong>Normal</strong> atau <strong>Rusak</strong>. Asset <strong>Normal langsung berpindah</strong> ke karyawan (per item, parsial). Asset <strong>Rusak</strong> tetap di gudang berstatus <code class="chip chip-bad">rusak</code>.</li>
 <li><strong>Penggantian</strong>: bila ada asset rusak, Admin memilih asset pengganti; karyawan mengecek ulang hanya asset pengganti. Siklus ini dapat berulang.</li>
 <li><strong>Transaksi selesai</strong> (<code class="chip chip-done">dikonfirmasi</code>) ketika seluruh item aktif (item yang tidak digantikan) berstatus normal.</li>
-<li><strong>Pemegang asset</strong> berubah pada <code>asset_data.pemegang_asset = 'karyawan'</code> dan <code>id_pemegang_asset = id_karyawan</code>; histori dicatat ke <code>asset_log</code>.</li>
+<li><strong>Pemegang asset</strong> berubah pada <code>asset_data.pemegang_asset = 'karyawan'</code> dan <code>id_pemegang_asset = id_karyawan</code>; histori dicatat ke <code>asset_trx_log</code>.</li>
 </ul>
 <hr />
 <h2 id="s5"><span class="sec-no">05</span>Tujuan Fitur</h2>
@@ -413,7 +412,7 @@ Semua item aktif Normal → status_approval = dikonfirmasi (&quot;Selesai&quot;)
 <li>Karyawan wajib memeriksa kondisi fisik dan menyatakan tanggung jawab atas asset ("Dengan menerima asset ini, saya menyatakan telah memeriksa kondisi dan bertanggung jawab atas asset tersebut.").</li>
 <li>Asset rusak saat serah terima tidak dibebankan ke karyawan, tetap di gudang dengan status rusak, dan dapat diganti.</li>
 <li>Asset yang sedang diproses tidak dapat dipakai oleh transaksi lain (peminjaman, penambahan, onboarding lain).</li>
-<li>Setiap perpindahan asset ke karyawan dapat ditelusuri (asset_log).</li>
+<li>Setiap perpindahan asset ke karyawan dapat ditelusuri (asset_trx_log).</li>
 </ul>
 <h3>5.2 Tujuan Sistem</h3>
 <ul>
@@ -421,7 +420,7 @@ Semua item aktif Normal → status_approval = dikonfirmasi (&quot;Selesai&quot;)
 <li>Menyimpan daftar asset beserta snapshot nama/deskripsi/kategori.</li>
 <li>Mereservasi asset (<code>status_asset = proses</code>) selama transaksi berjalan.</li>
 <li>Mencatat hasil pengecekan per item (<code class="chip chip-done">normal</code>/<code class="chip chip-bad">rusak</code> + alasan).</li>
-<li>Memindahkan pemegang asset ke karyawan dan mencatat <code>asset_log</code>.</li>
+<li>Memindahkan pemegang asset ke karyawan dan mencatat <code>asset_trx_log</code>.</li>
 <li>Menyediakan mekanisme asset pengganti berbentuk pohon (<code>parent_id</code>).</li>
 <li>Mengirim notifikasi inbox + push FCM ke pihak terkait.</li>
 </ul>
@@ -449,7 +448,7 @@ Semua item aktif Normal → status_approval = dikonfirmasi (&quot;Selesai&quot;)
 <tr>
 <td>System</td>
 <td>Backend + FCM</td>
-<td>Validasi, penguncian, penomoran, update <code>asset_data</code>, insert <code>asset_log</code>, notifikasi</td>
+<td>Validasi, penguncian, penomoran, update <code>asset_data</code>, insert <code>asset_trx_log</code>, notifikasi</td>
 </tr>
 </tbody>
 </table></div>
@@ -706,9 +705,11 @@ Semua item aktif Normal → status_approval = dikonfirmasi (&quot;Selesai&quot;)
 <li>ID header dan ID item: 3 digit urut per company per bulan (maks. 999); ID log: 5 digit.</li>
 <li><strong>Error:</strong> "Nomor transaksi untuk periode ini sudah mencapai batas."</li>
 </ul>
-<h3>BR-020 — Daftar pilihan karyawan (UI) mengecualikan karyawan yang masih memiliki onboarding draft/proses/ditolak</h3>
+<h3>BR-020 — Satu karyawan hanya boleh punya satu onboarding seumur hidup</h3>
 <ul>
-<li>Hanya diterapkan pada endpoint options, <strong>tidak</strong> divalidasi saat simpan (lihat RISK-003).</li>
+<li>Endpoint options mengecualikan karyawan yang sudah punya baris onboarding <strong>berstatus apa pun</strong> (draft, proses, ditolak, dikonfirmasi); baris draft milik transaksi yang sedang diedit dikecualikan lewat <code>exclude_onboarding_id</code>.</li>
+<li>Aturan ini juga divalidasi saat simpan dan ubah draft lewat <code>AssetAdmin_m::assertKaryawanBelumPernahOnboarding</code>.</li>
+<li><strong>Error:</strong> "Karyawan ini sudah pernah menerima onboarding asset." (422). Menghapus draft membebaskan karyawan kembali.</li>
 </ul>
 <h3>BR-021 — Asset dalam onboarding aktif terkunci untuk modul lain</h3>
 <ul>
@@ -752,7 +753,7 @@ Tambah (+) → Pilih Karyawan → Tambah Asset (kategori → asset) → Catatan 
 <ol>
 <li>Buka halaman admin <strong>Asset Karyawan</strong>, pilih aksi <strong>On Board</strong> → halaman <strong>On Boarding Asset</strong> (tab Proses/Dikonfirmasi/Selesai).</li>
 <li>Tekan <strong>+</strong> → form <strong>On Boarding Asset</strong>.</li>
-<li><strong>Pilih Karyawan</strong> (bottom sheet, cari nama/NIK). Hanya karyawan aktif tanpa onboarding aktif yang muncul.</li>
+<li><strong>Pilih Karyawan</strong> (bottom sheet, cari nama/NIK). Hanya karyawan aktif yang belum pernah punya onboarding yang muncul.</li>
 <li><strong>Tambah Asset</strong>: pilih kategori (pohon kategori), lalu asset (cari nama/kode/merek). Ulangi untuk asset lain; asset bisa dihapus dari daftar.</li>
 <li>Isi <strong>Catatan Tambahan</strong>.</li>
 <li>Tekan <strong>Simpan Draft</strong> (status draft) atau <strong>Submit ke Karyawan</strong> (status proses + notifikasi).</li>
@@ -774,7 +775,7 @@ Tambah (+) → Pilih Karyawan → Tambah Asset (kategori → asset) → Catatan 
 <li>Validasi request &amp; aturan bisnis; lock <code>master_company</code> per transaksi.</li>
 <li>Generate ID &amp; nomor transaksi.</li>
 <li>Reservasi/pelepasan asset (<code>tersedia ⇄ proses</code>).</li>
-<li>Pada konfirmasi: update item, update <code>asset_data</code>, insert <code>asset_log</code>, tentukan status header.</li>
+<li>Pada konfirmasi: update item, update <code>asset_data</code>, insert <code>asset_trx_log</code>, tentukan status header.</li>
 <li>Hitung label/tab turunan (<code>status_label</code>, <code>tab</code>, <code>isu_rusak</code>, <code>perlu_dicek</code>, <code>diganti</code>).</li>
 <li>Kirim notifikasi inbox (<code>notif_data</code>) + push FCM setelah transaksi DB selesai.</li>
 </ul>
@@ -803,7 +804,7 @@ Tambah (+) → Pilih Karyawan → Tambah Asset (kategori → asset) → Catatan 
     O --&gt; P[Karyawan: Konfirmasi Asset Baru]
     P --&gt; Q[Nilai Normal / Rusak]
     Q --&gt; R[POST konfirmasi]
-    R --&gt; S[Item normal: asset terpakai, pemegang karyawan, asset_log]
+    R --&gt; S[Item normal: asset terpakai, pemegang karyawan, asset_trx_log]
     R --&gt; T[Item rusak: asset status rusak di gudang]
     S --&gt; U{Semua item aktif normal?}
     T --&gt; U
@@ -868,7 +869,7 @@ Tambah (+) → Pilih Karyawan → Tambah Asset (kategori → asset) → Catatan 
     M-&gt;&gt;DB: UPDATE asset_data rusak (item rusak)
     M-&gt;&gt;DB: UPDATE header status/user_approval/tgl_approval
     M-&gt;&gt;DB: UPDATE asset_data terpakai + pemegang (item normal)
-    M-&gt;&gt;DB: INSERT asset_log (item normal)
+    M-&gt;&gt;DB: INSERT asset_trx_log (item normal)
     M-&gt;&gt;DB: COMMIT
     C-&gt;&gt;N: onboarding.dikonfirmasi / onboarding.rusak (ke semua admin)
     C--&gt;&gt;Bloc: 200 UPDATED {status_approval, status_label, tab}
@@ -1122,7 +1123,7 @@ Tambah (+) → Pilih Karyawan → Tambah Asset (kategori → asset) → Catatan 
 <td>Dipakai sebagai lock (<code>SELECT ... FOR UPDATE</code>)</td>
 </tr>
 <tr>
-<td><code>asset_log</code></td>
+<td><code>asset_trx_log</code></td>
 <td>Log</td>
 <td>Histori perpindahan asset ke karyawan</td>
 </tr>
@@ -1149,8 +1150,8 @@ Tambah (+) → Pilih Karyawan → Tambah Asset (kategori → asset) → Catatan 
     ASSET_TRX_ONBOARDING_KARYAWAN_ITEM |o--o{ ASSET_TRX_ONBOARDING_KARYAWAN_ITEM : &quot;parent_id (pengganti)&quot;
     ASSET_DATA ||--o{ ASSET_TRX_ONBOARDING_KARYAWAN_ITEM : &quot;id_asset_data&quot;
     ASSET_KATEGORI_M ||--o{ ASSET_DATA : &quot;id_asset_kategori_m&quot;
-    ASSET_DATA ||--o{ ASSET_LOG : &quot;id_asset_data&quot;
-    ASSET_TRX_ONBOARDING_KARYAWAN ||--o{ ASSET_LOG : &quot;id_transaksi (logis)&quot;
+    ASSET_DATA ||--o{ ASSET_TRX_LOG : &quot;id_asset_data&quot;
+    ASSET_TRX_ONBOARDING_KARYAWAN ||--o{ ASSET_TRX_LOG : &quot;id_transaksi (logis)&quot;
     DATA_KARYAWAN ||--o{ ASSET_TRX_ONBOARDING_KARYAWAN : &quot;id_karyawan (logis)&quot;
     DATA_KARYAWAN ||--o| ASSET_ADMIN : &quot;id_karyawan&quot;
     DATA_KARYAWAN ||--o{ ASSET_DATA : &quot;id_pemegang_asset (logis)&quot;
@@ -1182,15 +1183,15 @@ Tambah (+) → Pilih Karyawan → Tambah Asset (kategori → asset) → Catatan 
         varchar id_pemegang_asset
         varchar id_company
     }
-    ASSET_LOG {
-        varchar id_asset_log PK
+    ASSET_TRX_LOG {
+        varchar id_asset_trx_log PK
         varchar id_asset_data FK
         enum jenis_log
         varchar id_transaksi
         varchar nama_tabel_transaksi
     }
 </pre></div>
-<p>Relasi <strong>logis</strong> (tanpa <code>ref</code> di DBML, hanya lewat query): <code>id_karyawan</code> → <code>data_karyawan</code>, <code>id_pemegang_asset</code> → <code>data_karyawan</code>, <code>asset_log.id_transaksi</code> → header, <code>parent_id</code> → item. ⚠️ Belum ditemukan: apakah FK fisik dibuat di database (tidak ada migration create table).</p>
+<p>Relasi <strong>logis</strong> (tanpa <code>ref</code> di DBML, hanya lewat query): <code>id_karyawan</code> → <code>data_karyawan</code>, <code>id_pemegang_asset</code> → <code>data_karyawan</code>, <code>asset_trx_log.id_transaksi</code> → header, <code>parent_id</code> → item. ⚠️ Belum ditemukan: apakah FK fisik dibuat di database (tidak ada migration create table).</p>
 <hr />
 <h2 id="s18"><span class="sec-no">18</span>Data Dictionary</h2>
 <h3>18.1 asset_trx_onboarding_karyawan</h3>
@@ -1483,7 +1484,7 @@ Tambah (+) → Pilih Karyawan → Tambah Asset (kategori → asset) → Catatan 
 <tr>
 <td>kondisi_awal</td>
 <td>enum(normal, rusak, belum_dicek)</td>
-<td>Dikirim di options; disalin ke <code>asset_log.kondisi_awal</code></td>
+<td>Dikirim di options; disalin ke <code>asset_trx_log.kondisi_awal</code></td>
 </tr>
 <tr>
 <td>ket_rusak</td>
@@ -1507,7 +1508,7 @@ Tambah (+) → Pilih Karyawan → Tambah Asset (kategori → asset) → Catatan 
 </tr>
 </tbody>
 </table></div>
-<h3>18.4 asset_log (yang diisi fitur)</h3>
+<h3>18.4 asset_trx_log (yang diisi fitur)</h3>
 <div class="table-wrap"><table>
 <thead>
 <tr>
@@ -1517,7 +1518,7 @@ Tambah (+) → Pilih Karyawan → Tambah Asset (kategori → asset) → Catatan 
 </thead>
 <tbody>
 <tr>
-<td>id_asset_log</td>
+<td>id_asset_trx_log</td>
 <td><code>id_company + YYYYMM + 5 digit</code></td>
 </tr>
 <tr>
@@ -1743,7 +1744,7 @@ ApiResponse (format JSON seragam)   +   AssetNotification (setelah commit)
 <li>Item rusak → <strong>UPDATE asset_data</strong> <code>status_asset='rusak'</code>, <code>id_pemegang_asset=''</code>, <code>ket_rusak</code> (hanya jika masih <code class="chip chip-wait">proses</code> &amp; <code>gudang</code>).</li>
 <li>Hitung <code>semuaNormal</code> atas <strong>seluruh item aktif</strong> → status <code class="chip chip-done">dikonfirmasi</code> atau tetap <code class="chip chip-wait">proses</code>.</li>
 <li><strong>UPDATE header</strong> <code>status_approval</code>, <code>user_approval</code>, <code>tgl_approval = now</code>, <code>tgl_update</code>, <code>user_update</code>.</li>
-<li>Item normal ronde ini: lock <code>asset_data</code>; lewati jika sudah dipegang karyawan ini; selain itu wajib <code class="chip chip-wait">proses</code>+<code>gudang</code> → <strong>UPDATE</strong> <code class="chip chip-done">terpakai</code>/<code>karyawan</code>/<code>id_pemegang_asset</code>; <strong>INSERT asset_log</strong> per asset.</li>
+<li>Item normal ronde ini: lock <code>asset_data</code>; lewati jika sudah dipegang karyawan ini; selain itu wajib <code class="chip chip-wait">proses</code>+<code>gudang</code> → <strong>UPDATE</strong> <code class="chip chip-done">terpakai</code>/<code>karyawan</code>/<code>id_pemegang_asset</code>; <strong>INSERT asset_trx_log</strong> per asset.</li>
 <li>COMMIT; notifikasi <code>onboarding.dikonfirmasi</code> atau <code>onboarding.rusak</code> ke semua admin; response 200 <code>UPDATED</code>.</li>
 </ol>
 <h3>21.5 Ganti Asset Rusak — <code>gantiAssetRusakOnboarding</code></h3>
@@ -1758,7 +1759,7 @@ ApiResponse (format JSON seragam)   +   AssetNotification (setelah commit)
 </ol>
 <h3>21.6 Query baca</h3>
 <ul>
-<li><strong>Options</strong>: karyawan aktif tanpa onboarding draft/proses/ditolak; asset gudang yang <code class="chip chip-neutral">tersedia</code> (plus asset <code class="chip chip-wait">proses</code> milik draft yang sedang diedit) dan tidak punya item <code class="chip chip-wait">belum_dicek</code> di onboarding <code class="chip chip-wait">proses</code>; kategori yang dipakai asset beserta seluruh parent-nya.</li>
+<li><strong>Options</strong>: karyawan aktif yang belum punya onboarding berstatus apa pun (kecuali transaksi <code>exclude_onboarding_id</code>); asset gudang yang <code class="chip chip-neutral">tersedia</code> (plus asset <code class="chip chip-wait">proses</code> milik draft yang sedang diedit) dan tidak punya item <code class="chip chip-wait">belum_dicek</code> di onboarding <code class="chip chip-wait">proses</code>; kategori yang dipakai asset beserta seluruh parent-nya.</li>
 <li><strong>List</strong>: JOIN item, <code>COUNT</code> item (termasuk pengganti) → <code>jumlah_asset</code>; urut <code>tgl_input DESC</code>; filter tab (§14).</li>
 <li><strong>Detail</strong>: header + karyawan (cabang/divisi dari master) + item + flag turunan.</li>
 </ul>
@@ -1823,6 +1824,12 @@ ApiResponse (format JSON seragam)   +   AssetNotification (setelah commit)
 <td>Konfirmasi item Rusak</td>
 </tr>
 <tr>
+<td>id_asset_lokasi_m</td>
+<td>lokasi gudang</td>
+<td>NULL</td>
+<td>Konfirmasi item Normal</td>
+</tr>
+<tr>
 <td>tgl_update / user_update</td>
 <td>–</td>
 <td>now / <code>nik - nama</code> pelaku</td>
@@ -1840,8 +1847,8 @@ ApiResponse (format JSON seragam)   +   AssetNotification (setelah commit)
       ↓ create onboarding
 status_asset = proses (terkunci)
       ↓ karyawan konfirmasi
- ├─ Normal → status_asset = terpakai, pemegang_asset = karyawan, id_pemegang_asset = id_karyawan, + asset_log
- └─ Rusak  → status_asset = rusak, tetap gudang, ket_rusak = alasan (tanpa asset_log)
+ ├─ Normal → status_asset = terpakai, pemegang_asset = karyawan, id_pemegang_asset = id_karyawan, + asset_trx_log
+ └─ Rusak  → status_asset = rusak, tetap gudang, ket_rusak = alasan (tanpa asset_trx_log)
 </code></pre></div>
 <hr />
 <h2 id="s23"><span class="sec-no">23</span>API Documentation</h2>
@@ -2433,7 +2440,7 @@ INSERT notif_data
 UPDATE asset_data (rusak → status rusak)
 UPDATE asset_trx_onboarding_karyawan (status_approval, user_approval, tgl_approval)
 UPDATE asset_data (normal → terpakai, pemegang karyawan)
-INSERT asset_log (per asset normal)
+INSERT asset_trx_log (per asset normal)
 INSERT notif_data (semua admin asset)
 </code></pre></div>
 <p><strong>Success (200):</strong></p>
@@ -3063,7 +3070,7 @@ Backend
 <td>JWT</td>
 <td>Authorization</td>
 <td><code>$karyawan</code></td>
-<td>header / asset_data / asset_log</td>
+<td>header / asset_data / asset_trx_log</td>
 <td>user_approval, tgl_approval / id_pemegang_asset / id_pemegang, nama_pemegang</td>
 </tr>
 </tbody>
@@ -3530,12 +3537,12 @@ Backend
 <tr>
 <td>Asset log serah terima</td>
 <td style="text-align: center;">✅</td>
-<td><code>asset_log</code> untuk setiap asset <strong>normal</strong> yang diserahkan</td>
+<td><code>asset_trx_log</code> untuk setiap asset <strong>normal</strong> yang diserahkan</td>
 </tr>
 <tr>
 <td>Asset log asset rusak</td>
 <td style="text-align: center;">❌</td>
-<td>Tidak ada insert <code>asset_log</code> untuk item rusak</td>
+<td>Tidak ada insert <code>asset_trx_log</code> untuk item rusak</td>
 </tr>
 <tr>
 <td>Histori penggantian</td>
@@ -3896,14 +3903,14 @@ Backend
 <td>Konfirmasi semua normal</td>
 <td>TC-01</td>
 <td>Karyawan pilih Normal semua → Konfirmasi Asset</td>
-<td>Status dikonfirmasi "Selesai"; asset <code class="chip chip-done">terpakai</code>, pemegang karyawan; 2 baris asset_log; notif admin "Dikonfirmasi"</td>
+<td>Status dikonfirmasi "Selesai"; asset <code class="chip chip-done">terpakai</code>, pemegang karyawan; 2 baris asset_trx_log; notif admin "Dikonfirmasi"</td>
 </tr>
 <tr>
 <td>TC-07</td>
 <td>Konfirmasi ada rusak</td>
 <td>TC-01</td>
 <td>Asset A Rusak + alasan, B Normal</td>
-<td>Status proses "Isu Rusak" (tab Dikonfirmasi); A <code class="chip chip-bad">rusak</code> di gudang; B <code class="chip chip-done">terpakai</code> + asset_log; notif admin "Laporan Asset Rusak"</td>
+<td>Status proses "Isu Rusak" (tab Dikonfirmasi); A <code class="chip chip-bad">rusak</code> di gudang; B <code class="chip chip-done">terpakai</code> + asset_trx_log; notif admin "Laporan Asset Rusak"</td>
 </tr>
 <tr>
 <td>TC-08</td>
@@ -4231,9 +4238,9 @@ Backend
 <tr>
 <td>INC-06</td>
 <td>Backend options ↔ store</td>
-<td>Options mengecualikan karyawan dengan onboarding aktif, tetapi store/update tidak memvalidasi</td>
-<td>Duplikasi onboarding via API/race</td>
-<td>Tambah validasi di model</td>
+<td>Options dan store/update sama-sama menolak karyawan yang sudah punya onboarding (<strong>sudah diperbaiki</strong>, <code>assertKaryawanBelumPernahOnboarding</code>)</td>
+<td>Race antar dua request dicegah <code>lockCompany</code></td>
+<td>–</td>
 </tr>
 <tr>
 <td>INC-07</td>
@@ -4308,7 +4315,7 @@ Backend
 <tr>
 <td>INC-17</td>
 <td>Backend</td>
-<td>Item rusak tidak menghasilkan <code>asset_log</code>; <code>status_rusak</code> tidak diisi</td>
+<td>Item rusak tidak menghasilkan <code>asset_trx_log</code>; <code>status_rusak</code> tidak diisi</td>
 <td>Histori kerusakan tidak lengkap</td>
 <td>Tambah log/isi field</td>
 </tr>
@@ -4412,11 +4419,11 @@ Backend
 <td>Retry/queue</td>
 </tr>
 <tr>
-<td>Karyawan punya &gt;1 onboarding aktif (via API)</td>
-<td>Semua tampil di Asset Saya</td>
-<td>Duplikasi</td>
+<td>Karyawan punya &gt;1 onboarding (via API)</td>
+<td>422 "Karyawan ini sudah pernah menerima onboarding asset."</td>
+<td>Tidak ada duplikasi</td>
 <td>–</td>
-<td>Validasi backend (INC-06)</td>
+<td>Sudah divalidasi backend (INC-06)</td>
 </tr>
 </tbody>
 </table></div>
@@ -4436,11 +4443,9 @@ Backend
 <strong>Impact:</strong> Asset tertahan <code>status_asset = proses</code> tanpa jalan keluar di aplikasi.
 <strong>Current Handling:</strong> Tidak ada (perlu intervensi DB).
 <strong>Recommendation:</strong> Endpoint batal yang melepas reservasi.</p>
-<h3>RISK-003 — Duplikasi onboarding per karyawan</h3>
+<h3>RISK-003 — Duplikasi onboarding per karyawan (SUDAH DIPERBAIKI)</h3>
 <p><strong>Lokasi:</strong> <code>storeOnboardingKaryawan</code>, <code>updateOnboardingDraft</code>.
-<strong>Masalah:</strong> Aturan "satu onboarding aktif per karyawan" hanya di options.
-<strong>Impact:</strong> Dua transaksi aktif untuk karyawan sama.
-<strong>Recommendation:</strong> Validasi di model dalam transaksi.</p>
+<strong>Status:</strong> <code>assertKaryawanBelumPernahOnboarding</code> kini memvalidasi di model dalam transaksi (lihat BR-020). Catatan: aturannya lebih ketat daripada "satu aktif", yaitu satu onboarding per karyawan seumur hidup, sehingga karyawan yang pernah <code class="chip chip-done">dikonfirmasi</code> tidak bisa diberi onboarding kedua.</p>
 <h3>RISK-004 — Kapasitas penomoran 3 digit</h3>
 <p><strong>Lokasi:</strong> <code>nextSequence</code>/<code>ensureSequenceCapacity</code> (header &amp; item).
 <strong>Masalah:</strong> Maks 999 per company per bulan; item dipakai bersama semua onboarding + pengganti, dan edit draft menghabiskan sequence (delete+insert ID baru).
@@ -4459,7 +4464,7 @@ Backend
 <h3>RISK-007 — Status <code class="chip chip-bad">ditolak</code> tanpa implementasi</h3>
 <p>Lihat INC-01. Query list/options tetap memperhitungkannya.</p>
 <h3>RISK-008 — Audit item &amp; asset rusak tidak lengkap</h3>
-<p><strong>Lokasi:</strong> Tabel item (tanpa kolom update), konfirmasi item rusak (tanpa asset_log).
+<p><strong>Lokasi:</strong> Tabel item (tanpa kolom update), konfirmasi item rusak (tanpa asset_trx_log).
 <strong>Impact:</strong> Sulit menelusuri siapa/kapan item dinilai rusak (hanya <code>user_approval</code> terakhir).
 <strong>Recommendation:</strong> Tambah log/histori.</p>
 <h3>RISK-009 — Kode HTTP &amp; urutan cek akses tidak konsisten</h3>
@@ -4485,7 +4490,7 @@ Asset Data (terpakai, pemegang karyawan) ──► Asset Log (onboarding_karyawa
       ↓
 Modul lain yang bergantung:
   - Peminjaman &amp; Penambahan/Request: menolak asset yang aktif di onboarding
-  - Offboarding: menelusuri sumber asset karyawan (asset_log / onboarding dikonfirmasi) → jenis &quot;onboarding&quot;
+  - Offboarding: menelusuri sumber asset karyawan (asset_trx_log / onboarding dikonfirmasi) → jenis &quot;onboarding&quot;
   - Asset Saya: daftar asset &amp; banner onboarding
 </code></pre></div>
 <hr />
@@ -4661,7 +4666,7 @@ AssetKaryawan_m::konfirmasiOnboardingKaryawan
        ↓
 UPDATE asset_trx_onboarding_karyawan_item.status_item = 'normal'
 UPDATE asset_data: status_asset = 'terpakai', pemegang_asset = 'karyawan', id_pemegang_asset = 'KRY0001'
-INSERT asset_log (jenis_log = onboarding_karyawan, posisi gudang → karyawan)
+INSERT asset_trx_log (jenis_log = onboarding_karyawan, posisi gudang → karyawan)
        ↓
 Asset menjadi milik (dipegang) karyawan → tampil di Asset Saya (API-008 assets[])
 </code></pre></div>
@@ -4672,6 +4677,1168 @@ API: items[].kelengkapan
    ↓ AssetOnboardingKaryawanItem.kelengkapan
 UI: &quot;Kelengkapan&quot; pada Detail / Konfirmasi Asset Baru
 </code></pre></div>
+<h3>45.4 Walkthrough Lengkap dengan Contoh Data</h3>
+<p>Bagian ini mengikuti <strong>satu transaksi dari awal sampai selesai</strong>, langkah demi langkah: apa yang dilakukan pengguna di mobile, apa yang dikirim, apa yang diproses API, dan apa yang tersimpan di database. Semua data di bawah ini <strong>sintetis</strong>, tetapi format ID, nama kolom, urutan proses, dan pesan diambil dari kode (<code>AssetAdmin_m</code>, <code>AssetKaryawan_m</code>, <code>Asset_m</code>, <code>AssetNotification</code>).</p>
+<p><strong>Skenario:</strong> Admin Asset menyerahkan laptop dan mouse kepada karyawan baru. Karyawan menemukan laptop rusak, admin menggantinya, lalu karyawan menerima pengganti sehingga onboarding selesai.</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th style="text-align: center;">Langkah</th>
+<th>Pelaku</th>
+<th>Aksi</th>
+<th>Endpoint</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: center;">0</td>
+<td>Admin</td>
+<td>Membuka form tambah, mobile memuat opsi</td>
+<td>API-001 <code>GET /asset/onboarding-karyawan/options</code></td>
+</tr>
+<tr>
+<td style="text-align: center;">1</td>
+<td>Admin</td>
+<td><strong>Simpan Draft</strong> (1 asset)</td>
+<td>API-003 <code>POST /asset/onboarding-karyawan</code></td>
+</tr>
+<tr>
+<td style="text-align: center;">2</td>
+<td>Admin</td>
+<td>Lanjutkan draft, tambah mouse, <strong>Publish ke Karyawan</strong></td>
+<td>API-004 <code>PUT /asset/onboarding-karyawan/{id}</code></td>
+</tr>
+<tr>
+<td style="text-align: center;">3</td>
+<td>Karyawan</td>
+<td>Membuka notifikasi, melihat detail</td>
+<td>API-009 <code>GET /asset/karyawan/onboarding/{id}</code></td>
+</tr>
+<tr>
+<td style="text-align: center;">4</td>
+<td>Karyawan</td>
+<td>Laptop <strong>Rusak</strong>, mouse <strong>Normal</strong>, <strong>Konfirmasi Asset</strong></td>
+<td>API-010 <code>POST /asset/karyawan/onboarding/{id}/konfirmasi</code></td>
+</tr>
+<tr>
+<td style="text-align: center;">5</td>
+<td>Admin</td>
+<td>Membuka detail (status Isu Rusak)</td>
+<td>API-006 <code>GET /asset/onboarding-karyawan/{id}</code></td>
+</tr>
+<tr>
+<td style="text-align: center;">6</td>
+<td>Admin</td>
+<td><strong>Ganti Asset Yang Rusak</strong></td>
+<td>API-007 <code>POST /asset/onboarding-karyawan/{id}/ganti-asset</code></td>
+</tr>
+<tr>
+<td style="text-align: center;">7</td>
+<td>Karyawan</td>
+<td>Pengganti <strong>Normal</strong>, <strong>Konfirmasi Asset</strong></td>
+<td>API-010</td>
+</tr>
+</tbody>
+</table></div>
+<h4>Data awal (sebelum langkah 0)</h4>
+<p>Company <code>CMP001</code>. Tanggal kejadian 22 Oktober 2026, sehingga periode ID adalah <code>202610</code>. Belum ada onboarding, log, atau notifikasi pada periode ini.</p>
+<p><strong><code>data_karyawan</code></strong></p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>id_karyawan</th>
+<th>nik</th>
+<th>nama_lengkap</th>
+<th>Peran dalam skenario</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>KRY0099</td>
+<td>ADM-001</td>
+<td>Siti Admin</td>
+<td>Admin Asset yang membuat onboarding (aktor)</td>
+</tr>
+<tr>
+<td>KRY0100</td>
+<td>ADM-002</td>
+<td>Rudi Admin</td>
+<td>Admin Asset lain (ikut menerima notifikasi)</td>
+</tr>
+<tr>
+<td>KRY0001</td>
+<td>EMP-001</td>
+<td>Budi Contoh</td>
+<td>Karyawan penerima</td>
+</tr>
+</tbody>
+</table></div>
+<p>KRY0099 dan KRY0100 terdaftar di <code>asset_admin</code> untuk <code>CMP001</code>.</p>
+<p><strong><code>asset_data</code></strong></p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>id_asset_data</th>
+<th>kode_asset</th>
+<th>nama_asset</th>
+<th>deskripsi</th>
+<th>status_asset</th>
+<th>pemegang_asset</th>
+<th>id_pemegang_asset</th>
+<th>kondisi_awal</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>CMP00120260100001</td>
+<td>LPT-0001</td>
+<td>Laptop 14 inch</td>
+<td>Charger, tas</td>
+<td>tersedia</td>
+<td>gudang</td>
+<td><code>''</code></td>
+<td>normal</td>
+</tr>
+<tr>
+<td>CMP00120260100002</td>
+<td>MSE-0001</td>
+<td>Mouse Wireless</td>
+<td><code>''</code></td>
+<td>tersedia</td>
+<td>gudang</td>
+<td><code>''</code></td>
+<td>normal</td>
+</tr>
+<tr>
+<td>CMP00120260100003</td>
+<td>LPT-0002</td>
+<td>Laptop 14 inch</td>
+<td>Charger, tas</td>
+<td>tersedia</td>
+<td>gudang</td>
+<td><code>''</code></td>
+<td>normal</td>
+</tr>
+</tbody>
+</table></div>
+<p>Singkatan pada tabel berikutnya: <strong>A1</strong> = <code>…00001</code> (laptop pertama), <strong>A2</strong> = <code>…00002</code> (mouse), <strong>A3</strong> = <code>…00003</code> (laptop pengganti).</p>
+<hr />
+<h4>Langkah 0 — Admin membuka form, mobile memuat opsi</h4>
+<p><strong>Mobile</strong>
+- Route <code>/asset_admin_add_onboarding_karyawan</code> → <code>AssetOnboardingBloc</code> menerima <code>LoadAssetOnboardingOptions</code>.
+- <code>AssetOnboardingApi.getOptions()</code> memanggil API tanpa <code>exclude_onboarding_id</code> (form baru, bukan edit draft).</p>
+<p><strong>Dikirim</strong></p>
+<div class="code"><span class="code-lang">HTTP</span><pre><code class="language-http">GET /asset/onboarding-karyawan/options
+Authorization: Bearer &lt;access_token_admin&gt;
+</code></pre></div>
+<p><strong>Diproses API</strong>
+1. <code>JwtAuth</code> memvalidasi token, <code>ResolveContext</code> membentuk <code>ctx</code> (<code>id_karyawan = KRY0099</code>, <code>id_company = CMP001</code>).
+2. <code>accessError()</code> memastikan KRY0099 ada di <code>asset_admin</code>.
+3. <code>AssetAdmin_m::getOnboardingOptions</code>:
+   - karyawan aktif <strong>yang belum pernah punya baris onboarding apa pun</strong> (semua status, lihat BR-020) → KRY0001 lolos;
+   - asset <code>tersedia</code> di <code>gudang</code> dan tidak punya item <code>belum_dicek</code> pada onboarding <code>proses</code> → A1, A2, A3;
+   - kategori yang dipakai asset beserta parent-nya.</p>
+<p><strong>Database:</strong> hanya <code>SELECT</code>, tidak ada perubahan data.</p>
+<p><strong>Diterima mobile</strong> (ringkas, lengkap di API-001)</p>
+<div class="code"><span class="code-lang">JSON</span><pre><code class="language-json">{
+  &quot;code&quot;: &quot;SUCCESS&quot;,
+  &quot;message&quot;: &quot;Data opsi onboarding berhasil ditemukan.&quot;,
+  &quot;data&quot;: {
+    &quot;karyawan&quot;: [ { &quot;id_karyawan&quot;: &quot;KRY0001&quot;, &quot;nik&quot;: &quot;EMP-001&quot;, &quot;nama_karyawan&quot;: &quot;Budi Contoh&quot; } ],
+    &quot;kategori_asset&quot;: [
+      { &quot;id_asset_kategori_m&quot;: &quot;CMP001202601001&quot;, &quot;parent_id&quot;: &quot;&quot;, &quot;flag_parent&quot;: 1, &quot;nama_kategori&quot;: &quot;Elektronik&quot; },
+      { &quot;id_asset_kategori_m&quot;: &quot;CMP001202601002&quot;, &quot;parent_id&quot;: &quot;CMP001202601001&quot;, &quot;flag_parent&quot;: 0, &quot;nama_kategori&quot;: &quot;Laptop&quot; }
+    ],
+    &quot;assets&quot;: [
+      { &quot;id_asset_data&quot;: &quot;CMP00120260100001&quot;, &quot;kode_asset&quot;: &quot;LPT-0001&quot;, &quot;nama_asset&quot;: &quot;Laptop 14 inch&quot;,
+        &quot;id_asset_kategori_m&quot;: &quot;CMP001202601002&quot;, &quot;kategori_asset&quot;: &quot;Laptop&quot;, &quot;merek&quot;: &quot;MerekX&quot;,
+        &quot;deskripsi&quot;: &quot;Charger, tas&quot;, &quot;kondisi_awal&quot;: &quot;normal&quot; }
+    ]
+  }
+}
+</code></pre></div>
+<p>Mobile memetakan ke <code>AssetOnboardingEmployee</code>, <code>AssetOnboardingCategory</code>, <code>AssetOnboardingAsset</code>; hasilnya muncul di bottom sheet <strong>Pilih Karyawan</strong> dan pohon kategori <strong>Tambah Asset</strong>.</p>
+<hr />
+<h4>Langkah 1 — Admin menyimpan draft (1 asset)</h4>
+<p><strong>Mobile</strong>
+- Admin memilih Budi Contoh, menambah <strong>Laptop 14 inch (LPT-0001)</strong>, mengisi Catatan Tambahan, menekan <strong>Simpan Draft</strong>.
+- Bloc: <code>SubmitAssetOnboarding(isDraft: true)</code> → <code>AssetOnboardingApi.store(AssetOnboardingRequest)</code> → <code>request.toJson()</code>.</p>
+<p><strong>Dikirim</strong></p>
+<div class="code"><span class="code-lang">HTTP</span><pre><code class="language-http">POST /asset/onboarding-karyawan
+Authorization: Bearer &lt;access_token_admin&gt;
+Content-Type: application/json
+</code></pre></div>
+<div class="code"><span class="code-lang">JSON</span><pre><code class="language-json">{
+  &quot;id_karyawan&quot;: &quot;KRY0001&quot;,
+  &quot;asset_ids&quot;: [&quot;CMP00120260100001&quot;],
+  &quot;keterangan&quot;: &quot;Onboarding karyawan baru divisi IT&quot;,
+  &quot;is_draft&quot;: true
+}
+</code></pre></div>
+<p><strong>Diproses API</strong> (<code>AssetAdminOnboarding_c::storeOnboardingKaryawan</code> → <code>AssetAdmin_m::storeOnboardingKaryawan</code>, satu <code>DB::transaction</code>)
+1. Validasi request: <code>id_karyawan</code> wajib, <code>asset_ids</code> minimal 1 dan unik, <code>is_draft</code> boolean. <code>keterangan</code> boleh kosong karena draft.
+2. <code>accessError()</code>: pengguna harus admin asset.
+3. <code>lockCompany("CMP001")</code> → <code>SELECT … FOR UPDATE</code> pada <code>master_company</code>, transaksi asset company ini diserialkan.
+4. <code>getLockedAssets</code>: A1 harus <code>tersedia</code> + <code>gudang</code>; jumlah hasil harus sama dengan jumlah <code>asset_ids</code>.
+5. <code>hasActiveOnboardingAsset</code>: A1 tidak boleh ada di onboarding lain yang masih aktif.
+6. <code>findActiveKaryawan("KRY0001")</code> → ditemukan dan aktif.
+7. <code>assertKaryawanBelumPernahOnboarding</code>: belum ada baris onboarding untuk KRY0001 → lolos.
+8. <code>findAssetAdmin("KRY0099")</code> → <code>user_input = "ADM-001 - Siti Admin"</code>.
+9. <code>nextSequence</code> header: belum ada ID berawalan <code>CMP001202610</code> → urutan 1 → <code>id = CMP001202610001</code>, <code>no_trx = KRY01-202610001</code>.
+10. INSERT header (status <code>draft</code>), <code>nextSequence</code> item → 1, INSERT item per asset, UPDATE <code>asset_data</code> → <code>proses</code>.
+11. Karena <code>is_draft = true</code>, controller <strong>tidak</strong> mengirim notifikasi.</p>
+<p><strong>Hasil database</strong></p>
+<p><code>asset_trx_onboarding_karyawan</code></p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Kolom</th>
+<th>Nilai</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>id_asset_trx_onboarding_karyawan</td>
+<td>CMP001202610001</td>
+</tr>
+<tr>
+<td>no_trx</td>
+<td>KRY01-202610001</td>
+</tr>
+<tr>
+<td>tgl_onboarding</td>
+<td>2026-10-22</td>
+</tr>
+<tr>
+<td>keterangan</td>
+<td>Onboarding karyawan baru divisi IT</td>
+</tr>
+<tr>
+<td>ket_tolak</td>
+<td><code>''</code></td>
+</tr>
+<tr>
+<td>id_karyawan / nik_karyawan / nama_karyawan</td>
+<td>KRY0001 / EMP-001 / Budi Contoh</td>
+</tr>
+<tr>
+<td>status_approval</td>
+<td><strong>draft</strong></td>
+</tr>
+<tr>
+<td>user_approval / tgl_approval</td>
+<td><code>''</code> / NULL</td>
+</tr>
+<tr>
+<td>id_company</td>
+<td>CMP001</td>
+</tr>
+<tr>
+<td>tgl_input / user_input</td>
+<td>2026-10-22 09:00:00 / ADM-001 - Siti Admin</td>
+</tr>
+<tr>
+<td>tgl_update / user_update</td>
+<td>NULL / <code>''</code></td>
+</tr>
+</tbody>
+</table></div>
+<p><code>asset_trx_onboarding_karyawan_item</code></p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>id_asset_trx_onboarding_item</th>
+<th>parent_id</th>
+<th>id_asset_trx_onboarding</th>
+<th>id_asset_data</th>
+<th>nama_asset</th>
+<th>deskripsi_asset</th>
+<th>kategori_asset</th>
+<th>status_item</th>
+<th>ket_rusak</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>CMP001202610001</td>
+<td><code>''</code></td>
+<td>CMP001202610001</td>
+<td>A1</td>
+<td>Laptop 14 inch</td>
+<td>Charger, tas</td>
+<td>Laptop</td>
+<td>belum_dicek</td>
+<td><code>''</code></td>
+</tr>
+</tbody>
+</table></div>
+<p><code>asset_data</code>: A1 <code>status_asset</code> <strong>tersedia → proses</strong>, <code>tgl_update</code> = 09:00:00, <code>user_update</code> = ADM-001 - Siti Admin. A2 dan A3 tidak berubah.</p>
+<p><strong>Diterima mobile</strong> (HTTP 201)</p>
+<div class="code"><span class="code-lang">JSON</span><pre><code class="language-json">{
+  &quot;code&quot;: &quot;CREATED&quot;,
+  &quot;message&quot;: &quot;Draft onboarding asset berhasil disimpan.&quot;,
+  &quot;data&quot;: { &quot;id&quot;: &quot;CMP001202610001&quot;, &quot;no_trx&quot;: &quot;KRY01-202610001&quot;, &quot;status_approval&quot;: &quot;draft&quot; }
+}
+</code></pre></div>
+<p>Mobile menampilkan <code>message</code> sebagai snackbar dan kembali ke list; kartu draft muncul di tab <strong>Proses</strong> dengan badge <strong>Draft</strong>.</p>
+<hr />
+<h4>Langkah 2 — Admin melanjutkan draft, menambah mouse, lalu publish</h4>
+<p><strong>Mobile</strong>
+- Admin menekan <strong>Lanjutkan Draft</strong> → route <code>/asset_admin_add_onboarding_karyawan</code> dengan <code>draftId = CMP001202610001</code>.
+- Bloc: <code>LoadAssetOnboardingDraft(id)</code> memanggil <strong>dua</strong> endpoint: options dengan <code>?exclude_onboarding_id=CMP001202610001</code> (supaya A1 yang sedang <code>proses</code> milik draft ini tetap muncul), dan detail <code>GET /asset/onboarding-karyawan/CMP001202610001</code> untuk mengisi form.
+- Admin menambah <strong>Mouse Wireless</strong>, menekan <strong>Publish ke Karyawan</strong> → <code>UpdateAssetOnboardingDraft</code> → <code>AssetOnboardingApi.updateDraft(id, request)</code>.</p>
+<p><strong>Dikirim</strong></p>
+<div class="code"><span class="code-lang">HTTP</span><pre><code class="language-http">PUT /asset/onboarding-karyawan/CMP001202610001
+</code></pre></div>
+<div class="code"><span class="code-lang">JSON</span><pre><code class="language-json">{
+  &quot;id_karyawan&quot;: &quot;KRY0001&quot;,
+  &quot;asset_ids&quot;: [&quot;CMP00120260100001&quot;, &quot;CMP00120260100002&quot;],
+  &quot;keterangan&quot;: &quot;Onboarding karyawan baru divisi IT&quot;,
+  &quot;is_draft&quot;: false
+}
+</code></pre></div>
+<p><code>keterangan</code> kini wajib karena <code>is_draft = false</code>.</p>
+<p><strong>Diproses API</strong> (<code>AssetAdmin_m::updateOnboardingDraft</code>)
+1. Validasi dan cek admin seperti langkah 1; <code>lockCompany</code>.
+2. Header dikunci <code>FOR UPDATE</code>, harus berstatus <code>draft</code>.
+3. Asset lama (A1) yang masih <code>proses</code> dikembalikan ke <code>tersedia</code> (melepas reservasi).
+4. Validasi asset baru: A1 dan A2 <code>tersedia</code> + <code>gudang</code>, tidak aktif di onboarding lain (draft ini dikecualikan).
+5. Karyawan dicek aktif; <code>assertKaryawanBelumPernahOnboarding</code> dijalankan dengan pengecualian ID transaksi ini sendiri, sehingga draft tidak menolak dirinya.
+6. <code>nextSequence</code> item dihitung <strong>sebelum</strong> item lama dihapus: ID terakhir <code>…001</code> → mulai dari <strong>2</strong>. Karena itu item tidak memakai ulang <code>…001</code>.
+7. DELETE semua item lama, INSERT item baru.
+8. UPDATE header: <code>tgl_onboarding</code> hari ini, <code>keterangan</code>, data karyawan, <code>status_approval = proses</code>, <code>user_approval = ''</code>, <code>tgl_approval = NULL</code>, <code>tgl_update</code>, <code>user_update</code>.
+9. UPDATE <code>asset_data</code> A1 dan A2 → <code>proses</code>.
+10. Commit. Controller memanggil <code>AssetNotification::send('onboarding.dikirim', 'CMP001', 'CMP001202610001')</code>.</p>
+<p><strong>Notifikasi</strong> (<code>AssetNotification::send</code>, dijalankan setelah commit)
+- Penerima: karyawan pemilik transaksi (KRY0001).
+- INSERT <code>notif_data</code>, lalu push FCM bila <code>users.token_fcm</code> terisi.</p>
+<p><strong>Hasil database</strong></p>
+<p>Header <code>asset_trx_onboarding_karyawan</code> (kolom yang berubah)</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Kolom</th>
+<th>Sebelum</th>
+<th>Sesudah</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>status_approval</td>
+<td>draft</td>
+<td><strong>proses</strong></td>
+</tr>
+<tr>
+<td>tgl_approval</td>
+<td>NULL</td>
+<td>NULL (tetap, menandai belum pernah dicek)</td>
+</tr>
+<tr>
+<td>tgl_update</td>
+<td>NULL</td>
+<td>2026-10-22 09:10:00</td>
+</tr>
+<tr>
+<td>user_update</td>
+<td><code>''</code></td>
+<td>ADM-001 - Siti Admin</td>
+</tr>
+</tbody>
+</table></div>
+<p>Item: baris <code>CMP001202610001</code> <strong>dihapus</strong>, diganti dua baris baru:</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>id_asset_trx_onboarding_item</th>
+<th>parent_id</th>
+<th>id_asset_data</th>
+<th>nama_asset</th>
+<th>deskripsi_asset</th>
+<th>status_item</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>CMP001202610002</td>
+<td><code>''</code></td>
+<td>A1</td>
+<td>Laptop 14 inch</td>
+<td>Charger, tas</td>
+<td>belum_dicek</td>
+</tr>
+<tr>
+<td>CMP001202610003</td>
+<td><code>''</code></td>
+<td>A2</td>
+<td>Mouse Wireless</td>
+<td><code>''</code></td>
+<td>belum_dicek</td>
+</tr>
+</tbody>
+</table></div>
+<p>(Urutan penomoran mengikuti urutan hasil query asset, yang tidak memakai <code>ORDER BY</code>; penomoran bisa tertukar.)</p>
+<p><code>asset_data</code>: A1 <code>tersedia → proses</code> lalu tetap <code>proses</code>; A2 <code>tersedia → proses</code>.</p>
+<p><code>notif_data</code> (1 baris)</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Kolom</th>
+<th>Nilai</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>id_notif</td>
+<td>CMP00120261000001</td>
+</tr>
+<tr>
+<td>id_karyawan</td>
+<td>KRY0001</td>
+</tr>
+<tr>
+<td>jenis</td>
+<td>asset</td>
+</tr>
+<tr>
+<td>id_ref</td>
+<td>CMP001202610001</td>
+</tr>
+<tr>
+<td>rute</td>
+<td>asset_konfirmasi_onboarding</td>
+</tr>
+<tr>
+<td>ket_notif / ket_notif_id</td>
+<td>Anda menerima onboarding asset KRY01-202610001.</td>
+</tr>
+<tr>
+<td>ket_notif_en</td>
+<td>You received asset onboarding KRY01-202610001.</td>
+</tr>
+<tr>
+<td>flag_baca</td>
+<td>0</td>
+</tr>
+<tr>
+<td>id_company</td>
+<td>CMP001</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>Diterima mobile</strong> (HTTP 200)</p>
+<div class="code"><span class="code-lang">JSON</span><pre><code class="language-json">{
+  &quot;code&quot;: &quot;UPDATED&quot;,
+  &quot;message&quot;: &quot;Onboarding asset berhasil dipublish ke karyawan.&quot;,
+  &quot;data&quot;: { &quot;id&quot;: &quot;CMP001202610001&quot;, &quot;no_trx&quot;: &quot;KRY01-202610001&quot;, &quot;status_approval&quot;: &quot;proses&quot; }
+}
+</code></pre></div>
+<p>Kartu pindah dari <strong>Draft</strong> ke <strong>Menunggu Diterima</strong> di list admin.</p>
+<hr />
+<h4>Langkah 3 — Karyawan membuka notifikasi dan melihat detail</h4>
+<p><strong>Mobile</strong>
+- Push FCM dengan route <code>/asset_konfirmasi_onboarding</code> dan <code>id_ref = CMP001202610001</code> (atau banner <strong>On Boarding Asset</strong> di Asset Saya, API-008).
+- <code>AssetKonfirmasiOnboardingBloc</code> menerima <code>LoadAssetKonfirmasiOnboarding(id)</code> → <code>AssetSayaApi.getOnboardingDetail(id)</code>.</p>
+<p><strong>Dikirim</strong></p>
+<div class="code"><span class="code-lang">HTTP</span><pre><code class="language-http">GET /asset/karyawan/onboarding/CMP001202610001
+Authorization: Bearer &lt;access_token_budi&gt;
+</code></pre></div>
+<p><strong>Diproses API</strong> (<code>AssetKaryawan_m::getDetailOnboardingSaya</code>)
+1. <code>ctx.id_karyawan = KRY0001</code>.
+2. Header dicari dengan <code>id_karyawan = KRY0001</code> <strong>dan</strong> bukan draft; transaksi milik orang lain atau draft menghasilkan 404.
+3. Item dibaca. <code>perlu_dicek</code> dihitung oleh <code>pendingItemIds</code>: karena <code>tgl_approval</code> masih NULL, <strong>semua item aktif</strong> perlu dicek.</p>
+<p><strong>Database:</strong> hanya <code>SELECT</code>.</p>
+<p><strong>Diterima mobile</strong> (<code>data</code>, ringkas)</p>
+<div class="code"><span class="code-lang">JSON</span><pre><code class="language-json">{
+  &quot;id&quot;: &quot;CMP001202610001&quot;,
+  &quot;no_trx&quot;: &quot;KRY01-202610001&quot;,
+  &quot;tgl_onboarding&quot;: &quot;2026-10-22&quot;,
+  &quot;keterangan&quot;: &quot;Onboarding karyawan baru divisi IT&quot;,
+  &quot;status_approval&quot;: &quot;proses&quot;,
+  &quot;status_label&quot;: &quot;Menunggu Diterima&quot;,
+  &quot;tab&quot;: &quot;proses&quot;,
+  &quot;isu_rusak&quot;: false,
+  &quot;karyawan&quot;: { &quot;nik&quot;: &quot;EMP-001&quot;, &quot;nama_karyawan&quot;: &quot;Budi Contoh&quot;, &quot;cabang&quot;: &quot;Kantor Pusat&quot;, &quot;divisi&quot;: &quot;IT&quot; },
+  &quot;items&quot;: [
+    { &quot;id_item&quot;: &quot;CMP001202610002&quot;, &quot;parent_id&quot;: &quot;&quot;, &quot;id_asset_data&quot;: &quot;CMP00120260100001&quot;, &quot;kode_asset&quot;: &quot;LPT-0001&quot;,
+      &quot;nama_asset&quot;: &quot;Laptop 14 inch&quot;, &quot;kategori_asset&quot;: &quot;Laptop&quot;, &quot;kelengkapan&quot;: &quot;Charger, tas&quot;,
+      &quot;status_item&quot;: &quot;belum_dicek&quot;, &quot;ket_rusak&quot;: &quot;&quot;, &quot;perlu_dicek&quot;: true, &quot;diganti&quot;: false },
+    { &quot;id_item&quot;: &quot;CMP001202610003&quot;, &quot;parent_id&quot;: &quot;&quot;, &quot;id_asset_data&quot;: &quot;CMP00120260100002&quot;, &quot;kode_asset&quot;: &quot;MSE-0001&quot;,
+      &quot;nama_asset&quot;: &quot;Mouse Wireless&quot;, &quot;kategori_asset&quot;: &quot;Aksesoris&quot;, &quot;kelengkapan&quot;: &quot;&quot;,
+      &quot;status_item&quot;: &quot;belum_dicek&quot;, &quot;ket_rusak&quot;: &quot;&quot;, &quot;perlu_dicek&quot;: true, &quot;diganti&quot;: false }
+  ]
+}
+</code></pre></div>
+<p>Layar <strong>Konfirmasi Asset Baru</strong> menampilkan kedua item dengan pilihan <strong>Normal / Rusak</strong> karena <code>perlu_dicek = true</code>.</p>
+<hr />
+<h4>Langkah 4 — Karyawan mengonfirmasi: laptop rusak, mouse normal</h4>
+<p><strong>Mobile</strong>
+- Karyawan memilih <strong>Rusak</strong> pada laptop dan mengetik "Ada garis pada layar" (maks 255 karakter), memilih <strong>Normal</strong> pada mouse.
+- Validasi mobile: semua item <code>perlu_dicek</code> harus dinilai, alasan wajib bila Rusak.
+- <code>SubmitAssetKonfirmasiOnboarding</code> → <code>AssetSayaApi.konfirmasiOnboarding(id, AssetKonfirmasiOnboardingRequest)</code>. <code>ket_rusak</code> hanya dikirim untuk item rusak.</p>
+<p><strong>Dikirim</strong></p>
+<div class="code"><span class="code-lang">HTTP</span><pre><code class="language-http">POST /asset/karyawan/onboarding/CMP001202610001/konfirmasi
+</code></pre></div>
+<div class="code"><span class="code-lang">JSON</span><pre><code class="language-json">{
+  &quot;items&quot;: [
+    { &quot;id_item&quot;: &quot;CMP001202610002&quot;, &quot;status_item&quot;: &quot;rusak&quot;, &quot;ket_rusak&quot;: &quot;Ada garis pada layar&quot; },
+    { &quot;id_item&quot;: &quot;CMP001202610003&quot;, &quot;status_item&quot;: &quot;normal&quot; }
+  ]
+}
+</code></pre></div>
+<p><strong>Diproses API</strong> (<code>AssetKaryawanOnboarding_c::konfirmasiOnboardingSaya</code> → <code>AssetKaryawan_m::konfirmasiOnboardingKaryawan</code>, satu transaksi)
+1. Validasi: <code>items</code> wajib; <code>id_item</code> unik; <code>status_item</code> hanya <code>normal</code> atau <code>rusak</code>; <code>ket_rusak</code> wajib bila rusak.
+2. <code>lockCompany</code>; header diambil dengan <code>id_karyawan = KRY0001</code> + <code>FOR UPDATE</code>, harus berstatus <code>proses</code>.
+3. Karyawan harus aktif.
+4. Item yang perlu dinilai (<code>pendingItemIds</code>, <code>tgl_approval</code> NULL → semua item aktif): <code>…002</code> dan <code>…003</code>. Jumlah dan ID item yang dikirim harus sama persis ("Seluruh asset pada onboarding wajib dicek.").
+5. Item rusak tanpa alasan ditolak ("Alasan kerusakan wajib diisi.").
+6. UPDATE tiap item: <code>status_item</code>, <code>ket_rusak</code> (kosong untuk normal).
+7. Item rusak: UPDATE <code>asset_data</code> (hanya bila masih <code>proses</code> dan <code>gudang</code>) → <code>status_asset = rusak</code>, <code>id_pemegang_asset = ''</code>, <code>ket_rusak</code> = alasan. Asset tetap di gudang.
+8. Status header dihitung dari <strong>semua item aktif</strong> (item yang sudah diganti tidak dihitung). Laptop <code>rusak</code> → <code>semuaNormal = false</code> → status tetap <strong>proses</strong>.
+9. UPDATE header: <code>user_approval</code>, <code>tgl_approval = now</code> (mulai sekarang dianggap "sudah pernah dicek"), <code>tgl_update</code>, <code>user_update</code>.
+10. Item normal (mouse): <code>asset_data</code> dikunci, harus <code>proses</code> + <code>gudang</code> → <code>terpakai</code>, pemegang <code>karyawan</code>, <code>id_pemegang_asset = KRY0001</code>, <code>id_asset_lokasi_m = NULL</code>. INSERT <code>asset_trx_log</code> per asset normal.
+11. Commit, lalu <code>AssetNotification::send('onboarding.rusak', …)</code> ke seluruh admin asset di company (semua baris <code>asset_admin</code>).</p>
+<p><strong>Hasil database</strong></p>
+<p>Item (kolom yang berubah)</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>id_asset_trx_onboarding_item</th>
+<th>status_item</th>
+<th>ket_rusak</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>CMP001202610002 (laptop A1)</td>
+<td>belum_dicek → <strong>rusak</strong></td>
+<td>Ada garis pada layar</td>
+</tr>
+<tr>
+<td>CMP001202610003 (mouse A2)</td>
+<td>belum_dicek → <strong>normal</strong></td>
+<td><code>''</code></td>
+</tr>
+</tbody>
+</table></div>
+<p>Tabel item tidak punya <code>tgl_update</code>/<code>user_update</code>, jadi pelaku perubahan hanya terbaca dari header.</p>
+<p>Header</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Kolom</th>
+<th>Sebelum</th>
+<th>Sesudah</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>status_approval</td>
+<td>proses</td>
+<td>proses (masih ada item rusak)</td>
+</tr>
+<tr>
+<td>user_approval</td>
+<td><code>''</code></td>
+<td>EMP-001 - Budi Contoh</td>
+</tr>
+<tr>
+<td>tgl_approval</td>
+<td>NULL</td>
+<td>2026-10-22 10:00:00</td>
+</tr>
+<tr>
+<td>tgl_update / user_update</td>
+<td>09:10:00 / ADM-001 - Siti Admin</td>
+<td>10:00:00 / EMP-001 - Budi Contoh</td>
+</tr>
+</tbody>
+</table></div>
+<p><code>asset_data</code></p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Asset</th>
+<th>Kolom</th>
+<th>Sebelum</th>
+<th>Sesudah</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>A1 (laptop)</td>
+<td>status_asset</td>
+<td>proses</td>
+<td><strong>rusak</strong></td>
+</tr>
+<tr>
+<td>A1</td>
+<td>pemegang_asset / id_pemegang_asset</td>
+<td>gudang / <code>''</code></td>
+<td>gudang / <code>''</code> (tidak berubah)</td>
+</tr>
+<tr>
+<td>A1</td>
+<td>ket_rusak</td>
+<td><code>''</code></td>
+<td>Ada garis pada layar</td>
+</tr>
+<tr>
+<td>A2 (mouse)</td>
+<td>status_asset</td>
+<td>proses</td>
+<td><strong>terpakai</strong></td>
+</tr>
+<tr>
+<td>A2</td>
+<td>pemegang_asset</td>
+<td>gudang</td>
+<td><strong>karyawan</strong></td>
+</tr>
+<tr>
+<td>A2</td>
+<td>id_pemegang_asset</td>
+<td><code>''</code></td>
+<td><strong>KRY0001</strong></td>
+</tr>
+<tr>
+<td>A2</td>
+<td>id_asset_lokasi_m</td>
+<td>(nilai sebelumnya)</td>
+<td>NULL</td>
+</tr>
+</tbody>
+</table></div>
+<p><code>asset_trx_log</code> (1 baris, hanya untuk mouse; laptop rusak tidak masuk log)</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Kolom</th>
+<th>Nilai</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>id_asset_trx_log</td>
+<td>CMP00120261000001 (<code>id_company + YYYYMM + 5 digit</code>)</td>
+</tr>
+<tr>
+<td>id_asset_data</td>
+<td>CMP00120260100002</td>
+</tr>
+<tr>
+<td>jenis_log</td>
+<td>onboarding_karyawan</td>
+</tr>
+<tr>
+<td>id_transaksi</td>
+<td>CMP001202610001</td>
+</tr>
+<tr>
+<td>nama_tabel_transaksi</td>
+<td>asset_trx_onboarding_karyawan</td>
+</tr>
+<tr>
+<td>kondisi_awal / kondisi_akhir</td>
+<td>normal / normal</td>
+</tr>
+<tr>
+<td>posisi_awal / posisi_akhir</td>
+<td>gudang / karyawan</td>
+</tr>
+<tr>
+<td>pemegang_asset</td>
+<td>karyawan</td>
+</tr>
+<tr>
+<td>id_pemegang / nama_pemegang</td>
+<td>KRY0001 / Budi Contoh</td>
+</tr>
+<tr>
+<td>id_company</td>
+<td>CMP001</td>
+</tr>
+<tr>
+<td>tgl_input / user_input</td>
+<td>2026-10-22 10:00:00 / EMP-001 - Budi Contoh</td>
+</tr>
+</tbody>
+</table></div>
+<p><code>notif_data</code> (2 baris, satu per admin; urutan <code>id_notif</code> lanjutan dari notifikasi sebelumnya)</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>id_notif</th>
+<th>id_karyawan</th>
+<th>id_ref</th>
+<th>rute</th>
+<th>ket_notif_id</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>CMP00120261000002</td>
+<td>KRY0099</td>
+<td>CMP001202610001</td>
+<td>asset_admin_detail_onboarding</td>
+<td>Budi Contoh melaporkan asset rusak pada onboarding KRY01-202610001.</td>
+</tr>
+<tr>
+<td>CMP00120261000003</td>
+<td>KRY0100</td>
+<td>CMP001202610001</td>
+<td>asset_admin_detail_onboarding</td>
+<td>Budi Contoh melaporkan asset rusak pada onboarding KRY01-202610001.</td>
+</tr>
+</tbody>
+</table></div>
+<p><code>jenis = asset</code>, <code>flag_baca = 0</code>, <code>id_company = CMP001</code>. Bahasa Inggris tersimpan di <code>ket_notif_en</code>.</p>
+<p><strong>Diterima mobile</strong> (HTTP 200)</p>
+<div class="code"><span class="code-lang">JSON</span><pre><code class="language-json">{
+  &quot;code&quot;: &quot;UPDATED&quot;,
+  &quot;message&quot;: &quot;Laporan kerusakan asset berhasil dikirim ke admin.&quot;,
+  &quot;data&quot;: {
+    &quot;id&quot;: &quot;CMP001202610001&quot;,
+    &quot;no_trx&quot;: &quot;KRY01-202610001&quot;,
+    &quot;status_approval&quot;: &quot;proses&quot;,
+    &quot;status_label&quot;: &quot;Isu Rusak&quot;,
+    &quot;tab&quot;: &quot;dikonfirmasi&quot;
+  }
+}
+</code></pre></div>
+<p>Mobile menampilkan snackbar dan kembali. Banner onboarding hilang dari Asset Saya (tidak ada lagi item <code>perlu_dicek</code>), dan <strong>mouse sudah muncul</strong> di daftar asset karyawan.</p>
+<hr />
+<h4>Langkah 5 — Admin melihat detail dengan status Isu Rusak</h4>
+<p><strong>Mobile:</strong> notifikasi membuka <code>/asset_admin_detail_onboarding</code>; <code>AssetOnboardingDetailBloc</code> menerima <code>LoadAssetOnboardingDetail(id)</code> → <code>GET /asset/onboarding-karyawan/CMP001202610001</code>.</p>
+<p><strong>Diproses API:</strong> <code>AssetAdmin_m::getDetailOnboardingKaryawan</code> → <code>SELECT</code> header, karyawan (cabang/divisi dari master), item. <code>isu_rusak</code> bernilai true bila ada item aktif <code>rusak</code> yang belum diganti.</p>
+<p><strong>Diterima mobile</strong> (ringkas; field header seperti API-006)</p>
+<div class="code"><span class="code-lang">JSON</span><pre><code class="language-json">{
+  &quot;status_approval&quot;: &quot;proses&quot;, &quot;status_label&quot;: &quot;Isu Rusak&quot;, &quot;tab&quot;: &quot;dikonfirmasi&quot;, &quot;isu_rusak&quot;: true,
+  &quot;items&quot;: [
+    { &quot;id_item&quot;: &quot;CMP001202610002&quot;, &quot;status_item&quot;: &quot;rusak&quot;, &quot;ket_rusak&quot;: &quot;Ada garis pada layar&quot;, &quot;perlu_dicek&quot;: false, &quot;diganti&quot;: false },
+    { &quot;id_item&quot;: &quot;CMP001202610003&quot;, &quot;status_item&quot;: &quot;normal&quot;, &quot;ket_rusak&quot;: &quot;&quot;, &quot;perlu_dicek&quot;: false, &quot;diganti&quot;: false }
+  ]
+}
+</code></pre></div>
+<p>Karena <code>isu_rusak = true</code>, tombol bawah berubah menjadi <strong>Ganti Asset Yang Rusak</strong>.</p>
+<hr />
+<h4>Langkah 6 — Admin mengganti asset yang rusak</h4>
+<p><strong>Mobile</strong>
+- Tombol membuka <code>/asset_admin_ganti_rusak</code> dengan argumen <code>AssetOnboardingKaryawanDetail</code>; <code>AssetGantiRusakBloc</code> menerima <code>LoadAssetPenggantiOptions</code> (memanggil options API-001 lagi).
+- Admin menekan <strong>Ganti Asset</strong> pada laptop rusak dan memilih LPT-0002. Event <code>PilihAssetPengganti</code>. <code>kelengkapan</code> otomatis diisi dari <code>deskripsi</code> asset ("Charger, tas") dan tidak dapat diedit.
+- <strong>Submit ke Karyawan</strong> → <code>SubmitAssetGantiRusak</code> → <code>AssetOnboardingApi.gantiAsset(id, AssetGantiAssetRequest)</code>.</p>
+<p><strong>Dikirim</strong></p>
+<div class="code"><span class="code-lang">HTTP</span><pre><code class="language-http">POST /asset/onboarding-karyawan/CMP001202610001/ganti-asset
+</code></pre></div>
+<div class="code"><span class="code-lang">JSON</span><pre><code class="language-json">{
+  &quot;items&quot;: [
+    { &quot;id_item&quot;: &quot;CMP001202610002&quot;, &quot;id_asset_data&quot;: &quot;CMP00120260100003&quot;, &quot;kelengkapan&quot;: &quot;Charger, tas&quot; }
+  ]
+}
+</code></pre></div>
+<p><strong>Diproses API</strong> (<code>AssetAdmin_m::gantiAssetRusakOnboarding</code>)
+1. Validasi: <code>items</code> minimal 1; <code>id_item</code> dan <code>id_asset_data</code> unik; <code>kelengkapan</code> wajib (maks 255). Cek admin dan <code>lockCompany</code>.
+2. Header dikunci. Syarat penggantian: status <code>proses</code>, <code>tgl_approval</code> terisi, dan <strong>tidak ada item yang masih menunggu dicek</strong>. Bila tidak: "Asset rusak hanya dapat diganti setelah karyawan selesai mengecek asset."
+3. Item rusak yang dikirim (<code>…002</code>) harus berstatus <code>rusak</code> dan belum punya pengganti (<code>NOT EXISTS</code> item dengan <code>parent_id</code> = item itu).
+4. A3 harus <code>tersedia</code> + <code>gudang</code> dan tidak aktif di onboarding lain.
+5. <code>nextSequence</code> item → ID terakhir <code>…003</code> → <strong><code>…004</code></strong>. INSERT item pengganti dengan <code>parent_id = CMP001202610002</code> dan <code>deskripsi_asset</code> = <code>kelengkapan</code> yang dikirim.
+6. UPDATE <code>asset_data</code> A3 → <code>proses</code>. UPDATE header <code>status_approval = proses</code>, <code>tgl_update</code>, <code>user_update</code> (<code>tgl_approval</code> <strong>tidak</strong> di-reset).
+7. Commit, notifikasi <code>onboarding.pengganti</code> ke karyawan.</p>
+<p><strong>Hasil database</strong></p>
+<p>Item baru</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>id_asset_trx_onboarding_item</th>
+<th>parent_id</th>
+<th>id_asset_data</th>
+<th>nama_asset</th>
+<th>deskripsi_asset</th>
+<th>kategori_asset</th>
+<th>status_item</th>
+<th>user_input</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>CMP001202610004</td>
+<td><strong>CMP001202610002</strong></td>
+<td>A3</td>
+<td>Laptop 14 inch</td>
+<td>Charger, tas</td>
+<td>Laptop</td>
+<td>belum_dicek</td>
+<td>ADM-001 - Siti Admin</td>
+</tr>
+</tbody>
+</table></div>
+<p>Item <code>…002</code> (laptop rusak) <strong>tidak diubah</strong>: tetap <code>rusak</code>, dan kini dianggap sudah diganti karena ada anak dengan <code>parent_id</code> miliknya.</p>
+<p><code>asset_data</code>: A3 <code>tersedia → proses</code>. A1 tetap <code>rusak</code> di gudang.</p>
+<p>Header: <code>status_approval</code> tetap <code>proses</code>, <code>tgl_update</code> = 2026-10-22 11:00:00, <code>user_update</code> = ADM-001 - Siti Admin.</p>
+<p><code>notif_data</code> (1 baris): <code>id_notif = CMP00120261000004</code>, <code>id_karyawan = KRY0001</code>, <code>rute = asset_konfirmasi_onboarding</code>, <code>ket_notif_id</code> = "Asset pengganti onboarding KRY01-202610001 siap dicek."</p>
+<p><strong>Diterima mobile</strong> (HTTP 200)</p>
+<div class="code"><span class="code-lang">JSON</span><pre><code class="language-json">{
+  &quot;code&quot;: &quot;UPDATED&quot;,
+  &quot;message&quot;: &quot;Asset pengganti berhasil dikirim ke karyawan.&quot;,
+  &quot;data&quot;: { &quot;id&quot;: &quot;CMP001202610001&quot;, &quot;id_karyawan&quot;: &quot;KRY0001&quot;, &quot;no_trx&quot;: &quot;KRY01-202610001&quot;,
+            &quot;status_approval&quot;: &quot;proses&quot;, &quot;jumlah_pengganti&quot;: 1 }
+}
+</code></pre></div>
+<hr />
+<h4>Langkah 7 — Karyawan mengonfirmasi asset pengganti</h4>
+<p><strong>Mobile:</strong> push "Asset Pengganti" membuka <code>/asset_konfirmasi_onboarding</code>. Detail (API-009) kini berisi:</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>id_item</th>
+<th>parent_id</th>
+<th>status_item</th>
+<th style="text-align: center;">perlu_dicek</th>
+<th style="text-align: center;">diganti</th>
+<th>Tampil di layar</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>CMP001202610002</td>
+<td><code>''</code></td>
+<td>rusak</td>
+<td style="text-align: center;">false</td>
+<td style="text-align: center;">true</td>
+<td>Read-only, dengan Report Kerusakan</td>
+</tr>
+<tr>
+<td>CMP001202610003</td>
+<td><code>''</code></td>
+<td>normal</td>
+<td style="text-align: center;">false</td>
+<td style="text-align: center;">false</td>
+<td>Read-only</td>
+</tr>
+<tr>
+<td>CMP001202610004</td>
+<td>CMP001202610002</td>
+<td>belum_dicek</td>
+<td style="text-align: center;"><strong>true</strong></td>
+<td style="text-align: center;">false</td>
+<td>Bersarang sebagai Asset Pengganti, pilihan Normal/Rusak aktif</td>
+</tr>
+</tbody>
+</table></div>
+<p>Karyawan memilih <strong>Normal</strong> pada pengganti lalu <strong>Konfirmasi Asset</strong>.</p>
+<p><strong>Dikirim</strong></p>
+<div class="code"><span class="code-lang">HTTP</span><pre><code class="language-http">POST /asset/karyawan/onboarding/CMP001202610001/konfirmasi
+</code></pre></div>
+<div class="code"><span class="code-lang">JSON</span><pre><code class="language-json">{ &quot;items&quot;: [ { &quot;id_item&quot;: &quot;CMP001202610004&quot;, &quot;status_item&quot;: &quot;normal&quot; } ] }
+</code></pre></div>
+<p>Hanya item yang <code>perlu_dicek</code> yang dikirim; item lain tidak boleh disertakan karena jumlah dan ID harus sama persis.</p>
+<p><strong>Diproses API</strong> (<code>konfirmasiOnboardingKaryawan</code>, ronde kedua)
+1. Header <code>proses</code>, <code>tgl_approval</code> sudah terisi → <code>pendingItemIds</code> hanya mengembalikan item aktif berstatus <code>belum_dicek</code> = <code>…004</code>.
+2. UPDATE item <code>…004</code> → <code>normal</code>.
+3. Item aktif = semua item yang <strong>belum diganti</strong>: <code>…003</code> (normal) dan <code>…004</code> (normal). Laptop lama <code>…002</code> dikeluarkan karena sudah punya pengganti. <code>semuaNormal = true</code> → status header <strong>dikonfirmasi</strong>.
+4. UPDATE header: <code>status_approval = dikonfirmasi</code>, <code>user_approval</code>, <code>tgl_approval = now</code>, <code>tgl_update</code>, <code>user_update</code>.
+5. Hanya item yang dicek pada ronde ini yang diserahkan: A3 → <code>terpakai</code>, <code>karyawan</code>, <code>KRY0001</code>, <code>id_asset_lokasi_m = NULL</code>. Mouse tidak disentuh lagi.
+6. INSERT <code>asset_trx_log</code> untuk A3.
+7. Commit, notifikasi <code>onboarding.dikonfirmasi</code> ke seluruh admin asset.</p>
+<p><strong>Hasil database</strong></p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Tabel</th>
+<th>Perubahan</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>item <code>…004</code></td>
+<td>status_item <code>belum_dicek → normal</code></td>
+</tr>
+<tr>
+<td>header</td>
+<td>status_approval <code>proses → dikonfirmasi</code>; tgl_approval = 2026-10-22 13:00:00; user_approval/user_update = EMP-001 - Budi Contoh</td>
+</tr>
+<tr>
+<td>asset_data A3</td>
+<td>status_asset <code>proses → terpakai</code>; pemegang_asset <code>gudang → karyawan</code>; id_pemegang_asset <code>'' → KRY0001</code>; id_asset_lokasi_m → NULL</td>
+</tr>
+<tr>
+<td>asset_trx_log</td>
+<td>+ <code>CMP00120261000002</code>: A3 <code>CMP00120260100003</code>, jenis_log <code>onboarding_karyawan</code>, id_transaksi <code>CMP001202610001</code>, posisi gudang → karyawan, kondisi normal → normal, id_pemegang KRY0001, nama_pemegang Budi Contoh, user_input EMP-001 - Budi Contoh</td>
+</tr>
+<tr>
+<td>notif_data</td>
+<td>+ <code>CMP00120261000005</code> (KRY0099) dan <code>CMP00120261000006</code> (KRY0100): "Onboarding asset KRY01-202610001 telah dikonfirmasi oleh Budi Contoh.", rute <code>asset_admin_detail_onboarding</code></td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>Diterima mobile</strong> (HTTP 200)</p>
+<div class="code"><span class="code-lang">JSON</span><pre><code class="language-json">{
+  &quot;code&quot;: &quot;UPDATED&quot;,
+  &quot;message&quot;: &quot;Asset berhasil dikonfirmasi.&quot;,
+  &quot;data&quot;: { &quot;id&quot;: &quot;CMP001202610001&quot;, &quot;no_trx&quot;: &quot;KRY01-202610001&quot;,
+            &quot;status_approval&quot;: &quot;dikonfirmasi&quot;, &quot;status_label&quot;: &quot;Selesai&quot;, &quot;tab&quot;: &quot;selesai&quot; }
+}
+</code></pre></div>
+<p>Transaksi pindah ke tab <strong>Selesai</strong> di list admin, dan stepper alur mencapai langkah terakhir.</p>
+<hr />
+<h4>Kondisi akhir seluruh data</h4>
+<p><code>asset_trx_onboarding_karyawan</code></p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>id</th>
+<th>no_trx</th>
+<th>status_approval</th>
+<th>user_approval</th>
+<th>tgl_approval</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>CMP001202610001</td>
+<td>KRY01-202610001</td>
+<td><strong>dikonfirmasi</strong></td>
+<td>EMP-001 - Budi Contoh</td>
+<td>2026-10-22 13:00:00</td>
+</tr>
+</tbody>
+</table></div>
+<p><code>asset_trx_onboarding_karyawan_item</code></p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>id</th>
+<th>parent_id</th>
+<th>asset</th>
+<th>status_item</th>
+<th>ket_rusak</th>
+<th>Peran</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>CMP001202610002</td>
+<td><code>''</code></td>
+<td>A1 laptop</td>
+<td>rusak</td>
+<td>Ada garis pada layar</td>
+<td>Item awal, sudah diganti</td>
+</tr>
+<tr>
+<td>CMP001202610003</td>
+<td><code>''</code></td>
+<td>A2 mouse</td>
+<td>normal</td>
+<td><code>''</code></td>
+<td>Item awal, diterima</td>
+</tr>
+<tr>
+<td>CMP001202610004</td>
+<td>CMP001202610002</td>
+<td>A3 laptop</td>
+<td>normal</td>
+<td><code>''</code></td>
+<td>Pengganti <code>…002</code>, diterima</td>
+</tr>
+</tbody>
+</table></div>
+<p>(<code>CMP001202610001</code> pernah ada pada langkah 1, dihapus pada langkah 2, dan <strong>tidak dipakai ulang</strong>.)</p>
+<p><code>asset_data</code></p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Asset</th>
+<th>status_asset</th>
+<th>pemegang_asset</th>
+<th>id_pemegang_asset</th>
+<th>ket_rusak</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>A1 LPT-0001</td>
+<td>rusak</td>
+<td>gudang</td>
+<td><code>''</code></td>
+<td>Ada garis pada layar</td>
+</tr>
+<tr>
+<td>A2 MSE-0001</td>
+<td>terpakai</td>
+<td>karyawan</td>
+<td>KRY0001</td>
+<td><code>''</code></td>
+</tr>
+<tr>
+<td>A3 LPT-0002</td>
+<td>terpakai</td>
+<td>karyawan</td>
+<td>KRY0001</td>
+<td><code>''</code></td>
+</tr>
+</tbody>
+</table></div>
+<p><code>asset_trx_log</code>: 2 baris (A2 dan A3). <code>notif_data</code>: 6 baris (1 pengiriman, 2 laporan rusak, 1 pengganti, 2 dikonfirmasi). Aset A1 yang rusak tidak punya baris log dan kini menjadi kandidat modul Perbaikan/Garansi/Disposal.</p>
+<p>Pada Asset Saya karyawan (API-008), <code>assets[]</code> berisi A2 dan A3 dan <code>jumlah_asset = 2</code>.</p>
+<hr />
+<h4>Skenario variasi</h4>
+<p><strong>Semua normal sekali jalan.</strong> Pada langkah 4, bila kedua item dinilai <code>normal</code>: <code>semuaNormal = true</code>, header langsung <code>dikonfirmasi</code>, kedua asset <code>terpakai</code>/<code>karyawan</code>, 2 baris <code>asset_trx_log</code>, notif <code>onboarding.dikonfirmasi</code> ke admin, <code>status_label = "Selesai"</code>, <code>tab = "selesai"</code>. Langkah 5–7 tidak terjadi.</p>
+<p><strong>Menghapus draft (API-005).</strong> <code>DELETE /asset/onboarding-karyawan/CMP001202610001</code> saat masih <code>draft</code>: asset <code>proses</code> dikembalikan ke <code>tersedia</code>, item dan header di-DELETE, tanpa notifikasi. Response <code>DELETED</code> dengan <code>id</code> dan <code>no_trx</code>. Karena barisnya terhapus, Budi kembali muncul di options dan boleh dibuatkan onboarding baru.</p>
+<p><strong>Kasus gagal yang umum</strong></p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Situasi</th>
+<th>Langkah</th>
+<th style="text-align: center;">HTTP</th>
+<th>Pesan</th>
+<th>Perubahan database</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Karyawan sudah pernah punya onboarding (status apa pun)</td>
+<td>1 / 2</td>
+<td style="text-align: center;">422</td>
+<td>Karyawan ini sudah pernah menerima onboarding asset.</td>
+<td>Tidak ada (transaksi di-rollback)</td>
+</tr>
+<tr>
+<td>Asset sudah <code>proses</code> / bukan <code>gudang</code></td>
+<td>1 / 2 / 6</td>
+<td style="text-align: center;">422</td>
+<td>Satu atau beberapa asset tidak tersedia untuk onboarding. / …pengganti tidak tersedia.</td>
+<td>Tidak ada</td>
+</tr>
+<tr>
+<td>Asset ada di onboarding aktif lain</td>
+<td>1 / 2 / 6</td>
+<td style="text-align: center;">422</td>
+<td>Satu atau beberapa asset sedang diproses pada onboarding lain.</td>
+<td>Tidak ada</td>
+</tr>
+<tr>
+<td>Publish tanpa <code>keterangan</code></td>
+<td>1 / 2</td>
+<td style="text-align: center;">422</td>
+<td>Data onboarding belum lengkap. (<code>errors.keterangan</code>)</td>
+<td>Tidak ada</td>
+</tr>
+<tr>
+<td>Edit/hapus transaksi yang sudah <code>proses</code></td>
+<td>2 / hapus</td>
+<td style="text-align: center;">422</td>
+<td>Hanya onboarding berstatus draft yang dapat diubah / dihapus.</td>
+<td>Tidak ada</td>
+</tr>
+<tr>
+<td>Item rusak tanpa alasan</td>
+<td>4</td>
+<td style="text-align: center;">422</td>
+<td>Alasan kerusakan wajib diisi.</td>
+<td>Tidak ada</td>
+</tr>
+<tr>
+<td>Tidak semua item yang perlu dicek dikirim</td>
+<td>4 / 7</td>
+<td style="text-align: center;">422</td>
+<td>Seluruh asset pada onboarding wajib dicek.</td>
+<td>Tidak ada</td>
+</tr>
+<tr>
+<td>Konfirmasi dua kali</td>
+<td>4 / 7</td>
+<td style="text-align: center;">422</td>
+<td>Onboarding asset sudah tidak menunggu konfirmasi.</td>
+<td>Tidak ada</td>
+</tr>
+<tr>
+<td>Konfirmasi saat hanya menunggu pengganti</td>
+<td>4</td>
+<td style="text-align: center;">422</td>
+<td>Tidak ada asset yang perlu dicek. Asset rusak sedang menunggu penggantian dari admin.</td>
+<td>Tidak ada</td>
+</tr>
+<tr>
+<td>Ganti asset sebelum karyawan mengecek</td>
+<td>6</td>
+<td style="text-align: center;">422</td>
+<td>Asset rusak hanya dapat diganti setelah karyawan selesai mengecek asset.</td>
+<td>Tidak ada</td>
+</tr>
+<tr>
+<td>Item rusak sudah diganti / bukan rusak</td>
+<td>6</td>
+<td style="text-align: center;">422</td>
+<td>Satu atau beberapa asset rusak tidak valid atau sudah diganti.</td>
+<td>Tidak ada</td>
+</tr>
+<tr>
+<td>Pengguna bukan admin asset</td>
+<td>0–2, 5, 6</td>
+<td style="text-align: center;">403</td>
+<td>Pengguna tidak memiliki akses admin asset.</td>
+<td>Tidak ada</td>
+</tr>
+<tr>
+<td>Karyawan membuka transaksi orang lain / draft</td>
+<td>3 / 4 / 7</td>
+<td style="text-align: center;">404 / 422</td>
+<td>Onboarding asset tidak ditemukan.</td>
+<td>Tidak ada</td>
+</tr>
+<tr>
+<td>Token kedaluwarsa</td>
+<td>semua</td>
+<td style="text-align: center;">401</td>
+<td>Token telah expired. Mobile me-refresh token sekali, lalu mengulang request.</td>
+<td>Tidak ada</td>
+</tr>
+</tbody>
+</table></div>
+<p>Semua error bisnis dilempar sebagai <code>InvalidArgumentException</code> di dalam <code>DB::transaction</code>, sehingga seluruh perubahan pada request itu dibatalkan. Mobile menampilkan <code>message</code> (atau <code>errors</code> pertama) di snackbar.</p>
+<h4>Ringkasan siapa mengerjakan apa</h4>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Tahap</th>
+<th>Mobile</th>
+<th>API</th>
+<th>Database</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Pilih karyawan &amp; asset</td>
+<td>Bottom sheet, state lokal, tanpa request tulis</td>
+<td><code>getOnboardingOptions</code> (SELECT)</td>
+<td>Tidak berubah</td>
+</tr>
+<tr>
+<td>Simpan / Publish</td>
+<td>Rakit <code>AssetOnboardingRequest</code> → <code>toJson</code></td>
+<td>Validasi, lock company, cek asset &amp; karyawan, generate ID, insert, reservasi asset</td>
+<td>header, item, <code>asset_data</code> → <code>proses</code>, <code>notif_data</code> (publish)</td>
+</tr>
+<tr>
+<td>Cek &amp; konfirmasi</td>
+<td>Kumpulkan <code>_statusByItem</code>, <code>_ketRusakByItem</code>, validasi lokal</td>
+<td>Validasi, tentukan item pending, update item, serah terima asset normal, hitung status header</td>
+<td>item, <code>asset_data</code>, header, <code>asset_trx_log</code>, <code>notif_data</code></td>
+</tr>
+<tr>
+<td>Ganti rusak</td>
+<td>Pilih pengganti, kirim <code>items[]</code></td>
+<td>Validasi syarat, insert item pengganti (<code>parent_id</code>), reservasi asset</td>
+<td>item, <code>asset_data</code> → <code>proses</code>, header, <code>notif_data</code></td>
+</tr>
+<tr>
+<td>Tampilan</td>
+<td>Map JSON → model → widget; badge dari <code>status_approval</code> + <code>isu_rusak</code></td>
+<td><code>statusMetadata</code> menghasilkan <code>status_label</code> dan <code>tab</code></td>
+<td><code>SELECT</code> saja</td>
+</tr>
+</tbody>
+</table></div>
 <hr />
 <h2 id="s46"><span class="sec-no">46</span>Ringkasan Database Impact</h2>
 <div class="table-wrap"><table>
@@ -4716,7 +5883,7 @@ UI: &quot;Kelengkapan&quot; pada Detail / Konfirmasi Asset Baru
 </tr>
 <tr>
 <td>Serah terima / Konfirmasi</td>
-<td>asset_log (item normal), notif_data</td>
+<td>asset_trx_log (item normal), notif_data</td>
 <td>item (status_item, ket_rusak), asset_data (normal → terpakai/karyawan; rusak → rusak), header (status, user_approval, tgl_approval)</td>
 <td>–</td>
 </tr>
@@ -4743,7 +5910,7 @@ UI: &quot;Kelengkapan&quot; pada Detail / Konfirmasi Asset Baru
 <li class="task done">Index list header &amp; item</li>
 <li class="task done">Master relation (DBML ref; ⚠️ FK fisik belum terverifikasi)</li>
 <li class="task done">Status enum</li>
-<li class="task done">Log (asset_log untuk serah terima normal)</li>
+<li class="task done">Log (asset_trx_log untuk serah terima normal)</li>
 <li class="task">Migration CREATE TABLE baseline</li>
 <li class="task">Log untuk item rusak / histori status</li>
 </ul>
@@ -4759,7 +5926,7 @@ UI: &quot;Kelengkapan&quot; pada Detail / Konfirmasi Asset Baru
 <li class="task done">Notifikasi</li>
 <li class="task">Approve/Reject</li>
 <li class="task">Pembatalan onboarding berjalan</li>
-<li class="task">Validasi satu onboarding aktif per karyawan</li>
+<li class="task done">Validasi satu onboarding per karyawan (<code>assertKaryawanBelumPernahOnboarding</code>)</li>
 </ul>
 <h3>Mobile</h3>
 <ul>
@@ -4799,6 +5966,11 @@ UI: &quot;Kelengkapan&quot; pada Detail / Konfirmasi Asset Baru
 </tr>
 </thead>
 <tbody>
+<tr>
+<td>1.3</td>
+<td>2026-10-22</td>
+<td>Menambah §45.4 <em>Walkthrough Lengkap dengan Contoh Data</em> (aksi mobile, request, proses API, isi database per langkah, notifikasi, kasus gagal). Sinkronisasi kode: tabel log ternyata <code>asset_trx_log</code> (<code>id_asset_trx_log</code>), bukan <code>asset_log</code>; aturan satu onboarding per karyawan kini divalidasi di API (BR-020, RISK-003); serah terima mengosongkan <code>asset_data.id_asset_lokasi_m</code>.</td>
+</tr>
 <tr>
 <td>1.2</td>
 <td>2026-10-12</td>

@@ -18,7 +18,7 @@
 | Mobile | Flutter (`professional_flutter_3_35`), `flutter_bloc`, `dio` |
 | Web | ⚠️ Belum ditemukan: tidak ada source web di workspace |
 | Test otomatis | API `tests/Asset/AssetReturRuanganTest.php` (16 test, 269 assertion) · Mobile `test/asset/asset_retur_ruangan_test.dart` (25 test) |
-| Versi dokumen | 1.0 — 15 Oktober 2026 |
+| Versi dokumen | 1.1 — 22 Oktober 2026 |
 | Dokumen terkait | Retur Asset Karyawan (KRY04), Onboarding Ruangan (ALK-RGN01), Penambahan Asset Ruangan (ALK-RGN04), Master Lokasi & PIC Ruangan |
 
 ## 2. Daftar Isi
@@ -37,7 +37,7 @@ Lihat panel navigasi di samping.
 | Status header | `status_approval`: `pengajuan` → `disetujui` atau `ditolak`; `status_transaksi`: `proses` → `selesai` |
 | Tab daftar | Pengajuan (termasuk yang ditolak) · Dikonfirmasi · Diterima |
 | Status asset | Asal: `terpakai`/ruangan → `tersedia` atau `rusak`/gudang. Pengganti: `tersedia` → `proses` → `terpakai`/ruangan |
-| Log | `asset_trx_log` dengan `jenis_log = retur_ruangan` (bukan `asset_log`) |
+| Log | `asset_trx_log` dengan `jenis_log = retur_ruangan` (tabel `asset_trx_log`, sama dengan KRY04) |
 | Endpoint | 9: 5 admin + 4 PIC |
 | Notifikasi | 4 event (`retur_ruangan.*`) |
 
@@ -810,7 +810,7 @@ Hasil terakhir (dijalankan 15 Oktober 2026): API `AssetReturRuanganTest` 16 test
 | INC-07 | `asset_data.id_asset_lokasi_m` pengganti diset NULL | Pengganti: lokasi = id ruangan | Konsisten dengan RGN01/RGN04 |
 | INC-08 | Gudang default per cabang karyawan (`karyawan.id_cabang`) | `ruangan.id_cabang` tidak dikirim API sehingga tidak ada default | RISK-003 |
 | INC-09 | Mobile: PIC/karyawan memiliki halaman sendiri | Halaman dipakai ulang lewat `untukRuangan`; PIC tanpa aksi terima | Perilaku seragam |
-| INC-10 | Dokumen KRY04 menyebut log di `asset_log` | Kode KRY04 dan RGN06 sama-sama menulis `asset_trx_log` | ⚠️ Dokumen KRY04 perlu diselaraskan |
+| INC-10 | Dokumen KRY04 versi lama menyebut log di tabel lama | Kode KRY04 dan RGN06 sama-sama menulis `asset_trx_log`; dokumen KRY04 sudah dikoreksi pada versi 1.8 | ✅ Selaras |
 
 ## 40. Edge Case
 
@@ -879,7 +879,7 @@ Hasil terakhir (dijalankan 15 Oktober 2026): API `AssetReturRuanganTest` 16 test
 - Tanggal/jam NULL (bukan `0000-00-00`); `nullableDateValue`/`nullableTimeValue` mengubah NULL dan nilai nol menjadi `""` untuk mobile.
 - `id_asset_lokasi_m_tujuan` dan `parent_id` NULL pada item asal; kode memeriksa `parent_id` NULL **atau** `''` untuk keamanan.
 - `asset_data` tidak dikunci saat pengajuan; konsistensi dijaga lewat `hasActiveReturRuanganAsset` dan penyaringan opsi. Flow lain yang ingin menghormati retur ruangan harus memanggil helper tersebut.
-- Log memakai `asset_trx_log` (`jenis_log='retur_ruangan'`). Dokumen KRY04 menulis `asset_log`; kode KRY04 menulis `asset_trx_log`.
+- Log memakai `asset_trx_log` (`jenis_log='retur_ruangan'`). Dokumen KRY04 sudah dikoreksi (v1.8) dan selaras dengan kode.
 - Mengubah enum `jenis_log` harus mempertahankan seluruh nilai lama (lihat blok 3 SQL).
 - `tests/Routing` memuat angka jumlah route yang ditulis keras (506); hasil nyata 537 sehingga 4 test gagal. Penyebab selisih tidak diselidiki di sini.
 - Pemformatan: hanya `dart format` pada file Dart yang diubah.
@@ -896,6 +896,332 @@ Hasil terakhir (dijalankan 15 Oktober 2026): API `AssetReturRuanganTest` 16 test
 | PIC memantau | BR-16 | API-07, API-09 | Daftar, detail, banner | TC-13, TC-14, TC-19 |
 | Notifikasi | – | semua | Rute notifikasi | TC-15, TC-16, TC-21 |
 | Keunikan nomor transaksi per company | BR-15 | API-08 | – | TC-02, TC-23 |
+
+### 45.4 Walkthrough Lengkap dengan Contoh Data
+
+Walkthrough berikut mengikuti satu retur dari awal sampai selesai: PIC Ruangan mengajukan tiga asset dengan alasan berbeda, Admin/HR memutuskan per asset (dua disetujui, satu ditolak, satu mendapat pengganti), lalu Admin/HR menerima asset dengan memilih gudang tujuan per asset. Setiap langkah menjelaskan apa yang dilakukan di mobile, apa yang dikirim, apa yang diproses API, apa yang tersimpan di database, dan apa yang diterima mobile. Data bersifat **sintetis**, tetapi nama kolom, urutan proses, dan pesan diambil dari kode (`AssetReturRuangan_m`, `AssetKaryawanReturRuangan_c`, `AssetAdminReturRuangan_c`, `AssetNotification`).
+
+| Langkah | Pelaku | Aksi | Endpoint |
+|:---:|---|---|---|
+| 0 | PIC Ruangan | Memilih ruangan, memuat asset yang boleh diretur | API-06 `GET /asset/karyawan/pic-ruangan/retur/options?id_asset_lokasi_m=…` |
+| 1 | PIC Ruangan | **Ajukan Retur** 3 asset | API-08 `POST /asset/karyawan/pic-ruangan/retur` |
+| 2 | Admin/HR | Membuka detail dan opsi pengganti | API-01 `GET /asset/retur-ruangan/options`, API-03 `GET /asset/retur-ruangan/{id}` |
+| 3 | Admin/HR | **Konfirmasi** per asset (setujui, tolak, pengganti, metode) | API-04 `POST /asset/retur-ruangan/{id}/konfirmasi` |
+| 4 | Admin/HR | **Terima Asset** dan pilih gudang per asset | API-05 `POST /asset/retur-ruangan/{id}/terima` |
+| 5 | PIC Ruangan | Memantau status di tab Diterima | API-07/09 |
+
+#### Data awal
+
+Company `CMP001`. Tanggal 22 Oktober 2026, periode ID `202610`.
+
+**`data_karyawan`** (semua aktif)
+
+| id_karyawan | nik | nama_lengkap | Peran |
+|---|---|---|---|
+| KRY0099 | ADM-001 | Siti Admin | Admin Asset |
+| KRY0030 | EMP-030 | Dewi PIC | PIC Ruang Meeting Lt.2 |
+
+**`asset_lokasi_m`**: `LOK0007` "Ruang Meeting Lt.2" (`tipe = ruangan`, `status_aktif = 1`, cabang "Jakarta", departemen "Operasional"), `asset_lokasi_pic_m` menunjuk `KRY0030`. Gudang: `LOK0001` "Gudang Pusat" dan `LOK0002` "Gudang Cadangan" (`tipe = gudang`).
+
+**`asset_data`**
+
+| id_asset_data | nama_asset | status / pemegang / lokasi | Peran dalam skenario |
+|---|---|---|---|
+| AST0401 | Laptop Dell 14 | terpakai / ruangan / LOK0007 | Rusak, minta pengganti |
+| AST0402 | Proyektor Epson | terpakai / ruangan / LOK0007 | Tidak digunakan, disetujui |
+| AST0403 | Printer HP | terpakai / ruangan / LOK0007 | Tidak digunakan, ditolak Admin |
+| AST0501 | Laptop Lenovo 14 | tersedia / gudang / LOK0001 | Asset pengganti AST0401 |
+
+Penomoran: header dan item memakai `id_company + YYYYMM + 3 digit` (urut per tabel); `no_trx = RGN06-YYYYMMNNN` (unik per company); `asset_trx_log` dan notifikasi memakai 5 digit. **Pengajuan tidak mengunci `asset_data`**: asset tetap `terpakai` sampai Terima Asset; penjagaannya lewat pengecekan retur aktif.
+
+---
+
+#### Langkah 0 — PIC memilih ruangan dan asset
+
+**Mobile:** halaman **PIC Ruangan** → **Retur Asset** → **Ajukan Retur Asset Ruangan**. Setelah ruangan dipilih, layar memanggil API-06.
+
+**Dikirim**
+```http
+GET /asset/karyawan/pic-ruangan/retur/options?id_asset_lokasi_m=LOK0007
+Authorization: Bearer <access_token_dewi>
+```
+
+**Diproses API:** `getOptionsPic` memastikan ruangan aktif dan milik PIC login (selain itu `403 FORBIDDEN`: "Ruangan tidak ditemukan, tidak aktif, atau Anda bukan PIC ruangan ini."), lalu menampilkan asset `terpakai` di ruangan itu **kecuali** yang sedang terkunci di retur aktif, onboarding `proses`, penambahan `proses`, atau upgrade aktif. **Database:** hanya `SELECT`.
+
+**Diterima mobile:** AST0401, AST0402, AST0403 dengan nama dan kategori, ditambah pilihan alasan (`rusak`, `tidak_digunakan`, `tukar_unit`).
+
+#### Langkah 1 — PIC mengajukan retur tiga asset
+
+**Mobile:** Dewi menambahkan tiga asset, memilih alasan per asset (untuk Laptop: **Asset Rusak** → **Dengan Pengganti** + keterangan), mengisi catatan tambahan, lalu **Ajukan Retur**.
+
+**Dikirim**
+```http
+POST /asset/karyawan/pic-ruangan/retur
+Authorization: Bearer <access_token_dewi>
+```
+```json
+{ "id_asset_lokasi_m": "LOK0007",
+  "keterangan": "Penataan ulang ruang meeting",
+  "items": [
+    { "id_asset_data": "AST0401", "alasan_retur": "rusak", "rusak_dengan_pengganti": 2, "ket_retur": "Layar mati total" },
+    { "id_asset_data": "AST0402", "alasan_retur": "tidak_digunakan", "ket_retur": "Tidak dipakai lagi" },
+    { "id_asset_data": "AST0403", "alasan_retur": "tidak_digunakan" } ] }
+```
+
+**Diproses API** (`AssetKaryawanReturRuangan_c::storeReturRuangan` → `AssetReturRuangan_m::store`, satu `DB::transaction(…, 3)`)
+1. Validasi controller: `id_asset_lokasi_m` ("Ruangan wajib dipilih."), `items` minimal satu ("Minimal satu asset wajib dipilih."), `id_asset_data` wajib dan tidak kembar ("Asset retur wajib dipilih." / "Asset yang sama tidak boleh dipilih lebih dari sekali."), `alasan_retur` ("Alasan retur setiap asset wajib dipilih." / "Alasan retur asset tidak valid."), `rusak_dengan_pengganti` ∈ 0/1/2 ("Pilihan pengganti asset rusak tidak valid."), `ket_retur` maksimal 255.
+2. `lockCompany`; karyawan aktif ("Karyawan tidak ditemukan atau tidak aktif.").
+3. `findRuanganPic`: ruangan aktif dan PIC-nya pengaju ("Ruangan tidak ditemukan, tidak aktif, atau Anda bukan PIC ruangan ini.").
+4. `normalizeItems` menerapkan aturan per alasan: rusak wajib memilih tanpa/dengan pengganti ("Asset rusak wajib memilih tanpa atau dengan pengganti.") dan keterangan ("Keterangan kerusakan asset wajib diisi."); tukar unit wajib keterangan ("Alasan tukar unit wajib diisi."); selain rusak, `rusak_dengan_pengganti` dipaksa 0.
+5. Asset dibaca `FOR UPDATE` dengan syarat `pemegang_asset = ruangan` dan lokasi = ruangan ini ("Satu atau beberapa asset bukan milik ruangan atau sudah tidak dapat diretur.").
+6. Cek lintas flow: retur aktif lain ("Satu atau beberapa asset sedang diproses pada retur lain."), onboarding ruangan ("…pada onboarding ruangan."), penambahan ruangan ("…pada penambahan asset ruangan."), upgrade ruangan ("…pada upgrade ruangan."); status harus `terpakai` ("Satu atau beberapa asset tidak berstatus terpakai dan tidak dapat diretur.").
+7. Nomor: `CMP001202610001`, `RGN06-202610001`. INSERT header dan tiga item. **Tidak ada UPDATE `asset_data`.**
+8. Controller mengirim `retur_ruangan.diajukan` ke semua admin asset.
+
+**Hasil database**
+
+`asset_trx_retur_ruangan` (1 baris)
+
+| Kolom | Nilai |
+|---|---|
+| id_asset_trx_retur_ruangan / no_trx | CMP001202610001 / RGN06-202610001 |
+| id_asset_lokasi_m / nama_asset_ruangan | LOK0007 / Ruang Meeting Lt.2 |
+| nama_cabang / nama_departemen | Jakarta / Operasional |
+| id_karyawan_pic / nama_pic / nik_pic | KRY0030 / Dewi PIC / EMP-030 |
+| id_karyawan / nik_karyawan / nama_karyawan | KRY0030 / EMP-030 / Dewi PIC (pengaju) |
+| keterangan | Penataan ulang ruang meeting |
+| tgl_pengajuan | 2026-10-22 |
+| status_approval / status_transaksi | **pengajuan** / **proses** |
+| flag_jadwalkan | 0 |
+| tgl_pengambilan / jam_pengambilan / tgl_serah_terima / jam_serah_terima | NULL |
+| ket_tolak / user_approval / tgl_approval | `''` / `''` / NULL |
+| tgl_input / user_input | 2026-10-22 08:30:00 / EMP-030 - Dewi PIC |
+
+`asset_trx_retur_ruangan_item` (3 item asal; `parent_id` NULL)
+
+| id_asset_trx_retur_item | id_asset_data | alasan_retur | rusak_dengan_pengganti | ket_retur |
+|---|---|---|:---:|---|
+| CMP001202610001 | AST0401 | rusak | 2 | Layar mati total |
+| CMP001202610002 | AST0402 | tidak_digunakan | 0 | Tidak dipakai lagi |
+| CMP001202610003 | AST0403 | tidak_digunakan | 0 | `''` |
+
+`asset_data`: **tidak berubah** (ketiganya tetap `terpakai` di `LOK0007`).
+
+`notif_data`: satu baris per admin asset, rute `asset_admin_detail_retur_ruangan`, judul "Pengajuan Retur Asset Ruangan", isi "Dewi PIC mengajukan retur asset untuk Ruang Meeting Lt.2 (RGN06-202610001).". Push FCM ikut dikirim; kegagalan push hanya dicatat di log.
+
+**Diterima mobile** (HTTP 201)
+```json
+{ "code": "CREATED", "message": "Pengajuan retur asset ruangan berhasil dikirim.",
+  "data": { "id": "CMP001202610001", "no_trx": "RGN06-202610001",
+            "status_approval": "pengajuan", "status_transaksi": "proses",
+            "status_label": "Menunggu Konfirmasi", "tab": "pengajuan" } }
+```
+Retur muncul di tab **Pengajuan** milik PIC.
+
+#### Langkah 2 — Admin membuka detail dan opsi pengganti
+
+**Mobile:** Ruangan → **Retur** → tab **Pengajuan** → detail. Detail menampilkan tiap asset dengan alasannya; `AssetAdminReturRuangan` memuat opsi pengganti.
+
+**Dikirim**
+```http
+GET /asset/retur-ruangan/options
+GET /asset/retur-ruangan/CMP001202610001
+Authorization: Bearer <access_token_admin>
+```
+
+**Diproses API:** hanya admin asset (selain itu `403 FORBIDDEN`). `getAdminOptions` mengembalikan asset `tersedia` di gudang dan kategori; `getDetailAdmin` menggabungkan header, item, pasangan asal–pengganti lewat `parent_id`, dan `lokasi_gudang[]`. **Database:** hanya `SELECT`.
+
+**Diterima mobile:** AST0501 muncul sebagai kandidat pengganti. Tombol aksi: Tolak, Setujui, Ganti Asset per asset.
+
+#### Langkah 3 — Admin memutuskan per asset
+
+**Mobile:** Siti **menyetujui** AST0401 dan memilih AST0501 sebagai pengganti, **menyetujui** AST0402, **menolak** AST0403 dengan alasan, memilih metode **Dijadwalkan** (24 Okt 2026 pukul 10:00), lalu mengonfirmasi.
+
+**Dikirim**
+```http
+POST /asset/retur-ruangan/CMP001202610001/konfirmasi
+```
+```json
+{ "items": [
+    { "id_item": "CMP001202610001", "status_item": "disetujui", "id_asset_pengganti": "AST0501" },
+    { "id_item": "CMP001202610002", "status_item": "disetujui" },
+    { "id_item": "CMP001202610003", "status_item": "ditolak", "ket_tolak": "Masih dipakai rapat mingguan" } ],
+  "metode_serah_terima": "dijadwalkan",
+  "tgl_pengambilan": "2026-10-24", "jam_pengambilan": "10:00",
+  "keterangan_serah_terima": "Bawa troli" }
+```
+
+**Diproses API** (`konfirmasiReturRuangan` → `konfirmasiAdmin`)
+1. Validasi controller: `items` ("Keputusan asset retur wajib diisi."), `status_item` hanya `disetujui`/`ditolak`, `ket_tolak` wajib bila ditolak ("Alasan penolakan asset wajib diisi."), `metode_serah_terima` ∈ `dijadwalkan|langsung` ("Metode serah terima retur tidak valid."), tanggal `Y-m-d` dan jam `H:i` wajib bila dijadwalkan.
+2. `lockCompany`; aktor harus admin asset ("Pengguna tidak terdaftar sebagai admin asset."); header `FOR UPDATE` ("Retur asset tidak ditemukan."); harus `pengajuan`/`proses` ("Retur asset sudah tidak menunggu konfirmasi.").
+3. Keputusan harus mencakup **seluruh** item asal, tidak kurang dan tidak lebih ("Seluruh asset retur wajib dikonfirmasi."). Asset asal harus masih dipegang ruangan ini ("Satu atau beberapa asset sudah tidak dipegang oleh ruangan.").
+4. Per item: keputusan bukan `disetujui`/`ditolak` → "Keputusan asset harus disetujui atau ditolak."; ditolak tanpa alasan ditolak; ditolak dengan pengganti → "Asset yang ditolak tidak boleh memiliki asset pengganti."; disetujui yang membutuhkan pengganti (tukar unit, atau rusak dengan pengganti = 2) tanpa pengganti → "Asset pengganti wajib dipilih untuk retur ini."; disetujui yang tidak membutuhkan pengganti tetapi diberi → "Alasan retur ini tidak memerlukan asset pengganti."; pengganti kembar → "Asset pengganti yang sama tidak boleh dipilih lebih dari sekali.".
+5. Pengganti dikunci lewat `getLockedAssets` (harus `tersedia` di gudang; "Satu atau beberapa asset pengganti tidak tersedia.").
+6. Bila ada yang disetujui, metode wajib valid; dijadwalkan butuh tanggal dan jam ("Tanggal dan jam serah terima wajib diisi."), format benar ("Format jadwal serah terima tidak valid."), tanggal tidak sebelum `tgl_pengajuan` ("Tanggal serah terima tidak boleh sebelum tanggal pengajuan.").
+7. UPDATE keputusan tiap item asal; INSERT item pengganti (`parent_id` = item asal); UPDATE pengganti → `proses`; UPDATE header.
+8. Controller mengirim `retur_ruangan.dikonfirmasi` (atau `ditolak` bila semua ditolak) ke PIC.
+
+**Hasil database**
+
+`asset_trx_retur_ruangan_item`
+
+| id_asset_trx_retur_item | id_asset_data | parent_id | status_approval | ket_tolak | rusak_dengan_pengganti |
+|---|---|---|---|---|:---:|
+| CMP001202610001 | AST0401 | NULL | **disetujui** | `''` | 2 |
+| CMP001202610002 | AST0402 | NULL | **disetujui** | `''` | 0 |
+| CMP001202610003 | AST0403 | NULL | **ditolak** | Masih dipakai rapat mingguan | 0 |
+| **CMP001202610004** (baru) | AST0501 | CMP001202610001 | disetujui | `''` | 0 |
+
+Baris pengganti menyalin `alasan_retur` item asal (`rusak`), `rusak_dengan_pengganti = 0`, `ket_retur = ''`, `user_input` = admin.
+
+`asset_data`: hanya **AST0501** berubah, `status_asset` tersedia → **proses** (`user_update = ADM-001 - Siti Admin`). AST0401–AST0403 tetap `terpakai` di ruangan.
+
+`asset_trx_retur_ruangan` (header)
+
+| Kolom | Sebelum | Sesudah |
+|---|---|---|
+| status_approval | pengajuan | **disetujui** |
+| status_transaksi | proses | proses (tidak berubah) |
+| flag_jadwalkan | 0 | **1** |
+| tgl_pengambilan / jam_pengambilan | NULL / NULL | 2026-10-24 / 10:00:00 |
+| keterangan_serah_terima | `''` | Bawa troli |
+| ket_tolak | `''` | `''` (hanya diisi "Seluruh asset retur ditolak." bila semua ditolak) |
+| user_approval / tgl_approval | `''` / NULL | ADM-001 - Siti Admin / 2026-10-22 10:00:00 |
+| tgl_update / user_update | NULL / `''` | 2026-10-22 10:00:00 / ADM-001 - Siti Admin |
+
+`notif_data`: baris untuk KRY0030, rute `asset_pic_ruangan_retur`, judul "Retur Asset Ruangan Dikonfirmasi", isi "Retur asset RGN06-202610001 untuk Ruang Meeting Lt.2 telah dikonfirmasi admin.".
+
+**Diterima mobile** (HTTP 200; pesan "Retur asset ruangan berhasil dikonfirmasi.")
+```json
+{ "code": "UPDATED", "message": "Retur asset ruangan berhasil dikonfirmasi.",
+  "data": { "id": "CMP001202610001", "no_trx": "RGN06-202610001",
+            "status_approval": "disetujui", "status_transaksi": "proses",
+            "status_label": "Dikonfirmasi", "tab": "dikonfirmasi",
+            "jumlah_disetujui": 2, "jumlah_ditolak": 1, "jumlah_pengganti": 1 } }
+```
+Transaksi pindah ke tab **Dikonfirmasi**; tombol **Terima Asset** muncul untuk Admin/HR.
+
+#### Langkah 4 — Admin menerima asset dan memilih gudang
+
+Pada 24 Okt, laptop rusak dan proyektor tiba. Siti memilih gudang tujuan **per asset asal yang disetujui**: Laptop rusak ke `LOK0001`, proyektor ke `LOK0002`.
+
+**Dikirim**
+```http
+POST /asset/retur-ruangan/CMP001202610001/terima
+```
+```json
+{ "items": [
+    { "id_asset_trx_retur_item": "CMP001202610001", "id_asset_lokasi_m": "LOK0001" },
+    { "id_asset_trx_retur_item": "CMP001202610002", "id_asset_lokasi_m": "LOK0002" } ] }
+```
+
+**Diproses API** (`terimaReturRuangan` → `terimaAdmin`)
+1. Validasi: `items` wajib, id tidak kembar, gudang wajib ("Lokasi gudang tujuan setiap asset wajib dipilih." / "Lokasi gudang tujuan wajib dipilih.").
+2. `lockCompany`, admin asset, header `FOR UPDATE`; harus `disetujui`/`proses` ("Retur asset belum dikonfirmasi atau sudah selesai.").
+3. Item asal yang `disetujui` dipetakan ke gudang lewat `resolveItemLocations`: setiap item tepat satu kali ("Lokasi gudang tujuan asset tidak sesuai."), semua item terisi, dan lokasi harus bertipe `gudang` pada company yang sama ("Lokasi gudang tujuan tidak valid."). Item yang ditolak **tidak** dimasukkan. Tidak ada item disetujui → "Tidak ada asset retur yang dapat diterima.".
+4. Semua asset terkait dikunci `FOR UPDATE`; asset asal harus masih dipegang ruangan ("Satu atau beberapa asset sudah tidak dipegang oleh ruangan.") dan pengganti harus masih `proses` di gudang ("Asset pengganti sudah tidak siap diserahterimakan.").
+5. Per asset asal: UPDATE `asset_data` ke gudang (rusak → `rusak` + `ket_rusak`, selain itu `tersedia`), simpan `id_asset_lokasi_m_tujuan` di item, siapkan log. Bila ada pengganti: UPDATE `asset_data` → `terpakai` di ruangan, siapkan log.
+6. INSERT semua baris `asset_trx_log` sekaligus, lalu UPDATE header → `status_transaksi = selesai`.
+7. Controller mengirim `retur_ruangan.diterima_admin` ke PIC.
+
+**Hasil database**
+
+`asset_data`
+
+| id_asset_data | Kolom | Sebelum | Sesudah |
+|---|---|---|---|
+| AST0401 | status_asset | terpakai | **rusak** |
+| | pemegang_asset / id_pemegang_asset | ruangan / LOK0007 | **gudang** / `''` |
+| | id_asset_lokasi_m | LOK0007 | **LOK0001** |
+| | ket_rusak | `''` | Layar mati total |
+| AST0402 | status_asset | terpakai | **tersedia** |
+| | pemegang_asset / id_asset_lokasi_m | ruangan / LOK0007 | **gudang** / **LOK0002** |
+| AST0501 (pengganti) | status_asset | proses | **terpakai** |
+| | pemegang_asset / id_pemegang_asset | gudang / `''` | **ruangan** / **LOK0007** |
+| | id_asset_lokasi_m | LOK0001 | **LOK0007** |
+| AST0403 (ditolak) | semua kolom | terpakai @ LOK0007 | tidak berubah |
+
+`asset_trx_retur_ruangan_item`: kolom `id_asset_lokasi_m_tujuan` terisi `LOK0001` pada `CMP001202610001` dan `LOK0002` pada `CMP001202610002`.
+
+`asset_trx_log` (3 baris; nomor contoh dengan asumsi log pertama periode 202610)
+
+| id_asset_trx_log | id_asset_data | kondisi awal → akhir | posisi awal → akhir | id_pemegang / nama_pemegang |
+|---|---|---|---|---|
+| CMP00120261000001 | AST0401 | (kondisi_awal asset) → rusak | ruangan → gudang | `''` / `''` |
+| CMP00120261000002 | AST0501 | normal → normal | gudang → ruangan | LOK0007 / Ruang Meeting Lt.2 |
+| CMP00120261000003 | AST0402 | (kondisi_awal asset) → normal | ruangan → gudang | `''` / `''` |
+
+Semua baris memakai `jenis_log = retur_ruangan`, `id_transaksi = CMP001202610001`, `nama_tabel_transaksi = asset_trx_retur_ruangan`. Urutan log mengikuti urutan item: asset asal, pengganti miliknya, lalu item berikutnya.
+
+`asset_trx_retur_ruangan` (header): `status_transaksi` proses → **selesai**; `tgl_serah_terima = 2026-10-24`, `jam_serah_terima` = waktu penerimaan (misalnya 10:05:00); `tgl_update`/`user_update` diperbarui. `status_approval` tetap `disetujui`.
+
+`notif_data`: baris untuk KRY0030, judul "Retur Asset Ruangan Diterima", isi "Asset retur RGN06-202610001 untuk Ruang Meeting Lt.2 telah diterima admin.".
+
+**Diterima mobile** (HTTP 200)
+```json
+{ "code": "UPDATED", "message": "Retur asset ruangan berhasil diterima.",
+  "data": { "id": "CMP001202610001", "no_trx": "RGN06-202610001",
+            "status_approval": "disetujui", "status_transaksi": "selesai",
+            "status_label": "Selesai", "tab": "diterima",
+            "jumlah_diterima": 2, "jumlah_pengganti": 1 } }
+```
+
+#### Langkah 5 — PIC memantau
+
+PIC tidak memiliki aksi terima, ubah, atau batal. Dewi hanya membuka daftar `GET /asset/karyawan/pic-ruangan/retur?tab=diterima` dan detail `GET …/retur/CMP001202610001`. Akses dibatasi ke ruangan yang **saat ini** dipegang PIC (join `asset_lokasi_pic_m`); PIC lain mendapat `404 NOT_FOUND` ("Retur asset ruangan tidak ditemukan."). Detail PIC tidak menyertakan `lokasi_gudang[]`. Banner pada halaman **PIC Ruangan** hilang setelah transaksi selesai.
+
+#### Kondisi akhir
+
+| Objek | Keadaan |
+|---|---|
+| Header `CMP001202610001` | `disetujui` + `selesai`, tab **Diterima** |
+| Item | 4 baris: AST0401 (disetujui), AST0402 (disetujui), AST0403 (ditolak), AST0501 (pengganti AST0401) |
+| AST0401 | `rusak` di `LOK0001` |
+| AST0402 | `tersedia` di `LOK0002` |
+| AST0501 | `terpakai` di `LOK0007` |
+| AST0403 | tetap `terpakai` di `LOK0007` |
+| `asset_trx_log` | 3 baris `retur_ruangan` |
+
+#### Variasi
+
+- **Semua asset ditolak:** tidak ada metode serah terima yang diperlukan; header menjadi `status_approval = ditolak`, `status_transaksi = selesai`, `ket_tolak = "Seluruh asset retur ditolak."`; tidak ada pengganti, `asset_data` tidak berubah, PIC dinotifikasi `retur_ruangan.ditolak` (judul "Retur Asset Ruangan Ditolak"). Respons: "Retur asset ruangan berhasil ditolak.", tab `pengajuan`, label "Ditolak". Terima Asset tidak dapat dijalankan karena status bukan `disetujui`.
+- **Metode Langsung:** `metode_serah_terima = "langsung"`, tanpa tanggal dan jam; `flag_jadwalkan = 0`, `tgl_pengambilan`/`jam_pengambilan` tetap NULL. Terima Asset dapat dilakukan kapan saja setelah konfirmasi.
+- **Tukar unit:** `alasan_retur = tukar_unit` (keterangan wajib) selalu membutuhkan pengganti saat disetujui. Asal kembali ke gudang sebagai `tersedia` (bukan `rusak`) dan pengganti masuk ke ruangan. Tidak ada syarat kategori yang sama.
+- **Rusak tanpa pengganti:** `rusak_dengan_pengganti = 1`; Admin tidak boleh memberi pengganti ("Alasan retur ini tidak memerlukan asset pengganti."). Asal kembali ke gudang sebagai `rusak`.
+- **Tidak digunakan:** asal kembali sebagai `tersedia`; keterangan opsional; pengganti dilarang.
+
+#### Kasus gagal
+
+Semua kesalahan aturan bisnis dilempar sebagai `InvalidArgumentException` di dalam transaksi, sehingga seluruh perubahan di-rollback dan controller membalas `BUSINESS_RULE_VIOLATION` dengan pesan di bawah.
+
+| Situasi | Langkah | Pesan |
+|---|---|---|
+| Ruangan nonaktif atau bukan milik PIC | 0, 1 | Ruangan tidak ditemukan, tidak aktif, atau Anda bukan PIC ruangan ini. |
+| Asset bukan milik ruangan atau sudah berpindah | 1 | Satu atau beberapa asset bukan milik ruangan atau sudah tidak dapat diretur. |
+| Asset sudah ada di retur aktif lain | 1 | Satu atau beberapa asset sedang diproses pada retur lain. |
+| Asset sedang di onboarding / penambahan / upgrade ruangan | 1 | Satu atau beberapa asset sedang diproses pada onboarding ruangan. / …penambahan asset ruangan. / …upgrade ruangan. |
+| Asset tidak berstatus `terpakai` | 1 | Satu atau beberapa asset tidak berstatus terpakai dan tidak dapat diretur. |
+| Rusak tanpa pilihan pengganti / tanpa keterangan | 1 | Asset rusak wajib memilih tanpa atau dengan pengganti. / Keterangan kerusakan asset wajib diisi. |
+| Tukar unit tanpa alasan | 1 | Alasan tukar unit wajib diisi. |
+| Admin tidak memutuskan semua item | 3 | Seluruh asset retur wajib dikonfirmasi. |
+| Ditolak tanpa alasan / ditolak dengan pengganti | 3 | Alasan penolakan asset wajib diisi. / Asset yang ditolak tidak boleh memiliki asset pengganti. |
+| Pengganti wajib tidak dipilih / dipilih padahal tidak perlu | 3 | Asset pengganti wajib dipilih untuk retur ini. / Alasan retur ini tidak memerlukan asset pengganti. |
+| Pengganti kembar atau tidak tersedia | 3 | Asset pengganti yang sama tidak boleh dipilih lebih dari sekali. / Satu atau beberapa asset pengganti tidak tersedia. |
+| Metode atau jadwal salah | 3 | Metode serah terima retur tidak valid. / Tanggal dan jam serah terima wajib diisi. / Tanggal serah terima tidak boleh sebelum tanggal pengajuan. |
+| Konfirmasi ulang | 3 | Retur asset sudah tidak menunggu konfirmasi. |
+| Terima sebelum dikonfirmasi atau sesudah selesai | 4 | Retur asset belum dikonfirmasi atau sudah selesai. |
+| Gudang tidak lengkap atau bukan gudang | 4 | Lokasi gudang tujuan setiap asset wajib dipilih. / Lokasi gudang tujuan asset tidak sesuai. / Lokasi gudang tujuan tidak valid. |
+| Pengganti sudah tidak `proses` di gudang | 4 | Asset pengganti sudah tidak siap diserahterimakan. |
+| Bukan admin asset | 3, 4 | Pengguna tidak terdaftar sebagai admin asset. |
+
+#### Ringkasan siapa mengerjakan apa
+
+| Pihak | Tugas dalam alur ini |
+|---|---|
+| **Mobile PIC** | Memilih ruangan dan asset, mengisi alasan per asset, mengirim pengajuan, memantau status (tanpa aksi lain) |
+| **Mobile Admin/HR** | Memutuskan per asset, memilih pengganti dan metode serah terima, memilih gudang per asset saat Terima Asset |
+| **API** | Validasi, pembatasan ruangan milik PIC, pengecekan flow lain, penguncian asset dan pengganti, penomoran, pemetaan gudang, perubahan `asset_data`, `asset_trx_log`, notifikasi bilingual |
+| **Database** | Menyimpan header, item asal dan pengganti (`parent_id`), keputusan per item, gudang tujuan, status asset, log, dan notifikasi |
 
 ## 46. Ringkasan Database Impact
 
@@ -926,3 +1252,4 @@ Hasil terakhir (dijalankan 15 Oktober 2026): API `AssetReturRuanganTest` 16 test
 | Versi | Tanggal | Perubahan |
 |---|---|---|
 | 1.0 | 15 Oktober 2026 | Dokumen awal ALK-RGN06: skema 2 tabel, API admin (5) dan PIC (4), mobile (pemakaian ulang halaman KRY04), notifikasi, ringkasan admin dan beranda PIC, test. |
+| 1.1 | 22 Okt 2026 | Menambah §45.4 walkthrough lengkap (pengajuan PIC, keputusan per asset dengan pengganti, Terima Asset dengan gudang per asset), variasi, dan tabel kasus gagal. |

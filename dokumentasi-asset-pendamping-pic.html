@@ -195,7 +195,7 @@ footer{margin-top:64px;padding-top:18px;border-top:1px solid var(--line);color:v
       </div>
       <div class="tag" aria-label="Identitas dokumen">
         <dl>
-          <dt>Kode</dt><dd>PIC</dd><dt>Modul</dt><dd>Pemeliharaan Aset</dd><dt>Versi</dt><dd>1.2 · 12 Okt 2026</dd><dt>Stack</dt><dd>Lumen 10 · Flutter</dd><dt>API</dt><dd>5 endpoint</dd>
+          <dt>Kode</dt><dd>PIC</dd><dt>Modul</dt><dd>Pemeliharaan Aset</dd><dt>Versi</dt><dd>1.3 · 22 Okt 2026</dd><dt>Stack</dt><dd>Lumen 10 · Flutter</dd><dt>API</dt><dd>5 endpoint</dd>
         </dl>
         <div class="barcode" aria-hidden="true"></div>
         <div class="trx">asset_pendamping_m</div>
@@ -296,7 +296,7 @@ footer{margin-top:64px;padding-top:18px;border-top:1px solid var(--line);color:v
 </tr>
 <tr>
 <td>Versi dokumen</td>
-<td>1.2 — 12 Oktober 2026</td>
+<td>1.3 — 22 Oktober 2026</td>
 </tr>
 <tr>
 <td>Dokumen terkait</td>
@@ -1080,6 +1080,452 @@ footer{margin-top:64px;padding-top:18px;border-top:1px solid var(--line);color:v
 </tr>
 </tbody>
 </table></div>
+<h3>45.4 Walkthrough Lengkap dengan Contoh Data</h3>
+<p>Berbeda dari dokumen transaksi lain, fitur ini <strong>tidak memiliki nomor transaksi, status asset, <code>asset_trx_log</code>, maupun notifikasi sendiri</strong>. Walkthrough berikut mengikuti <strong>siklus hidup master pendamping</strong>: admin mendaftarkan dua karyawan, mencoba mendaftarkan ulang, mencoba menonaktifkan pendamping yang masih bertugas, mengganti PIC lalu menonaktifkannya, mengaktifkan kembali, dan terakhir PIC melihat ringkasan tugasnya. Setiap langkah menjelaskan apa yang dilakukan di mobile, apa yang dikirim, apa yang diproses API, dan apa yang tersimpan di database. Data bersifat <strong>sintetis</strong>, tetapi nama kolom, urutan proses, dan pesan diambil dari kode (<code>AssetPendamping_m</code>, <code>AssetAdminPendamping_c</code>, <code>AssetKaryawanPic_c</code>).</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th style="text-align: center;">Langkah</th>
+<th>Pelaku</th>
+<th>Aksi</th>
+<th>Endpoint</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: center;">0</td>
+<td>Admin</td>
+<td>Membuka <strong>Master Pendamping</strong>, memuat daftar dan opsi</td>
+<td>API-001 <code>GET /asset/pendamping</code>, API-002 <code>GET …/options</code></td>
+</tr>
+<tr>
+<td style="text-align: center;">1</td>
+<td>Admin</td>
+<td><strong>Tambah</strong> Tono sebagai pendamping</td>
+<td>API-003 <code>POST /asset/pendamping</code></td>
+</tr>
+<tr>
+<td style="text-align: center;">2</td>
+<td>Admin</td>
+<td><strong>Tambah</strong> Rina sebagai pendamping</td>
+<td>API-003</td>
+</tr>
+<tr>
+<td style="text-align: center;">3</td>
+<td>Admin</td>
+<td>Menambah Tono lagi (ditolak)</td>
+<td>API-003</td>
+</tr>
+<tr>
+<td style="text-align: center;">4</td>
+<td>Admin</td>
+<td><strong>Nonaktifkan</strong> Tono saat masih menjadi PIC (ditolak)</td>
+<td>API-004 <code>POST /asset/pendamping/{id}/status</code></td>
+</tr>
+<tr>
+<td style="text-align: center;">5</td>
+<td>Admin</td>
+<td>Ganti PIC pada transaksi, lalu <strong>Nonaktifkan</strong> Tono</td>
+<td>API-004</td>
+</tr>
+<tr>
+<td style="text-align: center;">6</td>
+<td>Admin</td>
+<td><strong>Aktifkan kembali</strong> Tono</td>
+<td>API-004 atau API-003</td>
+</tr>
+<tr>
+<td style="text-align: center;">7</td>
+<td>Karyawan PIC</td>
+<td>Membuka <strong>Tugas PIC</strong></td>
+<td>API-005 <code>GET /asset/karyawan/pic/ringkasan</code></td>
+</tr>
+</tbody>
+</table></div>
+<h4>Data awal</h4>
+<p>Company <code>CMP001</code>. Tanggal 22 Oktober 2026, periode ID <code>202610</code>. Tabel <code>asset_pendamping_m</code> masih kosong.</p>
+<p><strong><code>data_karyawan</code></strong> (semua aktif)</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>id_karyawan</th>
+<th>nik</th>
+<th>nama_lengkap</th>
+<th>Peran</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>KRY0020</td>
+<td>EMP-020</td>
+<td>Tono Pendamping</td>
+<td>Calon pendamping</td>
+</tr>
+<tr>
+<td>KRY0021</td>
+<td>EMP-021</td>
+<td>Rina Pendamping</td>
+<td>Calon pendamping</td>
+</tr>
+<tr>
+<td>KRY0099</td>
+<td>ADM-001</td>
+<td>Siti Admin</td>
+<td>Admin Asset (aktor)</td>
+</tr>
+</tbody>
+</table></div>
+<p>Penomoran: <code>id_asset_pendamping_m = id_company + YYYYMM + 3 digit</code>. Satu karyawan hanya boleh punya <strong>satu baris</strong> per company (unik <code>id_company, id_karyawan</code>).</p>
+<hr />
+<h4>Langkah 0 — Admin membuka Master Pendamping</h4>
+<p><strong>Mobile:</strong> Pemeliharaan → ikon <strong>Master Pendamping</strong> → <code>/asset_admin_pendamping</code> → <code>AssetPendampingBloc</code> memuat daftar dan opsi (<code>AssetPendampingApi</code>).</p>
+<p><strong>Dikirim</strong></p>
+<div class="code"><span class="code-lang">HTTP</span><pre><code class="language-http">GET /asset/pendamping
+GET /asset/pendamping/options
+Authorization: Bearer &lt;access_token_admin&gt;
+</code></pre></div>
+<p><code>aktif=0|1</code> bersifat opsional pada daftar; nilai lain ditolak ("Filter pendamping tidak valid.").</p>
+<p><strong>Diproses API:</strong> <code>getList</code> menggabungkan <code>data_karyawan</code> untuk <code>karyawan_aktif</code>, urut nama; <code>getOptions</code> mengembalikan <strong>karyawan aktif yang belum menjadi pendamping aktif</strong>. <strong>Database:</strong> hanya <code>SELECT</code>.</p>
+<p><strong>Diterima mobile:</strong> daftar <code>{"records": []}</code> (kosong) dan opsi</p>
+<div class="code"><span class="code-lang">JSON</span><pre><code class="language-json">{ &quot;code&quot;: &quot;SUCCESS&quot;, &quot;message&quot;: &quot;Opsi pendamping berhasil ditemukan.&quot;,
+  &quot;data&quot;: { &quot;karyawan&quot;: [
+    { &quot;id_karyawan&quot;: &quot;KRY0020&quot;, &quot;nik&quot;: &quot;EMP-020&quot;, &quot;nama_karyawan&quot;: &quot;Tono Pendamping&quot; },
+    { &quot;id_karyawan&quot;: &quot;KRY0021&quot;, &quot;nik&quot;: &quot;EMP-021&quot;, &quot;nama_karyawan&quot;: &quot;Rina Pendamping&quot; } ] } }
+</code></pre></div>
+<h4>Langkah 1 — Admin mendaftarkan Tono</h4>
+<p><strong>Dikirim</strong></p>
+<div class="code"><span class="code-lang">HTTP</span><pre><code class="language-http">POST /asset/pendamping
+</code></pre></div>
+<div class="code"><span class="code-lang">JSON</span><pre><code class="language-json">{ &quot;id_karyawan&quot;: &quot;KRY0020&quot; }
+</code></pre></div>
+<p><strong>Diproses API</strong> (<code>AssetAdminPendamping_c::store</code> → <code>AssetPendamping_m::store</code>, satu <code>DB::transaction</code>)
+1. Validasi: <code>id_karyawan</code> wajib ("Karyawan wajib dipilih.").
+2. <code>lockCompany</code>; <code>actorAdmin</code> (harus admin asset); <code>findActiveKaryawan</code> ("Karyawan tidak ditemukan atau tidak aktif.").
+3. Cari baris yang sudah ada untuk karyawan itu (<code>FOR UPDATE</code>); belum ada → INSERT baris baru dengan nomor urut, <code>flag_aktif = 1</code>, snapshot NIK dan nama.</p>
+<p><strong>Hasil database</strong> — <code>asset_pendamping_m</code> (1 baris baru)</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Kolom</th>
+<th>Nilai</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>id_asset_pendamping_m</td>
+<td>CMP001202610001</td>
+</tr>
+<tr>
+<td>id_karyawan / nik / nama_karyawan</td>
+<td>KRY0020 / EMP-020 / Tono Pendamping</td>
+</tr>
+<tr>
+<td>flag_aktif</td>
+<td><strong>1</strong></td>
+</tr>
+<tr>
+<td>id_company</td>
+<td>CMP001</td>
+</tr>
+<tr>
+<td>tgl_input / user_input</td>
+<td>2026-10-22 09:00:00 / ADM-001 - Siti Admin</td>
+</tr>
+<tr>
+<td>tgl_update / user_update</td>
+<td>NULL / <code>''</code></td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>Diterima mobile</strong> (HTTP 201)</p>
+<div class="code"><span class="code-lang">JSON</span><pre><code class="language-json">{ &quot;code&quot;: &quot;CREATED&quot;, &quot;message&quot;: &quot;Pendamping berhasil ditambahkan.&quot;,
+  &quot;data&quot;: { &quot;id_asset_pendamping_m&quot;: &quot;CMP001202610001&quot;, &quot;id_karyawan&quot;: &quot;KRY0020&quot;, &quot;nik&quot;: &quot;EMP-020&quot;,
+            &quot;nama_karyawan&quot;: &quot;Tono Pendamping&quot;, &quot;flag_aktif&quot;: true } }
+</code></pre></div>
+<h4>Langkah 2 — Admin mendaftarkan Rina</h4>
+<p>Permintaan dan proses sama dengan langkah 1 dengan <code>{"id_karyawan": "KRY0021"}</code>. <strong>Hasil database:</strong> baris kedua <code>CMP001202610002</code> (KRY0021, EMP-021, Rina Pendamping, <code>flag_aktif = 1</code>, <code>tgl_input</code> 2026-10-22 09:05:00). Respons <code>CREATED</code> "Pendamping berhasil ditambahkan.".</p>
+<p>Kedua pendamping kini ditawarkan sebagai pilihan <strong>PIC</strong> pada form buat atau ubah Pemeliharaan Gudang (PML01), Klaim Garansi (PML03), dan Perbaikan (PML02), hanya bila <strong>karyawannya masih aktif</strong> (<code>findAktif</code>).</p>
+<h4>Langkah 3 — Admin mencoba mendaftarkan Tono lagi</h4>
+<p><strong>Dikirim:</strong> <code>POST /asset/pendamping</code> dengan <code>{"id_karyawan": "KRY0020"}</code>.</p>
+<p><strong>Diproses API:</strong> baris sudah ada dan <code>flag_aktif = 1</code> → ditolak. <strong>Respons</strong> (HTTP 422)</p>
+<div class="code"><span class="code-lang">JSON</span><pre><code class="language-json">{ &quot;code&quot;: &quot;BUSINESS_RULE_VIOLATION&quot;, &quot;message&quot;: &quot;Karyawan sudah terdaftar sebagai pendamping.&quot; }
+</code></pre></div>
+<p><strong>Database:</strong> tidak berubah. Karyawan ini juga sudah tidak muncul di opsi (API-002).</p>
+<h4>Langkah 4 — Admin mencoba menonaktifkan Tono yang masih menjadi PIC</h4>
+<p>Misalkan Tono (<code>CMP001202610001</code>) masih menjadi PIC Perbaikan <code>PML02-202610001</code> yang berjalan.</p>
+<p><strong>Dikirim</strong></p>
+<div class="code"><span class="code-lang">HTTP</span><pre><code class="language-http">POST /asset/pendamping/CMP001202610001/status
+</code></pre></div>
+<div class="code"><span class="code-lang">JSON</span><pre><code class="language-json">{ &quot;flag_aktif&quot;: &quot;0&quot; }
+</code></pre></div>
+<p><strong>Diproses API</strong> (<code>setAktif</code>): baris dikunci ("Pendamping tidak ditemukan." bila tidak ada). Karena menonaktifkan, API memeriksa <strong><code>hasActivePic</code></strong> pada ketiga alur (PML01 gudang, PML03 garansi, PML02 perbaikan). PIC masih memegang transaksi yang belum selesai/dibatalkan → ditolak. <strong>Respons</strong> (HTTP 422)</p>
+<div class="code"><span class="code-lang">JSON</span><pre><code class="language-json">{ &quot;code&quot;: &quot;BUSINESS_RULE_VIOLATION&quot;,
+  &quot;message&quot;: &quot;Pendamping masih menjadi PIC pemeliharaan gudang yang berjalan. Ganti PIC terlebih dahulu.&quot; }
+</code></pre></div>
+<p>Pesan ini <strong>selalu menyebut "pemeliharaan gudang"</strong> walaupun penyebabnya klaim garansi atau perbaikan. <strong>Database:</strong> tidak berubah.</p>
+<h4>Langkah 5 — Admin mengganti PIC lalu menonaktifkan Tono</h4>
+<p><strong>Mobile:</strong> admin membuka transaksi yang bersangkutan (di sini Perbaikan <code>PML02-202610001</code>, masih <code>menunggu_serah_terima</code>) → <strong>Ubah</strong> → memilih Rina sebagai PIC (lihat dokumen Perbaikan, API-004). Setelah tidak ada transaksi berjalan yang memakai Tono, admin mengulang permintaan status:</p>
+<p><strong>Dikirim</strong></p>
+<div class="code"><span class="code-lang">HTTP</span><pre><code class="language-http">POST /asset/pendamping/CMP001202610001/status
+</code></pre></div>
+<div class="code"><span class="code-lang">JSON</span><pre><code class="language-json">{ &quot;flag_aktif&quot;: &quot;0&quot; }
+</code></pre></div>
+<p><strong>Diproses API:</strong> <code>hasActivePic</code> kini salah di ketiga alur, sehingga UPDATE dijalankan.</p>
+<p><strong>Hasil database</strong></p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Kolom (<code>asset_pendamping_m</code> <code>…001</code>)</th>
+<th>Sebelum</th>
+<th>Sesudah</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>flag_aktif</td>
+<td>1</td>
+<td><strong>0</strong></td>
+</tr>
+<tr>
+<td>tgl_update</td>
+<td>NULL</td>
+<td>2026-10-22 10:00:00</td>
+</tr>
+<tr>
+<td>user_update</td>
+<td><code>''</code></td>
+<td>ADM-001 - Siti Admin</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>Diterima mobile</strong> (HTTP 200)</p>
+<div class="code"><span class="code-lang">JSON</span><pre><code class="language-json">{ &quot;code&quot;: &quot;UPDATED&quot;, &quot;message&quot;: &quot;Status pendamping berhasil diperbarui.&quot;,
+  &quot;data&quot;: { &quot;id_asset_pendamping_m&quot;: &quot;CMP001202610001&quot;, &quot;id_karyawan&quot;: &quot;KRY0020&quot;, &quot;nik&quot;: &quot;EMP-020&quot;,
+            &quot;nama_karyawan&quot;: &quot;Tono Pendamping&quot;, &quot;flag_aktif&quot;: false } }
+</code></pre></div>
+<p>Pendamping <strong>tidak dihapus</strong> karena dirujuk foreign key transaksi lama. Tono tidak lagi muncul di pilihan PIC, dan transaksi lama tetap menyimpan snapshot PIC-nya.</p>
+<h4>Langkah 6 — Admin mengaktifkan kembali Tono</h4>
+<p>Ada dua jalur dengan hasil sama:</p>
+<ul>
+<li><strong>Lewat status:</strong> <code>POST /asset/pendamping/CMP001202610001/status</code> dengan <code>{"flag_aktif": "1"}</code>. API memeriksa karyawan masih aktif ("Karyawan tidak ditemukan atau tidak aktif.").</li>
+<li><strong>Lewat tambah:</strong> <code>POST /asset/pendamping</code> dengan <code>{"id_karyawan": "KRY0020"}</code>. Karena baris lama berstatus nonaktif, API <strong>mengaktifkan kembali</strong> baris itu (bukan membuat baris baru) dan menyegarkan NIK dan nama dari <code>data_karyawan</code>.</li>
+</ul>
+<p><strong>Hasil database</strong> (jalur tambah)</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Kolom (<code>asset_pendamping_m</code> <code>…001</code>)</th>
+<th>Sebelum</th>
+<th>Sesudah</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>flag_aktif</td>
+<td>0</td>
+<td><strong>1</strong></td>
+</tr>
+<tr>
+<td>nik / nama_karyawan</td>
+<td>EMP-020 / Tono Pendamping</td>
+<td>disegarkan dari <code>data_karyawan</code></td>
+</tr>
+<tr>
+<td>tgl_update / user_update</td>
+<td>2026-10-22 10:00:00 / ADM-001 - Siti Admin</td>
+<td>2026-10-22 11:00:00 / ADM-001 - Siti Admin</td>
+</tr>
+</tbody>
+</table></div>
+<p>Tidak ada baris baru: tetap satu baris per karyawan. Respons HTTP 201 <code>CREATED</code> pada jalur tambah, 200 <code>UPDATED</code> pada jalur status.</p>
+<h4>Langkah 7 — PIC membuka Tugas PIC</h4>
+<p><strong>Mobile:</strong> karyawan PIC (Tono, <code>KRY0020</code>) → <strong>Tugas PIC</strong> → <code>/asset_pic</code> → <code>AssetPicBloc</code> → <code>AssetPicApi</code> memanggil ringkasan.</p>
+<p><strong>Dikirim</strong></p>
+<div class="code"><span class="code-lang">HTTP</span><pre><code class="language-http">GET /asset/karyawan/pic/ringkasan
+Authorization: Bearer &lt;access_token_tono&gt;
+</code></pre></div>
+<p><strong>Diproses API</strong> (<code>AssetKaryawanPic_c::getRingkasanPic</code>): memakai <code>id_company</code> dan <code>id_karyawan</code> dari token, lalu memanggil <code>countByTabForPic</code> dan <code>getPendingForPic</code> pada <strong>tiga</strong> model: <code>AssetPemeliharaanGudang_m</code>, <code>AssetGaransi_m</code>, <code>AssetPerbaikan_m</code>. Transaksi dihitung bila <code>id_pic_pendamping</code> header = karyawan itu. <strong>Database:</strong> hanya <code>SELECT</code>. Pemeliharaan <strong>karyawan</strong> (PML01 karyawan) tidak masuk ringkasan ini; PIC Pendamping-nya memakai menu dan endpoint karyawan tersendiri.</p>
+<p><strong>Diterima mobile</strong> (contoh: Tono punya 1 pemeliharaan gudang di tab jadwal, 1 klaim garansi dalam proses, dan 3 pemeliharaan gudang selesai)</p>
+<div class="code"><span class="code-lang">JSON</span><pre><code class="language-json">{
+  &quot;code&quot;: &quot;SUCCESS&quot;, &quot;message&quot;: &quot;Ringkasan tugas PIC berhasil ditemukan.&quot;,
+  &quot;data&quot;: {
+    &quot;pemeliharaan_gudang&quot;: {
+      &quot;jumlah&quot;: { &quot;jadwal&quot;: 1, &quot;proses&quot;: 0, &quot;selesai&quot;: 3 },
+      &quot;perlu_tindakan&quot;: [ { &quot;id&quot;: &quot;CMP001202610003&quot;, &quot;no_trx&quot;: &quot;PML01-3-202610003&quot;,
+        &quot;fase_pemeliharaan&quot;: &quot;penjadwalan&quot;, &quot;tgl_pemeliharaan&quot;: &quot;2026-10-24&quot;, &quot;jam_pemeliharaan&quot;: &quot;09:00:00&quot;,
+        &quot;jumlah_asset&quot;: 1, &quot;aksi&quot;: &quot;hasil&quot; } ] },
+    &quot;garansi&quot;: {
+      &quot;jumlah&quot;: { &quot;jadwal&quot;: 0, &quot;proses&quot;: 1, &quot;selesai&quot;: 0 },
+      &quot;perlu_tindakan&quot;: [ { &quot;id&quot;: &quot;CMP001202610001&quot;, &quot;no_trx&quot;: &quot;PML03-202610001&quot;, &quot;aksi&quot;: &quot;klaim&quot; } ] },
+    &quot;perbaikan&quot;: { &quot;jumlah&quot;: { &quot;jadwal&quot;: 0, &quot;proses&quot;: 0, &quot;selesai&quot;: 0 }, &quot;perlu_tindakan&quot;: [] }
+  }
+}
+</code></pre></div>
+<p>Nilai <code>aksi</code>: <code>hasil</code> (gudang), <code>terima</code> atau <code>klaim</code> (garansi), <code>terima</code> atau <code>service</code> (perbaikan). Tab: <code>jadwal</code> (menunggu serah terima atau penjadwalan), <code>proses</code>, <code>selesai</code>. Mobile menampilkan kartu per alur dan membuka detail transaksi sesuai <code>no_trx</code>.</p>
+<hr />
+<h4>Kondisi akhir data</h4>
+<p><code>asset_pendamping_m</code></p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>id</th>
+<th>id_karyawan</th>
+<th>nama_karyawan</th>
+<th style="text-align: center;">flag_aktif</th>
+<th>tgl_update</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>CMP001202610001</td>
+<td>KRY0020</td>
+<td>Tono Pendamping</td>
+<td style="text-align: center;">1</td>
+<td>2026-10-22 11:00:00</td>
+</tr>
+<tr>
+<td>CMP001202610002</td>
+<td>KRY0021</td>
+<td>Rina Pendamping</td>
+<td style="text-align: center;">1</td>
+<td>NULL</td>
+</tr>
+</tbody>
+</table></div>
+<p><code>asset_data</code>, <code>asset_trx_log</code>, dan <code>notif_data</code>: <strong>tidak ada perubahan</strong> dari fitur ini. Pendamping juga dapat terbuat otomatis oleh <strong>Pemeliharaan Karyawan</strong> saat admin mengatur pelaksanaan (<code>pendampingMasterId</code> menambah baris bila pendamping belum ada), tanpa melalui Master Pendamping.</p>
+<hr />
+<h4>Variasi</h4>
+<p><strong>Karyawan nonaktif di HR.</strong> Pendamping tetap tercatat dengan <code>flag_aktif = 1</code>, tetapi <code>karyawan_aktif = false</code> pada daftar; ia <strong>tidak</strong> muncul di pilihan PIC (<code>findAktif</code> mensyaratkan karyawan aktif) dan tidak bisa diaktifkan kembali sampai karyawannya aktif.</p>
+<p><strong>Filter daftar.</strong> <code>GET /asset/pendamping?aktif=1</code> hanya pendamping aktif, <code>?aktif=0</code> hanya yang nonaktif; tanpa filter semuanya.</p>
+<hr />
+<h4>Kasus gagal yang umum</h4>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Situasi</th>
+<th>Langkah</th>
+<th style="text-align: center;">HTTP</th>
+<th>Pesan</th>
+<th>Perubahan database</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Filter <code>aktif</code> bukan 0/1</td>
+<td>0</td>
+<td style="text-align: center;">422</td>
+<td>Filter pendamping tidak valid.</td>
+<td>Tidak ada</td>
+</tr>
+<tr>
+<td><code>id_karyawan</code> kosong</td>
+<td>1</td>
+<td style="text-align: center;">422</td>
+<td>Karyawan wajib dipilih.</td>
+<td>Tidak ada</td>
+</tr>
+<tr>
+<td>Karyawan tidak ada atau tidak aktif</td>
+<td>1, 6</td>
+<td style="text-align: center;">422</td>
+<td>Karyawan tidak ditemukan atau tidak aktif.</td>
+<td>Tidak ada</td>
+</tr>
+<tr>
+<td>Karyawan sudah menjadi pendamping aktif</td>
+<td>3</td>
+<td style="text-align: center;">422</td>
+<td>Karyawan sudah terdaftar sebagai pendamping.</td>
+<td>Tidak ada</td>
+</tr>
+<tr>
+<td><code>flag_aktif</code> bukan 0/1</td>
+<td>4</td>
+<td style="text-align: center;">422</td>
+<td>Status pendamping tidak valid.</td>
+<td>Tidak ada</td>
+</tr>
+<tr>
+<td>Pendamping tidak ditemukan</td>
+<td>4–6</td>
+<td style="text-align: center;">422</td>
+<td>Pendamping tidak ditemukan.</td>
+<td>Tidak ada</td>
+</tr>
+<tr>
+<td>Nonaktifkan saat masih PIC transaksi berjalan</td>
+<td>4</td>
+<td style="text-align: center;">422</td>
+<td>Pendamping masih menjadi PIC pemeliharaan gudang yang berjalan. Ganti PIC terlebih dahulu.</td>
+<td>Tidak ada</td>
+</tr>
+<tr>
+<td>Pengguna bukan admin asset</td>
+<td>0–6</td>
+<td style="text-align: center;">403 / 422</td>
+<td>Pengguna tidak memiliki akses admin asset. / Pengguna tidak terdaftar sebagai admin asset.</td>
+<td>Tidak ada</td>
+</tr>
+<tr>
+<td>Kesalahan tak terduga</td>
+<td>semua</td>
+<td style="text-align: center;">500</td>
+<td>Terjadi kesalahan saat memproses data pendamping.</td>
+<td>Tidak ada</td>
+</tr>
+<tr>
+<td>Token kedaluwarsa</td>
+<td>semua</td>
+<td style="text-align: center;">401</td>
+<td>Token telah expired. Mobile me-refresh token sekali lalu mengulang request.</td>
+<td>Tidak ada</td>
+</tr>
+</tbody>
+</table></div>
+<p>Semua pelanggaran aturan dilempar sebagai <code>InvalidArgumentException</code> di dalam <code>DB::transaction</code> dan dijawab <code>BUSINESS_RULE_VIOLATION</code>, sehingga seluruh perubahan request itu dibatalkan.</p>
+<h4>Ringkasan siapa mengerjakan apa</h4>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Tahap</th>
+<th>Mobile</th>
+<th>API</th>
+<th>Database</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Daftar dan opsi</td>
+<td>Master Pendamping</td>
+<td>Gabung status karyawan, saring yang belum aktif</td>
+<td><code>SELECT</code> saja</td>
+</tr>
+<tr>
+<td>Tambah</td>
+<td>Pilih karyawan dari opsi</td>
+<td>Validasi aktif, tolak ganda, aktifkan kembali baris lama</td>
+<td><code>asset_pendamping_m</code> (insert atau update)</td>
+</tr>
+<tr>
+<td>Aktif/nonaktif</td>
+<td>Saklar status</td>
+<td>Cek karyawan aktif, cek <code>hasActivePic</code> tiga alur</td>
+<td><code>asset_pendamping_m</code> (<code>flag_aktif</code>)</td>
+</tr>
+<tr>
+<td>Pilihan PIC</td>
+<td>Dropdown PIC di form PM gudang, klaim, perbaikan</td>
+<td><code>getList</code> aktif dan <code>findAktif</code> saat menyimpan</td>
+<td><code>SELECT</code> saja</td>
+</tr>
+<tr>
+<td>Tugas PIC</td>
+<td>Kartu per alur dan daftar tugas</td>
+<td><code>countByTabForPic</code>, <code>getPendingForPic</code> pada tiga model</td>
+<td><code>SELECT</code> saja</td>
+</tr>
+</tbody>
+</table></div>
 <h2 id="s46"><span class="sec-no">46</span>Ringkasan Database Impact</h2>
 <p><code>asset_pendamping_m</code> di-ALTER: <code>flag_aktif</code>, <code>tgl_update</code>, <code>user_update</code>, unik <code>(id_company, id_karyawan)</code>. Tidak ada tabel baru.</p>
 <h2 id="s47"><span class="sec-no">47</span>Checklist Implementasi</h2>
@@ -1124,6 +1570,11 @@ footer{margin-top:64px;padding-top:18px;border-top:1px solid var(--line);color:v
 <td>1.2</td>
 <td>12 Okt 2026</td>
 <td>Tugas PIC pemeliharaan gudang: aksi <code>mulai</code> dihapus, kini selalu <code>hasil</code> (langkah Mulai PM dihapus); tab kartu tugas mengikuti <code>fase_pemeliharaan</code>.</td>
+</tr>
+<tr>
+<td>1.3</td>
+<td>22 Okt 2026</td>
+<td>Menambah §45.4 <em>Walkthrough Lengkap dengan Contoh Data</em> (siklus master pendamping: daftar dan opsi, tambah, tolak ganda, nonaktif ditolak saat masih PIC, ganti PIC lalu nonaktifkan, aktifkan kembali, ringkasan Tugas PIC; kasus gagal). Catatan kode: ringkasan PIC hanya mencakup pemeliharaan gudang, garansi, dan perbaikan; pesan penolakan nonaktif selalu menyebut pemeliharaan gudang.</td>
 </tr>
 </tbody>
 </table></div>

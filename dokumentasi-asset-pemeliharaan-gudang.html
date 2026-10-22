@@ -195,7 +195,7 @@ footer{margin-top:64px;padding-top:18px;border-top:1px solid var(--line);color:v
       </div>
       <div class="tag" aria-label="Identitas dokumen">
         <dl>
-          <dt>Kode</dt><dd>PML01</dd><dt>Modul</dt><dd>Pemeliharaan Aset</dd><dt>Versi</dt><dd>1.3 · 21 Okt 2026</dd><dt>Stack</dt><dd>Lumen 10 · Flutter</dd><dt>API</dt><dd>13 endpoint</dd>
+          <dt>Kode</dt><dd>PML01</dd><dt>Modul</dt><dd>Pemeliharaan Aset</dd><dt>Versi</dt><dd>1.4 · 22 Okt 2026</dd><dt>Stack</dt><dd>Lumen 10 · Flutter</dd><dt>API</dt><dd>13 endpoint</dd>
         </dl>
         <div class="barcode" aria-hidden="true"></div>
         <div class="trx">PML01-3-YYYYMMNNN</div>
@@ -224,7 +224,7 @@ footer{margin-top:64px;padding-top:18px;border-top:1px solid var(--line);color:v
         <div class="flow">
           <div class="step"><span class="badge b-wait">Penjadwalan</span><span class="who">Admin: Buat PM</span><p>Satu transaksi per asset, dengan jadwal, vendor, lokasi, PIC sendiri. Dapat diubah, diganti PIC, atau dibatalkan. PM dilaksanakan di lokasi.</p><span class="db">asset → dalam_perbaikan</span></div>
           <div class="step"><span class="badge b-draft">Menunggu Review</span><span class="who">PIC / Admin: Kirim Hasil</span><p>Checklist seluruh komponen untuk semua asset.</p><span class="db">status_item_pendamping</span></div>
-          <div class="step"><span class="badge b-done">Selesai</span><span class="who">Admin: Review</span><p>Jadwal berikutnya dihitung, atau asset ditarik.</p><span class="db">asset tersedia / rusak · asset_log</span></div>
+          <div class="step"><span class="badge b-done">Selesai</span><span class="who">Admin: Review</span><p>Jadwal berikutnya dihitung, atau asset ditarik.</p><span class="db">asset tersedia / rusak · asset_trx_log</span></div>
         </div>
       </div>
 
@@ -296,7 +296,7 @@ footer{margin-top:64px;padding-top:18px;border-top:1px solid var(--line);color:v
 </tr>
 <tr>
 <td>Versi dokumen</td>
-<td>1.3 — 21 Oktober 2026</td>
+<td>1.4 — 22 Oktober 2026</td>
 </tr>
 <tr>
 <td>Dokumen terkait</td>
@@ -405,7 +405,7 @@ footer{margin-top:64px;padding-top:18px;border-top:1px solid var(--line);color:v
 <li>Mengunci asset sepanjang PM dan membuka kembali saat selesai/batal.</li>
 <li>Menurunkan hasil asset dari checklist komponen (hasil terberat).</li>
 <li>Menghitung jadwal PM berikutnya dari interval asset.</li>
-<li>Mencatat <code>asset_log</code> (<code>pemeliharaan_gudang</code>) dan notifikasi.</li>
+<li>Mencatat <code>asset_trx_log</code> (<code>pemeliharaan_gudang</code>) dan notifikasi.</li>
 </ul>
 <h2 id="s6"><span class="sec-no">06</span>Aktor</h2>
 <div class="table-wrap"><table>
@@ -499,7 +499,7 @@ footer{margin-top:64px;padding-top:18px;border-top:1px solid var(--line);color:v
 <h3>BR-002 — Tidak bentrok onboarding</h3>
 <p>Asset yang masih berstatus belum dicek pada onboarding aktif tidak boleh dipilih.</p>
 <h3>BR-003 — Asset dikunci</h3>
-<p>Saat PM dibuat, setiap asset menjadi <code>dalam_perbaikan</code> dan masuk <code>asset_log</code>. Karena statusnya bukan <code>tersedia</code>, asset otomatis hilang dari monitoring dan tidak bisa dipilih modul lain.</p>
+<p>Saat PM dibuat, setiap asset menjadi <code>dalam_perbaikan</code> dan masuk <code>asset_trx_log</code>. Karena statusnya bukan <code>tersedia</code>, asset otomatis hilang dari monitoring dan tidak bisa dipilih modul lain.</p>
 <h3>BR-004 — PIC wajib</h3>
 <p>PIC dipilih dari pendamping aktif (<code>flag_aktif = 1</code>). Dapat diganti selama fase <code>penjadwalan</code> atau <code>pelaksanaan</code>; memilih pendamping yang sama ditolak.</p>
 <h3>BR-005 — Perubahan dan pembatalan</h3>
@@ -560,7 +560,7 @@ footer{margin-top:64px;padding-top:18px;border-top:1px solid var(--line);color:v
     participant DB
     Admin-&gt;&gt;App: Buat PM
     App-&gt;&gt;API: POST pemeliharaan-gudang (1 request, N transaksi)
-    API-&gt;&gt;DB: Kunci asset, insert N header + N item, asset_log
+    API-&gt;&gt;DB: Kunci asset, insert N header + N item, asset_trx_log
     API--&gt;&gt;PIC: Notifikasi ditugaskan
     PIC-&gt;&gt;API: POST karyawan/pemeliharaan-gudang/{id}/hasil (checklist)
     API-&gt;&gt;DB: hasil per item, tgl_mulai, fase menunggu_review
@@ -650,7 +650,7 @@ footer{margin-top:64px;padding-top:18px;border-top:1px solid var(--line);color:v
 <td>Status asset dan jadwal PM (tidak diubah strukturnya)</td>
 </tr>
 <tr>
-<td><code>asset_log</code></td>
+<td><code>asset_trx_log</code></td>
 <td>Jejak (<code>jenis_log = pemeliharaan_gudang</code>)</td>
 </tr>
 </tbody>
@@ -661,7 +661,7 @@ footer{margin-top:64px;padding-top:18px;border-top:1px solid var(--line);color:v
     asset_trx_pemeliharaan_gudang }o--|| asset_pendamping_m : &quot;PIC&quot;
     asset_trx_pemeliharaan_gudang }o--o| asset_vendor_m : &quot;vendor&quot;
     asset_trx_pemeliharaan_gudang_item }o--|| asset_data : &quot;asset&quot;
-    asset_data ||--o{ asset_log : &quot;jejak&quot;
+    asset_data ||--o{ asset_trx_log : &quot;jejak&quot;
 </pre></div>
 <h2 id="s18"><span class="sec-no">18</span>Data Dictionary</h2>
 <h3>18.1 asset_trx_pemeliharaan_gudang</h3>
@@ -818,7 +818,7 @@ footer{margin-top:64px;padding-top:18px;border-top:1px solid var(--line);color:v
 </tr>
 </tbody>
 </table></div>
-<h3>18.3 asset_log (<code>jenis_log = pemeliharaan_gudang</code>)</h3>
+<h3>18.3 asset_trx_log (<code>jenis_log = pemeliharaan_gudang</code>)</h3>
 <p>Ditulis saat PM dibuat (<code>posisi</code> gudang → gudang), saat dibatalkan, dan saat review. <code>kondisi_akhir</code> = <code>rusak</code> untuk hasil 4–5.</p>
 <h2 id="s19"><span class="sec-no">19</span>Database Index</h2>
 <div class="table-wrap"><table>
@@ -898,7 +898,7 @@ footer{margin-top:64px;padding-top:18px;border-top:1px solid var(--line);color:v
 </table></div>
 <h2 id="s21"><span class="sec-no">21</span>Backend Business Logic</h2>
 <h3>21.1 Buat PM — <code>store</code></h3>
-<p>Transaksi DB dengan kunci perusahaan. Input <code>pemeliharaan[]</code> (1–50 elemen, satu elemen per asset). Seluruh elemen divalidasi lebih dulu (asset BR-001/002, jadwal tidak sebelum hari ini, vendor, lokasi, PIC) sebelum ada yang ditulis. Nomor urut header dan item dihitung sekali untuk N transaksi (batas 999 dicek untuk N sekaligus); setiap asset → satu header + satu item, <code>dalam_perbaikan</code> + <code>asset_log</code>. Pesan error bisnis diawali <code>Asset &lt;nama&gt;:</code>. Notifikasi <code>ditugaskan</code> dikirim per transaksi setelah commit.</p>
+<p>Transaksi DB dengan kunci perusahaan. Input <code>pemeliharaan[]</code> (1–50 elemen, satu elemen per asset). Seluruh elemen divalidasi lebih dulu (asset BR-001/002, jadwal tidak sebelum hari ini, vendor, lokasi, PIC) sebelum ada yang ditulis. Nomor urut header dan item dihitung sekali untuk N transaksi (batas 999 dicek untuk N sekaligus); setiap asset → satu header + satu item, <code>dalam_perbaikan</code> + <code>asset_trx_log</code>. Pesan error bisnis diawali <code>Asset &lt;nama&gt;:</code>. Notifikasi <code>ditugaskan</code> dikirim per transaksi setelah commit.</p>
 <h3>21.2 Ubah — <code>ubah</code></h3>
 <p>Hanya <code>penjadwalan</code>; validasi ulang jadwal dan PIC. Mengembalikan <code>pic_berubah</code> untuk memilih event notifikasi (<code>ditugaskan</code> bila PIC berganti, selain itu <code>diubah</code>).</p>
 <h3>21.3 Ganti PIC — <code>gantiPic</code></h3>
@@ -1331,7 +1331,7 @@ footer{margin-top:64px;padding-top:18px;border-top:1px solid var(--line);color:v
 </tbody>
 </table></div>
 <h2 id="s33"><span class="sec-no">33</span>Audit Trail</h2>
-<p>Kolom <code>user_*</code>/<code>tgl_*</code> per langkah (hasil, review, batal; <code>*_mulai</code> terisi bersama hasil) berisi <code>nik - nama</code>. <code>asset_log</code> mencatat pembuatan, pembatalan, dan review.</p>
+<p>Kolom <code>user_*</code>/<code>tgl_*</code> per langkah (hasil, review, batal; <code>*_mulai</code> terisi bersama hasil) berisi <code>nik - nama</code>. <code>asset_trx_log</code> mencatat pembuatan, pembatalan, dan review.</p>
 <h2 id="s34"><span class="sec-no">34</span>Notification</h2>
 <div class="table-wrap"><table>
 <thead>
@@ -1564,7 +1564,7 @@ footer{margin-top:64px;padding-top:18px;border-top:1px solid var(--line);color:v
 <tbody>
 <tr>
 <td><code>Asset_m</code>/<code>Asset_c</code></td>
-<td>Akses admin, nomor urut, <code>asset_log</code>, kunci perusahaan</td>
+<td>Akses admin, nomor urut, <code>asset_trx_log</code>, kunci perusahaan</td>
 </tr>
 <tr>
 <td><code>AssetPemeliharaanKaryawan_m</code></td>
@@ -1672,8 +1672,760 @@ footer{margin-top:64px;padding-top:18px;border-top:1px solid var(--line);color:v
 </tr>
 </tbody>
 </table></div>
+<h3>45.4 Walkthrough Lengkap dengan Contoh Data</h3>
+<p>Bagian ini mengikuti <strong>satu permintaan pemeliharaan gudang yang membuat dua transaksi</strong>: satu diisi hasilnya dan direview, satu dibatalkan. Setiap langkah menjelaskan apa yang dilakukan pengguna di mobile, apa yang dikirim, apa yang diproses API, dan apa yang tersimpan di database. Data bersifat <strong>sintetis</strong>, tetapi format ID, nama kolom, urutan proses, label status, dan pesan diambil dari kode (<code>AssetPemeliharaanGudang_m</code>, <code>AssetAdminPemeliharaanGudang_c</code>, <code>AssetKaryawanPemeliharaanGudang_c</code>, <code>AssetNotification</code>).</p>
+<p><strong>Skenario:</strong> Dua asset gudang jatuh tempo PM: AC Portable dan Mesin Fotokopi. Admin membuat PM untuk keduanya dalam satu request (satu transaksi per asset, masing-masing dengan jadwal, vendor, lokasi, dan PIC sendiri). Jadwal mesin fotokopi diubah. PIC AC mengisi checklist hasil dan admin mereview. PM mesin fotokopi dibatalkan.</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th style="text-align: center;">Langkah</th>
+<th>Pelaku</th>
+<th>Aksi</th>
+<th>Endpoint</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: center;">0</td>
+<td>Admin</td>
+<td>Membuka monitoring dan memuat opsi</td>
+<td>API-001 <code>GET /asset/pemeliharaan-gudang/monitoring</code>, API-002 <code>GET …/options</code></td>
+</tr>
+<tr>
+<td style="text-align: center;">1</td>
+<td>Admin</td>
+<td><strong>Buat PM</strong> untuk 2 asset</td>
+<td>API-004 <code>POST /asset/pemeliharaan-gudang</code></td>
+</tr>
+<tr>
+<td style="text-align: center;">2</td>
+<td>Admin</td>
+<td><strong>Ubah</strong> jadwal transaksi kedua</td>
+<td>API-005 <code>PUT /asset/pemeliharaan-gudang/{id}</code></td>
+</tr>
+<tr>
+<td style="text-align: center;">3</td>
+<td>PIC</td>
+<td><strong>Checklist Hasil</strong> transaksi pertama</td>
+<td>API-012 <code>POST /asset/karyawan/pemeliharaan-gudang/{id}/hasil</code></td>
+</tr>
+<tr>
+<td style="text-align: center;">4</td>
+<td>Admin</td>
+<td><strong>Review</strong> transaksi pertama</td>
+<td>API-009 <code>POST /asset/pemeliharaan-gudang/{id}/review</code></td>
+</tr>
+<tr>
+<td style="text-align: center;">5</td>
+<td>Admin</td>
+<td><strong>Batalkan</strong> transaksi kedua</td>
+<td>API-007 <code>POST /asset/pemeliharaan-gudang/{id}/batal</code></td>
+</tr>
+</tbody>
+</table></div>
+<h4>Data awal</h4>
+<p>Company <code>CMP001</code>. PM dibuat 22 Oktober 2026, periode ID <code>202610</code>. Belum ada transaksi PM gudang, log, atau notifikasi pada periode ini.</p>
+<p><strong><code>asset_data</code></strong> (semua <code>pemegang_asset = gudang</code>, <code>status_asset = tersedia</code>, <code>flag_pemeliharaan = 1</code>, <code>kondisi_awal = normal</code>)</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Kode</th>
+<th>id_asset_data</th>
+<th>nama_asset</th>
+<th style="text-align: center;">interval_pemeliharaan</th>
+<th>jadwal_pemeliharaan</th>
+<th>Komponen (<code>asset_data_item</code>)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>A40</td>
+<td>CMP00120260100040 (AC-0001)</td>
+<td>AC Portable</td>
+<td style="text-align: center;">3 bulan</td>
+<td>2026-10-28</td>
+<td><code>CMP001ITEM0501</code> Unit Utama (aset_utama), <code>CMP001ITEM0502</code> Filter (kelengkapan)</td>
+</tr>
+<tr>
+<td>A41</td>
+<td>CMP00120260100041 (MFK-0001)</td>
+<td>Mesin Fotokopi</td>
+<td style="text-align: center;">6 bulan</td>
+<td>2026-11-02</td>
+<td><code>CMP001ITEM0601</code> Unit Utama (aset_utama)</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong><code>asset_pendamping_m</code></strong> (PIC aktif, <code>flag_aktif = 1</code>)</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>id_asset_pendamping_m</th>
+<th>id_karyawan</th>
+<th>nik</th>
+<th>nama</th>
+<th>Peran</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>CMP001202601001</td>
+<td>KRY0020</td>
+<td>EMP-020</td>
+<td>Tono Pendamping</td>
+<td>PIC transaksi AC</td>
+</tr>
+<tr>
+<td>CMP001202601002</td>
+<td>KRY0021</td>
+<td>EMP-021</td>
+<td>Rina Pendamping</td>
+<td>PIC transaksi mesin fotokopi</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>Vendor:</strong> <code>asset_vendor_m</code> <code>CMP001VND001</code> = PT Servis Dingin. <strong>Admin:</strong> KRY0099 (ADM-001, Siti Admin) dan KRY0100 (ADM-002, Rudi Admin).</p>
+<p>Penomoran: header dan item <code>id_company + YYYYMM + 3 digit</code>, <code>no_trx = PML01-3-YYYYMMNNN</code> (<code>-3-</code> = gudang); log dan notifikasi 5 digit. <strong>Satu transaksi = satu asset</strong>; N asset memakai N nomor header dan N nomor item.</p>
+<hr />
+<h4>Langkah 0 — Admin membuka monitoring dan memuat opsi</h4>
+<p><strong>Mobile:</strong> Pemeliharaan (admin) → tab <strong>Gudang</strong> → <strong>Jatuh Tempo Pemeliharaan</strong> → <code>AssetPemeliharaanGudangApi.getMonitoring()</code> dan <code>getOptions()</code> (<code>admin: true</code>).</p>
+<p><strong>Dikirim</strong></p>
+<div class="code"><span class="code-lang">HTTP</span><pre><code class="language-http">GET /asset/pemeliharaan-gudang/monitoring
+GET /asset/pemeliharaan-gudang/options
+Authorization: Bearer &lt;access_token_admin&gt;
+</code></pre></div>
+<p><strong>Diproses API:</strong> <code>getMonitoring</code> mengembalikan asset <code>tersedia</code> di gudang dengan <code>flag_pemeliharaan = 1</code> dan <code>jadwal_pemeliharaan</code> ≤ hari ini + 14, urut jadwal terdekat, beserta <code>watchlist</code> dari PM sebelumnya. <code>getAdminOptions</code> memuat <code>vendor[]</code>, <code>pendamping[]</code> (hanya yang aktif), <code>asset[]</code> (eligible), dan <code>hasil[]</code>.</p>
+<p><strong>Database:</strong> hanya <code>SELECT</code>. Karena asset yang sudah dipilih akan menjadi <code>dalam_perbaikan</code>, ia <strong>otomatis hilang</strong> dari monitoring dan opsi.</p>
+<h4>Langkah 1 — Admin membuat PM untuk dua asset</h4>
+<p><strong>Mobile:</strong> admin memilih AC dan mesin fotokopi, lalu untuk <strong>setiap asset</strong> mengisi jadwal, vendor, lokasi, PIC, dan keterangan → <strong>Simpan</strong> → <code>AssetPemeliharaanGudangApi.store</code>.</p>
+<p><strong>Dikirim</strong></p>
+<div class="code"><span class="code-lang">HTTP</span><pre><code class="language-http">POST /asset/pemeliharaan-gudang
+</code></pre></div>
+<div class="code"><span class="code-lang">JSON</span><pre><code class="language-json">{
+  &quot;pemeliharaan&quot;: [
+    { &quot;id_asset_data&quot;: &quot;CMP00120260100040&quot;, &quot;tgl_jadwal&quot;: &quot;2026-10-24&quot;, &quot;jam_jadwal&quot;: &quot;09:00&quot;,
+      &quot;id_asset_vendor_m&quot;: &quot;CMP001VND001&quot;, &quot;nama_vendor&quot;: &quot;&quot;, &quot;keterangan_vendor&quot;: &quot;0812-0000-0000&quot;,
+      &quot;lokasi_pemeliharaan&quot;: &quot;Gudang Utama&quot;, &quot;id_asset_pendamping_m&quot;: &quot;CMP001202601001&quot;,
+      &quot;keterangan&quot;: &quot;Servis berkala&quot; },
+    { &quot;id_asset_data&quot;: &quot;CMP00120260100041&quot;, &quot;tgl_jadwal&quot;: &quot;2026-10-26&quot;, &quot;jam_jadwal&quot;: &quot;13:00&quot;,
+      &quot;id_asset_vendor_m&quot;: &quot;&quot;, &quot;nama_vendor&quot;: &quot;Teknisi Lepas&quot;, &quot;keterangan_vendor&quot;: &quot;&quot;,
+      &quot;lokasi_pemeliharaan&quot;: &quot;Gudang Cabang&quot;, &quot;id_asset_pendamping_m&quot;: &quot;CMP001202601002&quot;, &quot;keterangan&quot;: &quot;&quot; }
+  ]
+}
+</code></pre></div>
+<p><strong>Diproses API</strong> (<code>AssetAdminPemeliharaanGudang_c::storePemeliharaanGudang</code> → <code>AssetPemeliharaanGudang_m::store</code>, <strong>satu</strong> <code>DB::transaction</code> untuk semua elemen)
+1. Validasi: <code>pemeliharaan</code> wajib, 1–50 elemen; <code>id_asset_data</code> unik antar elemen; <code>nama_vendor</code> wajib bila <code>id_asset_vendor_m</code> kosong. Kunci error berbentuk <code>pemeliharaan.N.field</code>.
+2. <code>lockCompany</code>; cek admin. Asset dikunci <code>FOR UPDATE</code> (urut <code>id_asset_data</code>).
+3. <strong>Seluruh elemen divalidasi lebih dulu sebelum ada yang ditulis</strong>: asset dipegang <code>gudang</code> dan <code>tersedia</code> ("Hanya asset tersedia di gudang yang dapat dipelihara."), <code>flag_pemeliharaan = 1</code>, tidak ada di onboarding aktif, jadwal valid dan tidak sebelum hari ini, vendor, lokasi wajib, dan PIC harus ada di <strong>pendamping aktif</strong> ("PIC Pendamping wajib dipilih dari daftar pendamping aktif."). Pesan error diawali <code>Asset &lt;nama&gt;:</code>.
+4. Nomor urut header dan item dihitung <strong>sekali</strong> untuk N transaksi (batas 999 dicek untuk N sekaligus): header <code>…001</code> dan <code>…002</code>.
+5. Per asset: INSERT header (<code>fase_pemeliharaan = penjadwalan</code>, <code>status = proses</code>, snapshot PIC, vendor, jadwal), INSERT item (hasil NULL), UPDATE <code>asset_data</code> → <strong><code>dalam_perbaikan</code></strong>, INSERT <code>asset_trx_log</code> (gudang → gudang).
+6. Setelah commit: notifikasi <code>pemeliharaan_gudang.ditugaskan</code> <strong>per transaksi</strong> ke PIC masing-masing. Bila satu asset gagal, <strong>tidak ada</strong> transaksi yang tersimpan.</p>
+<p><strong>Hasil database</strong></p>
+<p><code>asset_trx_pemeliharaan_gudang</code> (2 baris)</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Kolom</th>
+<th>Transaksi 1</th>
+<th>Transaksi 2</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>id_asset_trx_pemeliharaan_gudang</td>
+<td>CMP001202610001</td>
+<td>CMP001202610002</td>
+</tr>
+<tr>
+<td>no_trx</td>
+<td>PML01-3-202610001</td>
+<td>PML01-3-202610002</td>
+</tr>
+<tr>
+<td>fase_pemeliharaan / status</td>
+<td><strong>penjadwalan</strong> / proses</td>
+<td><strong>penjadwalan</strong> / proses</td>
+</tr>
+<tr>
+<td>id_asset_pendamping_m</td>
+<td>CMP001202601001</td>
+<td>CMP001202601002</td>
+</tr>
+<tr>
+<td>id_pic_pendamping / nama_pic_pendamping / nik_pic_pendamping</td>
+<td>KRY0020 / Tono Pendamping / EMP-020</td>
+<td>KRY0021 / Rina Pendamping / EMP-021</td>
+</tr>
+<tr>
+<td>id_asset_vendor_m / nama_vendor</td>
+<td>CMP001VND001 / PT Servis Dingin</td>
+<td>NULL / Teknisi Lepas</td>
+</tr>
+<tr>
+<td>keterangan_vendor</td>
+<td>0812-0000-0000</td>
+<td><code>''</code></td>
+</tr>
+<tr>
+<td>tgl_pemeliharaan / jam_pemeliharaan</td>
+<td>2026-10-24 / 09:00:00</td>
+<td>2026-10-26 / 13:00:00</td>
+</tr>
+<tr>
+<td>lokasi_pemeliharaan</td>
+<td>Gudang Utama</td>
+<td>Gudang Cabang</td>
+</tr>
+<tr>
+<td>keterangan</td>
+<td>Servis berkala</td>
+<td><code>''</code></td>
+</tr>
+<tr>
+<td>tgl_input / user_input</td>
+<td>2026-10-22 09:00:00 / ADM-001 - Siti Admin</td>
+<td>sama</td>
+</tr>
+</tbody>
+</table></div>
+<p><code>asset_trx_pemeliharaan_gudang_item</code></p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>id_asset_trx_pemeliharaan_gudang_item</th>
+<th>id_asset_trx_pemeliharaan_gudang</th>
+<th>id_asset_data</th>
+<th>nama_asset</th>
+<th>status_item_pendamping</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>CMP001202610001</td>
+<td>CMP001202610001</td>
+<td>A40</td>
+<td>AC Portable</td>
+<td>NULL</td>
+</tr>
+<tr>
+<td>CMP001202610002</td>
+<td>CMP001202610002</td>
+<td>A41</td>
+<td>Mesin Fotokopi</td>
+<td>NULL</td>
+</tr>
+</tbody>
+</table></div>
+<p><code>asset_data</code>: A40 dan A41 <code>status_asset</code> <strong>tersedia → dalam_perbaikan</strong>, <code>pemegang_asset</code> tetap <code>gudang</code>, <code>user_update</code> = ADM-001 - Siti Admin.</p>
+<p><code>asset_trx_log</code> (2 baris, <code>jenis_log = pemeliharaan_gudang</code>)</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>id_asset_trx_log</th>
+<th>id_asset_data</th>
+<th>id_transaksi</th>
+<th>kondisi awal → akhir</th>
+<th>posisi awal → akhir</th>
+<th>user_input</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>CMP00120261000001</td>
+<td>A40</td>
+<td>CMP001202610001</td>
+<td>normal → normal</td>
+<td>gudang → gudang</td>
+<td>ADM-001 - Siti Admin</td>
+</tr>
+<tr>
+<td>CMP00120261000002</td>
+<td>A41</td>
+<td>CMP001202610002</td>
+<td>normal → normal</td>
+<td>gudang → gudang</td>
+<td>ADM-001 - Siti Admin</td>
+</tr>
+</tbody>
+</table></div>
+<p><code>notif_data</code> (2 baris, masing-masing ke PIC transaksinya)</p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>id_notif</th>
+<th>id_karyawan</th>
+<th>id_ref</th>
+<th>rute</th>
+<th>ket_notif_id</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>CMP00120261000001</td>
+<td>KRY0020</td>
+<td>CMP001202610001</td>
+<td>asset_detail_pemeliharaan_gudang</td>
+<td>Anda ditunjuk sebagai PIC pemeliharaan gudang PML01-3-202610001.</td>
+</tr>
+<tr>
+<td>CMP00120261000002</td>
+<td>KRY0021</td>
+<td>CMP001202610002</td>
+<td>asset_detail_pemeliharaan_gudang</td>
+<td>Anda ditunjuk sebagai PIC pemeliharaan gudang PML01-3-202610002.</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>Diterima mobile</strong> (HTTP 201)</p>
+<div class="code"><span class="code-lang">JSON</span><pre><code class="language-json">{ &quot;code&quot;: &quot;CREATED&quot;, &quot;message&quot;: &quot;…&quot;,
+  &quot;data&quot;: { &quot;records&quot;: [
+      { &quot;id&quot;: &quot;CMP001202610001&quot;, &quot;no_trx&quot;: &quot;PML01-3-202610001&quot;, &quot;fase_pemeliharaan&quot;: &quot;penjadwalan&quot;,
+        &quot;status_label&quot;: &quot;Penjadwalan&quot;, &quot;tab&quot;: &quot;jadwal&quot;, &quot;id_asset_data&quot;: &quot;CMP00120260100040&quot; },
+      { &quot;id&quot;: &quot;CMP001202610002&quot;, &quot;no_trx&quot;: &quot;PML01-3-202610002&quot;, &quot;fase_pemeliharaan&quot;: &quot;penjadwalan&quot;,
+        &quot;status_label&quot;: &quot;Penjadwalan&quot;, &quot;tab&quot;: &quot;jadwal&quot;, &quot;id_asset_data&quot;: &quot;CMP00120260100041&quot; } ],
+    &quot;jumlah&quot;: 2 } }
+</code></pre></div>
+<h4>Langkah 2 — Admin mengubah jadwal transaksi kedua</h4>
+<p><strong>Mobile:</strong> detail transaksi kedua (<code>aksi.ubah = true</code>) → <strong>Ubah</strong> → <code>AssetPemeliharaanGudangApi.ubah</code>.</p>
+<p><strong>Dikirim</strong></p>
+<div class="code"><span class="code-lang">HTTP</span><pre><code class="language-http">PUT /asset/pemeliharaan-gudang/CMP001202610002
+</code></pre></div>
+<div class="code"><span class="code-lang">JSON</span><pre><code class="language-json">{ &quot;tgl_jadwal&quot;: &quot;2026-10-27&quot;, &quot;jam_jadwal&quot;: &quot;10:00&quot;, &quot;id_asset_vendor_m&quot;: &quot;&quot;, &quot;nama_vendor&quot;: &quot;Teknisi Lepas&quot;,
+  &quot;keterangan_vendor&quot;: &quot;&quot;, &quot;lokasi_pemeliharaan&quot;: &quot;Gudang Cabang&quot;, &quot;id_asset_pendamping_m&quot;: &quot;CMP001202601002&quot;,
+  &quot;keterangan&quot;: &quot;Jadwal digeser&quot; }
+</code></pre></div>
+<p>Body sama dengan satu elemen <code>pemeliharaan[]</code>, tanpa <code>id_asset_data</code>.</p>
+<p><strong>Diproses API</strong> (<code>ubah</code>): hanya fase <code>penjadwalan</code>; jadwal, vendor, lokasi, dan PIC divalidasi ulang. Respons menandai apakah PIC berganti (<code>pic_berubah</code>): bila berganti, event <code>pemeliharaan_gudang.ditugaskan</code>; selain itu <code>pemeliharaan_gudang.diubah</code>.</p>
+<p><strong>Hasil database</strong></p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Tabel</th>
+<th>Perubahan</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>header <code>…002</code></td>
+<td>tgl_pemeliharaan <code>2026-10-26 → 2026-10-27</code>; jam_pemeliharaan <code>13:00:00 → 10:00:00</code>; keterangan = Jadwal digeser; tgl_update/user_update = ADM-001 - Siti Admin</td>
+</tr>
+<tr>
+<td>notif_data</td>
+<td>+ <code>CMP00120261000003</code>: KRY0021, id_ref <code>CMP001202610002</code>, rute <code>asset_detail_pemeliharaan_gudang</code>, "Jadwal pemeliharaan gudang PML01-3-202610002 telah diperbarui." (PIC tidak berganti)</td>
+</tr>
+</tbody>
+</table></div>
+<p>Admin juga bisa <strong>Ganti PIC</strong> (API-006, <code>POST …/{id}/pic</code> dengan <code>{id_asset_pendamping_m}</code>) selama <code>penjadwalan</code> atau <code>pelaksanaan</code>; PIC baru harus berbeda dari PIC saat ini.</p>
+<h4>Langkah 3 — PIC mengisi checklist hasil transaksi pertama</h4>
+<p><strong>Mobile:</strong> menu <strong>Tugas PIC</strong> → detail transaksi AC (<code>peran = pendamping</code>) → checklist tiap komponen (lima tingkat) → <code>AssetPemeliharaanGudangApi.hasil</code> (<code>admin: false</code>). <strong>Tidak ada langkah "Mulai PM"</strong>: hasil dapat dikirim langsung dari <code>penjadwalan</code>.</p>
+<p><strong>Dikirim</strong></p>
+<div class="code"><span class="code-lang">HTTP</span><pre><code class="language-http">POST /asset/karyawan/pemeliharaan-gudang/CMP001202610001/hasil
+</code></pre></div>
+<div class="code"><span class="code-lang">JSON</span><pre><code class="language-json">{
+  &quot;assets&quot;: [ {
+    &quot;id_asset_data&quot;: &quot;CMP00120260100040&quot;,
+    &quot;keterangan&quot;: &quot;Filter kotor&quot;,
+    &quot;items&quot;: [
+      { &quot;id_item&quot;: &quot;CMP001ITEM0501&quot;, &quot;hasil&quot;: &quot;normal&quot;, &quot;keterangan&quot;: &quot;&quot; },
+      { &quot;id_item&quot;: &quot;CMP001ITEM0502&quot;, &quot;hasil&quot;: &quot;komponen_rusak_tidak_segera&quot;, &quot;keterangan&quot;: &quot;Filter kotor dan sobek&quot; }
+    ] } ]
+}
+</code></pre></div>
+<p><strong>Diproses API</strong> (<code>AssetKaryawanPemeliharaanGudang_c</code> → <code>hasil</code>)
+1. <code>lockForActor</code>: aktor PIC lewat <code>id_karyawan</code>; header harus milik PIC itu (<code>id_pic_pendamping = KRY0020</code>) dan karyawan aktif. Admin dapat mengisi lewat API-008.
+2. Fase harus <code>penjadwalan</code> (atau <code>pelaksanaan</code> pada transaksi lama) ("Pemeliharaan sudah tidak berada pada tahap pelaksanaan.").
+3. <code>lockAssets</code>: seluruh asset transaksi harus masih di gudang dan <code>dalam_perbaikan</code> ("Status asset sudah berubah atau tidak lagi berada di gudang.").
+4. <strong>Seluruh asset</strong> transaksi wajib ada pada <code>assets[]</code> ("Seluruh asset wajib diperiksa.").
+5. <code>normalizeHasilChecklist</code>: semua komponen wajib dinilai, hasil salah satu dari lima tingkat, selain <code>normal</code> wajib keterangan.
+6. Hasil asset = komponen <strong>terberat</strong> (<code>komponen_rusak_tidak_segera</code>).
+7. UPDATE item (<code>status_item_pendamping</code>, <code>checklist_hasil</code>, <code>keterangan_konfirmasi</code>); UPDATE header: <code>fase_pemeliharaan = menunggu_review</code>, <code>tgl_mulai</code> dan <code>user_mulai</code> <strong>diisi otomatis</strong> bila kosong, <code>tgl_hasil</code>, <code>user_hasil</code>.
+8. Notifikasi <code>pemeliharaan_gudang.hasil</code> ke admin.</p>
+<p><strong>Hasil database</strong></p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Tabel</th>
+<th>Perubahan</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>item <code>…001</code></td>
+<td>status_item_pendamping NULL → <strong>komponen_rusak_tidak_segera</strong>; checklist_hasil = <code>[{"id_item":"CMP001ITEM0501","nama_item":"Unit Utama","jenis":"aset_utama","hasil":"normal","keterangan":""},{"id_item":"CMP001ITEM0502","nama_item":"Filter","jenis":"kelengkapan","hasil":"komponen_rusak_tidak_segera","keterangan":"Filter kotor dan sobek"}]</code>; keterangan_konfirmasi = Filter kotor</td>
+</tr>
+<tr>
+<td>header <code>…001</code></td>
+<td>fase <code>penjadwalan → menunggu_review</code>; tgl_mulai = tgl_hasil = 2026-10-24 10:30:00; user_mulai = user_hasil = EMP-020 - Tono Pendamping</td>
+</tr>
+<tr>
+<td>asset_data A40</td>
+<td>Tidak berubah (<code>dalam_perbaikan</code>)</td>
+</tr>
+<tr>
+<td>notif_data</td>
+<td>+ <code>CMP00120261000004</code> (KRY0099) dan <code>CMP00120261000005</code> (KRY0100), rute <code>asset_admin_detail_pemeliharaan_gudang</code>, "Hasil pemeliharaan gudang PML01-3-202610001 telah dikirim dan menunggu review."</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>Diterima mobile</strong> (HTTP 200): header <code>fase_pemeliharaan = menunggu_review</code>, <code>status_label = "Menunggu Review"</code>, <code>tab = "proses"</code>, dan peta <code>hasil</code>: <code>{"CMP00120260100040": "komponen_rusak_tidak_segera"}</code>.</p>
+<h4>Langkah 4 — Admin mereview transaksi pertama</h4>
+<p><strong>Mobile:</strong> detail admin (<code>aksi.review = true</code>) → <strong>Review</strong>, mengisi catatan dan tanggal rencana penggantian komponen → <code>AssetPemeliharaanGudangApi.review</code>.</p>
+<p><strong>Dikirim</strong></p>
+<div class="code"><span class="code-lang">HTTP</span><pre><code class="language-http">POST /asset/pemeliharaan-gudang/CMP001202610001/review
+</code></pre></div>
+<div class="code"><span class="code-lang">JSON</span><pre><code class="language-json">{ &quot;keterangan_review&quot;: &quot;Lanjut pantau filter&quot;,
+  &quot;items&quot;: [ { &quot;id_asset_data&quot;: &quot;CMP00120260100040&quot;, &quot;tgl_rencana_penggantian_komponen&quot;: &quot;2026-12-01&quot; } ] }
+</code></pre></div>
+<p><strong>Diproses API</strong> (<code>review</code>)
+1. Fase harus <code>menunggu_review</code> ("Hasil pemeliharaan belum dikirim."). Asset pada <code>items[]</code> harus termasuk transaksi ini.
+2. Hasil asset ini <strong>bukan</strong> 4–5, sehingga <code>jadwalBerikutnya</code>: hasil 3 (<code>komponen_rusak_tidak_segera</code>) <strong>wajib</strong> tanggal rencana penggantian komponen; bila <code>interval_pemeliharaan &gt; 0</code>, jadwal berikutnya = <strong>tanggal review + interval bulan</strong> (tanpa overflow akhir bulan).
+3. UPDATE <code>asset_data</code> → <strong><code>tersedia</code></strong> (kembali bisa dipakai modul lain) dan INSERT <code>asset_trx_log</code> (gudang → gudang).
+4. UPDATE header → <code>selesai</code>: <code>status = selesai</code>, <code>tgl_review</code>, <code>user_review</code>, <code>keterangan_review</code>.
+5. Notifikasi <code>pemeliharaan_gudang.selesai</code> ke PIC. Respons memuat <code>ditarik[]</code> (kosong di sini).</p>
+<p><strong>Hasil database</strong></p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Tabel</th>
+<th>Perubahan</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>item <code>…001</code></td>
+<td>tgl_rencana_penggantian_komponen = 2026-12-01; tgl_pemeliharaan_selanjutnya = 2027-01-24 00:00:00</td>
+</tr>
+<tr>
+<td>asset_data A40</td>
+<td>status_asset <code>dalam_perbaikan → tersedia</code>; <strong>jadwal_pemeliharaan <code>2026-10-28 → 2027-01-24</code></strong> (review 2026-10-24 + 3 bulan)</td>
+</tr>
+<tr>
+<td>header <code>…001</code></td>
+<td>fase <code>menunggu_review → selesai</code>; status <code>proses → selesai</code>; tgl_review = 2026-10-24 15:00:00; user_review = ADM-001 - Siti Admin; keterangan_review = Lanjut pantau filter</td>
+</tr>
+<tr>
+<td>notif_data</td>
+<td>+ <code>CMP00120261000006</code>: KRY0020, id_ref <code>CMP001202610001</code>, rute <code>asset_detail_pemeliharaan_gudang</code>, "Pemeliharaan gudang PML01-3-202610001 telah direview dan selesai."</td>
+</tr>
+</tbody>
+</table></div>
+<p><code>asset_trx_log</code> (1 baris baru): <code>CMP00120261000003</code>, A40, <code>pemeliharaan_gudang</code>, id_transaksi <code>CMP001202610001</code>, kondisi normal → normal, posisi gudang → gudang, <code>user_input</code> = ADM-001 - Siti Admin.</p>
+<p><strong>Diterima mobile</strong> (HTTP 200): <code>fase_pemeliharaan = selesai</code>, <code>status_label = "Selesai"</code>, <code>tab = "selesai"</code>, <code>ditarik = []</code>.</p>
+<h4>Langkah 5 — Admin membatalkan transaksi kedua</h4>
+<p><strong>Mobile:</strong> detail transaksi kedua → <strong>Batalkan</strong> dengan alasan → <code>AssetPemeliharaanGudangApi.batal</code>.</p>
+<p><strong>Dikirim</strong></p>
+<div class="code"><span class="code-lang">HTTP</span><pre><code class="language-http">POST /asset/pemeliharaan-gudang/CMP001202610002/batal
+</code></pre></div>
+<div class="code"><span class="code-lang">JSON</span><pre><code class="language-json">{ &quot;alasan_batal&quot;: &quot;Vendor berhalangan&quot; }
+</code></pre></div>
+<p><strong>Diproses API</strong> (<code>batal</code>): hanya fase <code>penjadwalan</code> ("Hanya pemeliharaan yang belum dimulai yang dapat dibatalkan."); alasan wajib ("Alasan pembatalan wajib diisi."). Asset dikunci dan dikembalikan <code>tersedia</code>, INSERT <code>asset_trx_log</code>, header <code>dibatalkan</code>. Notifikasi <code>pemeliharaan_gudang.dibatalkan</code> ke PIC.</p>
+<p><strong>Hasil database</strong></p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Tabel</th>
+<th>Perubahan</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>asset_data A41</td>
+<td>status_asset <code>dalam_perbaikan → tersedia</code>; <code>jadwal_pemeliharaan</code> <strong>tidak diubah</strong> (tetap 2026-11-02, sehingga muncul lagi di monitoring)</td>
+</tr>
+<tr>
+<td>header <code>…002</code></td>
+<td>fase <code>penjadwalan → dibatalkan</code>; status <code>proses → selesai</code>; tgl_batal = 2026-10-24 16:00:00; user_batal = ADM-001 - Siti Admin; alasan_batal = Vendor berhalangan</td>
+</tr>
+<tr>
+<td>asset_trx_log</td>
+<td>+ <code>CMP00120261000004</code>: A41, <code>pemeliharaan_gudang</code>, normal → normal, gudang → gudang</td>
+</tr>
+<tr>
+<td>notif_data</td>
+<td>+ <code>CMP00120261000007</code>: KRY0021, rute <code>asset_detail_pemeliharaan_gudang</code>, "Pemeliharaan gudang PML01-3-202610002 dibatalkan."</td>
+</tr>
+</tbody>
+</table></div>
+<p><strong>Diterima mobile</strong> (HTTP 200): <code>fase_pemeliharaan = dibatalkan</code>, <code>status_label = "Dibatalkan"</code>, <code>tab = "selesai"</code>.</p>
+<hr />
+<h4>Kondisi akhir data</h4>
+<p><code>asset_trx_pemeliharaan_gudang</code></p>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>id</th>
+<th>no_trx</th>
+<th>fase_pemeliharaan</th>
+<th>status</th>
+<th>PIC</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>CMP001202610001</td>
+<td>PML01-3-202610001</td>
+<td>selesai</td>
+<td>selesai</td>
+<td>KRY0020</td>
+</tr>
+<tr>
+<td>CMP001202610002</td>
+<td>PML01-3-202610002</td>
+<td>dibatalkan</td>
+<td>selesai</td>
+<td>KRY0021</td>
+</tr>
+</tbody>
+</table></div>
+<p><code>asset_data</code>: A40 → <code>tersedia</code>, <code>jadwal_pemeliharaan = 2027-01-24</code>; A41 → <code>tersedia</code>, jadwal tetap 2026-11-02. <code>asset_trx_log</code>: 4 baris. <code>notif_data</code>: 7 baris.</p>
+<hr />
+<h4>Variasi</h4>
+<p><strong>Hasil 4–5 (asset ditarik).</strong> Pada review, asset dengan hasil <code>komponen_rusak_perlu_segera</code> atau <code>tidak_dapat_diperbaiki</code>: <code>status_asset = rusak</code>, <code>kondisi_awal = rusak</code>, <code>ket_rusak</code> (temuan + catatan review, maks 255), <code>status_rusak = "sudah tidak bisa di gunakan"</code>; INSERT <code>asset_trx_log</code> dengan <code>kondisi_akhir = rusak</code>; item <code>nama_tabel_tindak_lanjut</code> = <code>asset_trx_perbaikan</code> (hasil 4) atau <code>asset_trx_disposal</code> (hasil 5); id asset masuk <code>ditarik[]</code>. Transaksi Perbaikan atau Disposal <strong>tidak dibuat otomatis</strong>. Pada gudang, <code>pemegang_asset</code> memang sudah <code>gudang</code>.</p>
+<p><strong>Hasil 1–2.</strong> Hasil <code>normal</code> atau <code>perlu_tindak_lanjut</code>: tanpa tanggal rencana penggantian; jadwal PM berikutnya tetap dihitung bila interval &gt; 0. Interval 0 tidak mengubah <code>jadwal_pemeliharaan</code>.</p>
+<p><strong>Admin mengisi hasil sebagai cadangan.</strong> <code>POST /asset/pemeliharaan-gudang/{id}/hasil</code> (API-008) dengan body sama; aktor admin (<code>user_id</code>), tanpa pemeriksaan kepemilikan PIC.</p>
+<p><strong>Request pembuatan gagal sebagian.</strong> Bila salah satu asset tidak lolos validasi (mis. sudah <code>dalam_perbaikan</code>), <strong>seluruh</strong> request ditolak, tidak ada transaksi atau perubahan asset yang tersimpan, dan pesan berbentuk <code>Asset &lt;nama&gt;: &lt;alasan&gt;</code>.</p>
+<hr />
+<h4>Kasus gagal yang umum</h4>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Situasi</th>
+<th>Langkah</th>
+<th style="text-align: center;">HTTP</th>
+<th>Pesan</th>
+<th>Perubahan database</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>pemeliharaan</code> kosong atau &gt; 50</td>
+<td>1</td>
+<td style="text-align: center;">422</td>
+<td>Minimal satu asset wajib dipilih. / validasi <code>pemeliharaan</code></td>
+<td>Tidak ada</td>
+</tr>
+<tr>
+<td>Asset duplikat dalam request</td>
+<td>1</td>
+<td style="text-align: center;">422</td>
+<td>Asset yang sama tidak boleh dipilih lebih dari sekali.</td>
+<td>Tidak ada</td>
+</tr>
+<tr>
+<td>Asset tidak ditemukan</td>
+<td>1</td>
+<td style="text-align: center;">422</td>
+<td>Asset <id> tidak ditemukan.</td>
+<td>Tidak ada</td>
+</tr>
+<tr>
+<td>Asset bukan <code>tersedia</code> di gudang</td>
+<td>1</td>
+<td style="text-align: center;">422</td>
+<td>Asset <nama>: Hanya asset tersedia di gudang yang dapat dipelihara.</td>
+<td>Tidak ada (seluruh request)</td>
+</tr>
+<tr>
+<td><code>flag_pemeliharaan</code> tidak aktif</td>
+<td>1</td>
+<td style="text-align: center;">422</td>
+<td>Asset <nama>: Asset tidak memiliki jadwal pemeliharaan aktif.</td>
+<td>Tidak ada</td>
+</tr>
+<tr>
+<td>Asset di onboarding aktif</td>
+<td>1</td>
+<td style="text-align: center;">422</td>
+<td>Asset <nama>: Asset sedang diproses pada onboarding.</td>
+<td>Tidak ada</td>
+</tr>
+<tr>
+<td>Jadwal kosong atau sebelum hari ini</td>
+<td>1, 2</td>
+<td style="text-align: center;">422</td>
+<td>Jadwal pemeliharaan wajib diisi dan tidak boleh sebelum tanggal pembuatan.</td>
+<td>Tidak ada</td>
+</tr>
+<tr>
+<td>Vendor atau lokasi kosong</td>
+<td>1, 2</td>
+<td style="text-align: center;">422</td>
+<td>Vendor / teknisi wajib diisi. / Lokasi pemeliharaan wajib diisi.</td>
+<td>Tidak ada</td>
+</tr>
+<tr>
+<td>PIC bukan pendamping aktif</td>
+<td>1, 2</td>
+<td style="text-align: center;">422</td>
+<td>PIC Pendamping wajib dipilih dari daftar pendamping aktif.</td>
+<td>Tidak ada</td>
+</tr>
+<tr>
+<td>Ubah di luar fase <code>penjadwalan</code></td>
+<td>2</td>
+<td style="text-align: center;">422</td>
+<td>Pemeliharaan hanya dapat diubah pada tahap penjadwalan.</td>
+<td>Tidak ada</td>
+</tr>
+<tr>
+<td>Ganti PIC di luar fase <code>penjadwalan</code>/<code>pelaksanaan</code></td>
+<td>–</td>
+<td style="text-align: center;">422</td>
+<td>PIC Pendamping tidak dapat diganti pada tahap ini.</td>
+<td>Tidak ada</td>
+</tr>
+<tr>
+<td>Ganti PIC dengan PIC yang sama</td>
+<td>–</td>
+<td style="text-align: center;">422</td>
+<td>Pendamping yang dipilih sudah menjadi PIC.</td>
+<td>Tidak ada</td>
+</tr>
+<tr>
+<td>Hasil di luar fase</td>
+<td>3</td>
+<td style="text-align: center;">422</td>
+<td>Pemeliharaan sudah tidak berada pada tahap pelaksanaan.</td>
+<td>Tidak ada</td>
+</tr>
+<tr>
+<td>Bukan PIC transaksi</td>
+<td>3</td>
+<td style="text-align: center;">404</td>
+<td>Pemeliharaan asset tidak ditemukan.</td>
+<td>Tidak ada</td>
+</tr>
+<tr>
+<td>Asset tidak lagi <code>dalam_perbaikan</code> di gudang</td>
+<td>3, 4, 5</td>
+<td style="text-align: center;">422</td>
+<td>Status asset sudah berubah atau tidak lagi berada di gudang.</td>
+<td>Tidak ada</td>
+</tr>
+<tr>
+<td>Asset belum semua diperiksa</td>
+<td>3</td>
+<td style="text-align: center;">422</td>
+<td>Seluruh asset wajib diperiksa.</td>
+<td>Tidak ada</td>
+</tr>
+<tr>
+<td>Komponen belum semua dinilai / hasil tidak valid</td>
+<td>3</td>
+<td style="text-align: center;">422</td>
+<td>Seluruh item aset wajib diperiksa. / Hasil pemeriksaan item tidak valid.</td>
+<td>Tidak ada</td>
+</tr>
+<tr>
+<td>Keterangan temuan kosong</td>
+<td>3</td>
+<td style="text-align: center;">422</td>
+<td>Keterangan temuan wajib diisi untuk hasil selain normal.</td>
+<td>Tidak ada</td>
+</tr>
+<tr>
+<td>Review sebelum hasil dikirim</td>
+<td>4</td>
+<td style="text-align: center;">422</td>
+<td>Hasil pemeliharaan belum dikirim.</td>
+<td>Tidak ada</td>
+</tr>
+<tr>
+<td>Hasil 3 tanpa tanggal rencana penggantian</td>
+<td>4</td>
+<td style="text-align: center;">422</td>
+<td>Tanggal rencana penggantian komponen wajib diisi.</td>
+<td>Tidak ada</td>
+</tr>
+<tr>
+<td>Asset pada rencana bukan bagian transaksi</td>
+<td>4</td>
+<td style="text-align: center;">422</td>
+<td>Asset pada rencana penggantian tidak termasuk transaksi ini.</td>
+<td>Tidak ada</td>
+</tr>
+<tr>
+<td>Batal di luar fase <code>penjadwalan</code></td>
+<td>5</td>
+<td style="text-align: center;">422</td>
+<td>Hanya pemeliharaan yang belum dimulai yang dapat dibatalkan.</td>
+<td>Tidak ada</td>
+</tr>
+<tr>
+<td>Batal tanpa alasan</td>
+<td>5</td>
+<td style="text-align: center;">422</td>
+<td>Alasan pembatalan wajib diisi.</td>
+<td>Tidak ada</td>
+</tr>
+<tr>
+<td>Pengguna bukan admin asset</td>
+<td>0–2, 4, 5</td>
+<td style="text-align: center;">403 / 422</td>
+<td>Pengguna tidak memiliki akses admin asset. / Pengguna tidak terdaftar sebagai admin asset.</td>
+<td>Tidak ada</td>
+</tr>
+<tr>
+<td>Token kedaluwarsa</td>
+<td>semua</td>
+<td style="text-align: center;">401</td>
+<td>Token telah expired. Mobile me-refresh token sekali lalu mengulang request.</td>
+<td>Tidak ada</td>
+</tr>
+</tbody>
+</table></div>
+<p>Semua pelanggaran aturan dilempar sebagai <code>InvalidArgumentException</code> di dalam <code>DB::transaction</code>, sehingga seluruh perubahan request itu dibatalkan. Pesan tersedia dalam bahasa Indonesia dan Inggris mengikuti header <code>locale</code>.</p>
+<h4>Ringkasan siapa mengerjakan apa</h4>
+<div class="table-wrap"><table>
+<thead>
+<tr>
+<th>Tahap</th>
+<th>Mobile</th>
+<th>API</th>
+<th>Database</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Monitoring dan opsi</td>
+<td>Daftar jatuh tempo, pilih asset</td>
+<td>Asset gudang tersedia H-14, opsi vendor/PIC aktif</td>
+<td><code>SELECT</code> saja</td>
+</tr>
+<tr>
+<td>Buat PM</td>
+<td>Form per asset: jadwal, vendor, lokasi, PIC</td>
+<td>Validasi semua elemen sebelum menulis, satu transaksi per asset, kunci asset</td>
+<td>header (N), item (N), <code>asset_data → dalam_perbaikan</code>, <code>asset_trx_log</code>, <code>notif_data</code></td>
+</tr>
+<tr>
+<td>Ubah / ganti PIC / batal</td>
+<td>Form ubah, dialog alasan</td>
+<td>Hanya fase penjadwalan, kembalikan asset bila batal</td>
+<td>header, <code>asset_data</code> (batal), <code>asset_trx_log</code> (batal), <code>notif_data</code></td>
+</tr>
+<tr>
+<td>Hasil</td>
+<td>Checklist komponen 5 tingkat oleh PIC</td>
+<td>Hasil terberat, <code>tgl_mulai</code> otomatis</td>
+<td>item, header, <code>notif_data</code></td>
+</tr>
+<tr>
+<td>Review</td>
+<td>Catatan dan rencana penggantian</td>
+<td>Asset → <code>tersedia</code> + jadwal berikutnya, atau <code>rusak</code> (4–5)</td>
+<td><code>asset_data</code>, item, header, <code>asset_trx_log</code>, <code>notif_data</code></td>
+</tr>
+<tr>
+<td>Tampilan</td>
+<td>JSON → model → widget; objek <code>aksi</code> per peran</td>
+<td><code>statusFase</code>, <code>peran</code></td>
+<td><code>SELECT</code> saja</td>
+</tr>
+</tbody>
+</table></div>
 <h2 id="s46"><span class="sec-no">46</span>Ringkasan Database Impact</h2>
-<p>Tabel baru: <code>asset_trx_pemeliharaan_gudang</code>, <code>…_item</code>. Perubahan: <code>asset_pendamping_m</code> (+<code>flag_aktif</code>, audit update, unik per karyawan), <code>asset_log.jenis_log</code> (+<code>pemeliharaan_gudang</code>). <code>asset_data</code> tidak diubah strukturnya.</p>
+<p>Tabel baru: <code>asset_trx_pemeliharaan_gudang</code>, <code>…_item</code>. Perubahan: <code>asset_pendamping_m</code> (+<code>flag_aktif</code>, audit update, unik per karyawan), <code>asset_trx_log.jenis_log</code> (+<code>pemeliharaan_gudang</code>). <code>asset_data</code> tidak diubah strukturnya.</p>
 <h2 id="s47"><span class="sec-no">47</span>Checklist Implementasi</h2>
 <h3>Database</h3>
 <ul>
@@ -1726,6 +2478,11 @@ footer{margin-top:64px;padding-top:18px;border-top:1px solid var(--line);color:v
 <td>1.3</td>
 <td>21 Okt 2026</td>
 <td>Pembuatan PM berubah menjadi <strong>1 transaksi = 1 asset</strong>: <code>POST asset/pemeliharaan-gudang</code> menerima <code>pemeliharaan[]</code> (1–50 elemen, atomik) dan membalas <code>{records[], jumlah}</code>; <code>asset_ids</code> dihapus; BR-012 ditambah. Mobile: <strong>Lanjut</strong> membuka halaman form per asset (kartu lipat, Samakan untuk semua, progres), bukan bottom sheet; pilihan dibatasi 50; back diblokir saat submit. Koreksi angka ringkasan: 10 admin + 3 PIC endpoint, 5 event notifikasi; jumlah test 16 API / 30 + 8 mobile. Tanpa perubahan skema.</td>
+</tr>
+<tr>
+<td>1.4</td>
+<td>22 Okt 2026</td>
+<td>Menambah §45.4 <em>Walkthrough Lengkap dengan Contoh Data</em> (satu request membuat dua transaksi per asset, ubah jadwal, checklist hasil PIC, review dengan jadwal PM berikutnya, pembatalan; variasi hasil 4–5, hasil 1–2, request gagal sebagian; kasus gagal). Sinkronisasi kode: tabel log ternyata <code>asset_trx_log</code> (<code>id_asset_trx_log</code>), bukan <code>asset_log</code>.</td>
 </tr>
 </tbody>
 </table></div>

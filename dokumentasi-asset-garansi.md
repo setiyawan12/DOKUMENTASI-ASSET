@@ -17,8 +17,8 @@
 | Database | `API/diagram-asset.dbml` (tanda `[NEW PML03]`) + SQL manual `Claude outputs/sql-pml03-klaim-garansi.sql`. ⚠️ SQL harus dijalankan manual (belum dijalankan saat dokumen ditulis) |
 | Mobile | Flutter (`professional_flutter_3_35`), `flutter_bloc`, `dio`, `image_picker` |
 | Web | ⚠️ Belum ditemukan: tidak ada source web di workspace |
-| Test otomatis | API `tests/Asset/AssetGaransiTest.php` (5 test) · Mobile `test/asset/asset_garansi_test.dart` (17 test) |
-| Versi dokumen | 1.1 — 12 Oktober 2026 |
+| Test otomatis | API `tests/Asset/AssetGaransiTest.php` (13 test) · Mobile `test/asset/asset_garansi_test.dart` (25 test) |
+| Versi dokumen | 1.3 — 22 Oktober 2026 |
 | Dokumen terkait | Perbaikan (PML02), Disposal (PML04), Pemeliharaan Gudang (PML01), Master Pendamping & Tugas PIC |
 
 ## 2. Daftar Isi
@@ -27,7 +27,7 @@ Lihat panel navigasi di samping.
 
 ## 3. Quick Overview
 
-Aset gudang yang rusak **selama masa garansi** diklaim ke vendor garansi. Admin membuat transaksi klaim (satu atau banyak aset), menunjuk **PIC Claim** dari master pendamping, dan menetapkan jadwal serah terima. PIC menerima aset dengan checklist (kondisi, **dokumen garansi**, kelengkapan), mengajukan klaim ke vendor (nomor referensi tiket dan bukti pengajuan wajib), memantau progres, lalu mengisi **hasil klaim**: diperbaiki, diganti unit baru, atau **ditolak**. Admin menerima aset kembali dan menentukan tindak lanjut; klaim ditolak diarahkan ke **Perbaikan (PML02)** atau **Disposal (PML04)**.
+Aset gudang yang rusak **selama masa garansi** diklaim ke vendor garansi. Admin membuat transaksi klaim (dipilih satu atau banyak aset sekaligus; sistem membuat satu transaksi per aset dengan jadwal dan PIC masing-masing), menunjuk **PIC Claim** dari master pendamping, dan menetapkan jadwal serah terima. PIC menerima aset dengan checklist (kondisi, **dokumen garansi**, kelengkapan), mengajukan klaim ke vendor (nomor referensi tiket dan bukti pengajuan wajib), memantau progres, lalu mengisi **hasil klaim**: diperbaiki, diganti unit baru, atau **ditolak**. Admin menerima aset kembali dan menentukan tindak lanjut; klaim ditolak diarahkan ke **Perbaikan (PML02)** atau **Disposal (PML04)**.
 
 | Aspek | Ringkasan |
 |---|---|
@@ -42,7 +42,7 @@ Aset gudang yang rusak **selama masa garansi** diklaim ke vendor garansi. Admin 
 
 | No | Fitur | Aktor |
 |---|---|---|
-| 1 | Buat klaim dari aset gudang rusak bergaransi aktif | Admin |
+| 1 | Buat klaim dari aset gudang rusak bergaransi aktif (pilih banyak aset, 1 transaksi per aset) | Admin |
 | 2 | Ubah jadwal/PIC sebelum aset diterima | Admin |
 | 3 | Terima aset (checklist kondisi, dokumen garansi, kelengkapan) | PIC (admin cadangan) |
 | 4 | Ajukan klaim ke vendor (nomor referensi, bukti) | PIC (admin cadangan) |
@@ -63,7 +63,7 @@ Aset gudang yang rusak **selama masa garansi** diklaim ke vendor garansi. Admin 
 
 - Hanya aset bergaransi aktif yang bisa diklaim.
 - Mengunci status aset sepanjang klaim dan menautkan unit pengganti.
-- Mencatat `asset_log` (`klaim_garansi_gudang`) dan notifikasi.
+- Mencatat `asset_trx_log` (`klaim_garansi_gudang`) dan notifikasi.
 
 ## 6. Aktor
 
@@ -230,7 +230,7 @@ stateDiagram-v2
 | `asset_trx_garansi_item` | Satu baris per aset (snapshot garansi, penerimaan, pengajuan, hasil, tindak lanjut) |
 | `asset_pendamping_m` | Master PIC Claim |
 | `asset_data` | Status aset dan data garansi |
-| `asset_log` | Jejak `klaim_garansi_gudang` |
+| `asset_trx_log` | Jejak `klaim_garansi_gudang` |
 
 ## 17. Relasi Database
 
@@ -297,7 +297,7 @@ erDiagram
 ## 21. Backend Business Logic
 
 ### 21.1 Buat — `store`
-Kunci aset, validasi BR-001 termasuk garansi aktif, PIC, jadwal; snapshot data garansi; aset → `menunggu_serah_terima_claim` + log.
+Menerima daftar `garansi[]` (1–50 elemen). Semua aset dikunci dan seluruh elemen divalidasi lebih dulu (BR-001 termasuk garansi aktif, PIC, jadwal per aset); lalu per aset dibuat satu header + satu item dengan nomor urut sendiri, snapshot data garansi; aset → `menunggu_serah_terima_claim` + log.
 
 ### 21.2 Ubah — `ubah`
 Hanya `menunggu_serah_terima`; mengembalikan `pic_berubah`.
@@ -363,12 +363,18 @@ Query `tab` (`jadwal|proses|selesai`), `limit` (1–50), `offset`. Respons `{fil
 
 ### API-003 — Buat
 ```json
-{"asset_ids": ["LP-1"], "tgl_jadwal": "2026-10-12", "jam_jadwal": "09:00",
- "id_asset_pendamping_m": "PDM-1", "keterangan_serah_terima": "Bawa kartu garansi"}
+{"garansi": [
+  {"id_asset_data": "LP-1", "tgl_jadwal": "2026-10-12", "jam_jadwal": "09:00",
+   "id_asset_pendamping_m": "PDM-1", "keterangan_serah_terima": "Bawa kartu garansi"},
+  {"id_asset_data": "LP-2", "tgl_jadwal": "2026-10-13", "jam_jadwal": "10:00",
+   "id_asset_pendamping_m": "PDM-2", "keterangan_serah_terima": ""}
+]}
 ```
 
+Array `garansi` berisi 1–50 elemen dengan `id_asset_data` unik; jadwal, PIC Claim, dan keterangan diisi **per aset**. Server membuat **satu transaksi (header + satu item) per aset** dalam satu transaksi database: bila satu elemen gagal validasi, tidak ada yang tersimpan. Field lama `asset_ids` sudah dihapus (request lama → 422). Respons sukses `201 CREATED`: `{"records": [{id, no_trx, fase_garansi, status_label, tab, id_asset_data}], "jumlah": N}`. Pesan error aturan bisnis diawali nama aset, mis. *"Asset Laptop A: …"*. Notifikasi `garansi.ditugaskan` dikirim per transaksi.
+
 ### API-004 — Ubah
-Body sama tanpa `asset_ids`.
+Body satu objek: `tgl_jadwal`, `jam_jadwal`, `id_asset_pendamping_m`, `keterangan_serah_terima` (tanpa `garansi[]` dan `id_asset_data`).
 
 ### API-005/014 — Terima
 ```json
@@ -427,7 +433,7 @@ Header, PIC, jadwal, `assets[]` (garansi, penerimaan, pengajuan, hasil, kembali,
 `HalamanAssetGaransi` (admin dan PIC): tab Serah Terima/Proses/Selesai.
 
 ### 26.2 Buat Klaim (admin)
-`HalamanBuatGaransi`: pilih aset rusak bergaransi aktif, lalu sheet jadwal + PIC.
+`HalamanBuatGaransi`: pilih satu atau banyak aset rusak bergaransi aktif (checkbox, maks. 50), lalu **Lanjut** membuka `HalamanFormBuatGaransi` dengan satu kartu per aset (tanggal, jam, PIC Claim, keterangan). Submit mengirim satu request `garansi[]`; server membuat satu transaksi per aset.
 
 ### 26.3 Detail
 `HalamanDetailAssetGaransi` dengan stepper (`AssetGaransiProsesWidgets`) dan tombol sesuai `aksi`.
@@ -483,14 +489,14 @@ Enum fase/status/hasil; FK; unik `(trx, asset)`.
 | Kondisi | Kode | Contoh pesan |
 |---|---|---|
 | Validasi request | 422 | "Nomor referensi klaim wajib diisi." |
-| Aturan bisnis | 422 `BUSINESS_RULE_VIOLATION` | "Satu atau beberapa asset tidak memiliki garansi aktif." |
+| Aturan bisnis | 422 `BUSINESS_RULE_VIOLATION` | "Asset Laptop A: Satu atau beberapa asset tidak memiliki garansi aktif." |
 | Bukan admin | 403 | "Pengguna tidak memiliki akses admin asset." |
 | Tidak ditemukan | 404 | "Klaim garansi tidak ditemukan." |
 | Sistem | 500 `SYSTEM_ERROR` | Pesan umum |
 
 ## 33. Audit Trail
 
-`user_terima`, `user_ajukan_pengembalian`, `user_terima_kembali`, `user_review` + timestamp; `asset_log` pada pembuatan dan review.
+`user_terima`, `user_ajukan_pengembalian`, `user_terima_kembali`, `user_review` + timestamp; `asset_trx_log` pada pembuatan dan review.
 
 ## 34. Notification
 
@@ -509,7 +515,7 @@ JWT; admin diperiksa per request; PIC dibatasi ke transaksinya dan harus karyawa
 ## 36. Manual Book User/Admin
 
 ### A. Admin — Membuat klaim
-Klaim Garansi → **+** → pilih aset rusak bergaransi → jadwal dan PIC Claim → simpan.
+Klaim Garansi → **+** → centang satu atau banyak aset rusak bergaransi → **Lanjut** → isi tanggal, jam, PIC Claim, dan keterangan **untuk tiap aset** → **Buat Klaim**. Setiap aset menjadi satu transaksi klaim sendiri.
 
 ### B. PIC — Menerima dan mengajukan
 Tugas PIC → **Terima Aset** (3 checklist) → **Ajukan Klaim** (vendor, nomor referensi, foto bukti) → ulangi **Ajukan Klaim** bila ada perubahan (mis. estimasi).
@@ -599,9 +605,293 @@ Klaim yang tertahan mengunci aset.
 | Bukti pengajuan | BR-004 | API-006 | Sheet ajukan | `nomor_referensi_klaim_garansi`, `foto_tanda_terima` |
 | Klaim ditolak | BR-008 | API-010 | Sheet review | `nama_tabel_tindak_lanjut` |
 
+### 45.4 Walkthrough Lengkap dengan Contoh Data
+
+Bagian ini mengikuti **satu permintaan klaim garansi untuk dua asset gudang rusak**; alur lengkap diikuti pada transaksi pertama sampai **klaim ditolak vendor** dan admin menetapkan tindak lanjut Perbaikan. Setiap langkah menjelaskan apa yang dilakukan pengguna di mobile, apa yang dikirim, apa yang diproses API, dan apa yang tersimpan di database. Data bersifat **sintetis**, tetapi format ID, nama kolom, urutan proses, label status, dan pesan diambil dari kode (`AssetGaransi_m`, `AssetAdminGaransi_c`, `AssetKaryawanGaransi_c`, `AssetNotification`).
+
+**Skenario:** Dua asset gudang rusak masih dalam masa garansi: laptop dan printer. Admin membuat klaim untuk keduanya (satu transaksi per asset). PIC Claim laptop menerima asset dengan checklist, mengajukan klaim ke vendor, memperbarui estimasi, lalu mengisi hasil "Klaim Ditolak". Admin menerima asset kembali dan menetapkan tindak lanjut **Perbaikan**, sehingga laptop tetap `rusak`.
+
+| Langkah | Pelaku | Aksi | Endpoint |
+|:---:|---|---|---|
+| 0 | Admin | Memuat opsi | API-001 `GET /asset/garansi/options` |
+| 1 | Admin | **Buat Klaim** untuk 2 asset | API-003 `POST /asset/garansi` |
+| 2 | PIC Claim | **Terima Aset** + 3 checklist | API-014 `POST /asset/karyawan/garansi/{id}/terima` |
+| 3 | PIC Claim | **Ajukan Klaim** ke vendor | API-015 `POST /asset/karyawan/garansi/{id}/ajukan` |
+| 4 | PIC Claim | **Perbarui** pengajuan (ajukan lagi) | API-015 |
+| 5 | PIC Claim | **Isi Hasil** + jadwal balik | API-016 `POST /asset/karyawan/garansi/{id}/hasil` |
+| 6 | Admin | **Terima Kembali** + checklist | API-009 `POST /asset/garansi/{id}/terima-kembali` |
+| 7 | Admin | **Review & Tindak Lanjut** | API-010 `POST /asset/garansi/{id}/review` |
+
+#### Data awal
+
+Company `CMP001`. Klaim dibuat 22 Oktober 2026, periode ID `202610`. Belum ada transaksi garansi, log, atau notifikasi pada periode ini.
+
+**`asset_data`** (semua `pemegang_asset = gudang`, `status_asset = rusak`, `kondisi_awal = rusak`, `flag_garansi = 1`, `id_asset_lokasi_m = CMP001202601001` = Gudang Pusat, `id_asset_vendor_garansi = CMP001VND002` = PT Garansi Laptop)
+
+| Kode | id_asset_data | nama_asset | ket_rusak | tgl_awal / tgl_akhir garansi | no_dokumen_garansi |
+|---|---|---|---|---|---|
+| A60 | CMP00120260100060 (LPT-0060) | Laptop Pro 14 | Layar berkedip | 2026-03-01 / 2027-03-01 | GRN-2026-001 |
+| A61 | CMP00120260100061 (PRN-0061) | Printer Warna | Tinta bocor | 2026-04-01 / 2027-04-01 | GRN-2026-002 |
+
+**`asset_pendamping_m`** (PIC Claim): `CMP001202601001` = Tono Pendamping (KRY0020, EMP-020) untuk laptop; `CMP001202601002` = Rina Pendamping (KRY0021, EMP-021) untuk printer. **Admin:** KRY0099 (ADM-001, Siti Admin), KRY0100 (ADM-002, Rudi Admin).
+
+Penomoran: header, item `id_company + YYYYMM + 3 digit`, `no_trx = PML03-YYYYMMNNN`; log dan notifikasi 5 digit. **Satu transaksi = tepat satu asset**: aksi pada transaksi (terima, ajukan, hasil, terima kembali) menolak `assets[]` yang tidak berisi tepat satu elemen.
+
+---
+
+#### Langkah 0 — Admin memuat opsi
+
+**Dikirim**
+```http
+GET /asset/garansi/options
+Authorization: Bearer <access_token_admin>
+```
+
+**Diproses API** (`AssetGaransi_m::getAdminOptions`): `vendor`, `pendamping` (aktif), asset gudang `rusak` dengan **garansi aktif**, asset gudang `tersedia` (calon unit baru), dan `hasil`. Untuk PIC, opsi hanya memuat vendor. **Database:** hanya `SELECT`.
+
+#### Langkah 1 — Admin membuat klaim untuk dua asset
+
+**Mobile:** Pemeliharaan (admin) → **Klaim Garansi** → buat; untuk **setiap asset** diisi jadwal serah terima, PIC Claim, dan keterangan.
+
+**Dikirim**
+```http
+POST /asset/garansi
+```
+```json
+{
+  "garansi": [
+    { "id_asset_data": "CMP00120260100060", "tgl_jadwal": "2026-10-23", "jam_jadwal": "09:00",
+      "id_asset_pendamping_m": "CMP001202601001", "keterangan_serah_terima": "Bawa kartu garansi" },
+    { "id_asset_data": "CMP00120260100061", "tgl_jadwal": "2026-10-23", "jam_jadwal": "10:00",
+      "id_asset_pendamping_m": "CMP001202601002", "keterangan_serah_terima": "" }
+  ]
+}
+```
+
+**Diproses API** (`AssetAdminGaransi_c::storeGaransi…` → `AssetGaransi_m::store`, **satu** `DB::transaction` untuk semua elemen)
+1. Validasi: `garansi` 1–50 elemen, `id_asset_data` unik. Field lama `asset_ids` ditolak (422).
+2. `lockCompany`; cek admin; asset dikunci `FOR UPDATE`.
+3. **Seluruh elemen divalidasi sebelum ada yang ditulis:** asset `gudang` dan `rusak` ("Hanya asset rusak di gudang yang dapat diklaim garansi."), `flag_garansi = 1` **dan** `tgl_akhir_garansi` belum lewat ("Satu atau beberapa asset tidak memiliki garansi aktif."), tidak ada di onboarding aktif, PIC dari pendamping aktif, jadwal tidak sebelum hari ini. Pesan error diawali `Asset <nama>:`.
+4. Nomor urut dihitung sekali untuk N transaksi: `…001` dan `…002`.
+5. Per asset: INSERT header (`fase_garansi = menunggu_serah_terima`, snapshot PIC, jadwal), INSERT item (snapshot asset, `keterangan_rusak`, gudang asal, **snapshot garansi**: `tgl_awal_garansi`, `tgl_akhir_garansi`, `no_dokumen_garansi`, `foto_dokumen_garansi`, vendor garansi sebagai vendor awal), UPDATE `asset_data` → **`menunggu_serah_terima_claim`**, INSERT `asset_trx_log` (gudang → gudang).
+6. Notifikasi `garansi.ditugaskan` ke PIC tiap transaksi. Bila satu asset gagal, **tidak ada** transaksi yang tersimpan.
+
+**Hasil database**
+
+`asset_trx_garansi` (2 baris)
+
+| Kolom | Transaksi 1 | Transaksi 2 |
+|---|---|---|
+| id_asset_trx_garansi / no_trx | CMP001202610001 / PML03-202610001 | CMP001202610002 / PML03-202610002 |
+| fase_garansi / status | **menunggu_serah_terima** / proses | **menunggu_serah_terima** / proses |
+| id_asset_pendamping_m | CMP001202601001 | CMP001202601002 |
+| id_pic_pendamping / nama_pic_pendamping / nik_pic_pendamping | KRY0020 / Tono Pendamping / EMP-020 | KRY0021 / Rina Pendamping / EMP-021 |
+| tgl_serah_terima / jam_serah_terima | 2026-10-23 / 09:00:00 | 2026-10-23 / 10:00:00 |
+| keterangan_serah_terima | Bawa kartu garansi | `''` |
+| tgl_input / user_input | 2026-10-22 09:00:00 / ADM-001 - Siti Admin | sama |
+
+`asset_trx_garansi_item` (transaksi 1; transaksi 2 serupa)
+
+| Kolom | Nilai |
+|---|---|
+| id_asset_trx_garansi_item / id_asset_trx_garansi | CMP001202610001 / CMP001202610001 |
+| id_asset_data / nama_asset / keterangan_rusak | A60 / Laptop Pro 14 / Layar berkedip |
+| id_asset_lokasi_m | CMP001202601001 |
+| tgl_awal_garansi / tgl_akhir_garansi / no_dokumen_garansi | 2026-03-01 / 2027-03-01 / GRN-2026-001 |
+| id_asset_vendor_m / nama_vendor | CMP001VND002 / PT Garansi Laptop |
+
+`asset_data`: A60 dan A61 `status_asset` **rusak → menunggu_serah_terima_claim**.
+
+`asset_trx_log` (2 baris, `jenis_log = klaim_garansi_gudang`): `CMP00120261000001` (A60) dan `CMP00120261000002` (A61), rusak → rusak, gudang → gudang, `user_input` = ADM-001 - Siti Admin.
+
+`notif_data`: `CMP00120261000001` ke KRY0020 ("Anda ditunjuk sebagai PIC klaim garansi PML03-202610001. Silakan terima aset sesuai jadwal.") dan `CMP00120261000002` ke KRY0021 (PML03-202610002), rute `asset_detail_garansi`.
+
+**Diterima mobile** (HTTP 201): `data.records[]` berisi `id`, `no_trx`, `fase_garansi = menunggu_serah_terima`, `status_label = "Menunggu Serah Terima"`, `tab = "jadwal"`, `id_asset_data` untuk tiap transaksi, dan `jumlah = 2`. Selama fase ini admin dapat **Ubah** jadwal dan PIC (API-004, `PUT /asset/garansi/{id}`); PIC berganti → `garansi.ditugaskan`, selain itu `garansi.diubah`.
+
+#### Langkah 2 — PIC menerima asset dengan tiga checklist
+
+**Dikirim**
+```http
+POST /asset/karyawan/garansi/CMP001202610001/terima
+```
+```json
+{ "assets": [ { "id_asset_data": "CMP00120260100060", "status_kesesuaian_item": "ya",
+                "status_dokumen_garansi_lengkap": "tidak", "status_kelengkapan_aset": "ya",
+                "keterangan": "Kartu garansi hilang" } ] }
+```
+
+**Diproses API** (`terima`): aktor PIC (header miliknya) atau admin sebagai cadangan; fase `menunggu_serah_terima` ("Klaim garansi tidak menunggu serah terima."); `assets[]` harus tepat satu asset ("Setiap transaksi klaim garansi harus berisi tepat satu asset."); tiga checklist `ya`/`tidak`; bila ada `tidak`, keterangan wajib. UPDATE item, UPDATE `asset_data` → `dalam_proses_klaim`, header `fase_garansi = proses_klaim`, `tgl_terima`, `user_terima`. Notifikasi `garansi.diterima` ke admin.
+
+**Hasil database**
+
+| Tabel | Perubahan |
+|---|---|
+| item `…001` | status_kesesuaian_item = ya; status_dokumen_garansi_lengkap = tidak; status_kelengkapan_aset = ya; keterangan_garansi_pendamping = Kartu garansi hilang |
+| asset_data A60 | status_asset `menunggu_serah_terima_claim → dalam_proses_klaim` |
+| header `…001` | fase `menunggu_serah_terima → proses_klaim`; tgl_terima = 2026-10-23 09:10:00; user_terima = EMP-020 - Tono Pendamping |
+| notif_data | + `CMP00120261000003` (KRY0099) dan `CMP00120261000004` (KRY0100), rute `asset_admin_detail_garansi`, "Tono Pendamping telah menerima aset klaim garansi PML03-202610001." |
+
+#### Langkah 3 — PIC mengajukan klaim ke vendor
+
+**Dikirim** (multipart karena ada foto)
+```http
+POST /asset/karyawan/garansi/CMP001202610001/ajukan
+```
+```json
+{ "assets": [ { "id_asset_data": "CMP00120260100060", "id_asset_vendor_m": "CMP001VND002", "nama_vendor": "",
+    "keterangan_vendor": "0812-0000-0000", "tgl_mulai_klaim_garansi": "2026-10-24",
+    "tgl_estimasi_selesai_klaim_garansi": "2026-10-31", "nomor_referensi_klaim_garansi": "TKT-001",
+    "foto_tanda_terima": "<file multipart atau base64>" } ] }
+```
+
+**Diproses API** (`prepareImageUpload` lalu `ajukan`): fase harus `proses_klaim` ("Klaim garansi belum berada pada tahap proses klaim."); validasi dilakukan **sebelum** foto diunggah. Wajib per asset: tanggal pengajuan dan nomor referensi ("Tanggal pengajuan dan nomor referensi klaim wajib diisi."), serta foto tanda terima ("Foto tanda terima / bukti pengajuan wajib diunggah."; foto lama dipertahankan bila tidak mengunggah baru). Vendor dari master atau teks bebas. Foto disimpan dengan key `CMP001/asset/garansi/<id_karyawan>/<hex>.<ext>`. `baru = true` pada pengajuan pertama. Notifikasi `garansi.diajukan` ke admin. Fase tidak berubah.
+
+**Hasil database**
+
+| Tabel | Perubahan |
+|---|---|
+| item `…001` | id_asset_vendor_m = CMP001VND002; nama_vendor = PT Garansi Laptop; keterangan_vendor = 0812-0000-0000; tgl_mulai_klaim_garansi = 2026-10-24; tgl_estimasi_selesai_klaim_garansi = 2026-10-31; nomor_referensi_klaim_garansi = TKT-001; foto_tanda_terima = `CMP001/asset/garansi/KRY0020/ef56ab78.jpg` |
+| notif_data | + `CMP00120261000005` (KRY0099) dan `CMP00120261000006` (KRY0100), "Tono Pendamping telah mengajukan klaim garansi PML03-202610001 ke vendor." |
+
+#### Langkah 4 — PIC memperbarui pengajuan
+
+**Tidak ada endpoint progres terpisah** (berbeda dari Perbaikan): PIC memanggil **ajukan lagi** selama `proses_klaim`, misalnya untuk memperbarui estimasi.
+
+**Dikirim:** `POST /asset/karyawan/garansi/CMP001202610001/ajukan` dengan body sama dan `tgl_estimasi_selesai_klaim_garansi = 2026-11-05`, tanpa foto baru.
+
+**Diproses API:** `baru = false` karena `tgl_mulai_klaim_garansi` sudah terisi, sehingga event menjadi **`garansi.progres`**. Item diperbarui (estimasi), foto lama tetap.
+
+**Hasil database:** item `tgl_estimasi_selesai_klaim_garansi 2026-10-31 → 2026-11-05`; notifikasi `CMP00120261000007` (KRY0099) dan `CMP00120261000008` (KRY0100), "Tono Pendamping memperbarui progres klaim garansi PML03-202610001.".
+
+#### Langkah 5 — PIC mengisi hasil klaim
+
+**Dikirim**
+```http
+POST /asset/karyawan/garansi/CMP001202610001/hasil
+```
+```json
+{ "tgl_pengembalian": "2026-11-06", "jam_pengembalian": "13:00",
+  "assets": [ { "id_asset_data": "CMP00120260100060", "hasil_klaim": "ditolak",
+    "keterangan_hasil_klaim": "Kerusakan karena pemakaian", "komponen_klaim": "",
+    "alasan_penolakan": "Garansi tidak mencakup kerusakan fisik" } ] }
+```
+
+**Diproses API** (`hasil`): fase `proses_klaim`; pengajuan klaim sudah terisi ("Pengajuan klaim seluruh asset harus diisi sebelum hasil klaim."); `assets[]` tepat satu asset ("Hasil klaim seluruh asset wajib diisi."). `hasil_klaim` ∈ diperbaiki/diganti_unit_baru/ditolak ("Hasil klaim tidak valid."); **keterangan hasil wajib**; `diperbaiki` wajib `komponen_klaim`; `ditolak` wajib `alasan_penolakan`. Jadwal serah terima balik wajib dan tidak boleh sebelum hari ini. Header → `menunggu_pengembalian` dengan `user_ajukan_pengembalian`. Notifikasi `garansi.hasil` ke admin.
+
+**Hasil database**
+
+| Tabel | Perubahan |
+|---|---|
+| item `…001` | hasil_klaim = ditolak; keterangan_hasil_klaim = Kerusakan karena pemakaian; komponen_klaim `''`; alasan_penolakan = Garansi tidak mencakup kerusakan fisik |
+| header | fase `proses_klaim → menunggu_pengembalian`; tgl_pengembalian = 2026-11-06; jam_pengembalian = 13:00:00; user_ajukan_pengembalian = EMP-020 - Tono Pendamping |
+| notif_data | + `CMP00120261000009` (KRY0099) dan `CMP00120261000010` (KRY0100), "Hasil klaim garansi PML03-202610001 telah diisi. Jadwal serah terima balik menunggu konfirmasi." |
+
+Admin dapat **Atur Jadwal Balik** (API-008, `POST …/jadwal-kembali`) selama `menunggu_pengembalian` ("Jadwal pengembalian hanya dapat diubah sebelum aset diterima kembali."); notifikasi `garansi.jadwal_kembali` ke PIC.
+
+#### Langkah 6 — Admin menerima asset kembali
+
+**Dikirim**
+```http
+POST /asset/garansi/CMP001202610001/terima-kembali
+```
+```json
+{ "assets": [ { "id_asset_data": "CMP00120260100060", "status_kesesuaian_kembali": "ya", "ket_kesesuaian_kembali": "" } ] }
+```
+
+**Diproses API** (`terimaKembali`): fase `menunggu_pengembalian` ("Klaim garansi tidak menunggu serah terima balik."); asset masih `dalam_proses_klaim`; `status_kesesuaian_kembali` `ya`/`tidak`, `tidak` wajib keterangan. Header → `menunggu_review`; `asset_data` belum berubah. Notifikasi `garansi.diterima_kembali` ke PIC.
+
+**Hasil database:** item `status_kesesuaian_kembali = ya`; header `fase_garansi menunggu_pengembalian → menunggu_review`, `tgl_terima_kembali = 2026-11-06 13:20:00`, `user_terima_kembali = ADM-001 - Siti Admin`; notifikasi `CMP00120261000011` ke KRY0020 ("Admin telah menerima kembali aset klaim garansi PML03-202610001.").
+
+#### Langkah 7 — Admin mereview dan menetapkan tindak lanjut
+
+**Dikirim**
+```http
+POST /asset/garansi/CMP001202610001/review
+```
+```json
+{ "keterangan_review": "Tindak lanjut ditetapkan",
+  "items": [ { "id_asset_data": "CMP00120260100060", "tindak_lanjut": "perbaikan" } ] }
+```
+
+**Diproses API** (`review`): `items[]` paling banyak satu elemen; fase `menunggu_review` ("Aset belum diterima kembali dari PIC Claim."). Untuk hasil **`ditolak`**, `tindak_lanjut` wajib `perbaikan` atau `disposal` ("Tindak lanjut klaim yang ditolak wajib dipilih (perbaikan atau disposal)."). Asset menjadi/tetap **`rusak`**, INSERT `asset_trx_log` (kondisi akhir rusak), item `nama_tabel_tindak_lanjut = asset_trx_perbaikan`, `status_garansi = selesai`; header `selesai`. Transaksi Perbaikan **tidak dibuat otomatis**. Notifikasi `garansi.selesai` ke PIC.
+
+**Hasil database**
+
+| Tabel | Perubahan |
+|---|---|
+| asset_data A60 | status_asset `dalam_proses_klaim → rusak` |
+| item `…001` | status_garansi `proses → selesai`; nama_tabel_tindak_lanjut = asset_trx_perbaikan |
+| header `…001` | fase `menunggu_review → selesai`; status `proses → selesai`; tgl_review = 2026-11-06 14:00:00; user_review = ADM-001 - Siti Admin; keterangan_review = Tindak lanjut ditetapkan |
+| asset_trx_log | + `CMP00120261000003`: A60, `klaim_garansi_gudang`, id_transaksi `CMP001202610001`, kondisi rusak → **rusak**, gudang → gudang |
+| notif_data | + `CMP00120261000012` ke KRY0020, "Klaim garansi PML03-202610001 telah direview dan selesai." |
+
+---
+
+#### Kondisi akhir data
+
+`asset_trx_garansi`: `CMP001202610001` / `PML03-202610001` `selesai`; `CMP001202610002` / `PML03-202610002` masih `menunggu_serah_terima`. `asset_data`: A60 → `rusak` (lanjut ke Perbaikan atau Disposal), A61 → `menunggu_serah_terima_claim`. `asset_trx_log`: 3 baris. `notif_data`: 12 baris.
+
+---
+
+#### Variasi
+
+**Diperbaiki.** `hasil_klaim = diperbaiki` (komponen wajib). Review: `asset_data` → `tersedia`, `kondisi_awal = normal`, `ket_rusak = ''`, `status_rusak = ''`; log kondisi akhir **normal**. Berbeda dari Perbaikan, lokasi gudang tidak diubah dan tidak ada pilihan gudang tujuan.
+
+**Diganti unit baru.** Review wajib `id_asset_data_baru` (berbeda dari asset lama dan asset lain pada review, bukan asset transaksi ini, lolos `assertUnitBaru`: gudang, `tersedia`, belum dipakai klaim atau perbaikan lain). Unit lama tetap `rusak` (log kondisi akhir rusak), item `id_asset_data_baru` terisi, `nama_tabel_tindak_lanjut = asset_trx_disposal`. Unit baru hanya ditautkan, statusnya tidak diubah.
+
+**Tindak lanjut Disposal.** Pada hasil `ditolak`, `tindak_lanjut = disposal` mengisi `nama_tabel_tindak_lanjut = asset_trx_disposal`; asset tetap `rusak`.
+
+**Admin sebagai cadangan.** API-005 sampai API-007 (`POST /asset/garansi/{id}/terima|ajukan|hasil`) memakai logika yang sama.
+
+---
+
+#### Kasus gagal yang umum
+
+| Situasi | Langkah | HTTP | Pesan | Perubahan database |
+|---|---|:---:|---|---|
+| `garansi` kosong atau > 50 | 1 | 422 | Minimal satu asset wajib dipilih. / Maksimal 50 asset dalam satu pengajuan. | Tidak ada |
+| Asset duplikat | 1 | 422 | Asset yang sama tidak boleh dipilih lebih dari sekali. | Tidak ada |
+| Asset bukan `rusak` di gudang | 1 | 422 | Asset <nama>: Hanya asset rusak di gudang yang dapat diklaim garansi. | Tidak ada (seluruh request) |
+| Garansi tidak aktif atau sudah lewat | 1 | 422 | Asset <nama>: Satu atau beberapa asset tidak memiliki garansi aktif. | Tidak ada |
+| Asset di onboarding aktif | 1 | 422 | Asset <nama>: Satu atau beberapa asset sedang diproses pada onboarding. | Tidak ada |
+| PIC bukan pendamping aktif | 1 | 422 | PIC Claim wajib dipilih dari daftar pendamping aktif. | Tidak ada |
+| Terima di luar fase | 2 | 422 | Klaim garansi tidak menunggu serah terima. | Tidak ada |
+| `assets[]` bukan tepat satu asset | 2, 3, 5, 6 | 422 | Setiap transaksi klaim garansi harus berisi tepat satu asset. | Tidak ada |
+| Checklist `tidak` tanpa keterangan | 2, 6 | 422 | Keterangan wajib diisi jika ada checklist yang tidak sesuai. / …kondisi asset tidak sesuai. | Tidak ada |
+| Ajukan di luar fase `proses_klaim` | 3, 4, 5 | 422 | Klaim garansi belum berada pada tahap proses klaim. | Tidak ada |
+| Tanggal pengajuan atau nomor referensi kosong | 3 | 422 | Tanggal pengajuan dan nomor referensi klaim wajib diisi. | Tidak ada |
+| Foto bukti tidak ada | 3 | 422 | Foto tanda terima / bukti pengajuan wajib diunggah. | Tidak ada |
+| Hasil sebelum pengajuan klaim | 5 | 422 | Pengajuan klaim seluruh asset harus diisi sebelum hasil klaim. | Tidak ada |
+| Hasil tidak valid atau keterangan kosong | 5 | 422 | Hasil klaim tidak valid. / Keterangan hasil klaim wajib diisi. | Tidak ada |
+| Diperbaiki tanpa komponen / ditolak tanpa alasan | 5 | 422 | Komponen yang diperbaiki wajib diisi. / Alasan penolakan wajib diisi. | Tidak ada |
+| Ubah jadwal balik di luar fase | – | 422 | Jadwal pengembalian hanya dapat diubah sebelum aset diterima kembali. | Tidak ada |
+| Terima kembali di luar fase | 6 | 422 | Klaim garansi tidak menunggu serah terima balik. | Tidak ada |
+| Review sebelum asset diterima kembali | 7 | 422 | Aset belum diterima kembali dari PIC Claim. | Tidak ada |
+| Tindak lanjut ditolak tidak dipilih | 7 | 422 | Tindak lanjut klaim yang ditolak wajib dipilih (perbaikan atau disposal). | Tidak ada |
+| Unit baru tidak dipilih atau tidak valid | 7 | 422 | Unit baru pengganti wajib dipilih untuk setiap asset yang diganti. / Unit baru harus sudah diregistrasi dan tersedia di gudang. | Tidak ada |
+| Asset pada review bukan bagian transaksi | 7 | 422 | Asset pada review tidak termasuk transaksi ini. | Tidak ada |
+| Asset sudah berubah status | 2–7 | 422 | Status asset sudah berubah atau tidak lagi berada di gudang. | Tidak ada |
+| Transaksi tidak ditemukan atau bukan milik PIC | semua | 422 | Klaim garansi tidak ditemukan. | Tidak ada |
+| Pengguna bukan admin asset | semua | 403 / 422 | Pengguna tidak memiliki akses admin asset. / Pengguna tidak terdaftar sebagai admin asset. | Tidak ada |
+| Token kedaluwarsa | semua | 401 | Token telah expired. Mobile me-refresh token sekali lalu mengulang request. | Tidak ada |
+
+Semua pelanggaran aturan dilempar sebagai `InvalidArgumentException` di dalam `DB::transaction`, sehingga seluruh perubahan request itu dibatalkan. Pesan tersedia dalam bahasa Indonesia dan Inggris mengikuti header `locale`.
+
+#### Ringkasan siapa mengerjakan apa
+
+| Tahap | Mobile | API | Database |
+|---|---|---|---|
+| Buat | Pilih asset bergaransi aktif, jadwal dan PIC per asset | Validasi semua elemen, snapshot garansi, satu transaksi per asset | header (N), item (N), `asset_data → menunggu_serah_terima_claim`, `asset_trx_log`, `notif_data` |
+| Terima aset | Tiga checklist | Validasi checklist, asset → `dalam_proses_klaim` | item, `asset_data`, header, `notif_data` |
+| Ajukan / perbarui | Vendor, tanggal, nomor referensi, foto | Unggah foto setelah validasi; `baru` menentukan event | item, `notif_data` |
+| Hasil | Hasil klaim dan jadwal balik | Validasi per jenis hasil | item, header, `notif_data` |
+| Terima kembali | Checklist admin | Validasi fase dan checklist | item, header, `notif_data` |
+| Review | Tindak lanjut atau unit baru | Asset → `tersedia` atau `rusak`, catat tabel tujuan | `asset_data`, item, header, `asset_trx_log`, `notif_data` |
+| Tampilan | JSON → model → widget; objek `aksi` per peran | `statusFase`, `peran`, foto sebagai URL | `SELECT` saja |
+
 ## 46. Ringkasan Database Impact
 
-Tabel baru `asset_trx_garansi`, `_item`. `asset_data.status_asset` +`menunggu_serah_terima_claim`; `asset_log.jenis_log` +`klaim_garansi_gudang`.
+Tabel baru `asset_trx_garansi`, `_item`. `asset_data.status_asset` +`menunggu_serah_terima_claim`; `asset_trx_log.jenis_log` +`klaim_garansi_gudang`.
 
 ## 47. Checklist Implementasi
 
@@ -625,3 +915,5 @@ Tabel baru `asset_trx_garansi`, `_item`. `asset_data.status_asset` +`menunggu_se
 |---|---|---|
 | 1.0 | 8 Okt 2026 | Dokumen awal PML03 |
 | 1.1 | 12 Okt 2026 | Sinkronisasi dengan kode: foto tanda terima kini disimpan di object storage MinIO (RISK-003 diturunkan ke RENDAH); path UI/model mobile mengikuti struktur folder baru; `AssetGaransiProsesWidgets` dan `AssetFotoPreview` dicatat |
+| 1.2 | 22 Okt 2026 | Buat klaim multi-aset: `POST asset/garansi` memakai `garansi[]` (1–50 elemen, jadwal/PIC/keterangan per aset), server membuat satu transaksi per aset secara atomik, respons `{records, jumlah}`; field `asset_ids` dihapus. Mobile: pilih banyak aset (checkbox) lalu form per aset (`HalamanFormBuatGaransi`); error validasi form tidak menempel setelah nilai diisi. Pesan batas nomor urut dilokalisasi. Test: API 13 test, mobile 25 test |
+| 1.3 | 22 Okt 2026 | Menambah §45.4 *Walkthrough Lengkap dengan Contoh Data* (buat klaim untuk dua asset, terima dengan tiga checklist, ajukan dan perbarui klaim, hasil ditolak, terima kembali, review dengan tindak lanjut Perbaikan; variasi diperbaiki, diganti unit baru, tindak lanjut Disposal; kasus gagal). Sinkronisasi kode: tabel log ternyata `asset_trx_log` (`id_asset_trx_log`), bukan `asset_log`; jenis log `klaim_garansi_gudang`; aksi pada transaksi menolak `assets[]` yang bukan tepat satu asset. |

@@ -18,8 +18,8 @@
 | Mobile | Flutter (`professional_flutter_3_35`), `flutter_bloc`, `dio` |
 | Web | ⚠️ Belum ditemukan: tidak ada source web di workspace |
 | Test otomatis | `API/tests/Asset/AssetUpgradeKaryawanTest.php` (5 test) |
-| Versi Dokumen | 1.2 |
-| Tanggal Dokumentasi | 2026-10-12 |
+| Versi Dokumen | 1.3 |
+| Tanggal Dokumentasi | 2026-10-22 |
 | Dokumen terkait | Onboarding (KRY01), Offboarding (KRY02), Retur (KRY04), Peminjaman (KRY05), Kerusakan (KRY06), Request/Penambahan |
 
 ---
@@ -41,7 +41,7 @@
 | Main Transaction | `asset_trx_upgrade_karyawan` |
 | Detail Transaction | `asset_trx_upgrade_karyawan_item` — satu baris per **atribut spesifikasi** (field `komponen` di `asset_data_item`) |
 | Asset Master | `asset_data` (status `dalam_perbaikan` selama service) + `asset_data_item` (nilai atribut diperbarui saat selesai) |
-| Log | `asset_log` `jenis_log = upgrade_karyawan` |
+| Log | `asset_trx_log` `jenis_log = upgrade_karyawan` |
 | Status | `status_approval` (proses/disetujui/ditolak) + `fase_upgrade` (`pengajuan → menunggu_pengambilan → dalam_service → menunggu_pengembalian → menunggu_review → selesai`) |
 | Hasil | `selesai` (nilai baru ditulis ke atribut) atau `tidak_dapat_diupgrade` (atribut tidak berubah) + biaya |
 | Siklus ulang | Admin dapat **Kirim Ulang ke Teknisi** saat review akhir |
@@ -280,7 +280,7 @@ sequenceDiagram
     K->>M: Serahkan Aset
     M->>CK: POST /asset/karyawan/upgrade/{id}/pelepasan
     CK->>U: pelepasan()
-    U->>DB: asset dalam_perbaikan, INSERT asset_log, fase dalam_service
+    U->>DB: asset dalam_perbaikan, INSERT asset_trx_log, fase dalam_service
     CK->>N: upgrade.dilepas (admin)
     A->>M: Hasil upgrade, nilai baru, biaya, jadwal pengembalian
     M->>CA: POST /asset/upgrade-karyawan/{id}/hasil
@@ -295,7 +295,7 @@ sequenceDiagram
     A->>M: Selesaikan Upgrade
     M->>CA: POST /asset/upgrade-karyawan/{id}/selesai (aksi terima)
     CA->>U: selesai()
-    U->>DB: tulis nilai baru ke asset_data_item, asset terpakai, INSERT asset_log, fase selesai
+    U->>DB: tulis nilai baru ke asset_data_item, asset terpakai, INSERT asset_trx_log, fase selesai
     CA->>N: upgrade.selesai (karyawan)
 ```
 
@@ -356,7 +356,7 @@ Status `asset_data`:
 | `asset_data` | Master | Status asset |
 | `asset_data_item` | Master komponen | Nilai atribut (`json_value.komponen[].value`) — **diperbarui** saat selesai |
 | `asset_kategori_m` | Master | Snapshot kategori |
-| `asset_log` | Log | `upgrade_karyawan` (enum ditambah oleh migration) |
+| `asset_trx_log` | Log | `upgrade_karyawan` (enum ditambah oleh migration) |
 | `data_karyawan`, `master_cabang`, `master_departemen` | Master HR | |
 | `asset_admin`, `master_company` | Akses / lock | |
 | `notif_data`, `users` | Notifikasi | |
@@ -374,7 +374,7 @@ erDiagram
     ASSET_DATA ||--o{ ASSET_DATA_ITEM : "id_asset_data"
     ASSET_DATA_ITEM ||--o{ ASSET_TRX_UPGRADE_KARYAWAN_ITEM : "kelengkapan_item.id_asset_data_item (JSON)"
     DATA_KARYAWAN ||--o{ ASSET_TRX_UPGRADE_KARYAWAN : "id_karyawan (logis)"
-    ASSET_DATA ||--o{ ASSET_LOG : "id_asset_data"
+    ASSET_DATA ||--o{ ASSET_TRX_LOG : "id_asset_data"
 
     ASSET_TRX_UPGRADE_KARYAWAN {
         varchar id_asset_trx_upgrade_karyawan PK
@@ -409,8 +409,8 @@ erDiagram
         varchar id_asset_data FK
         text json_value
     }
-    ASSET_LOG {
-        varchar id_asset_log PK
+    ASSET_TRX_LOG {
+        varchar id_asset_trx_log PK
         varchar id_asset_data FK
         enum jenis_log
     }
@@ -463,7 +463,7 @@ erDiagram
 | alasan_tidak_upgrade | varchar(255) | '' | Keterangan bila tidak dapat diupgrade |
 | id_company, tgl_input, user_input | – | – | |
 
-### 18.3 asset_log (`jenis_log = upgrade_karyawan`)
+### 18.3 asset_trx_log (`jenis_log = upgrade_karyawan`)
 | Kejadian | posisi | pemegang di log | kondisi |
 |---|---|---|---|
 | Serahkan aset | karyawan → gudang | `pemegang_asset = gudang`, id/nama pemegang = karyawan | kondisi_awal → kondisi_awal |
@@ -870,10 +870,10 @@ Asset Saya: menu **Upgrade** + banner **Serahkan Aset untuk Upgrade** / **Terima
 | Catatan | `catatan` | `storeAdmin` | header | catatan |
 | Jadwal | `tgl_jadwal`, `jam_jadwal`, `keterangan_jadwal` | `parseJadwalValue` | header | tgl/jam_pengambilan atau tgl/jam_pengembalian, keterangan_pengembalian |
 | Checklist pengambilan | `items[]` | `normalizeKondisiChecklist` | header | checklist_pengambilan |
-| Serahkan Aset | – | `pelepasan()` | asset_data / asset_log / header | status_asset / log / tgl_pelepasan |
+| Serahkan Aset | – | `pelepasan()` | asset_data / asset_trx_log / header | status_asset / log / tgl_pelepasan |
 | Hasil | `status_hasil`, `keterangan_hasil`, `biaya_upgrade`, `items[].nilai_baru` | `hasil()` | header / item | status_hasil, keterangan_hasil, biaya_upgrade / nilai_baru, alasan_tidak_upgrade |
 | Checklist penerimaan | `items[]` | `terima()` | header | checklist_pengembalian, tgl_diterima |
-| Selesaikan | `aksi = terima` | `selesai()` + `applyAtribut` | asset_data_item / asset_data / asset_log / header | json_value / status_asset / log / fase |
+| Selesaikan | `aksi = terima` | `selesai()` + `applyAtribut` | asset_data_item / asset_data / asset_trx_log / header | json_value / status_asset / log / fase |
 
 ---
 
@@ -928,7 +928,7 @@ Asset Saya: menu **Upgrade** + banner **Serahkan Aset untuk Upgrade** / **Terima
 | Kondisi sebelum & sesudah | ✅ | `checklist_pengambilan`, `checklist_pengembalian` (hanya versi terakhir) |
 | Nilai atribut lama/baru | ✅ | item `nilai_lama`, `nilai_baru` |
 | Hasil & biaya | ✅ | `status_hasil`, `keterangan_hasil`, `biaya_upgrade` (tertimpa bila kirim ulang) |
-| Perpindahan asset | ✅ | `asset_log upgrade_karyawan` |
+| Perpindahan asset | ✅ | `asset_trx_log upgrade_karyawan` |
 | Riwayat kirim ulang | ❌ | ⚠️ Belum ditemukan (checklist & hasil sebelumnya tertimpa) |
 | Perubahan `asset_data_item` | ⚠️ | Hanya `tgl_update/user_update` pada baris item |
 
@@ -1106,7 +1106,7 @@ Asset terpakai milik karyawan + atribut spesifikasi di asset_data_item
       ↓
 Upgrade (Jalur A / B → pengambilan → service → pengembalian → review ↺ kirim ulang → selesai) ──► Notifikasi
       ↓
-asset_data (dalam_perbaikan ↔ terpakai), asset_data_item (nilai baru), asset_log upgrade_karyawan
+asset_data (dalam_perbaikan ↔ terpakai), asset_data_item (nilai baru), asset_trx_log upgrade_karyawan
 
 Aturan silang:
   - Upgrade mengecek: upgrade lain, Kerusakan, Retur, Offboarding, Pemeliharaan PML01
@@ -1161,6 +1161,415 @@ Admin: Selesaikan Upgrade → selesai() → asset_data_item RAM value "16", asse
   → Mobile: Sebelum 8 / Sesudah 16, badge "Selesai"
 ```
 
+### 45.4 Walkthrough Lengkap dengan Contoh Data
+
+Bagian ini mengikuti **satu upgrade dari pengajuan sampai atribut diperbarui**, langkah demi langkah: apa yang dilakukan pengguna di mobile, apa yang dikirim, apa yang diproses API, dan apa yang tersimpan di database. Data bersifat **sintetis**, tetapi format ID, nama kolom, urutan proses, label status, dan pesan diambil dari kode (`AssetUpgradeKaryawan_m`, `AssetKaryawanUpgrade_c`, `AssetAdminUpgrade_c`, `AssetNotification`).
+
+**Skenario (Jalur A):** Dimas mengajukan upgrade RAM laptopnya dari 8 GB ke 16 GB. Admin menyetujui dan menjadwalkan pengambilan, memeriksa laptop (checklist pengambilan), Dimas menyerahkannya, admin mencatat hasil upgrade, Dimas menerima laptop kembali dengan checklist penerimaan, lalu admin menyelesaikan upgrade dan nilai RAM baru ditulis ke data komponen.
+
+| Langkah | Pelaku | Aksi | Endpoint |
+|:---:|---|---|---|
+| 0 | Karyawan | Memuat asset dan atribut yang bisa diupgrade | API-010 `GET /asset/karyawan/upgrade/options` |
+| 1 | Karyawan | **Ajukan Upgrade** | API-012 `POST /asset/karyawan/upgrade` |
+| 2 | Admin | **Setujui** + jadwal pengambilan | API-005 `POST /asset/upgrade-karyawan/{id}/review` |
+| 3 | Admin | **Checklist Pengambilan** | API-007 `POST /asset/upgrade-karyawan/{id}/checklist-pengambilan` |
+| 4 | Karyawan | **Serahkan Aset** | API-014 `POST /asset/karyawan/upgrade/{id}/pelepasan` |
+| 5 | Admin | **Hasil Upgrade** + jadwal pengembalian | API-008 `POST /asset/upgrade-karyawan/{id}/hasil` |
+| 6 | Karyawan | Checklist penerimaan, **Terima Aset** | API-015 `POST /asset/karyawan/upgrade/{id}/terima` |
+| 7 | Admin | **Selesaikan Upgrade** | API-009 `POST /asset/upgrade-karyawan/{id}/selesai` |
+
+#### Data awal
+
+Company `CMP001`. Pengajuan 22 Oktober 2026, periode ID `202610`. Belum ada upgrade, log, atau notifikasi pada periode ini.
+
+**`data_karyawan`**
+
+| id_karyawan | nik | nama_lengkap | Peran |
+|---|---|---|---|
+| KRY0010 | EMP-010 | Dimas Contoh | Pemohon, pemegang asset |
+| KRY0099 | ADM-001 | Siti Admin | Admin Asset (aktor) |
+| KRY0100 | ADM-002 | Rudi Admin | Admin Asset lain (ikut menerima notifikasi) |
+
+**`asset_data`**: A12 `CMP00120260100012` (LPT-0012), Laptop 14 inch, kategori Laptop (`CMP001202601002`), `status_asset = terpakai`, `pemegang_asset = karyawan`, `id_pemegang_asset = KRY0010`, `kondisi_awal = normal`.
+
+**`asset_data_item`** milik A12 (`json_value`, hanya yang `flag_spesifikasi` 1 atau 2 yang bisa dipilih)
+
+| id_asset_data_item | nama_item | flag_spesifikasi | komponen (`json_value.komponen[]`) |
+|---|---|:---:|---|
+| CMP001ITEM0101 | Laptop 14 inch | 1 (unit utama) | `{"id":"ram","label":"RAM","satuan":"GB","value":"8"}` |
+| CMP001ITEM0102 | Charger | 2 (kelengkapan) | `{"id":"daya","label":"Daya","satuan":"W","value":"65"}` |
+
+Setiap field `komponen` (kecuali bertipe `file`) menjadi satu **atribut** dengan `id_atribut = id_asset_data_item|id_komponen`, misalnya `CMP001ITEM0101|ram`.
+
+Penomoran: header dan item `id_company + YYYYMM + 3 digit`, `no_trx = KRY03-2-YYYYMMNNN`; log dan notifikasi 5 digit. Selama proses, **`pemegang_asset` tetap karyawan**; hanya `status_asset` yang berubah (`dalam_perbaikan`).
+
+---
+
+#### Langkah 0 — Karyawan membuka form
+
+**Mobile:** Asset Saya → **Upgrade** → **+** → form **Ajukan Upgrade Asset** → `AssetUpgradeApi.getOptions()`.
+
+**Dikirim**
+```http
+GET /asset/karyawan/upgrade/options
+Authorization: Bearer <access_token_dimas>
+```
+
+**Diproses API** (`AssetUpgradeKaryawan_m::getOptions`): asset milik karyawan yang `terpakai`, tidak diblokir flow lain, dan **punya atribut spesifikasi** (`atributAssets`); ditambah daftar urgensi.
+
+**Database:** hanya `SELECT`.
+
+**Diterima mobile** (ringkas)
+```json
+{ "code": "SUCCESS", "message": "Opsi upgrade asset berhasil ditemukan.",
+  "data": {
+    "assets": [ { "id_asset_data": "CMP00120260100012", "kode_asset": "LPT-0012", "nama_asset": "Laptop 14 inch",
+      "kategori_asset": "Laptop", "id_pemegang_asset": "KRY0010",
+      "atribut": [
+        { "id_atribut": "CMP001ITEM0101|ram", "id_asset_data_item": "CMP001ITEM0101", "id_komponen": "ram",
+          "nama_item": "Laptop 14 inch", "jenis": "aset_utama", "label": "RAM", "satuan": "GB", "nilai": "8" },
+        { "id_atribut": "CMP001ITEM0102|daya", "id_asset_data_item": "CMP001ITEM0102", "id_komponen": "daya",
+          "nama_item": "Charger", "jenis": "kelengkapan", "label": "Daya", "satuan": "W", "nilai": "65" } ] } ],
+    "urgensi": [ { "value": "normal", "label": "Normal" }, { "value": "secepatnya", "label": "Secepatnya" },
+                 { "value": "mendesak", "label": "Mendesak" } ] } }
+```
+Unit utama selalu ditampilkan lebih dulu daripada kelengkapan.
+
+#### Langkah 1 — Dimas mengajukan upgrade
+
+**Mobile:** Dimas memilih laptop, mencentang atribut **RAM**, mengisi detail "8 GB menjadi 16 GB", alasan, dan urgensi **Secepatnya**, lalu **Ajukan Upgrade** → `AssetUpgradeApi.storeKaryawan`.
+
+**Dikirim**
+```http
+POST /asset/karyawan/upgrade
+```
+```json
+{
+  "id_asset_data": "CMP00120260100012",
+  "alasan": "Aplikasi desain sering lambat",
+  "urgensi": "secepatnya",
+  "items": [ { "id_atribut": "CMP001ITEM0101|ram", "detail_upgrade": "8 GB menjadi 16 GB" } ]
+}
+```
+
+**Diproses API** (`AssetKaryawanUpgrade_c::storeUpgradeSaya` → `storeKaryawan` → `insertTransaction`, satu `DB::transaction`)
+1. Validasi: `alasan` wajib (maks 1000); `urgensi` ∈ normal/secepatnya/mendesak; `items` minimal 1; `id_atribut` unik; `detail_upgrade` wajib (maks 255).
+2. `lockCompany`; `activeKaryawan("KRY0010")`.
+3. Asset diambil `FOR UPDATE`: dipegang Dimas dan **`terpakai`**; `assetBlockMessage` memastikan tidak ada upgrade, kerusakan, retur, offboarding, atau pemeliharaan aktif.
+4. `atributAssets` + `normalizeItems`: setiap atribut harus milik asset itu dan tidak boleh duplikat.
+5. Generate ID: header urutan 1 → `CMP001202610001`, `no_trx = KRY03-2-202610001`.
+6. INSERT header (`sumber_pengajuan = karyawan`, `status_approval = proses`, `fase_upgrade = pengajuan`, jadwal nol) dan INSERT item per atribut (snapshot JSON dan `nilai_lama`).
+7. **`asset_data` tidak berubah.** Notifikasi `upgrade.diajukan` ke seluruh admin.
+
+**Hasil database**
+
+`asset_trx_upgrade_karyawan`
+
+| Kolom | Nilai |
+|---|---|
+| id_asset_trx_upgrade_karyawan | CMP001202610001 |
+| no_trx | KRY03-2-202610001 |
+| sumber_pengajuan | **karyawan** |
+| id_asset_kategori_m / nama_kategori | CMP001202601002 / Laptop |
+| detail_upgrade | RAM: 8 GB menjadi 16 GB |
+| alasan / urgensi / catatan | Aplikasi desain sering lambat / secepatnya / `''` |
+| id_karyawan / nik_karyawan / nama_karyawan | KRY0010 / EMP-010 / Dimas Contoh |
+| tgl_pengajuan | 2026-10-22 |
+| tgl_pengambilan / jam_pengambilan / tgl_pengembalian / jam_pengembalian | 0000-00-00 / 00:00:00 / 0000-00-00 / 00:00:00 |
+| status_approval / fase_upgrade / status_transaksi | **proses** / **pengajuan** / proses |
+| user_approval / tgl_approval | `''` / NULL |
+| tgl_input / user_input | 2026-10-22 09:00:00 / EMP-010 - Dimas Contoh |
+
+`asset_trx_upgrade_karyawan_item`
+
+| Kolom | Nilai |
+|---|---|
+| id_asset_trx_upgrade_item | CMP001202610001 |
+| id_asset_trx_upgrade / id_asset_data | CMP001202610001 / A12 |
+| kelengkapan_item | `{"id_atribut":"CMP001ITEM0101\|ram","id_asset_data_item":"CMP001ITEM0101","id_komponen":"ram","nama_item":"Laptop 14 inch","jenis":"aset_utama","label":"RAM","satuan":"GB","nilai":"8"}` |
+| detail_upgrade | 8 GB menjadi 16 GB |
+| nilai_lama / nilai_baru / alasan_tidak_upgrade | 8 / `''` / `''` |
+
+`notif_data` (2 baris, satu per admin)
+
+| id_notif | id_karyawan | id_ref | rute | ket_notif_id |
+|---|---|---|---|---|
+| CMP00120261000001 | KRY0099 | CMP001202610001 | asset_admin_detail_upgrade | Dimas Contoh mengajukan upgrade asset KRY03-2-202610001. |
+| CMP00120261000002 | KRY0100 | CMP001202610001 | asset_admin_detail_upgrade | Dimas Contoh mengajukan upgrade asset KRY03-2-202610001. |
+
+**Diterima mobile** (HTTP 201)
+```json
+{ "code": "CREATED", "message": "Pengajuan upgrade asset berhasil dikirim.",
+  "data": { "id": "CMP001202610001", "no_trx": "KRY03-2-202610001", "status_approval": "proses",
+            "fase_upgrade": "pengajuan", "status_label": "Menunggu Persetujuan", "tab": "pengajuan" } }
+```
+
+#### Langkah 2 — Admin menyetujui dan menjadwalkan pengambilan
+
+**Mobile:** notifikasi membuka detail admin (`aksi.review = true`). Admin memilih **Setujui**, mengisi tanggal 23 Okt 2026 pukul 10:00 dan catatan → `AssetUpgradeAdminApi.review`.
+
+**Dikirim**
+```http
+POST /asset/upgrade-karyawan/CMP001202610001/review
+```
+```json
+{ "keputusan": "disetujui", "ket_tolak": "", "tgl_jadwal": "2026-10-23", "jam_jadwal": "10:00",
+  "keterangan_jadwal": "Bawa ke ruang IT" }
+```
+
+**Diproses API** (`reviewUpgradeKaryawan` → `review`)
+1. Validasi: `keputusan` ∈ disetujui/ditolak; `ket_tolak` wajib bila ditolak. Cek admin, `lockCompany`.
+2. Header harus `status_approval = proses` ("Pengajuan upgrade sudah direview.").
+3. **Setuju:** asset masih `terpakai` dan dipegang Dimas (`lockHeldAsset`, "Status asset sudah berubah atau tidak lagi dipegang karyawan."); jadwal wajib `Y-m-d` + `H:i`, tanggal tidak boleh sebelum `tgl_pengajuan`.
+4. UPDATE header: `status_approval = disetujui`, `fase_upgrade = menunggu_pengambilan`, jadwal pengambilan, `keterangan_pengembalian` (kolom catatan untuk **kedua** jadwal), `user_approval`, `tgl_approval`, `tgl_update`, `user_update`.
+5. Notifikasi `upgrade.disetujui` ke karyawan.
+
+**Hasil database**
+
+| Tabel | Perubahan |
+|---|---|
+| header | status_approval `proses → disetujui`; fase_upgrade `pengajuan → menunggu_pengambilan`; tgl_pengambilan 2026-10-23; jam_pengambilan 10:00:00; keterangan_pengembalian = Bawa ke ruang IT; user_approval = ADM-001 - Siti Admin; tgl_approval = 2026-10-22 10:00:00; tgl_update/user_update sama |
+| asset_data A12 | **Tidak berubah** |
+| notif_data | + `CMP00120261000003`: KRY0010, id_ref `CMP001202610001`, rute `asset_detail_upgrade`, "Upgrade KRY03-2-202610001 disetujui. Cek jadwal pengambilan asset." |
+
+**Diterima mobile** (HTTP 200): `status_approval = disetujui`, `fase_upgrade = menunggu_pengambilan`, `status_label = "Menunggu Pengambilan"`, `tab = "proses"`, message "Review upgrade asset berhasil disimpan.". Admin masih bisa **Ubah Jadwal** (API-006) selama fase ini; yang berubah adalah kolom jadwal pengambilan, dengan notifikasi `upgrade.dijadwalkan`.
+
+#### Langkah 3 — Admin mengisi checklist pengambilan
+
+**Mobile:** pada hari pengambilan admin memeriksa komponen laptop → **Checklist Pengambilan** → `AssetUpgradeAdminApi.checklistPengambilan`.
+
+**Dikirim**
+```http
+POST /asset/upgrade-karyawan/CMP001202610001/checklist-pengambilan
+```
+```json
+{ "items": [
+    { "id_item": "CMP001ITEM0101", "kondisi": "normal", "ket_rusak": "" },
+    { "id_item": "CMP001ITEM0102", "kondisi": "rusak", "ket_rusak": "Kabel charger longgar" } ] }
+```
+
+**Diproses API** (`checklistPengambilanUpgrade` → `checklistPengambilan`)
+1. Validasi: `kondisi` ∈ normal/rusak; `ket_rusak` wajib bila rusak.
+2. Fase harus `menunggu_pengambilan` **dan** checklist masih kosong ("Checklist pengambilan tidak dapat diisi saat ini.").
+3. Asset harus masih dipegang karyawan (`terpakai` atau `dalam_perbaikan`).
+4. `normalizeKondisiChecklist`: **semua** komponen asset (unit utama dan kelengkapan) wajib dicek ("Seluruh item aset wajib dicek.").
+5. UPDATE header `checklist_pengambilan` (JSON). Notifikasi `upgrade.checklist_pengambilan` ke karyawan.
+
+**Hasil database**
+
+| Tabel | Perubahan |
+|---|---|
+| header | checklist_pengambilan NULL → `[{"id_item":"CMP001ITEM0101","nama_item":"Laptop 14 inch","jenis":"aset_utama","kondisi":"normal","ket_rusak":""},{"id_item":"CMP001ITEM0102","nama_item":"Charger","jenis":"kelengkapan","kondisi":"rusak","ket_rusak":"Kabel charger longgar"}]`; tgl_update/user_update diisi admin |
+| asset_data A12 | Tidak berubah |
+| notif_data | + `CMP00120261000004`: KRY0010, rute `asset_detail_upgrade`, "Admin telah memeriksa asset KRY03-2-202610001. Silakan konfirmasi penyerahan." |
+
+**Diterima mobile** (HTTP 200): message "Checklist pengambilan berhasil disimpan."; fase tetap `menunggu_pengambilan`, tetapi `aksi.pelepasan = true` bagi karyawan.
+
+#### Langkah 4 — Dimas menyerahkan aset
+
+**Mobile:** banner di Asset Saya (tombol aktif setelah checklist pengambilan ada) → **Serahkan Aset** → `AssetUpgradeApi.pelepasan(id)`.
+
+**Dikirim**
+```http
+POST /asset/karyawan/upgrade/CMP001202610001/pelepasan
+```
+Tanpa body.
+
+**Diproses API** (`pelepasanUpgradeSaya` → `pelepasan`)
+1. Karyawan aktif; header milik Dimas; fase `menunggu_pengambilan` **dan** `checklist_pengambilan` sudah ada ("Aset belum siap diserahkan untuk upgrade.").
+2. Asset dikunci dan harus masih dipegang Dimas.
+3. UPDATE `asset_data` A12 → **`dalam_perbaikan`** (`pemegang_asset` **tidak diubah**). INSERT `asset_trx_log` (`jenis_log = upgrade_karyawan`, karyawan → gudang).
+4. UPDATE header: `fase_upgrade = dalam_service`, `tgl_pelepasan`, `user_pelepasan`.
+5. Notifikasi `upgrade.dilepas` ke admin.
+
+**Hasil database**
+
+| Tabel | Perubahan |
+|---|---|
+| asset_data A12 | status_asset `terpakai → dalam_perbaikan`; pemegang_asset tetap karyawan; id_pemegang_asset tetap KRY0010; tgl_update = 2026-10-23 10:15:00; user_update = EMP-010 - Dimas Contoh |
+| header | fase_upgrade `menunggu_pengambilan → dalam_service`; tgl_pelepasan = 2026-10-23 10:15:00; user_pelepasan = EMP-010 - Dimas Contoh |
+
+`asset_trx_log` (1 baris)
+
+| Kolom | Nilai |
+|---|---|
+| id_asset_trx_log | CMP00120261000001 |
+| id_asset_data / jenis_log | A12 / upgrade_karyawan |
+| id_transaksi / nama_tabel_transaksi | CMP001202610001 / asset_trx_upgrade_karyawan |
+| kondisi_awal / kondisi_akhir | normal / normal |
+| posisi_awal / posisi_akhir | karyawan / gudang |
+| pemegang_asset / id_pemegang / nama_pemegang | gudang / KRY0010 / Dimas Contoh |
+| user_input | EMP-010 - Dimas Contoh |
+
+`notif_data`: `CMP00120261000005` (KRY0099) dan `CMP00120261000006` (KRY0100), rute `asset_admin_detail_upgrade`, "Dimas Contoh telah menyerahkan asset KRY03-2-202610001 untuk diupgrade."
+
+**Diterima mobile** (HTTP 200): `fase_upgrade = dalam_service`, `status_label = "Dalam Service"`, message "Aset berhasil diserahkan untuk upgrade.".
+
+#### Langkah 5 — Admin mencatat hasil upgrade
+
+**Mobile:** teknisi menyelesaikan pekerjaan di luar sistem. Admin membuka **Hasil Upgrade**, memilih **Selesai**, mengisi keterangan, biaya, nilai baru RAM, dan jadwal pengembalian 26 Okt 2026 pukul 15:00 → `AssetUpgradeAdminApi.hasil`.
+
+**Dikirim**
+```http
+POST /asset/upgrade-karyawan/CMP001202610001/hasil
+```
+```json
+{
+  "status_hasil": "selesai",
+  "keterangan_hasil": "RAM ditambah 1 keping 8 GB",
+  "biaya_upgrade": 650000,
+  "items": [ { "id_item": "CMP001202610001", "nilai_baru": "16" } ],
+  "tgl_jadwal": "2026-10-26", "jam_jadwal": "15:00", "keterangan_jadwal": ""
+}
+```
+
+**Diproses API** (`hasilUpgradeKaryawan` → `hasil`)
+1. Fase harus `dalam_service` ("Aset belum berada dalam proses upgrade.").
+2. `status_hasil` ∈ selesai/tidak_dapat_diupgrade; `keterangan_hasil` wajib (maks 1000); `biaya_upgrade` ≥ 0; jadwal pengembalian wajib.
+3. Per item: bila `selesai`, `nilai_baru` wajib ("Nilai baru setiap atribut wajib diisi."); bila `tidak_dapat_diupgrade`, `nilai_baru` dikosongkan dan `alasan_tidak_upgrade` diisi dari keterangan (maks 255).
+4. UPDATE header: `fase_upgrade = menunggu_pengembalian`, hasil, biaya, jadwal pengembalian, `keterangan_pengembalian`, serta **reset** `checklist_pengembalian = NULL` dan `tgl_diterima = NULL`.
+5. Notifikasi `upgrade.pengembalian` ke karyawan.
+
+**Hasil database**
+
+| Tabel | Perubahan |
+|---|---|
+| item `…001` | nilai_baru `'' → 16`; alasan_tidak_upgrade `''` |
+| header | fase_upgrade `dalam_service → menunggu_pengembalian`; status_hasil = selesai; keterangan_hasil = RAM ditambah 1 keping 8 GB; biaya_upgrade = 650000; tgl_pengembalian 2026-10-26; jam_pengembalian 15:00:00; checklist_pengembalian NULL; tgl_diterima NULL |
+| asset_data A12 | Tidak berubah (`dalam_perbaikan`) |
+| notif_data | + `CMP00120261000007`: KRY0010, rute `asset_detail_upgrade`, "Hasil upgrade KRY03-2-202610001 sudah tersedia. Cek jadwal pengembalian." |
+
+**Diterima mobile** (HTTP 200): `fase_upgrade = menunggu_pengembalian`, `status_label = "Menunggu Pengembalian"`, message "Hasil upgrade berhasil disimpan.". Ubah Jadwal pada fase ini mengubah jadwal **pengembalian**.
+
+#### Langkah 6 — Dimas menerima laptop dan mengisi checklist
+
+**Mobile:** Dimas menerima laptop, memeriksa semua komponen, memilih **Normal**, lalu **Terima Aset** → `AssetUpgradeApi.terima(id, items)`.
+
+**Dikirim**
+```http
+POST /asset/karyawan/upgrade/CMP001202610001/terima
+```
+```json
+{ "items": [
+    { "id_item": "CMP001ITEM0101", "kondisi": "normal", "ket_rusak": "" },
+    { "id_item": "CMP001ITEM0102", "kondisi": "normal", "ket_rusak": "" } ] }
+```
+
+**Diproses API** (`terimaUpgradeSaya` → `terima`)
+1. Karyawan aktif; header milik Dimas; fase harus `menunggu_pengembalian` ("Aset belum dijadwalkan untuk dikembalikan.").
+2. Asset harus `dalam_perbaikan` dan masih dipegang Dimas.
+3. `normalizeKondisiChecklist`: semua komponen wajib dicek, rusak wajib keterangan.
+4. UPDATE header: `fase_upgrade = menunggu_review`, `checklist_pengembalian` (JSON), `tgl_diterima = now`. **`asset_data` belum berubah.**
+5. Notifikasi `upgrade.diterima` ke admin.
+
+**Hasil database**
+
+| Tabel | Perubahan |
+|---|---|
+| header | fase_upgrade `menunggu_pengembalian → menunggu_review`; checklist_pengembalian = JSON hasil (semua normal); tgl_diterima = 2026-10-26 15:20:00; user_update = EMP-010 - Dimas Contoh |
+| asset_data A12 | Tidak berubah (`dalam_perbaikan`) |
+| notif_data | + `CMP00120261000008` (KRY0099) dan `CMP00120261000009` (KRY0100), rute `asset_admin_detail_upgrade`, "Dimas Contoh telah menerima asset upgrade KRY03-2-202610001." |
+
+**Diterima mobile** (HTTP 200): `fase_upgrade = menunggu_review`, `status_label = "Menunggu Review"`.
+
+#### Langkah 7 — Admin menyelesaikan upgrade
+
+**Mobile:** detail admin (`aksi.selesai = true`) → **Selesaikan Upgrade** → `AssetUpgradeAdminApi.selesai`.
+
+**Dikirim**
+```http
+POST /asset/upgrade-karyawan/CMP001202610001/selesai
+```
+```json
+{ "aksi": "terima" }
+```
+
+**Diproses API** (`selesaiUpgradeKaryawan` → `selesai`)
+1. Fase harus `menunggu_review` ("Checklist pengembalian belum dikirim karyawan.").
+2. Aksi `terima`: asset harus `dalam_perbaikan` dan dipegang Dimas.
+3. Bila `status_hasil = selesai` → **`applyAtribut`**: untuk tiap item, `asset_data_item.json_value.komponen[]` dengan `id` = `id_komponen` diperbarui `value`-nya ke `nilai_baru`, bila tidak kosong.
+4. UPDATE `asset_data` A12 → **`terpakai`**; INSERT `asset_trx_log` (gudang → karyawan).
+5. UPDATE header: `fase_upgrade = selesai`, `status_transaksi = selesai`.
+6. Notifikasi `upgrade.selesai` ke karyawan. Admin dapat menyelesaikan walau checklist penerimaan berisi item rusak.
+
+**Hasil database**
+
+| Tabel | Perubahan |
+|---|---|
+| asset_data_item `CMP001ITEM0101` | `json_value.komponen[id=ram].value`: **8 → 16**; tgl_update/user_update = admin |
+| asset_data A12 | status_asset `dalam_perbaikan → terpakai`; user_update = ADM-001 - Siti Admin |
+| header | fase_upgrade `menunggu_review → selesai`; status_transaksi `proses → selesai`; tgl_update 2026-10-26 16:00:00 |
+
+`asset_trx_log` (1 baris baru): `CMP00120261000002`, A12, `upgrade_karyawan`, kondisi normal → normal, posisi **gudang → karyawan**, id_pemegang KRY0010, nama_pemegang Dimas Contoh, `user_input` = ADM-001 - Siti Admin.
+
+`notif_data`: `CMP00120261000010` ke KRY0010, rute `asset_detail_upgrade`, "Upgrade asset KRY03-2-202610001 telah selesai."
+
+**Diterima mobile** (HTTP 200): `fase_upgrade = selesai`, `status_label = "Selesai"`, `tab = "selesai"`, message "Review akhir upgrade berhasil disimpan.".
+
+---
+
+#### Kondisi akhir data
+
+`asset_trx_upgrade_karyawan`: `CMP001202610001` / `KRY03-2-202610001`, `status_approval = disetujui`, `fase_upgrade = selesai`, `status_transaksi = selesai`, `status_hasil = selesai`, `biaya_upgrade = 650000`, `tgl_pelepasan = 2026-10-23 10:15:00`, `tgl_diterima = 2026-10-26 15:20:00`.
+
+`asset_trx_upgrade_karyawan_item`: `CMP001202610001`, `nilai_lama = 8`, `nilai_baru = 16`.
+
+`asset_data`: A12 → `terpakai` @KRY0010 (tidak pernah berpindah pemegang). `asset_data_item`: RAM = 16. `asset_trx_log`: 2 baris. `notif_data`: 10 baris.
+
+---
+
+#### Variasi
+
+**Jalur B (admin menginisiasi).** `POST /asset/upgrade-karyawan` dengan `id_karyawan`, `id_asset_data`, `items[]`, `catatan`, dan jadwal pengambilan (**wajib, tanggal ≥ hari ini**). Header langsung `sumber_pengajuan = admin`, `status_approval = disetujui`, `fase_upgrade = menunggu_pengambilan`, `alasan` dan `urgensi` kosong, `user_approval` = admin pembuat; notifikasi `upgrade.disetujui` ke karyawan. Langkah 3–7 sama.
+
+**Admin menolak.** Pada langkah 2, `keputusan = ditolak` dengan `ket_tolak` (wajib): `status_approval = ditolak`, `status_transaksi = selesai`, `fase_upgrade = selesai`, asset tidak berubah, notifikasi `upgrade.ditolak`.
+
+**Tidak dapat diupgrade.** Pada langkah 5, `status_hasil = tidak_dapat_diupgrade`: `nilai_baru` dikosongkan dan `alasan_tidak_upgrade` terisi. Pada langkah 7 `applyAtribut` **dilewati**, jadi nilai atribut tidak berubah, namun asset tetap kembali `terpakai` dan log tetap dibuat.
+
+**Kirim ulang ke teknisi.** Pada langkah 7, `{"aksi":"kirim_ulang","tgl_jadwal":"2026-10-30","jam_jadwal":"10:00","keterangan_jadwal":"Layar berkedip setelah upgrade"}`: jadwal wajib; `fase_upgrade` kembali `menunggu_pengambilan`, jadwal pengambilan diganti, `checklist_pengambilan = NULL` (harus diisi ulang oleh admin), asset tetap `dalam_perbaikan`, notifikasi `upgrade.kirim_ulang` ke karyawan. Siklus pengambilan, serah, hasil, terima berulang.
+
+---
+
+#### Kasus gagal yang umum
+
+| Situasi | Langkah | HTTP | Pesan | Perubahan database |
+|---|---|:---:|---|---|
+| Asset bukan milik karyawan | 1 | 422 | Asset bukan milik karyawan atau tidak ditemukan. | Tidak ada |
+| Asset bukan `terpakai` | 1 | 422 | Hanya asset berstatus terpakai yang dapat diupgrade. | Tidak ada |
+| Asset di flow lain | 1 | 422 | Asset sedang diproses pada upgrade lain. / …laporan kerusakan. / …retur. / …offboarding. / …pemeliharaan. | Tidak ada |
+| Atribut bukan milik asset / duplikat | 1 | 422 | Komponen upgrade tidak ditemukan pada asset. / Komponen yang sama tidak boleh dipilih lebih dari sekali. | Tidak ada |
+| Alasan, urgensi, atau detail kosong | 1 | 422 | Alasan upgrade wajib diisi. / Urgensi wajib dipilih. / Detail upgrade setiap komponen wajib diisi. | Tidak ada |
+| Review dua kali | 2 | 422 | Pengajuan upgrade sudah direview. | Tidak ada |
+| Asset sudah berubah status atau pemegang | 2, 3, 4, 6, 7 | 422 | Status asset sudah berubah atau tidak lagi dipegang karyawan. | Tidak ada |
+| Jadwal kosong / format salah / sebelum tanggal pengajuan | 2, 5, 7 | 422 | Tanggal dan jam serah terima wajib diisi. / Format jadwal serah terima tidak valid. / Tanggal serah terima tidak boleh sebelum tanggal pengajuan. | Tidak ada |
+| Ubah jadwal di luar fase yang diizinkan | – | 422 | Jadwal hanya dapat diubah sebelum serah terima dilakukan. | Tidak ada |
+| Checklist pengambilan diisi dua kali atau di fase lain | 3 | 422 | Checklist pengambilan tidak dapat diisi saat ini. | Tidak ada |
+| Komponen belum semua dicek | 3, 6 | 422 | Seluruh item aset wajib dicek. | Tidak ada |
+| Serahkan sebelum checklist pengambilan | 4 | 422 | Aset belum siap diserahkan untuk upgrade. | Tidak ada |
+| Hasil di luar fase `dalam_service` | 5 | 422 | Aset belum berada dalam proses upgrade. | Tidak ada |
+| Nilai baru kosong saat hasil `selesai` | 5 | 422 | Nilai baru setiap atribut wajib diisi. | Tidak ada |
+| Keterangan hasil kosong / biaya negatif | 5 | 422 | Keterangan hasil upgrade wajib diisi. / Biaya upgrade tidak boleh negatif. | Tidak ada |
+| Terima sebelum dijadwalkan kembali | 6 | 422 | Aset belum dijadwalkan untuk dikembalikan. | Tidak ada |
+| Selesaikan sebelum checklist penerimaan | 7 | 422 | Checklist pengembalian belum dikirim karyawan. | Tidak ada |
+| Pengguna bukan admin asset | 2, 3, 5, 7 | 403 / 422 | Pengguna tidak memiliki akses admin asset. / Pengguna tidak terdaftar sebagai admin asset. | Tidak ada |
+| Karyawan tidak aktif | 1, 4, 6 | 422 | Karyawan tidak ditemukan atau tidak aktif. | Tidak ada |
+| Token kedaluwarsa | semua | 401 | Token telah expired. Mobile me-refresh token sekali lalu mengulang request. | Tidak ada |
+
+Semua pelanggaran aturan dilempar sebagai `InvalidArgumentException` di dalam `DB::transaction`, sehingga seluruh perubahan request itu dibatalkan. Pesan tersedia dalam bahasa Indonesia dan Inggris mengikuti header `locale`.
+
+#### Ringkasan siapa mengerjakan apa
+
+| Tahap | Mobile | API | Database |
+|---|---|---|---|
+| Ajukan / Buat | Pilih asset, atribut, detail, alasan, urgensi (Jalur A); atau karyawan + jadwal (Jalur B) | Validasi atribut, cek flow lain, snapshot nilai lama | header, item (`nilai_lama`), `notif_data` |
+| Review dan jadwal | Setujui/tolak, tanggal dan jam | Validasi jadwal, set fase | header, `notif_data` |
+| Checklist pengambilan | Kondisi tiap komponen | Semua komponen wajib, simpan JSON | header (`checklist_pengambilan`), `notif_data` |
+| Serahkan | Tombol Serahkan Aset | Asset → `dalam_perbaikan`, log, fase `dalam_service` | `asset_data`, `asset_trx_log`, header, `notif_data` |
+| Hasil | Status hasil, biaya, nilai baru, jadwal kembali | Simpan nilai baru, reset checklist penerimaan | item, header, `notif_data` |
+| Terima | Checklist penerimaan | Simpan JSON, fase `menunggu_review` | header, `notif_data` |
+| Selesaikan / kirim ulang | Tombol review akhir | Tulis nilai baru ke komponen, asset → `terpakai`, atau ulang siklus | `asset_data_item`, `asset_data`, `asset_trx_log`, header, `notif_data` |
+| Tampilan | JSON → model → widget; objek `aksi` menentukan tombol | `upgradeStatusMetadata`, `aksi`, `komponen` | `SELECT` saja |
+
 ---
 
 ## 46. Ringkasan Database Impact
@@ -1171,10 +1580,10 @@ Admin: Selesaikan Upgrade → selesai() → asset_data_item RAM value "16", asse
 | Review | notif | header | – |
 | Ubah jadwal | notif | header | – |
 | Checklist pengambilan | notif | header | – |
-| Serahkan | asset_log, notif | asset_data, header | – |
+| Serahkan | asset_trx_log, notif | asset_data, header | – |
 | Hasil | notif | item, header | – |
 | Terima | notif | header | – |
-| Selesaikan | asset_log, notif | asset_data_item (bila berhasil), asset_data, header | – |
+| Selesaikan | asset_trx_log, notif | asset_data_item (bila berhasil), asset_data, header | – |
 | Kirim ulang | notif | header | – |
 
 ---
@@ -1210,6 +1619,7 @@ Admin: Selesaikan Upgrade → selesai() → asset_data_item RAM value "16", asse
 
 | Version | Date | Changes |
 |---|---|---|
+| 1.3 | 2026-10-22 | Menambah §45.4 *Walkthrough Lengkap dengan Contoh Data* (Jalur A dari ajukan sampai atribut diperbarui: review, checklist pengambilan, serahkan, hasil, terima, selesaikan; variasi Jalur B, tolak, tidak dapat diupgrade, kirim ulang; kasus gagal). Sinkronisasi kode: tabel log ternyata `asset_trx_log` (`id_asset_trx_log`), bukan `asset_log`. |
 | 1.2 | 2026-10-12 | RISK-001 ditutup: Retur kini menolak asset dalam upgrade aktif (TC-19, edge case). Sinkronisasi dengan kode 12 Okt 2026: path file mobile mengikuti struktur folder baru (`UI/Modul/Asset/<Fitur>/` berhuruf kapital, model di `Repository/Model/Asset/`). |
 | 1.1 | 2026-09-28 | Offboarding kini menolak asset dalam upgrade aktif (RISK-001 sebagian selesai). BR-002 & error 422 menambah blokir Pemeliharaan (PML01). Helper checklist `normalizeChecklist` dipindah ke `Asset_m::normalizeKondisiChecklist` (dipakai bersama PML01, perilaku sama). TC-04, TC-19, edge case, dependency, checklist disesuaikan |
 | 1.0 | 2026-09-28 | Initial documentation — disusun dari source lokal API & MOBILE |

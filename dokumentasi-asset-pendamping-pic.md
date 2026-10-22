@@ -18,7 +18,7 @@
 | Mobile | Flutter (`professional_flutter_3_35`), `flutter_bloc`, `dio` |
 | Web | ⚠️ Belum ditemukan |
 | Test otomatis | API: `AssetPemeliharaanGudangTest::test_pendamping_master_store_and_reactivate` (+ ringkasan PIC di `AssetGaransiTest`, `AssetPerbaikanTest`, `AssetPemeliharaanGudangTest`) · Mobile: `test/asset/asset_pic_dashboard_test.dart` (5 test) |
-| Versi dokumen | 1.2 — 12 Oktober 2026 |
+| Versi dokumen | 1.3 — 22 Oktober 2026 |
 | Dokumen terkait | Pemeliharaan Gudang, Klaim Garansi, Perbaikan |
 
 ## 2. Daftar Isi
@@ -458,6 +458,255 @@ Enam fungsi hitung/daftar per panggilan; aman pada volume saat ini.
 | Tidak menonaktifkan yang bertugas | BR-004 | API-004 | Saklar status | `…_pic`, `flag_aktif` |
 | Satu halaman tugas | BR-007 | API-005 | `HalamanAssetPic` | tabel transaksi |
 
+### 45.4 Walkthrough Lengkap dengan Contoh Data
+
+Berbeda dari dokumen transaksi lain, fitur ini **tidak memiliki nomor transaksi, status asset, `asset_trx_log`, maupun notifikasi sendiri**. Walkthrough berikut mengikuti **siklus hidup master pendamping**: admin mendaftarkan dua karyawan, mencoba mendaftarkan ulang, mencoba menonaktifkan pendamping yang masih bertugas, mengganti PIC lalu menonaktifkannya, mengaktifkan kembali, dan terakhir PIC melihat ringkasan tugasnya. Setiap langkah menjelaskan apa yang dilakukan di mobile, apa yang dikirim, apa yang diproses API, dan apa yang tersimpan di database. Data bersifat **sintetis**, tetapi nama kolom, urutan proses, dan pesan diambil dari kode (`AssetPendamping_m`, `AssetAdminPendamping_c`, `AssetKaryawanPic_c`).
+
+| Langkah | Pelaku | Aksi | Endpoint |
+|:---:|---|---|---|
+| 0 | Admin | Membuka **Master Pendamping**, memuat daftar dan opsi | API-001 `GET /asset/pendamping`, API-002 `GET …/options` |
+| 1 | Admin | **Tambah** Tono sebagai pendamping | API-003 `POST /asset/pendamping` |
+| 2 | Admin | **Tambah** Rina sebagai pendamping | API-003 |
+| 3 | Admin | Menambah Tono lagi (ditolak) | API-003 |
+| 4 | Admin | **Nonaktifkan** Tono saat masih menjadi PIC (ditolak) | API-004 `POST /asset/pendamping/{id}/status` |
+| 5 | Admin | Ganti PIC pada transaksi, lalu **Nonaktifkan** Tono | API-004 |
+| 6 | Admin | **Aktifkan kembali** Tono | API-004 atau API-003 |
+| 7 | Karyawan PIC | Membuka **Tugas PIC** | API-005 `GET /asset/karyawan/pic/ringkasan` |
+
+#### Data awal
+
+Company `CMP001`. Tanggal 22 Oktober 2026, periode ID `202610`. Tabel `asset_pendamping_m` masih kosong.
+
+**`data_karyawan`** (semua aktif)
+
+| id_karyawan | nik | nama_lengkap | Peran |
+|---|---|---|---|
+| KRY0020 | EMP-020 | Tono Pendamping | Calon pendamping |
+| KRY0021 | EMP-021 | Rina Pendamping | Calon pendamping |
+| KRY0099 | ADM-001 | Siti Admin | Admin Asset (aktor) |
+
+Penomoran: `id_asset_pendamping_m = id_company + YYYYMM + 3 digit`. Satu karyawan hanya boleh punya **satu baris** per company (unik `id_company, id_karyawan`).
+
+---
+
+#### Langkah 0 — Admin membuka Master Pendamping
+
+**Mobile:** Pemeliharaan → ikon **Master Pendamping** → `/asset_admin_pendamping` → `AssetPendampingBloc` memuat daftar dan opsi (`AssetPendampingApi`).
+
+**Dikirim**
+```http
+GET /asset/pendamping
+GET /asset/pendamping/options
+Authorization: Bearer <access_token_admin>
+```
+`aktif=0|1` bersifat opsional pada daftar; nilai lain ditolak ("Filter pendamping tidak valid.").
+
+**Diproses API:** `getList` menggabungkan `data_karyawan` untuk `karyawan_aktif`, urut nama; `getOptions` mengembalikan **karyawan aktif yang belum menjadi pendamping aktif**. **Database:** hanya `SELECT`.
+
+**Diterima mobile:** daftar `{"records": []}` (kosong) dan opsi
+```json
+{ "code": "SUCCESS", "message": "Opsi pendamping berhasil ditemukan.",
+  "data": { "karyawan": [
+    { "id_karyawan": "KRY0020", "nik": "EMP-020", "nama_karyawan": "Tono Pendamping" },
+    { "id_karyawan": "KRY0021", "nik": "EMP-021", "nama_karyawan": "Rina Pendamping" } ] } }
+```
+
+#### Langkah 1 — Admin mendaftarkan Tono
+
+**Dikirim**
+```http
+POST /asset/pendamping
+```
+```json
+{ "id_karyawan": "KRY0020" }
+```
+
+**Diproses API** (`AssetAdminPendamping_c::store` → `AssetPendamping_m::store`, satu `DB::transaction`)
+1. Validasi: `id_karyawan` wajib ("Karyawan wajib dipilih.").
+2. `lockCompany`; `actorAdmin` (harus admin asset); `findActiveKaryawan` ("Karyawan tidak ditemukan atau tidak aktif.").
+3. Cari baris yang sudah ada untuk karyawan itu (`FOR UPDATE`); belum ada → INSERT baris baru dengan nomor urut, `flag_aktif = 1`, snapshot NIK dan nama.
+
+**Hasil database** — `asset_pendamping_m` (1 baris baru)
+
+| Kolom | Nilai |
+|---|---|
+| id_asset_pendamping_m | CMP001202610001 |
+| id_karyawan / nik / nama_karyawan | KRY0020 / EMP-020 / Tono Pendamping |
+| flag_aktif | **1** |
+| id_company | CMP001 |
+| tgl_input / user_input | 2026-10-22 09:00:00 / ADM-001 - Siti Admin |
+| tgl_update / user_update | NULL / `''` |
+
+**Diterima mobile** (HTTP 201)
+```json
+{ "code": "CREATED", "message": "Pendamping berhasil ditambahkan.",
+  "data": { "id_asset_pendamping_m": "CMP001202610001", "id_karyawan": "KRY0020", "nik": "EMP-020",
+            "nama_karyawan": "Tono Pendamping", "flag_aktif": true } }
+```
+
+#### Langkah 2 — Admin mendaftarkan Rina
+
+Permintaan dan proses sama dengan langkah 1 dengan `{"id_karyawan": "KRY0021"}`. **Hasil database:** baris kedua `CMP001202610002` (KRY0021, EMP-021, Rina Pendamping, `flag_aktif = 1`, `tgl_input` 2026-10-22 09:05:00). Respons `CREATED` "Pendamping berhasil ditambahkan.".
+
+Kedua pendamping kini ditawarkan sebagai pilihan **PIC** pada form buat atau ubah Pemeliharaan Gudang (PML01), Klaim Garansi (PML03), dan Perbaikan (PML02), hanya bila **karyawannya masih aktif** (`findAktif`).
+
+#### Langkah 3 — Admin mencoba mendaftarkan Tono lagi
+
+**Dikirim:** `POST /asset/pendamping` dengan `{"id_karyawan": "KRY0020"}`.
+
+**Diproses API:** baris sudah ada dan `flag_aktif = 1` → ditolak. **Respons** (HTTP 422)
+```json
+{ "code": "BUSINESS_RULE_VIOLATION", "message": "Karyawan sudah terdaftar sebagai pendamping." }
+```
+**Database:** tidak berubah. Karyawan ini juga sudah tidak muncul di opsi (API-002).
+
+#### Langkah 4 — Admin mencoba menonaktifkan Tono yang masih menjadi PIC
+
+Misalkan Tono (`CMP001202610001`) masih menjadi PIC Perbaikan `PML02-202610001` yang berjalan.
+
+**Dikirim**
+```http
+POST /asset/pendamping/CMP001202610001/status
+```
+```json
+{ "flag_aktif": "0" }
+```
+
+**Diproses API** (`setAktif`): baris dikunci ("Pendamping tidak ditemukan." bila tidak ada). Karena menonaktifkan, API memeriksa **`hasActivePic`** pada ketiga alur (PML01 gudang, PML03 garansi, PML02 perbaikan). PIC masih memegang transaksi yang belum selesai/dibatalkan → ditolak. **Respons** (HTTP 422)
+```json
+{ "code": "BUSINESS_RULE_VIOLATION",
+  "message": "Pendamping masih menjadi PIC pemeliharaan gudang yang berjalan. Ganti PIC terlebih dahulu." }
+```
+Pesan ini **selalu menyebut "pemeliharaan gudang"** walaupun penyebabnya klaim garansi atau perbaikan. **Database:** tidak berubah.
+
+#### Langkah 5 — Admin mengganti PIC lalu menonaktifkan Tono
+
+**Mobile:** admin membuka transaksi yang bersangkutan (di sini Perbaikan `PML02-202610001`, masih `menunggu_serah_terima`) → **Ubah** → memilih Rina sebagai PIC (lihat dokumen Perbaikan, API-004). Setelah tidak ada transaksi berjalan yang memakai Tono, admin mengulang permintaan status:
+
+**Dikirim**
+```http
+POST /asset/pendamping/CMP001202610001/status
+```
+```json
+{ "flag_aktif": "0" }
+```
+
+**Diproses API:** `hasActivePic` kini salah di ketiga alur, sehingga UPDATE dijalankan.
+
+**Hasil database**
+
+| Kolom (`asset_pendamping_m` `…001`) | Sebelum | Sesudah |
+|---|---|---|
+| flag_aktif | 1 | **0** |
+| tgl_update | NULL | 2026-10-22 10:00:00 |
+| user_update | `''` | ADM-001 - Siti Admin |
+
+**Diterima mobile** (HTTP 200)
+```json
+{ "code": "UPDATED", "message": "Status pendamping berhasil diperbarui.",
+  "data": { "id_asset_pendamping_m": "CMP001202610001", "id_karyawan": "KRY0020", "nik": "EMP-020",
+            "nama_karyawan": "Tono Pendamping", "flag_aktif": false } }
+```
+Pendamping **tidak dihapus** karena dirujuk foreign key transaksi lama. Tono tidak lagi muncul di pilihan PIC, dan transaksi lama tetap menyimpan snapshot PIC-nya.
+
+#### Langkah 6 — Admin mengaktifkan kembali Tono
+
+Ada dua jalur dengan hasil sama:
+
+- **Lewat status:** `POST /asset/pendamping/CMP001202610001/status` dengan `{"flag_aktif": "1"}`. API memeriksa karyawan masih aktif ("Karyawan tidak ditemukan atau tidak aktif.").
+- **Lewat tambah:** `POST /asset/pendamping` dengan `{"id_karyawan": "KRY0020"}`. Karena baris lama berstatus nonaktif, API **mengaktifkan kembali** baris itu (bukan membuat baris baru) dan menyegarkan NIK dan nama dari `data_karyawan`.
+
+**Hasil database** (jalur tambah)
+
+| Kolom (`asset_pendamping_m` `…001`) | Sebelum | Sesudah |
+|---|---|---|
+| flag_aktif | 0 | **1** |
+| nik / nama_karyawan | EMP-020 / Tono Pendamping | disegarkan dari `data_karyawan` |
+| tgl_update / user_update | 2026-10-22 10:00:00 / ADM-001 - Siti Admin | 2026-10-22 11:00:00 / ADM-001 - Siti Admin |
+
+Tidak ada baris baru: tetap satu baris per karyawan. Respons HTTP 201 `CREATED` pada jalur tambah, 200 `UPDATED` pada jalur status.
+
+#### Langkah 7 — PIC membuka Tugas PIC
+
+**Mobile:** karyawan PIC (Tono, `KRY0020`) → **Tugas PIC** → `/asset_pic` → `AssetPicBloc` → `AssetPicApi` memanggil ringkasan.
+
+**Dikirim**
+```http
+GET /asset/karyawan/pic/ringkasan
+Authorization: Bearer <access_token_tono>
+```
+
+**Diproses API** (`AssetKaryawanPic_c::getRingkasanPic`): memakai `id_company` dan `id_karyawan` dari token, lalu memanggil `countByTabForPic` dan `getPendingForPic` pada **tiga** model: `AssetPemeliharaanGudang_m`, `AssetGaransi_m`, `AssetPerbaikan_m`. Transaksi dihitung bila `id_pic_pendamping` header = karyawan itu. **Database:** hanya `SELECT`. Pemeliharaan **karyawan** (PML01 karyawan) tidak masuk ringkasan ini; PIC Pendamping-nya memakai menu dan endpoint karyawan tersendiri.
+
+**Diterima mobile** (contoh: Tono punya 1 pemeliharaan gudang di tab jadwal, 1 klaim garansi dalam proses, dan 3 pemeliharaan gudang selesai)
+```json
+{
+  "code": "SUCCESS", "message": "Ringkasan tugas PIC berhasil ditemukan.",
+  "data": {
+    "pemeliharaan_gudang": {
+      "jumlah": { "jadwal": 1, "proses": 0, "selesai": 3 },
+      "perlu_tindakan": [ { "id": "CMP001202610003", "no_trx": "PML01-3-202610003",
+        "fase_pemeliharaan": "penjadwalan", "tgl_pemeliharaan": "2026-10-24", "jam_pemeliharaan": "09:00:00",
+        "jumlah_asset": 1, "aksi": "hasil" } ] },
+    "garansi": {
+      "jumlah": { "jadwal": 0, "proses": 1, "selesai": 0 },
+      "perlu_tindakan": [ { "id": "CMP001202610001", "no_trx": "PML03-202610001", "aksi": "klaim" } ] },
+    "perbaikan": { "jumlah": { "jadwal": 0, "proses": 0, "selesai": 0 }, "perlu_tindakan": [] }
+  }
+}
+```
+Nilai `aksi`: `hasil` (gudang), `terima` atau `klaim` (garansi), `terima` atau `service` (perbaikan). Tab: `jadwal` (menunggu serah terima atau penjadwalan), `proses`, `selesai`. Mobile menampilkan kartu per alur dan membuka detail transaksi sesuai `no_trx`.
+
+---
+
+#### Kondisi akhir data
+
+`asset_pendamping_m`
+
+| id | id_karyawan | nama_karyawan | flag_aktif | tgl_update |
+|---|---|---|:---:|---|
+| CMP001202610001 | KRY0020 | Tono Pendamping | 1 | 2026-10-22 11:00:00 |
+| CMP001202610002 | KRY0021 | Rina Pendamping | 1 | NULL |
+
+`asset_data`, `asset_trx_log`, dan `notif_data`: **tidak ada perubahan** dari fitur ini. Pendamping juga dapat terbuat otomatis oleh **Pemeliharaan Karyawan** saat admin mengatur pelaksanaan (`pendampingMasterId` menambah baris bila pendamping belum ada), tanpa melalui Master Pendamping.
+
+---
+
+#### Variasi
+
+**Karyawan nonaktif di HR.** Pendamping tetap tercatat dengan `flag_aktif = 1`, tetapi `karyawan_aktif = false` pada daftar; ia **tidak** muncul di pilihan PIC (`findAktif` mensyaratkan karyawan aktif) dan tidak bisa diaktifkan kembali sampai karyawannya aktif.
+
+**Filter daftar.** `GET /asset/pendamping?aktif=1` hanya pendamping aktif, `?aktif=0` hanya yang nonaktif; tanpa filter semuanya.
+
+---
+
+#### Kasus gagal yang umum
+
+| Situasi | Langkah | HTTP | Pesan | Perubahan database |
+|---|---|:---:|---|---|
+| Filter `aktif` bukan 0/1 | 0 | 422 | Filter pendamping tidak valid. | Tidak ada |
+| `id_karyawan` kosong | 1 | 422 | Karyawan wajib dipilih. | Tidak ada |
+| Karyawan tidak ada atau tidak aktif | 1, 6 | 422 | Karyawan tidak ditemukan atau tidak aktif. | Tidak ada |
+| Karyawan sudah menjadi pendamping aktif | 3 | 422 | Karyawan sudah terdaftar sebagai pendamping. | Tidak ada |
+| `flag_aktif` bukan 0/1 | 4 | 422 | Status pendamping tidak valid. | Tidak ada |
+| Pendamping tidak ditemukan | 4–6 | 422 | Pendamping tidak ditemukan. | Tidak ada |
+| Nonaktifkan saat masih PIC transaksi berjalan | 4 | 422 | Pendamping masih menjadi PIC pemeliharaan gudang yang berjalan. Ganti PIC terlebih dahulu. | Tidak ada |
+| Pengguna bukan admin asset | 0–6 | 403 / 422 | Pengguna tidak memiliki akses admin asset. / Pengguna tidak terdaftar sebagai admin asset. | Tidak ada |
+| Kesalahan tak terduga | semua | 500 | Terjadi kesalahan saat memproses data pendamping. | Tidak ada |
+| Token kedaluwarsa | semua | 401 | Token telah expired. Mobile me-refresh token sekali lalu mengulang request. | Tidak ada |
+
+Semua pelanggaran aturan dilempar sebagai `InvalidArgumentException` di dalam `DB::transaction` dan dijawab `BUSINESS_RULE_VIOLATION`, sehingga seluruh perubahan request itu dibatalkan.
+
+#### Ringkasan siapa mengerjakan apa
+
+| Tahap | Mobile | API | Database |
+|---|---|---|---|
+| Daftar dan opsi | Master Pendamping | Gabung status karyawan, saring yang belum aktif | `SELECT` saja |
+| Tambah | Pilih karyawan dari opsi | Validasi aktif, tolak ganda, aktifkan kembali baris lama | `asset_pendamping_m` (insert atau update) |
+| Aktif/nonaktif | Saklar status | Cek karyawan aktif, cek `hasActivePic` tiga alur | `asset_pendamping_m` (`flag_aktif`) |
+| Pilihan PIC | Dropdown PIC di form PM gudang, klaim, perbaikan | `getList` aktif dan `findAktif` saat menyimpan | `SELECT` saja |
+| Tugas PIC | Kartu per alur dan daftar tugas | `countByTabForPic`, `getPendingForPic` pada tiga model | `SELECT` saja |
+
 ## 46. Ringkasan Database Impact
 
 `asset_pendamping_m` di-ALTER: `flag_aktif`, `tgl_update`, `user_update`, unik `(id_company, id_karyawan)`. Tidak ada tabel baru.
@@ -484,3 +733,4 @@ Enam fungsi hitung/daftar per panggilan; aman pada volume saat ini.
 | 1.0 | 8 Okt 2026 | Dokumen awal Master Pendamping & Tugas PIC |
 | 1.1 | 12 Okt 2026 | Sinkronisasi dengan kode 12 Okt 2026: path file mobile mengikuti struktur folder baru (`UI/Modul/Asset/<Fitur>/` berhuruf kapital, model di `Repository/Model/Asset/`). `HalamanPendampingAsset` kini di `Pemeliharaan/Pic/` |
 | 1.2 | 12 Okt 2026 | Tugas PIC pemeliharaan gudang: aksi `mulai` dihapus, kini selalu `hasil` (langkah Mulai PM dihapus); tab kartu tugas mengikuti `fase_pemeliharaan`. |
+| 1.3 | 22 Okt 2026 | Menambah §45.4 *Walkthrough Lengkap dengan Contoh Data* (siklus master pendamping: daftar dan opsi, tambah, tolak ganda, nonaktif ditolak saat masih PIC, ganti PIC lalu nonaktifkan, aktifkan kembali, ringkasan Tugas PIC; kasus gagal). Catatan kode: ringkasan PIC hanya mencakup pemeliharaan gudang, garansi, dan perbaikan; pesan penolakan nonaktif selalu menyebut pemeliharaan gudang. |

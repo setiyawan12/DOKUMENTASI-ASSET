@@ -18,7 +18,7 @@
 | Mobile | Flutter (`professional_flutter_3_35`), `flutter_bloc`, `dio`, `image_picker` |
 | Web | ⚠️ Belum ditemukan: tidak ada source web di workspace |
 | Test otomatis | API `tests/Asset/AssetDisposalTest.php` (7 test) · Mobile `test/asset/asset_disposal_test.dart` (13 test) |
-| Versi dokumen | 1.1 — 12 Oktober 2026 |
+| Versi dokumen | 1.2 — 22 Oktober 2026 |
 | Dokumen terkait | Perbaikan (PML02), Klaim Garansi (PML03), Pemeliharaan (PML01) |
 
 ## 2. Daftar Isi
@@ -61,7 +61,7 @@ Aset gudang yang rusak dan tidak layak dipertahankan dihapus dari daftar aset ak
 
 - Menjaga aset yang sedang di-disposal tidak bisa dipakai alur lain.
 - Memvalidasi field wajib per metode dan bukti.
-- Mencatat pelaksana, waktu, `asset_log`, dan notifikasi penyelesaian.
+- Mencatat pelaksana, waktu, `asset_trx_log`, dan notifikasi penyelesaian.
 
 ## 6. Aktor
 
@@ -112,7 +112,7 @@ Semua metode wajib bukti. Pembaruan tanpa bukti baru mempertahankan bukti lama; 
 Selama `status = proses`, admin boleh memperbarui data pelaksanaan. Setelah `selesai`, tidak dapat diubah.
 
 ### BR-007 — Penyelesaian
-Hanya bila pelaksanaan sudah dicatat (`tgl_pelaksanaan` terisi) dan data masih lengkap sesuai metode. Aset harus masih di gudang dengan status `menunggu_disposal`. Hasil: aset `disposed`, transaksi `selesai`, `asset_log` `disposal_gudang`.
+Hanya bila pelaksanaan sudah dicatat (`tgl_pelaksanaan` terisi) dan data masih lengkap sesuai metode. Aset harus masih di gudang dengan status `menunggu_disposal`. Hasil: aset `disposed`, transaksi `selesai`, `asset_trx_log` `disposal_gudang`.
 
 ### BR-008 — Arsip, bukan hapus
 Baris transaksi dan baris `asset_data` (status `disposed`) tetap ada. Daftar aset admin dan total ringkasan mengecualikan `disposed` bila filter status kosong; filter status `disposed` eksplisit tetap menampilkannya.
@@ -175,7 +175,7 @@ sequenceDiagram
     API->>DB: simpan pelaksanaan + file_bukti
     Admin->>App: Selesaikan Disposal (konfirmasi)
     App->>API: POST asset/disposal/{id}/selesai
-    API->>DB: trx selesai, asset disposed, asset_log
+    API->>DB: trx selesai, asset disposed, asset_trx_log
     API-->>Admin: Notifikasi disposal.selesai
 ```
 
@@ -206,7 +206,7 @@ stateDiagram-v2
 |---|---|
 | `asset_trx_disposal` | Satu baris per disposal (keputusan, pelaksanaan, penyelesaian) |
 | `asset_data` | Status aset (`menunggu_disposal`, `disposed`) |
-| `asset_log` | Jejak `disposal_gudang` |
+| `asset_trx_log` | Jejak `disposal_gudang` |
 
 Tabel lama `asset_trx_disposal_item` dan kolom approval dihapus (struktur lama berbasis approval, belum dipakai API).
 
@@ -216,7 +216,7 @@ Tabel lama `asset_trx_disposal_item` dan kolom approval dihapus (struktur lama b
 erDiagram
     asset_trx_disposal }o--|| asset_data : "asset"
     asset_trx_disposal }o--o| asset_lokasi_m : "gudang asal"
-    asset_data ||--o{ asset_log : "jejak"
+    asset_data ||--o{ asset_trx_log : "jejak"
 ```
 
 ## 18. Data Dictionary
@@ -243,7 +243,7 @@ erDiagram
 | `status` | enum proses/selesai | Status transaksi |
 | `id_company`, `tgl_input`, `user_input`, `tgl_update`, `user_update` | | Audit; `tgl_input`/`user_input` = keputusan |
 
-### 18.2 asset_log (`jenis_log = disposal_gudang`)
+### 18.2 asset_trx_log (`jenis_log = disposal_gudang`)
 
 Ditulis saat penyelesaian: posisi gudang → gudang, `kondisi_awal`/`kondisi_akhir` = kondisi aset, `user_input` = pelaksana.
 
@@ -275,7 +275,7 @@ Kunci perusahaan; validasi alasan, metode, nilai sisa; kunci aset (`lockForUpdat
 Hanya `status = proses`. `pelaksanaanFields` memvalidasi tanggal, bukti, dan field sesuai metode; kolom metode lain dikosongkan; `harga_jual` dinormalisasi.
 
 ### 21.3 Penyelesaian — `selesai`
-Validasi ulang kelengkapan pelaksanaan, cek aset masih `menunggu_disposal` di gudang; aset → `disposed`; `asset_log`; transaksi `selesai` dengan `tgl_selesai`/`user_selesai`.
+Validasi ulang kelengkapan pelaksanaan, cek aset masih `menunggu_disposal` di gudang; aset → `disposed`; `asset_trx_log`; transaksi `selesai` dengan `tgl_selesai`/`user_selesai`.
 
 ### 21.4 Query baca
 `getPage` (tab `proses|selesai`, paginasi limit+1), `getDetail` (aset + riwayat, keputusan, pelaksanaan, penyelesaian, `aksi`), `getAdminOptions` (aset gudang rusak + metode), `getPendingForAdmin`, `countPendingForAdmin`.
@@ -426,7 +426,7 @@ Enum `metode_disposal`, `status`; FK aset dan gudang.
 
 ## 33. Audit Trail
 
-`user_input`/`tgl_input` = keputusan, `user_update`/`tgl_update` = pelaksanaan terakhir, `user_selesai`/`tgl_selesai` = penyelesaian (format `nik - nama`). `asset_log` `disposal_gudang` saat selesai.
+`user_input`/`tgl_input` = keputusan, `user_update`/`tgl_update` = pelaksanaan terakhir, `user_selesai`/`tgl_selesai` = penyelesaian (format `nik - nama`). `asset_trx_log` `disposal_gudang` saat selesai.
 
 ## 34. Notification
 
@@ -475,7 +475,7 @@ JWT; semua endpoint admin-only; filter `id_company`; transaksi + `lockForUpdate`
 | T-06 | Perbarui tanpa bukti baru | Bukti lama dipertahankan |
 | T-07 | Field metode lain ikut dikirim | Dikosongkan |
 | T-08 | Selesai sebelum pelaksanaan | Ditolak |
-| T-09 | Selesai valid | Aset `disposed`, `asset_log`, transaksi `selesai` |
+| T-09 | Selesai valid | Aset `disposed`, `asset_trx_log`, transaksi `selesai` |
 | T-10 | Ubah/selesai ulang setelah selesai | Ditolak |
 | T-11 | Status aset berubah di luar alur | Ditolak |
 | T-12 | Alur penuh via route; non-admin | 200; 403 |
@@ -519,7 +519,7 @@ Batas 999 transaksi per bulan per perusahaan.
 
 ## 42. Dependency
 
-`Asset_m`/`Asset_c`, `AssetImageStorage`, `AssetNotification`, `AssetPemeliharaanKaryawan_m` (format tanggal), tabel `asset_data`, `asset_kategori_m`, `asset_lokasi_m`, `asset_log`; `asset_trx_perbaikan_item` dan `asset_trx_garansi_item` (riwayat, opsional).
+`Asset_m`/`Asset_c`, `AssetImageStorage`, `AssetNotification`, `AssetPemeliharaanKaryawan_m` (format tanggal), tabel `asset_data`, `asset_kategori_m`, `asset_lokasi_m`, `asset_trx_log`; `asset_trx_perbaikan_item` dan `asset_trx_garansi_item` (riwayat, opsional).
 
 ## 43. Source Code Reference
 
@@ -549,9 +549,257 @@ Batas 999 transaksi per bulan per perusahaan.
 | Status perantara | BR-003 | API-003 | Badge Menunggu | `asset_data.status_asset = menunggu_disposal` |
 | Arsip bukan hapus | BR-008 | API-005 | Tab Selesai | `status = selesai`, `disposed` |
 
+### 45.4 Walkthrough Lengkap dengan Contoh Data
+
+Bagian ini mengikuti **satu disposal dari keputusan sampai asset dihapus dari daftar aktif**, langkah demi langkah: apa yang dilakukan admin di mobile, apa yang dikirim, apa yang diproses API, dan apa yang tersimpan di database. Data bersifat **sintetis**, tetapi format ID, nama kolom, urutan proses, label status, dan pesan diambil dari kode (`AssetDisposal_m`, `AssetAdminDisposal_c`, `AssetNotification`). Disposal hanya dilakukan **admin** (tanpa approval) dan **tidak ada PIC**.
+
+**Skenario:** Laptop lama di gudang rusak total dan tidak layak dipertahankan. Admin meninjau riwayatnya lalu memutuskan disposal dengan metode **Lelang / Jual**. Setelah laptop terjual, admin mencatat pelaksanaan (pembeli, harga, tanggal, bukti), memperbaruinya satu kali karena harga terkoreksi, lalu menyelesaikan disposal.
+
+| Langkah | Pelaku | Aksi | Endpoint |
+|:---:|---|---|---|
+| 0 | Admin | Memuat asset gudang rusak beserta riwayat | API-001 `GET /asset/disposal/options` |
+| 1 | Admin | **Submit Keputusan** | API-003 `POST /asset/disposal` |
+| 2 | Admin | **Catat Pelaksanaan** + bukti | API-004 `POST /asset/disposal/{id}/pelaksanaan` |
+| 3 | Admin | **Perbarui Pelaksanaan** | API-004 |
+| 4 | Admin | **Selesaikan Disposal** | API-005 `POST /asset/disposal/{id}/selesai` |
+
+#### Data awal
+
+Company `CMP001`. Keputusan diambil 22 Oktober 2026, periode ID `202610`. Belum ada transaksi disposal, log, atau notifikasi pada periode ini.
+
+**`asset_data`** A70: `CMP00120260100070` (LPT-0070), Laptop Lama, kategori Laptop, `pemegang_asset = gudang`, `status_asset = rusak`, `kondisi_awal = rusak`, `ket_rusak = Mati total`, `id_asset_lokasi_m = CMP001202601001` (Gudang Pusat), `tgl_perolehan = 2019-10-01`, `harga_perolehan = 15000000`. Asset ini pernah 2 kali masuk Perbaikan dan 1 kali Klaim Garansi.
+
+**Admin:** KRY0099 (ADM-001, Siti Admin) sebagai pelaksana, KRY0100 (ADM-002, Rudi Admin).
+
+Penomoran: `id_company + YYYYMM + 3 digit`, `no_trx = PML04-YYYYMMNNN`; log dan notifikasi 5 digit. **Satu transaksi = satu asset**; tidak ada tabel item terpisah dan tidak ada kolom fase: tahap pelaksanaan ditandai terisinya `tgl_pelaksanaan`.
+
+---
+
+#### Langkah 0 — Admin memuat opsi dan riwayat
+
+**Mobile:** Pemeliharaan (admin) → **Disposal** → buat → `AssetDisposalApi` memuat opsi.
+
+**Dikirim**
+```http
+GET /asset/disposal/options
+Authorization: Bearer <access_token_admin>
+```
+
+**Diproses API** (`AssetDisposal_m::getAdminOptions`): asset `gudang` berstatus `rusak` (asset yang sudah `menunggu_disposal` tidak muncul lagi), masing-masing dengan **riwayat**: usia dalam bulan dari `tgl_perolehan`, `harga_perolehan`, jumlah baris di `asset_trx_perbaikan_item`, dan jumlah baris di `asset_trx_garansi_item` (0 bila tabel belum ada). Biaya perbaikan tidak dicatat sistem. Ditambah daftar `metode`.
+
+**Database:** hanya `SELECT`.
+
+**Diterima mobile** (ringkas)
+```json
+{ "asset": [ { "id_asset_data": "CMP00120260100070", "kode_asset": "LPT-0070", "nama_asset": "Laptop Lama",
+    "kategori_asset": "Laptop", "keterangan_rusak": "Mati total", "lokasi_gudang": "Gudang Pusat",
+    "riwayat": { "tgl_perolehan": "2019-10-01", "usia_bulan": 84, "harga_perolehan": 15000000,
+                 "jumlah_perbaikan": 2, "jumlah_klaim_garansi": 1 } } ],
+  "metode": [ { "value": "lelang_jual", "label": "Lelang / Jual" }, { "value": "donasi", "label": "Donasi" },
+              { "value": "pemusnahan", "label": "Pemusnahan" } ] }
+```
+
+#### Langkah 1 — Admin menyubmit keputusan
+
+**Mobile:** admin memilih laptop, meninjau riwayat, mengisi alasan, memilih metode, nilai sisa, dan catatan → **Submit** → `AssetDisposalApi.store`.
+
+**Dikirim**
+```http
+POST /asset/disposal
+```
+```json
+{ "id_asset_data": "CMP00120260100070", "alasan_disposal": "Motherboard rusak total",
+  "metode_disposal": "lelang_jual", "nilai_sisa": 250000, "catatan": "Data sudah dihapus" }
+```
+
+**Diproses API** (`AssetAdminDisposal_c::storeDisposal` → `store`, satu `DB::transaction`)
+1. Validasi: `alasan_disposal` wajib, `metode_disposal` ∈ lelang_jual/donasi/pemusnahan; `nilai_sisa` opsional dan tidak negatif ("Nilai sisa harus berupa angka tidak negatif.").
+2. `lockCompany`; cek admin; asset dikunci `FOR UPDATE` dan harus tepat satu ("Asset tidak ditemukan.").
+3. Asset harus `gudang` dan `rusak` ("Hanya asset rusak di gudang yang dapat di-disposal."); tidak ada di onboarding aktif. Karena proses lain mengubah status (`dalam_perbaikan`, `dalam_proses_klaim`, menunggu serah terima), syarat "tidak ada proses aktif" terpenuhi otomatis.
+4. Generate ID: `CMP001202610001`, `no_trx = PML04-202610001`.
+5. INSERT transaksi (snapshot asset dan gudang asal, `status = proses`, `tgl_pelaksanaan` NULL) dan UPDATE `asset_data` → **`menunggu_disposal`**.
+6. **Tidak ada notifikasi** pada tahap ini (event `null`).
+
+**Hasil database**
+
+`asset_trx_disposal`
+
+| Kolom | Nilai |
+|---|---|
+| id_asset_trx_disposal / no_trx | CMP001202610001 / PML04-202610001 |
+| id_asset_data / nama_asset / deskripsi_asset / kategori_asset | A70 / Laptop Lama / `''` / Laptop |
+| id_asset_lokasi_m_asal | CMP001202601001 |
+| alasan_disposal | Motherboard rusak total |
+| metode_disposal | **lelang_jual** |
+| nilai_sisa | 250000.00 |
+| catatan | Data sudah dihapus |
+| tgl_pelaksanaan / pembeli / harga_jual / penerima_donasi / metode_pemusnahan / file_bukti | NULL / `''` / NULL / `''` / `''` / `''` |
+| status | **proses** |
+| tgl_selesai / user_selesai | NULL / `''` |
+| tgl_input / user_input | 2026-10-22 09:00:00 / ADM-001 - Siti Admin |
+
+`asset_data` A70: `status_asset` **rusak → menunggu_disposal**, `tgl_update` = 09:00:00, `user_update` = ADM-001 - Siti Admin.
+
+**Diterima mobile** (HTTP 201)
+```json
+{ "code": "CREATED", "message": "…",
+  "data": { "id": "CMP001202610001", "no_trx": "PML04-202610001", "status": "proses",
+            "status_label": "Menunggu Disposal", "tab": "proses" } }
+```
+Asset kini hilang dari opsi sehingga **tidak dapat diajukan dua kali**.
+
+#### Langkah 2 — Admin mencatat pelaksanaan
+
+**Mobile:** detail disposal (`aksi.pelaksanaan = true`) → form pelaksanaan sesuai metode **Lelang / Jual**: tanggal, pembeli, harga jual, dan **foto bukti** (kamera atau galeri) → **Simpan**.
+
+**Dikirim** (multipart karena ada file)
+```http
+POST /asset/disposal/CMP001202610001/pelaksanaan
+```
+```json
+{ "tgl_pelaksanaan": "2026-10-23", "pembeli": "PT Pembeli Sejahtera", "harga_jual": 1500000,
+  "penerima_donasi": "", "metode_pemusnahan": "", "file_bukti": "<file multipart atau base64>" }
+```
+
+**Diproses API** (`buktiPath` lalu `pelaksanaan`)
+1. Validasi controller: `tgl_pelaksanaan` wajib `Y-m-d`; `harga_jual` numerik ≥ 0.
+2. `prepareImageUpload` memastikan transaksi masih `proses` **sebelum** file diunggah ("Disposal sudah selesai dan tidak dapat diubah."). File diunggah dengan key `CMP001/asset/disposal/<id_karyawan>/<hex>.<ext>`; hanya key yang disimpan. File tidak valid → "File bukti tidak valid.".
+3. `pelaksanaanFields` menerapkan aturan **menurut metode transaksi** (bukan menurut input): tanggal wajib dan **tidak boleh setelah hari ini**; bukti wajib (bila tidak mengunggah baru, bukti lama dipertahankan; bila belum pernah ada, ditolak). Untuk `lelang_jual`: `pembeli` dan `harga_jual` wajib. Field milik metode lain dikosongkan.
+4. UPDATE transaksi dengan kolom pelaksanaan, `tgl_update`, `user_update`. **`asset_data` belum berubah.** Tidak ada notifikasi.
+
+**Hasil database**
+
+| Kolom (`asset_trx_disposal`) | Sebelum | Sesudah |
+|---|---|---|
+| tgl_pelaksanaan | NULL | 2026-10-23 |
+| pembeli | `''` | PT Pembeli Sejahtera |
+| harga_jual | NULL | 1500000.00 |
+| penerima_donasi / metode_pemusnahan | `''` / `''` | `''` / `''` |
+| file_bukti | `''` | `CMP001/asset/disposal/KRY0099/9f3a1c2e.jpg` |
+| status | proses | proses |
+| tgl_update / user_update | NULL / `''` | 2026-10-23 10:00:00 / ADM-001 - Siti Admin |
+
+**Diterima mobile** (HTTP 200): `status = proses`, `status_label = "Siap Diselesaikan"` (karena `tgl_pelaksanaan` sudah terisi), `tab = "proses"`, message "Data pelaksanaan disposal berhasil disimpan.". Detail menampilkan `pelaksanaan.tercatat = true` dan `file_bukti_url`.
+
+#### Langkah 3 — Admin memperbarui pelaksanaan
+
+Pelaksanaan boleh diperbarui **selama `status = proses`**. Admin mengoreksi harga jual.
+
+**Dikirim:** `POST /asset/disposal/CMP001202610001/pelaksanaan` dengan `harga_jual = 1750000`, tanpa `file_bukti` baru dan tanpa mengulang field lain.
+
+**Diproses API:** `pelaksanaanFields` memakai nilai lama untuk field yang tidak dikirim (`pakai(key, nilai lama)`), sehingga `pembeli` dan tanggal tetap; bukti lama dipertahankan karena `file_bukti` kosong. **Hasil database:** `harga_jual 1500000.00 → 1750000.00`, `tgl_update` = 2026-10-23 10:30:00; kolom lain tetap.
+
+#### Langkah 4 — Admin menyelesaikan disposal
+
+**Mobile:** **Selesaikan Disposal** (dialog konfirmasi) → `AssetDisposalApi.selesai`.
+
+**Dikirim**
+```http
+POST /asset/disposal/CMP001202610001/selesai
+```
+Tanpa body.
+
+**Diproses API** (`selesai`)
+1. Transaksi harus `proses` ("Disposal sudah selesai.").
+2. `tgl_pelaksanaan` harus terisi ("Data pelaksanaan disposal belum dicatat."); `pelaksanaanFields` dijalankan ulang untuk memastikan data masih lengkap menurut metode.
+3. Asset dikunci dan harus masih `gudang` dengan status `menunggu_disposal` ("Status asset sudah berubah atau tidak lagi berada di gudang.").
+4. UPDATE `asset_data` → **`disposed`**; INSERT `asset_trx_log` (`jenis_log = disposal_gudang`, posisi gudang → gudang, kondisi tidak berubah).
+5. UPDATE transaksi: `status = selesai`, `tgl_selesai`, `user_selesai`, `tgl_update`, `user_update`.
+6. Notifikasi `disposal.selesai` ke **seluruh admin**.
+
+**Hasil database**
+
+| Tabel | Perubahan |
+|---|---|
+| asset_data A70 | status_asset `menunggu_disposal → disposed`; user_update = ADM-001 - Siti Admin |
+| asset_trx_disposal | status `proses → selesai`; tgl_selesai = 2026-10-23 11:00:00; user_selesai = ADM-001 - Siti Admin |
+
+`asset_trx_log` (1 baris)
+
+| Kolom | Nilai |
+|---|---|
+| id_asset_trx_log | CMP00120261000001 |
+| id_asset_data / jenis_log | A70 / disposal_gudang |
+| id_transaksi / nama_tabel_transaksi | CMP001202610001 / asset_trx_disposal |
+| kondisi_awal / kondisi_akhir | rusak / rusak |
+| posisi_awal / posisi_akhir | gudang / gudang |
+| id_pemegang / nama_pemegang | `''` / `''` |
+| user_input | ADM-001 - Siti Admin |
+
+`notif_data` (2 baris, satu per admin)
+
+| id_notif | id_karyawan | id_ref | rute | ket_notif_id |
+|---|---|---|---|---|
+| CMP00120261000001 | KRY0099 | CMP001202610001 | asset_admin_detail_disposal | Disposal PML04-202610001 selesai: Laptop Lama (Lelang / Jual) telah dihapus dari daftar asset aktif. |
+| CMP00120261000002 | KRY0100 | CMP001202610001 | asset_admin_detail_disposal | Disposal PML04-202610001 selesai: Laptop Lama (Lelang / Jual) telah dihapus dari daftar asset aktif. |
+
+**Diterima mobile** (HTTP 200)
+```json
+{ "code": "UPDATED", "message": "Disposal berhasil diselesaikan.",
+  "data": { "id": "CMP001202610001", "no_trx": "PML04-202610001", "status": "selesai",
+            "status_label": "Dihapus (Disposed)", "tab": "selesai" } }
+```
+
+---
+
+#### Kondisi akhir data
+
+`asset_trx_disposal`: `CMP001202610001` / `PML04-202610001`, `status = selesai`, `metode_disposal = lelang_jual`, `harga_jual = 1750000.00`, `tgl_pelaksanaan = 2026-10-23`, bukti tersimpan sebagai key object storage.
+
+`asset_data` A70: `status_asset = disposed`. Baris asset **tidak dihapus** (arsip): daftar asset admin dan total ringkasan mengecualikan `disposed` bila filter status kosong, tetapi filter status `disposed` eksplisit tetap menampilkannya. `asset_trx_log`: 1 baris. `notif_data`: 2 baris.
+
+---
+
+#### Variasi
+
+**Donasi.** `metode_disposal = donasi`: pelaksanaan wajib `penerima_donasi` ("Penerima donasi wajib diisi."), tanggal, dan bukti; `pembeli`, `harga_jual`, dan `metode_pemusnahan` dikosongkan. Notifikasi menyebut "(Donasi)".
+
+**Pemusnahan.** `metode_disposal = pemusnahan`: pelaksanaan wajib `metode_pemusnahan` ("Metode pemusnahan wajib diisi."), tanggal, dan bukti; field metode lain dikosongkan. Notifikasi menyebut "(Pemusnahan)".
+
+**Disposal sebagai tindak lanjut modul lain.** Asset `rusak` di gudang yang berasal dari Pemeliharaan (hasil 4–5), Perbaikan ("diganti unit baru" atau "tidak bisa diperbaiki"), atau Klaim Garansi (ditolak dengan tindak lanjut disposal) hanya **ditandai** `nama_tabel_tindak_lanjut = asset_trx_disposal`; transaksi Disposal tetap harus dibuat manual lewat langkah 1.
+
+---
+
+#### Kasus gagal yang umum
+
+| Situasi | Langkah | HTTP | Pesan | Perubahan database |
+|---|---|:---:|---|---|
+| Asset belum dipilih / tidak ditemukan | 1 | 422 | Asset wajib dipilih. / Asset tidak ditemukan. | Tidak ada |
+| Alasan kosong | 1 | 422 | Alasan disposal wajib diisi. | Tidak ada |
+| Metode kosong atau tidak dikenal | 1 | 422 | Metode disposal wajib dipilih. / Metode disposal tidak valid. | Tidak ada |
+| Nilai sisa negatif atau bukan angka | 1 | 422 | Nilai sisa harus berupa angka tidak negatif. | Tidak ada |
+| Asset bukan `rusak` di gudang (mis. sudah `menunggu_disposal`) | 1 | 422 | Hanya asset rusak di gudang yang dapat di-disposal. | Tidak ada |
+| Asset di onboarding aktif | 1 | 422 | Asset sedang diproses pada onboarding. | Tidak ada |
+| Tanggal pelaksanaan kosong | 2 | 422 | Tanggal pelaksanaan wajib diisi. | Tidak ada |
+| Tanggal pelaksanaan setelah hari ini | 2 | 422 | Tanggal pelaksanaan tidak boleh setelah hari ini. | Tidak ada |
+| Bukti belum pernah diunggah | 2 | 422 | Bukti pelaksanaan wajib diunggah. | Tidak ada |
+| File bukti tidak valid | 2 | 422 | File bukti tidak valid. | Tidak ada (file tidak tersimpan) |
+| Pembeli atau harga jual kosong (lelang/jual) | 2 | 422 | Nama pembeli wajib diisi. / Harga jual wajib diisi. | Tidak ada |
+| Penerima donasi kosong (donasi) | 2 | 422 | Penerima donasi wajib diisi. | Tidak ada |
+| Metode pemusnahan kosong (pemusnahan) | 2 | 422 | Metode pemusnahan wajib diisi. | Tidak ada |
+| Mengubah pelaksanaan setelah selesai | 2, 3 | 422 | Disposal sudah selesai dan tidak dapat diubah. | Tidak ada |
+| Selesaikan sebelum pelaksanaan dicatat | 4 | 422 | Data pelaksanaan disposal belum dicatat. | Tidak ada |
+| Selesaikan dua kali | 4 | 422 | Disposal sudah selesai. | Tidak ada |
+| Asset sudah berubah status | 4 | 422 | Status asset sudah berubah atau tidak lagi berada di gudang. | Tidak ada |
+| Disposal tidak ditemukan | 2–4 | 422 | Disposal tidak ditemukan. | Tidak ada |
+| Pengguna bukan admin asset | semua | 403 / 422 | Pengguna tidak memiliki akses admin asset. / Pengguna tidak terdaftar sebagai admin asset. | Tidak ada |
+| Token kedaluwarsa | semua | 401 | Token telah expired. Mobile me-refresh token sekali lalu mengulang request. | Tidak ada |
+
+Semua pelanggaran aturan dilempar sebagai `InvalidArgumentException` di dalam `DB::transaction`, sehingga seluruh perubahan request itu dibatalkan. Pesan tersedia dalam bahasa Indonesia dan Inggris mengikuti header `locale`.
+
+#### Ringkasan siapa mengerjakan apa
+
+| Tahap | Mobile | API | Database |
+|---|---|---|---|
+| Opsi | Daftar asset gudang rusak dengan riwayat | Hitung usia, jumlah perbaikan dan klaim | `SELECT` saja |
+| Keputusan | Alasan, metode, nilai sisa, catatan | Validasi asset gudang rusak, snapshot, kunci status | `asset_trx_disposal`, `asset_data → menunggu_disposal` |
+| Pelaksanaan | Form sesuai metode dan foto bukti | Validasi menurut metode, unggah bukti setelah validasi | `asset_trx_disposal` (kolom pelaksanaan) |
+| Selesai | Dialog konfirmasi | Validasi ulang, asset → `disposed`, log, notifikasi | `asset_data`, `asset_trx_disposal`, `asset_trx_log`, `notif_data` |
+| Tampilan | JSON → model → widget; objek `aksi` | `statusMeta` (Menunggu Disposal, Siap Diselesaikan, Dihapus) | `SELECT` saja |
+
 ## 46. Ringkasan Database Impact
 
-Tabel `asset_trx_disposal` dibuat ulang (tabel lama `asset_trx_disposal` dan `_item` di-drop bila kosong). `asset_data.status_asset` +`menunggu_disposal`; `asset_log.jenis_log` +`disposal_gudang`.
+Tabel `asset_trx_disposal` dibuat ulang (tabel lama `asset_trx_disposal` dan `_item` di-drop bila kosong). `asset_data.status_asset` +`menunggu_disposal`; `asset_trx_log.jenis_log` +`disposal_gudang`.
 
 ## 47. Checklist Implementasi
 
@@ -578,3 +826,4 @@ Tabel `asset_trx_disposal` dibuat ulang (tabel lama `asset_trx_disposal` dan `_i
 |---|---|---|
 | 1.0 | 8 Okt 2026 | Dokumen awal PML04 |
 | 1.1 | 12 Okt 2026 | Sinkronisasi dengan kode: bukti kini disimpan di object storage MinIO (RISK-004 diturunkan ke RENDAH); path UI/model mobile mengikuti struktur folder baru; berkas `AssetDisposalProsesWidgets` dan `AssetFotoPreview` dicatat. Perbaikan 422 vs 500 pada controller Asset (import `InvalidArgumentException`/`Throwable`) tidak mengubah kontrak API |
+| 1.2 | 22 Okt 2026 | Menambah §45.4 *Walkthrough Lengkap dengan Contoh Data* (keputusan dengan riwayat asset, pelaksanaan lelang/jual dengan bukti, pembaruan pelaksanaan, penyelesaian dan notifikasi; variasi donasi, pemusnahan, disposal sebagai tindak lanjut modul lain; kasus gagal). Sinkronisasi kode: tabel log ternyata `asset_trx_log` (`id_asset_trx_log`), bukan `asset_log`. |
