@@ -1,6 +1,6 @@
 # Dokumentasi Teknis & Manual Book — Peminjaman Asset Karyawan
 
-> Dokumen ini disusun **murni dari source code lokal** (`API/` Lumen dan `MOBILE/` Flutter) per 26 September 2026.
+> Dokumen ini disusun **murni dari source code lokal** (`API/` Lumen dan `MOBILE/` Flutter) per 26 September 2026 dan disinkronkan ulang pada 27 Oktober 2026 (v1.6).
 > Business requirement dan kode fitur **diturunkan dari kode**. Bagian yang tidak ditemukan ditandai **⚠️ Belum ditemukan**, asumsi ditandai **⚠️ Asumsi**.
 > Contoh ID/nama pada payload adalah **data sintetis**.
 
@@ -17,8 +17,8 @@
 | Database | Struktur mengacu `API/diagram-asset.dbml` + migrations. ⚠️ Asumsi: MySQL/MariaDB |
 | Mobile | Flutter (package `professional_flutter_3_35`), `flutter_bloc`, `dio` |
 | Web | ⚠️ Belum ditemukan: tidak ada source web di workspace |
-| Versi Dokumen | 1.5 |
-| Tanggal Dokumentasi | 2026-10-22 |
+| Versi Dokumen | 1.6 |
+| Tanggal Dokumentasi | 2026-10-27 |
 | Dokumen terkait | Onboarding, Request/Penambahan (helper & pola bersama), Offboarding (mengembalikan pinjaman saat karyawan keluar) |
 
 ---
@@ -41,20 +41,23 @@
 | Relasi pengembalian | `id_peminjaman_asal` → header peminjaman |
 | Asset Master | `asset_data` (`status_asset = dipinjam` selama dipinjam) |
 | Log | `asset_trx_log`: `peminjaman_karyawan` (serah terima) dan `pengembalian_karyawan` (pengembalian) |
-| Status | Peminjaman: `pengajuan → dikonfirmasi → aktif → selesai` atau `ditolak`. Pengembalian: `pengajuan → selesai` |
+| Status | Peminjaman: `pengajuan → dikonfirmasi → aktif → selesai`, atau berhenti di `ditolak` (ditolak admin) / `dibatalkan` (dibatalkan karyawan, v1.6). Pengembalian: `pengajuan → selesai` |
 | Approval | Admin memutuskan **per asset** (setujui/tolak) lalu menetapkan jadwal serah terima |
-| API | 6 endpoint admin + 9 endpoint karyawan |
-| Mobile Screen | Karyawan: Peminjaman Asset (switch Peminjaman / Pengembalian), Tambah Peminjaman Asset, Detail Peminjaman / Pengembalian. Admin: Peminjaman Asset (switch Peminjaman / Pengembalian), Detail + sheet Konfirmasi Peminjaman Asset. Banner & kartu di Asset Saya |
+| API | 6 endpoint admin + 9 endpoint karyawan = 15 rute (jumlah rute tidak berubah di v1.6; parameter list bertambah: `tab=dibatalkan`, `tab=riwayat`, `kondisi`) |
+| Mobile Screen | Karyawan: Peminjaman Asset (4 tab: Permintaan Peminjaman, Sedang Dipinjam, Pengembalian, Riwayat Peminjaman), Tambah Peminjaman Asset, Detail Peminjaman / Pengembalian. Admin: Peminjaman Asset (4 tab yang sama), Detail + sheet Konfirmasi Peminjaman Asset. Banner & kartu di Asset Saya |
+| Prasyarat deploy (v1.6) | SQL manual `Claude outputs/sql-peminjaman-status-dibatalkan.sql` menambah nilai `dibatalkan` pada enum `status_peminjaman`. **Jalankan sebelum API v1.6 dipakai** (lihat RISK-010). DBML bertanda `[NEW KRY05]`; status eksekusi SQL di server tidak diverifikasi dari kode |
+| Hasil tes (eksekusi sesi 2026-10-27) | API `tests/Asset`: 386 tes lulus (4850 assertion, sqlite). Mobile `test/asset`: 466 lulus, 5 gagal lama yang tidak terkait fitur (Receive action…, pemeliharaan gudang progress summary, dashboard 320px & 800px, Damaged asset replacement picker) |
 
 ```text
 Karyawan: pilih asset gudang + keperluan + tujuan + tanggal pinjam–kembali → Ajukan Peminjaman
       │  asset_data → proses                                          status: pengajuan
+      │   (atau Batalkan → semua asset → tersedia, status: dibatalkan)
       ▼
 Admin: setujui / tolak tiap asset + jadwal serah terima (dalam periode pinjam)
       │  asset ditolak → tersedia                                     status: dikonfirmasi (atau ditolak bila semua ditolak)
       ▼
 Karyawan: Terima Asset ─────────────► asset → dipinjam @karyawan + asset_trx_log     status: aktif
-      │   (atau Batalkan → asset → tersedia, status: ditolak)
+      │   (atau Batalkan → asset disetujui → tersedia, status: dibatalkan)
       ▼
 Pengingat H-1 / terlambat (banner di aplikasi)
       ▼
@@ -62,6 +65,8 @@ Karyawan: Kembalikan Asset ─► header baru jenis pengembalian               s
       ▼
 Admin: kondisi + lokasi gudang tiap asset ─► asset → tersedia / rusak @gudang pilihan admin + asset_trx_log
                                             pengembalian: selesai · peminjaman asal: selesai
+      ▼
+Tab Riwayat Peminjaman: peminjaman selesai + pengembaliannya tampil sebagai 1 entri
 ```
 
 ---
@@ -73,9 +78,11 @@ Peminjaman Asset memungkinkan **karyawan meminjam asset gudang untuk jangka wakt
 Alur utama:
 - **Pengajuan** oleh karyawan: memilih satu atau lebih asset yang tersedia, keperluan (Kantor/Dinas/Pelatihan/Lainnya), tujuan, tanggal pinjam dan tanggal kembali. Asset langsung dikunci.
 - **Konfirmasi admin per asset**: setiap asset disetujui atau ditolak (dengan alasan). Jika ada yang disetujui, admin menentukan **jadwal serah terima** yang harus berada dalam periode pinjam.
-- **Serah terima**: karyawan menekan **Terima Asset** setelah menerima fisik asset → status **Aktif**, asset tercatat dipinjam karyawan. Karyawan juga bisa **Batalkan** sebelum menerima.
+- **Serah terima**: karyawan menekan **Terima Asset** setelah menerima fisik asset → status **Aktif**, asset tercatat dipinjam karyawan. Karyawan juga bisa **Batalkan** selama peminjaman masih `pengajuan` atau `dikonfirmasi` (sebelum menerima); hasilnya status **Dibatalkan** dan asset yang dikunci kembali tersedia.
 - **Jatuh tempo**: mulai H-1 tanggal kembali, peminjaman tampil sebagai pengingat; lewat tanggal ditandai **Terlambat**.
 - **Pengembalian**: karyawan mengajukan pengembalian **seluruh** asset pinjaman; admin memeriksa kondisi tiap asset (Normal → kembali tersedia, Rusak → status rusak di gudang). Peminjaman asal otomatis **Selesai**.
+- **Riwayat** (v1.6): tab Riwayat Peminjaman menampilkan peminjaman `selesai` beserta pengembaliannya sebagai satu entri (jumlah normal/rusak dan tanggal dikembalikan).
+- **Halaman 4 tab** (v1.6): Permintaan Peminjaman, Sedang Dipinjam (chip Semua / Jatuh Tempo / Terlambat), Pengembalian, Riwayat Peminjaman.
 
 ---
 
@@ -114,10 +121,11 @@ Alur utama:
 | Melihat semua peminjaman & pengembalian | ✅ | ❌ | `/asset/peminjaman-karyawan`, `/asset/pengembalian-karyawan` |
 | Melihat peminjaman & pengembalian sendiri | – | ✅ | `/asset/karyawan/peminjaman`, `/asset/karyawan/pengembalian` |
 | Mengajukan peminjaman | – | ✅ | Untuk diri sendiri |
-| Membatalkan pengajuan (sebelum admin memutuskan) | ❌ | ❌ | ⚠️ Belum ditemukan (RISK-002) |
+| Melihat riwayat peminjaman selesai + pengembaliannya | ✅ (semua karyawan di company) | ✅ (milik sendiri) | Tab `riwayat` dan key `pengembalian` pada detail |
+| Membatalkan pengajuan (sebelum admin memutuskan) | ❌ | ✅ (status pengajuan) | Disimpan sebagai `dibatalkan` (v1.6; RISK-002 ditutup) |
 | Setujui / tolak per asset | ✅ (status pengajuan) | ❌ | |
 | Terima asset | ❌ | ✅ (status dikonfirmasi) | |
-| Batalkan setelah disetujui | ❌ | ✅ (status dikonfirmasi) | Disimpan sebagai `ditolak` |
+| Batalkan setelah disetujui | ❌ | ✅ (status dikonfirmasi) | Disimpan sebagai `dibatalkan` (v1.6; sebelumnya `ditolak`) |
 | Ajukan pengembalian | ❌ | ✅ (status aktif) | Seluruh asset |
 | Konfirmasi kondisi & lokasi gudang pengembalian | ✅ (status pengajuan) | ❌ | |
 | Menolak pengembalian | ❌ | ❌ | ⚠️ Belum ditemukan (RISK-004) |
@@ -135,8 +143,11 @@ Alur utama:
 | Periode pinjam | `tgl_peminjaman` s.d. `tgl_dikembalikan` |
 | Jadwal serah terima | Tanggal + jam penyerahan fisik yang ditetapkan admin, harus di dalam periode pinjam |
 | Aktif | Karyawan sudah menerima asset (`status_asset = dipinjam`) |
-| Jatuh tempo | Peminjaman aktif dengan `tgl_dikembalikan` ≤ besok dan belum diajukan pengembalian |
-| Terlambat | Aktif dan hari ini > `tgl_dikembalikan` |
+| Jatuh tempo (banner/dashboard) | Peminjaman aktif dengan `tgl_dikembalikan` ≤ besok (termasuk yang sudah lewat), asset masih dipegang, dan belum ada pengembalian berjalan |
+| Chip Jatuh Tempo (tab Sedang Dipinjam) | Parameter `kondisi=jatuh_tempo`: `tgl_dikembalikan` hari ini sampai besok; yang sudah lewat tidak termasuk (masuk chip Terlambat). Tidak mengecualikan peminjaman yang pengembaliannya sedang diajukan |
+| Dibatalkan | Status `dibatalkan` (v1.6): peminjaman dibatalkan karyawan saat `pengajuan` atau `dikonfirmasi`; `ket_tolak = "Dibatalkan oleh karyawan."` |
+| Riwayat | Tab `riwayat`: peminjaman `selesai` dengan ringkasan pengembaliannya (key `pengembalian`) |
+| Terlambat | Aktif dan hari ini > `tgl_dikembalikan` (chip Terlambat: `kondisi=terlambat`, `tgl_dikembalikan` < hari ini) |
 | `sisa_hari` | Selisih hari ke tanggal kembali; negatif = terlambat |
 | `dapat_dikembalikan` | Flag detail karyawan: aktif, semua asset masih dipegang, belum ada pengembalian berjalan |
 
@@ -177,8 +188,10 @@ Minimal satu disetujui → `dikonfirmasi`; semua ditolak → `ditolak` dengan `k
 ### BR-011 — Terima asset hanya saat dikonfirmasi
 Karyawan aktif, status `dikonfirmasi`, asset disetujui masih `proses` di gudang → asset `dipinjam` @karyawan, status `aktif`, `asset_trx_log` → "Peminjaman asset belum dapat diterima." / "Satu atau beberapa asset belum siap diserahterimakan."
 
-### BR-012 — Batalkan hanya saat dikonfirmasi
-Asset disetujui kembali `tersedia`; status `ditolak`, `ket_tolak = "Dibatalkan oleh karyawan."` → "Peminjaman asset sudah tidak dapat dibatalkan."
+### BR-012 — Batalkan hanya saat pengajuan atau dikonfirmasi (v1.6)
+Karyawan pemilik dapat membatalkan peminjaman berstatus `pengajuan` atau `dikonfirmasi`. Dari `pengajuan` seluruh asset item (belum diputuskan, `status_item` NULL) dilepas; dari `dikonfirmasi` hanya item `disetujui` (item ditolak sudah dilepas saat konfirmasi). Hanya asset yang masih `proses` + `gudang` yang diubah menjadi `tersedia` @gudang (asset lain tidak disentuh). Header menjadi **`dibatalkan`** (bukan lagi `ditolak`) dengan `ket_tolak = "Dibatalkan oleh karyawan."`. Tidak ada `asset_trx_log` karena asset tidak pernah berpindah pemegang. Status lain (`aktif`, `selesai`, `ditolak`, `dibatalkan`) → "Peminjaman asset sudah tidak dapat dibatalkan."; milik karyawan lain atau baris pengembalian → "Peminjaman asset tidak ditemukan."; karyawan nonaktif → "Karyawan tidak ditemukan atau tidak aktif."
+
+> Data lama: pembatalan sebelum v1.6 (hanya mungkin pada `dikonfirmasi`) tersimpan sebagai `ditolak` dengan teks yang sama. SQL langkah 3 (opsional) memindahkannya ke `dibatalkan`.
 
 ### BR-013 — Pengembalian hanya untuk peminjaman aktif, seluruh asset
 Semua asset disetujui harus masih `dipinjam` oleh karyawan; tidak boleh ada pengembalian berjalan; tidak sedang di offboarding → "Hanya peminjaman aktif yang dapat dikembalikan." / "Satu atau beberapa asset tidak sedang dipinjam oleh karyawan." / "Pengembalian asset sedang menunggu konfirmasi." / "Asset sedang diproses pada offboarding."
@@ -196,7 +209,13 @@ Saat karyawan menerima asset pinjaman (Terima Asset), `asset_data.id_asset_lokas
 Peminjaman `aktif` dengan `tgl_dikembalikan ≤ besok`, asset masih dipegang, dan belum ada pengembalian `pengajuan`/`dikonfirmasi` → tampil di Asset Saya (karyawan) dan ringkasan admin. ⚠️ Belum ditemukan: scheduler/push otomatis.
 
 ### BR-017 — Pengembalian lewat offboarding dipisahkan
-Pengembalian yang dibuat oleh proses offboarding (tercatat di `asset_trx_offboarding_relasi`) disembunyikan dari daftar dan tidak dapat dikonfirmasi lewat menu peminjaman.
+Pengembalian yang dibuat oleh proses offboarding (tercatat di `asset_trx_offboarding_relasi`) disembunyikan dari tab, list, dan detail **Pengembalian** serta tidak dapat dikonfirmasi lewat menu peminjaman. **Keputusan produk (v1.6):** pengembalian dari offboarding sengaja tetap tampil di tab **Riwayat** dan pada bagian `pengembalian` di detail peminjaman, sehingga satu peminjaman selesai selalu menampilkan seluruh pengembaliannya.
+
+### BR-019 — Filter kondisi tab Sedang Dipinjam (v1.6)
+Parameter opsional `kondisi` (`semua` | `jatuh_tempo` | `terlambat`) pada list peminjaman karyawan dan admin hanya efektif bila `tab=aktif`; di tab lain diabaikan. `terlambat`: `tgl_dikembalikan` < hari ini. `jatuh_tempo`: `tgl_dikembalikan` hari ini sampai besok (yang sudah terlambat tidak masuk). `semua`/kosong = semua peminjaman aktif. Filter diterapkan di SQL **sebelum** paginasi. Nilai lain → 422 "Filter kondisi peminjaman asset tidak valid." Tanpa `tab`/`limit`/`offset` list kembali ke respons lama non-paginasi dan `kondisi` diabaikan.
+
+### BR-020 — Tab Riwayat menggabungkan peminjaman dan pengembalian (v1.6)
+`tab=riwayat` hanya berisi peminjaman `selesai`, urut `tgl_update` desc lalu id desc, paginasi sama dengan tab lain. Tiap item memuat `pengembalian[]` (hanya pengembalian `selesai` milik peminjaman dan karyawan yang sama, satu query per halaman). Detail peminjaman memuat `pengembalian[]` untuk semua status pengembalian (urut `tgl_input` asc). `riwayat` sengaja tidak ada di `filters` statis.
 
 ### BR-018 — Penomoran
 ID header/item `id_company + YYYYMM + 3 digit`; `no_trx = KRY05-YYYYMMNNN` (sequence yang sama untuk peminjaman & pengembalian).
@@ -209,19 +228,21 @@ ID header/item `id_company + YYYYMM + 3 digit`; `no_trx = KRY05-YYYYMMNNN` (sequ
 1. Karyawan: Asset Saya → Peminjaman → (+) Tambah Peminjaman Asset
    → Pilih Asset (Tambah Asset) → Pilih Keperluan → Tujuan Peminjaman → Tanggal Pinjam–Kembali
    → Ajukan Peminjaman                         [pengajuan · asset proses · notif admin]
-2. Admin: Asset Karyawan → Peminjaman → tab Pengajuan → Detail
+2. Admin: Asset Karyawan → Peminjaman → tab Permintaan Peminjaman (chip Pengajuan) → Detail
    → Setujui / Tolak tiap asset (+ alasan) → Konfirmasi
    → Sheet "Konfirmasi Peminjaman Asset": Jadwal Serah Terima + Jam + Catatan → Submit
                                                [dikonfirmasi / ditolak · notif karyawan]
 3. Karyawan: banner / Detail → "Siap untuk meminjam Asset?"
    → Terima Asset   [aktif · asset dipinjam · asset_trx_log · notif admin]
-   → Batalkan       [ditolak "Dibatalkan oleh karyawan." · asset tersedia · notif admin]
+   → Batalkan       [dibatalkan "Dibatalkan oleh karyawan." · asset tersedia · notif admin]
+      (Batalkan juga tersedia sejak status pengajuan, sebelum admin memutuskan)
 4. H-1 tanggal kembali → pengingat jatuh tempo; lewat tanggal → "Terlambat"
 5. Karyawan: Detail peminjaman aktif → Kembalikan Asset
                                                [header pengembalian: pengajuan · notif admin]
-6. Admin: Peminjaman → switch Pengembalian → Detail → Normal / Rusak tiap asset → Konfirmasi
+6. Admin: Peminjaman → tab Pengembalian → Detail → Normal / Rusak tiap asset → Konfirmasi
                                                [pengembalian selesai · asset tersedia/rusak · asset_trx_log
                                                 · peminjaman asal selesai · notif karyawan]
+7. Riwayat: tab Riwayat Peminjaman menampilkan peminjaman selesai + ringkasan pengembaliannya
 ```
 
 ---
@@ -229,16 +250,17 @@ ID header/item `id_company + YYYYMM + 3 digit`; `no_trx = KRY05-YYYYMMNNN` (sequ
 ## 11. Flow Berdasarkan Role
 
 ### 11.1 Karyawan
-1. **Asset Saya** → menu **Peminjaman** → halaman **Peminjaman Asset** (switch **Peminjaman** / **Pengembalian**; tab Pengajuan, Dikonfirmasi, Ditolak, Aktif untuk peminjaman; Pengajuan, Selesai untuk pengembalian).
+1. **Asset Saya** → menu **Peminjaman** → halaman **Peminjaman Asset** dengan 4 tab: **Permintaan Peminjaman** (chip Pengajuan, Dikonfirmasi, Ditolak, Dibatalkan), **Sedang Dipinjam** (chip Semua, Jatuh Tempo, Terlambat), **Pengembalian** (chip Pengajuan, Selesai) dan **Riwayat Peminjaman** (tanpa chip).
 2. Tekan **+** → **Tambah Peminjaman Asset** → **Ajukan Peminjaman**.
-3. Setelah admin mengonfirmasi: banner di Asset Saya / detail → **Terima Asset** atau **Batalkan**.
+3. Selama masih **Menunggu Konfirmasi**: detail menyediakan **Batalkan**. Setelah admin mengonfirmasi: banner di Asset Saya / detail → **Terima Asset** atau **Batalkan**.
 4. Selama aktif: kartu peminjaman aktif di Asset Saya, pengingat jatuh tempo, label **Terlambat** bila lewat.
-5. **Kembalikan Asset** di detail peminjaman aktif → pantau di switch Pengembalian.
+5. **Kembalikan Asset** di detail peminjaman aktif → pantau di tab Pengembalian; setelah selesai peminjaman pindah ke tab Riwayat.
 
 ### 11.2 Admin Asset
 1. **Asset Karyawan** → aksi **Peminjaman** (juga panel ringkasan "perlu diproses" dan "jatuh tempo").
-2. Tab **Pengajuan** → detail → **Setujui**/**Tolak** per asset → **Konfirmasi** → isi jadwal → **Submit**.
-3. Switch **Pengembalian** → tab Pengajuan → detail → **Normal**/**Rusak** per asset → **Konfirmasi**.
+2. Tab **Permintaan Peminjaman** → chip **Pengajuan** → detail → **Setujui**/**Tolak** per asset → **Konfirmasi** → isi jadwal → **Submit**.
+3. Tab **Pengembalian** → chip Pengajuan → detail → **Normal**/**Rusak** per asset → **Konfirmasi**.
+4. Tab **Sedang Dipinjam** (chip Jatuh Tempo / Terlambat) memantau peminjaman aktif; tab **Riwayat Peminjaman** (read-only) menelusuri peminjaman yang sudah selesai.
 
 ### 11.3 Approver
 Dijalankan Admin Asset (§11.2 langkah 2).
@@ -256,10 +278,11 @@ flowchart TD
     B -->|Gagal| X[Pesan error]
     B -->|OK| C[status pengajuan, asset proses, notif admin]
     C --> D{Admin putuskan per asset}
+    C -->|Karyawan Batalkan| H0[status dibatalkan, semua asset tersedia, notif admin]
     D -->|Semua ditolak| E[status ditolak, asset tersedia, notif karyawan]
     D -->|Ada yang disetujui + jadwal| F[status dikonfirmasi, asset ditolak tersedia, notif karyawan]
     F --> G{Karyawan}
-    G -->|Batalkan| H[status ditolak - dibatalkan, asset tersedia, notif admin]
+    G -->|Batalkan| H[status dibatalkan, asset disetujui tersedia, notif admin]
     G -->|Terima Asset| I[status aktif, asset dipinjam, asset_trx_log, notif admin]
     I --> J{Tanggal kembali}
     J -->|H-1 atau lewat| K[Pengingat jatuh tempo / Terlambat]
@@ -269,6 +292,7 @@ flowchart TD
     M --> N[Admin isi kondisi dan pilih lokasi gudang tiap asset]
     N --> O[Asset tersedia atau rusak di gudang, asset_trx_log]
     O --> P[Pengembalian selesai, peminjaman asal selesai, notif karyawan]
+    P --> Q[Tab Riwayat: peminjaman selesai + pengembalian]
 ```
 
 ---
@@ -336,20 +360,42 @@ sequenceDiagram
     CA->>N: pengembalian.dikonfirmasi (karyawan)
 ```
 
+### 13.3 Pembatalan oleh karyawan (v1.6)
+
+```mermaid
+sequenceDiagram
+    actor K as Karyawan
+    participant M as Mobile
+    participant CK as AssetKaryawanPeminjaman_c
+    participant P as AssetPeminjamanKaryawan_m
+    participant DB
+    participant N as AssetNotification
+
+    K->>M: Batalkan (status pengajuan atau dikonfirmasi)
+    M->>CK: POST /asset/karyawan/peminjaman/{id}/batalkan
+    CK->>P: batalkanKaryawan()
+    P->>DB: lock company, header milik karyawan FOR UPDATE
+    P->>DB: cek status pengajuan atau dikonfirmasi, karyawan aktif
+    P->>DB: UPDATE asset_data proses + gudang menjadi tersedia (item pengajuan: semua, dikonfirmasi: disetujui)
+    P->>DB: UPDATE header dibatalkan, ket_tolak
+    CK->>N: peminjaman.dibatalkan (admin)
+```
+
 ---
 
 ## 14. Status Transaksi
 
-Kolom `status` (enum `status_peminjaman`: `pengajuan`, `dikonfirmasi`, `ditolak`, `aktif`, `selesai`; default `pengajuan`). Di API dikirim sebagai `status_approval`.
+Kolom `status` (enum `status_peminjaman`: `pengajuan`, `dikonfirmasi`, `ditolak`, `aktif`, `selesai`, **`dibatalkan`** (v1.6, via SQL manual); default `pengajuan`). Di API dikirim sebagai `status_approval`. Enum ini dipakai bersama baris pengembalian, tetapi kode hanya memakai `dibatalkan` untuk peminjaman.
 
 ### 14.1 Peminjaman (`jenis_status = peminjaman`)
 | Status | Label API | Tab | Arti | Aksi berikutnya |
 |---|---|---|---|---|
-| `pengajuan` | Menunggu Konfirmasi | pengajuan | Menunggu keputusan admin | Admin: Konfirmasi |
+| `pengajuan` | Menunggu Konfirmasi | pengajuan | Menunggu keputusan admin | Admin: Konfirmasi; Karyawan: Batalkan |
 | `dikonfirmasi` | Dikonfirmasi | dikonfirmasi | Minimal satu asset disetujui, jadwal ditetapkan | Karyawan: Terima / Batalkan |
-| `ditolak` | Ditolak | ditolak | Semua asset ditolak admin **atau** dibatalkan karyawan | – |
+| `ditolak` | Ditolak | ditolak | Semua asset ditolak admin. Data sebelum v1.6 juga memuat pembatalan karyawan (`ket_tolak = "Dibatalkan oleh karyawan."`) | – |
+| `dibatalkan` | Dibatalkan | dibatalkan | Dibatalkan karyawan saat `pengajuan` atau `dikonfirmasi` (v1.6) | – |
 | `aktif` | Aktif (mobile: **Terlambat** bila lewat tanggal kembali) | aktif | Asset dipegang karyawan | Karyawan: Kembalikan Asset |
-| `selesai` | Selesai | selesai | Seluruh asset sudah kembali | – (tidak tampil di daftar peminjaman) |
+| `selesai` | Selesai | selesai (list: tab `riwayat`) | Seluruh asset sudah kembali | – (tidak tampil di tab Permintaan/Sedang Dipinjam; tampil di tab Riwayat) |
 
 ### 14.2 Pengembalian (`jenis_status = pengembalian`)
 | Status | Label API | Tab | Arti |
@@ -379,9 +425,11 @@ stateDiagram-v2
     pengajuan --> dikonfirmasi: Konfirmasi, ada asset disetujui (Admin)
     pengajuan --> ditolak: Konfirmasi, semua ditolak (Admin)
     dikonfirmasi --> aktif: Terima Asset (Karyawan)
-    dikonfirmasi --> ditolak: Batalkan (Karyawan)
+    pengajuan --> dibatalkan: Batalkan (Karyawan)
+    dikonfirmasi --> dibatalkan: Batalkan (Karyawan)
     aktif --> selesai: Pengembalian dikonfirmasi (Admin)
     ditolak --> [*]
+    dibatalkan --> [*]
     selesai --> [*]
 ```
 
@@ -391,7 +439,8 @@ stateDiagram-v2
 | pengajuan | Konfirmasi (≥1 disetujui) | dikonfirmasi | Admin |
 | pengajuan | Konfirmasi (semua ditolak) | ditolak | Admin |
 | dikonfirmasi | Terima Asset | aktif | Karyawan |
-| dikonfirmasi | Batalkan | ditolak | Karyawan |
+| pengajuan | Batalkan | dibatalkan | Karyawan |
+| dikonfirmasi | Batalkan | dibatalkan | Karyawan |
 | aktif | Ajukan pengembalian | aktif (+ header pengembalian `pengajuan`) | Karyawan |
 | aktif | Pengembalian dikonfirmasi | selesai | Admin (otomatis) |
 | pengajuan (pengembalian) | Konfirmasi kondisi | selesai | Admin |
@@ -400,7 +449,7 @@ Status `asset_data`:
 | Dari | Ke | Trigger |
 |---|---|---|
 | tersedia @gudang | proses | Ajukan peminjaman |
-| proses | tersedia @gudang | Asset ditolak admin / peminjaman dibatalkan karyawan |
+| proses | tersedia @gudang | Asset ditolak admin / peminjaman dibatalkan karyawan (pengajuan: semua item; dikonfirmasi: item disetujui) |
 | proses @gudang | dipinjam @karyawan | Terima Asset |
 | dipinjam @karyawan | tersedia @gudang | Pengembalian, kondisi normal |
 | dipinjam @karyawan | rusak @gudang | Pengembalian, kondisi rusak |
@@ -423,6 +472,8 @@ Status `asset_data`:
 | `notif_data`, `users` | Notifikasi | Inbox & token FCM |
 
 > ⚠️ Belum ditemukan: migration `CREATE TABLE` untuk tabel peminjaman; struktur mengacu DBML + migrations `2026_09_17_000006`, `2026_09_17_000009`.
+
+> ⚠️ **Prasyarat deploy v1.6:** nilai enum `dibatalkan` ditambahkan lewat SQL manual `Claude outputs/sql-peminjaman-status-dibatalkan.sql` (`ALTER TABLE … MODIFY COLUMN status ENUM('pengajuan','dikonfirmasi','ditolak','aktif','selesai','dibatalkan')`, nilai ditambahkan di akhir sehingga hanya metadata yang berubah). DBML `Enum status_peminjaman` sudah bertanda `[NEW KRY05]`. Dokumen ini tidak dapat memastikan SQL sudah dijalankan di server mana pun; jalankan **sebelum** API v1.6 dipakai (RISK-010).
 
 ---
 
@@ -489,15 +540,15 @@ Semua JOIN mencocokkan `id_company`. `id_peminjaman_asal` memiliki `ref` di DBML
 | tgl_serah_terima | date | No | 0000-00-00 | – | Jadwal serah terima (admin) |
 | jam_serah_terima | time | No | 00:00:00 | – | Jam serah terima |
 | keterangan_serah_terima | varchar(255) | – | '' | – | Catatan admin |
-| ket_tolak | varchar(255) | No | '' | – | "Seluruh asset peminjaman ditolak." / "Dibatalkan oleh karyawan." |
+| ket_tolak | varchar(255) | No | '' | – | "Seluruh asset peminjaman ditolak." (status `ditolak`) / "Dibatalkan oleh karyawan." (status `dibatalkan`; data lama: `ditolak`) |
 | id_karyawan, nik_karyawan, nama_karyawan | varchar | – | '' | IDX | Peminjam (snapshot) |
 | jenis_status | enum(peminjaman, pengembalian) | No | peminjaman | IDX | Jenis baris |
 | id_peminjaman_asal | varchar(50) | Yes | NULL | FK | Wajib untuk pengembalian |
-| status | enum(pengajuan, dikonfirmasi, ditolak, aktif, selesai) | No | pengajuan | IDX | API: `status_approval` |
+| status | enum(pengajuan, dikonfirmasi, ditolak, aktif, selesai, **dibatalkan**) | No | pengajuan | IDX | API: `status_approval`. `dibatalkan` ditambah v1.6 (SQL manual) |
 | user_approval / tgl_approval | varchar / timestamp | – | '' / NULL | – | Admin pemutus / pemeriksa pengembalian |
 | id_company | varchar(50) | No | '' | IDX | Company |
 | tgl_input, user_input | – | – | – | IDX | Pembuat (API: `tgl_pengajuan`) |
-| tgl_update, user_update | – | Yes | NULL | – | Perubahan terakhir; dipakai sebagai **tanggal diterima** saat `aktif` |
+| tgl_update, user_update | – | Yes | NULL | – | Perubahan terakhir; dipakai sebagai **tanggal diterima** saat `aktif`, sebagai waktu pembatalan saat `dibatalkan`, dan sebagai urutan tab Riwayat saat `selesai` |
 
 ### 18.2 asset_trx_peminjaman_karyawan_item
 | Field | Type | Null | Default | Key | Description |
@@ -530,7 +581,7 @@ Semua JOIN mencocokkan `id_company`. `id_peminjaman_asal` memiliki `ref` di DBML
 | `atpk_employee_list_idx` | header | (id_company, id_karyawan, jenis_status, status, tgl_input, id_asset_trx_peminjaman_karyawan) | List karyawan |
 | `atpki_loan_status_idx` | item | (id_asset_trx_peminjaman, id_company, status_item, id_asset_data) | Hitung item, cek asset per header |
 
-Dibuat migration `2026_09_17_000006`, dibuat ulang `2026_09_17_000009`. Pencarian `hasActivePeminjamanAsset`/`hasActivePengembalianAsset` berdasarkan `atpki.id_asset_data` tidak diawali kolom index (⚠️ belum diukur).
+Dibuat migration `2026_09_17_000006`, dibuat ulang `2026_09_17_000009`. Index tidak berubah di v1.6 (SQL `dibatalkan` tidak menyentuh index). Filter `kondisi` (tgl kembali) dan urutan tab Riwayat (`tgl_update`) tidak memiliki index khusus (⚠️ belum diukur). Pencarian `hasActivePeminjamanAsset`/`hasActivePengembalianAsset` berdasarkan `atpki.id_asset_data` tidak diawali kolom index (⚠️ belum diukur).
 
 ---
 
@@ -553,8 +604,8 @@ ApiResponse + AssetNotification (setelah commit)
 | Route | `RouteAsset.php` | 15 route peminjaman/pengembalian |
 | Controller | `AssetAdminPeminjaman_c` (peminjaman), `AssetAdminPengembalian_c` (pengembalian) | getPeminjamanKaryawan, getDetailPeminjamanKaryawan, konfirmasiPeminjamanKaryawan, getPengembalianKaryawan, getDetailPengembalianKaryawan, konfirmasiPengembalianKaryawan |
 | Controller | `AssetKaryawanPeminjaman_c` | getPeminjamanOptions, getPeminjamanSaya, storePeminjamanSaya, getDetailPeminjamanSaya, terimaPeminjamanSaya, batalkanPeminjamanSaya, ajukanPengembalianSaya, getPengembalianSaya, getDetailPengembalianSaya |
-| Model | `AssetPeminjamanKaryawan_m` | getOptions, getPeminjaman/Page, getPengembalian(Admin), getDetail(Admin), getDetailPengembalian(Admin), store, konfirmasiAdmin, terimaKaryawan, batalkanKaryawan, ajukanPengembalianKaryawan, konfirmasiPengembalianAdmin (lokasi gudang per item via `resolveItemLocations` di `Asset_m`), getPendingForEmployee, getPendingForAdmin, countPendingForAdmin, getJatuhTempo, countJatuhTempo |
-| Enum | `PeminjamanStatus` | pengajuan/dikonfirmasi/ditolak/aktif/selesai (dipakai lewat konstanta model) |
+| Model | `AssetPeminjamanKaryawan_m` | getOptions, getPeminjaman/Page, getPengembalian(Admin), getDetail(Admin), getDetailPengembalian(Admin), store, konfirmasiAdmin, terimaKaryawan, batalkanKaryawan, ajukanPengembalianKaryawan, konfirmasiPengembalianAdmin (lokasi gudang per item via `resolveItemLocations` di `Asset_m`), getPendingForEmployee, getPendingForAdmin, countPendingForAdmin, getJatuhTempo, countJatuhTempo; v1.6: `applyKondisiAktifFilter`, `attachRiwayatPengembalian`, `pengembalianForDetail`, `peminjamanFilters` |
+| Enum | `PeminjamanStatus` | pengajuan/dikonfirmasi/ditolak/aktif/selesai/dibatalkan (dipakai lewat konstanta model) |
 | Support | `AssetNotification` | Event `peminjaman.*`, `pengembalian.*` |
 
 ---
@@ -570,8 +621,8 @@ Lock → admin → header peminjaman FOR UPDATE → bukan milik offboarding → 
 ### 21.3 Terima — `terimaKaryawan`
 Lock → header milik karyawan FOR UPDATE → status `dikonfirmasi` → karyawan aktif → item disetujui → asset harus `proses` @gudang → UPDATE asset `dipinjam` @karyawan (`id_asset_lokasi_m = NULL`) → header `aktif` → INSERT `asset_trx_log peminjaman_karyawan` → notif `peminjaman.diterima`.
 
-### 21.4 Batalkan — `batalkanKaryawan`
-Lock → header milik karyawan → status `dikonfirmasi` → karyawan aktif → asset disetujui → `tersedia` @gudang → header `ditolak`, `ket_tolak = "Dibatalkan oleh karyawan."` → notif `peminjaman.dibatalkan`.
+### 21.4 Batalkan — `batalkanKaryawan` (v1.6)
+Lock company → header milik karyawan FOR UPDATE (`lockedEmployeeHeader`, hanya `jenis_status = peminjaman`) → status harus `pengajuan` **atau** `dikonfirmasi` → karyawan aktif → ambil asset item: dari `pengajuan` semua item dengan `status_item` NULL, dari `dikonfirmasi` item `disetujui` (FOR UPDATE) → UPDATE `asset_data` menjadi `tersedia` @gudang (`id_pemegang_asset = ''`) **hanya** yang masih `proses` + `gudang` → header `dibatalkan`, `ket_tolak = "Dibatalkan oleh karyawan."`, `tgl_update`, `user_update` → notif `peminjaman.dibatalkan`. Tidak ada `asset_trx_log`. Controller: `batalkanPeminjamanSaya` → `prosesSerahTerimaPeminjaman($diterima = false)`. Response 200.
 
 ### 21.5 Ajukan pengembalian — `ajukanPengembalianKaryawan`
 Lock → peminjaman milik karyawan `aktif` → item disetujui → semua asset masih `dipinjam` oleh karyawan → tidak ada pengembalian `pengajuan`/`dikonfirmasi` → tidak di offboarding → INSERT header `jenis_status = pengembalian`, `id_peminjaman_asal`, salinan periode/keperluan, `pengajuan` → INSERT item (salinan item disetujui, `status_item` NULL) → notif `pengembalian.diajukan`. Response 201.
@@ -581,8 +632,11 @@ Lock → admin → header pengembalian `pengajuan` → peminjaman asal ada & `ak
 
 ### 21.7 Query baca
 - **Options**: asset `tersedia` @gudang yang tidak ada di peminjaman berjalan (item tidak ditolak) + daftar keperluan.
-- **List peminjaman**: tidak menampilkan `selesai`, dan `aktif` hanya jika asset masih dipegang karyawan.
-- **List pengembalian**: mengecualikan pengembalian milik offboarding.
+- **List peminjaman**: tab Permintaan/Sedang Dipinjam tidak menampilkan `selesai`, dan `aktif` hanya jika asset masih dipegang karyawan. Filter tab: `pengajuan`, `dikonfirmasi`, `ditolak`, `aktif`, `dibatalkan`, `riwayat` (v1.6). Tab tanpa nilai (hanya `limit`/`offset`) tidak memfilter status, kecuali `selesai` tetap disembunyikan.
+- **Kondisi (v1.6)**: `applyKondisiAktifFilter` hanya dipanggil bila `tab=aktif`; `terlambat` = `tgl_dikembalikan` < hari ini, `jatuh_tempo` = hari ini sampai besok; diterapkan di query SQL sebelum `limit+1`/`offset`.
+- **Riwayat (v1.6)**: `peminjamanQuery(includeSelesai)` + filter `status = selesai`, `reorder()` ke `tgl_update` desc, id desc; `attachRiwayatPengembalian` mengambil pengembalian `selesai` untuk seluruh id di halaman dengan satu query (JOIN item, `SUM` normal/rusak) dan hanya menempelkan yang `id_karyawan`-nya sama dengan peminjaman. Pengembalian offboarding tidak dikecualikan.
+- **Detail peminjaman (v1.6)**: key `pengembalian` dari `pengembalianForDetail` (semua status, urut `tgl_input` asc, `id_karyawan` sama) yang memanggil `getDetail(..., includeOffboarding = true)` per pengembalian.
+- **List pengembalian**: mengecualikan pengembalian milik offboarding (tab/list/detail Pengembalian).
 - **Detail**: menghitung `terlambat`, `tgl_diterima` (= `tgl_update` saat aktif), `dapat_dikembalikan` (hanya untuk karyawan).
 - **Jatuh tempo**: aktif, `tgl_dikembalikan ≤ besok`, asset masih dipegang, belum ada pengembalian berjalan; `sisa_hari` negatif = terlambat.
 
@@ -593,7 +647,7 @@ Lock → admin → header pengembalian `pengajuan` → peminjaman asal ada & `ak
 | Field | Sebelum | Sesudah | Trigger |
 |---|---|---|---|
 | status_asset | tersedia | proses | Ajukan peminjaman |
-| status_asset / pemegang | proses | tersedia / gudang | Asset ditolak admin; peminjaman dibatalkan |
+| status_asset / pemegang | proses | tersedia / gudang | Asset ditolak admin; peminjaman dibatalkan (pengajuan: semua item; dikonfirmasi: item disetujui; hanya asset `proses` + gudang) |
 | status_asset | proses | dipinjam | Terima Asset |
 | pemegang_asset / id_pemegang_asset | gudang / '' | karyawan / id_karyawan | Terima Asset |
 | id_asset_lokasi_m | lokasi gudang | NULL (v1.1) | Terima Asset |
@@ -610,24 +664,24 @@ Lock → admin → header pengembalian `pengajuan` → peminjaman asal ada & `ak
 
 | ID | Method | Endpoint | Function | Auth |
 |---|---|---|---|---|
-| API-001 | GET | `/asset/peminjaman-karyawan` | List peminjaman (admin) | Admin |
-| API-002 | GET | `/asset/peminjaman-karyawan/{id}` | Detail peminjaman (admin) | Admin |
+| API-001 | GET | `/asset/peminjaman-karyawan` | List peminjaman (admin); `tab` termasuk `dibatalkan`/`riwayat`, `kondisi` | Admin |
+| API-002 | GET | `/asset/peminjaman-karyawan/{id}` | Detail peminjaman (admin) + `pengembalian[]` | Admin |
 | API-003 | POST | `/asset/peminjaman-karyawan/{id}/konfirmasi` | Setujui/tolak per asset + jadwal | Admin |
 | API-004 | GET | `/asset/pengembalian-karyawan` | List pengembalian (admin) | Admin |
 | API-005 | GET | `/asset/pengembalian-karyawan/{id}` | Detail pengembalian (admin) | Admin |
 | API-006 | POST | `/asset/pengembalian-karyawan/{id}/konfirmasi` | Konfirmasi kondisi + lokasi gudang per asset | Admin |
 | API-007 | GET | `/asset/karyawan/peminjaman/options` | Opsi keperluan & asset | JWT |
-| API-008 | GET | `/asset/karyawan/peminjaman` | List peminjaman saya | JWT |
+| API-008 | GET | `/asset/karyawan/peminjaman` | List peminjaman saya; `tab` termasuk `dibatalkan`/`riwayat`, `kondisi` | JWT |
 | API-009 | POST | `/asset/karyawan/peminjaman` | Ajukan peminjaman | JWT |
-| API-010 | GET | `/asset/karyawan/peminjaman/{id}` | Detail peminjaman saya | JWT, pemilik |
+| API-010 | GET | `/asset/karyawan/peminjaman/{id}` | Detail peminjaman saya + `pengembalian[]` | JWT, pemilik |
 | API-011 | POST | `/asset/karyawan/peminjaman/{id}/terima` | Terima asset | JWT, pemilik |
-| API-012 | POST | `/asset/karyawan/peminjaman/{id}/batalkan` | Batalkan (setelah dikonfirmasi) | JWT, pemilik |
+| API-012 | POST | `/asset/karyawan/peminjaman/{id}/batalkan` | Batalkan (status pengajuan atau dikonfirmasi) | JWT, pemilik |
 | API-013 | POST | `/asset/karyawan/peminjaman/{id}/pengembalian` | Ajukan pengembalian | JWT, pemilik |
 | API-014 | GET | `/asset/karyawan/pengembalian` | List pengembalian saya | JWT |
 | API-015 | GET | `/asset/karyawan/pengembalian/{id}` | Detail pengembalian saya | JWT, pemilik |
 
 Terkait: `GET /asset/karyawan/onboarding` (Asset Saya: `peminjaman[]`, `jatuh_tempo[]`, `peminjaman_aktif[]`) dan `GET /asset/summary` (`peminjaman_perlu_proses`, `peminjaman_pending`, `jatuh_tempo_jumlah`, `jatuh_tempo`).
-Batalkan pengajuan, tolak pengembalian, perpanjangan: ⚠️ Belum ditemukan.
+Tolak pengembalian dan perpanjangan: ⚠️ Belum ditemukan. (Batalkan pengajuan tersedia sejak v1.6.)
 
 ---
 
@@ -638,9 +692,18 @@ Header umum: `Authorization: Bearer <token>`, `Content-Type: application/json`, 
 ### API-001 / API-008 — List Peminjaman
 ```http
 GET /asset/peminjaman-karyawan?tab=pengajuan&limit=20&offset=0          (admin)
-GET /asset/karyawan/peminjaman?tab=aktif&limit=20&offset=0              (karyawan)
+GET /asset/karyawan/peminjaman?tab=aktif&kondisi=terlambat&limit=20&offset=0   (karyawan)
+GET /asset/karyawan/peminjaman?tab=riwayat&limit=20&offset=0            (karyawan)
 ```
-`tab`: `pengajuan` | `dikonfirmasi` | `ditolak` | `aktif` ("Filter peminjaman asset tidak valid."); `limit` 1–50; `offset` ≥ 0. Tanpa parameter → array.
+| Parameter | Nilai | Keterangan |
+|---|---|---|
+| `tab` | `pengajuan` \| `dikonfirmasi` \| `ditolak` \| `aktif` \| `dibatalkan` \| `riwayat` | Selain itu 422 "Filter peminjaman asset tidak valid." `dibatalkan` dan `riwayat` baru di v1.6 |
+| `kondisi` | `semua` \| `jatuh_tempo` \| `terlambat` | Opsional, baru v1.6. Hanya efektif bila `tab=aktif` (diabaikan di tab lain). `terlambat`: `tgl_kembali` < hari ini; `jatuh_tempo`: `tgl_kembali` hari ini sampai besok (terlambat tidak masuk); `semua`/kosong: semua aktif. Difilter di SQL sebelum paginasi. Nilai lain 422 |
+| `limit` | 1–50 (default 20) | "Limit maksimal adalah 50 data." |
+| `offset` | ≥ 0 (default 0) | – |
+
+Tanpa `tab`, `limit`, dan `offset` respons berupa array (non-paginasi) dan `kondisi` diabaikan. Kegagalan validasi: HTTP 422, message "Parameter daftar peminjaman asset tidak valid.", `errors.kondisi = ["Filter kondisi peminjaman asset tidak valid."]` (EN: "Invalid asset loan condition filter."), `errors.tab = ["Filter peminjaman asset tidak valid."]`.
+
 ```json
 {
   "code": "SUCCESS",
@@ -650,7 +713,8 @@ GET /asset/karyawan/peminjaman?tab=aktif&limit=20&offset=0              (karyawa
       {"value": "pengajuan", "label": "Pengajuan"},
       {"value": "dikonfirmasi", "label": "Dikonfirmasi"},
       {"value": "ditolak", "label": "Ditolak"},
-      {"value": "aktif", "label": "Aktif"}
+      {"value": "aktif", "label": "Aktif"},
+      {"value": "dibatalkan", "label": "Dibatalkan"}
     ],
     "records": [
       {
@@ -682,6 +746,25 @@ GET /asset/karyawan/peminjaman?tab=aktif&limit=20&offset=0              (karyawa
   }
 }
 ```
+`filters` sengaja **tidak** memuat `riwayat` (tab Riwayat punya tab utama sendiri di mobile).
+
+**Tab `riwayat` (v1.6).** Hanya peminjaman `selesai` (company login; karyawan login untuk endpoint karyawan), urut `tgl_update` desc lalu `id` desc, paginasi `limit+1` tanpa COUNT. Setiap record memuat field di atas plus `pengembalian[]` (urut `tgl_approval` asc; hanya pengembalian `selesai` milik peminjaman dan karyawan yang sama; satu query per halaman, tanpa N+1). Pengembalian yang berasal dari offboarding **ikut** ditampilkan (keputusan produk).
+```json
+{
+  "id": "CMP001202610001",
+  "no_trx": "KRY05-202610001",
+  "status_approval": "selesai",
+  "status_label": "Selesai",
+  "tab": "selesai",
+  "jumlah_asset": 2,
+  "tgl_diterima": "",
+  "terlambat": false,
+  "pengembalian": [
+    {"id": "CMP001202610002", "no_trx": "KRY05-202610002", "tgl_selesai": "2026-10-28", "jumlah_normal": 0, "jumlah_rusak": 1}
+  ]
+}
+```
+(field header lain sama dengan contoh di atas). `tgl_selesai` = tanggal `tgl_approval` pengembalian (`""` bila kosong); `jumlah_normal` = item `disetujui`, `jumlah_rusak` = item `ditolak`.
 
 ### API-002 / API-010 — Detail Peminjaman
 ```http
@@ -703,12 +786,36 @@ Field sama dengan record list (tanpa `id_karyawan`, `nik/nama` di dalam `karyawa
       "kategori_asset": "Proyektor",
       "merek": "MerekY",
       "status_item": "disetujui",
-      "ket_tolak": ""
+      "ket_tolak": "",
+      "id_asset_lokasi_m_tujuan": "",
+      "nama_lokasi_tujuan": ""
+    }
+  ],
+  "pengembalian": [
+    {
+      "id": "CMP001202610002",
+      "no_trx": "KRY05-202610002",
+      "status_approval": "selesai",
+      "status_label": "Selesai",
+      "tgl_pengajuan": "2026-10-28",
+      "tgl_selesai": "2026-10-28",
+      "assets": [
+        {
+          "id_item": "CMP001202610003",
+          "id_asset_data": "CMP00120260100009",
+          "nama_asset": "Proyektor Mini",
+          "kondisi": "rusak",
+          "keterangan_kerusakan": "Lensa tergores",
+          "lokasi_tujuan": "Gudang Servis"
+        }
+      ]
     }
   ]
 }
 ```
 `dapat_dikembalikan` hanya bernilai true pada endpoint karyawan. 404: "Peminjaman asset tidak ditemukan."
+
+**`pengembalian[]` (v1.6)** hanya ada pada detail peminjaman (bukan detail pengembalian), boleh kosong, berisi **semua** status pengembalian milik peminjaman itu (urut `tgl_input` asc, `id_karyawan` sama dengan peminjaman). `tgl_selesai` berisi tanggal `tgl_approval` hanya bila status `selesai`, selain itu `""`. `assets[].kondisi`: `normal` (dari `disetujui`), `rusak` (dari `ditolak`), selain itu `""`; `keterangan_kerusakan` = `ket_tolak` item; `lokasi_tujuan` = nama lokasi gudang atau `""`. Pengembalian dari offboarding ikut tampil. Backend memanggil `getDetail` per pengembalian (RISK-012).
 
 ### API-003 — Konfirmasi Peminjaman (Admin)
 ```http
@@ -868,17 +975,19 @@ Tanpa body. Database impact: `UPDATE asset_data (dipinjam @karyawan)`, `UPDATE h
 ```
 422: "Peminjaman asset tidak ditemukan.", "Peminjaman asset belum dapat diterima.", "Karyawan tidak ditemukan atau tidak aktif.", "Tidak ada asset yang disetujui untuk diterima.", "Satu atau beberapa asset belum siap diserahterimakan." 500: "Terjadi kesalahan saat memproses serah terima asset."
 
-### API-012 — Batalkan Peminjaman
+### API-012 — Batalkan Peminjaman (v1.6: pengajuan dan dikonfirmasi)
 ```http
 POST /asset/karyawan/peminjaman/{id}/batalkan
 ```
-Tanpa body. Database impact: `UPDATE asset_data (tersedia @gudang)`, `UPDATE header (ditolak, ket_tolak)`, `INSERT notif_data`.
+Tanpa body. Hanya pemilik transaksi (dari token) dan hanya baris `jenis_status = peminjaman`. Dari `pengajuan` seluruh asset item dilepas; dari `dikonfirmasi` hanya item `disetujui`. Hanya asset yang masih `proses` + `gudang` diubah menjadi `tersedia` @gudang. Database impact: `UPDATE asset_data (tersedia @gudang)`, `UPDATE header (dibatalkan, ket_tolak = "Dibatalkan oleh karyawan.", tgl_update, user_update)`, `INSERT notif_data`. **Tidak ada** `asset_trx_log`.
 ```json
 { "code": "UPDATED", "message": "Peminjaman asset berhasil dibatalkan.",
-  "data": { "id": "CMP001202609007", "no_trx": "KRY05-202609007", "status_approval": "ditolak",
-            "status_label": "Ditolak", "tab": "ditolak" } }
+  "data": { "id": "CMP001202609007", "no_trx": "KRY05-202609007", "status_approval": "dibatalkan",
+            "status_label": "Dibatalkan", "tab": "dibatalkan" } }
 ```
-422: "Peminjaman asset sudah tidak dapat dibatalkan." (status bukan `dikonfirmasi`).
+EN: "Asset loan cancelled successfully." Notifikasi `peminjaman.dibatalkan` ke seluruh admin.
+
+422 (`BUSINESS_RULE_VIOLATION`): "Peminjaman asset sudah tidak dapat dibatalkan." (status `aktif`, `selesai`, `ditolak`, atau `dibatalkan`), "Peminjaman asset tidak ditemukan." (milik karyawan lain, id tidak ada, atau id adalah baris pengembalian), "Karyawan tidak ditemukan atau tidak aktif." 500: "Terjadi kesalahan saat memproses serah terima asset."
 
 ### API-013 — Ajukan Pengembalian
 ```http
@@ -905,21 +1014,21 @@ Page → Bloc (AssetPeminjamanBloc / AssetPeminjamanAdminBloc) → Api (AssetPem
 |---|---|---|
 | Api | `Repository/Service/assetPeminjamanApi.dart` | getPeminjaman, getOptions, store, getDetail, terima, batalkan, getPengembalian, getDetailPengembalian, ajukanPengembalian |
 | Api | `Repository/Service/assetPeminjamanAdminApi.dart` | getPeminjaman, getDetail, konfirmasi, getPengembalian, getDetailPengembalian, konfirmasiPengembalian (+ `id_asset_lokasi_m` per item) |
-| Model | `Repository/Model/Asset/mAssetPeminjaman.dart` | AssetPeminjamanAsset, AssetPeminjamanKeperluan, AssetPeminjamanOptions, AssetPeminjamanKaryawan, `AssetPeminjamanApproval` + `parseAssetPeminjamanApproval`, AssetPeminjamanRecord, AssetPeminjamanPage, AssetPeminjamanRequest |
+| Model | `Repository/Model/Asset/mAssetPeminjaman.dart` | AssetPeminjamanAsset, AssetPeminjamanKeperluan, AssetPeminjamanOptions, AssetPeminjamanKaryawan, `AssetPeminjamanApproval` (kini termasuk `dibatalkan`) + `parseAssetPeminjamanApproval`, AssetPeminjamanRecord (+ `pengembalian`), `AssetPeminjamanPengembalian` & `AssetPeminjamanPengembalianAsset` (v1.6), ekstensi `AssetPeminjamanRecordPengembalianX` (`isSelesai`, jumlah normal/rusak, tanggal pengembalian terakhir), AssetPeminjamanPage, AssetPeminjamanRequest |
 | Model | `Repository/Model/Asset/mAssetPeminjamanAdmin.dart` | AssetPeminjamanAdminKeputusan, AssetPeminjamanAdminKonfirmasiRequest, AssetPengembalianAdminKondisi (kini + `idLokasi`), AssetPengembalianAdminKonfirmasiRequest; model bersama `AssetWarehouseLocation` (`mAssetWarehouseLocation.dart`) |
-| Bloc | `Bloc/Asset/AssetPeminjamanBloc.dart` | List peminjaman/pengembalian, options, detail, submit, terima, batalkan, ajukan pengembalian |
+| Bloc | `Bloc/Asset/AssetPeminjamanBloc.dart` | List peminjaman/pengembalian (`LoadAssetPeminjamanList(tab, kondisi)`; state menyimpan `activePeminjamanTab` & `activePeminjamanKondisi`; kondisi di-reset ke `semua` bila tab diberikan tanpa kondisi), options, detail, submit, terima, batalkan, ajukan pengembalian |
 | Bloc | `Bloc/Asset/AssetPeminjamanAdminBloc.dart` | List, detail, konfirmasi peminjaman & pengembalian |
-| UI karyawan | `UI/Modul/Asset/AssetSaya/Peminjaman/*` | HalamanAssetPeminjaman, HalamanTambahAssetPeminjaman, HalamanDetailAssetPeminjaman, AssetPeminjamanPicker, AssetPeminjamanWidgets |
+| UI karyawan | `UI/Modul/Asset/AssetSaya/Peminjaman/*` | HalamanAssetPeminjaman, HalamanTambahAssetPeminjaman, HalamanDetailAssetPeminjaman, AssetPeminjamanPicker, AssetPeminjamanWidgets (berisi `AssetPeminjamanPageMode`, `AssetPeminjamanKondisi`, `AssetPeminjamanTabBar`, `AssetPeminjamanRiwayatCard`, `AssetPeminjamanPengembalianSection`) |
 | UI admin | `UI/Modul/Asset/AssetAdmin/AssetAdminKaryawan/Peminjaman/*` | HalamanAssetAdminPeminjaman, HalamanAssetAdminDetailPeminjaman, AssetPeminjamanAdminConfirmationSheet, AssetPeminjamanAdminWidgets |
 | UI | `UI/Modul/Asset/AssetSaya/HalamanAssetSaya.dart` | Banner terima, pengingat jatuh tempo, kartu peminjaman aktif |
 
 | Route | Page | Event awal |
 |---|---|---|
-| `/asset_peminjaman` | Peminjaman Asset (argumen `true` = buka mode Pengembalian) | LoadAssetPeminjamanList / LoadAssetPengembalianList |
+| `/asset_peminjaman` | Peminjaman Asset (argumen `AssetPeminjamanPageMode`; `true` lama → Pengembalian, selain itu Permintaan Peminjaman; lihat §26.1) | Per mode: `LoadAssetPeminjamanList()` (peminjaman), `(tab: 'aktif')` (sedangDipinjam), `(tab: 'riwayat')` (riwayat), `LoadAssetPengembalianList()` (pengembalian) |
 | `/asset_tambah_peminjaman` | Tambah Peminjaman Asset | LoadAssetPeminjamanOptions |
 | `/asset_detail_peminjaman` | Detail Peminjaman Asset | LoadAssetPeminjamanDetail(id) |
 | `/asset_detail_pengembalian` | Detail Pengembalian Asset (`isPengembalian`) | LoadAssetPengembalianDetail(id) |
-| `/asset_admin_peminjaman` | Peminjaman Asset (admin) | LoadAssetPeminjamanAdminList |
+| `/asset_admin_peminjaman` | Peminjaman Asset (admin; argumen `AssetPeminjamanPageMode`, default peminjaman) | LoadAssetPeminjamanAdminList / LoadAssetPengembalianAdminList sesuai mode |
 | `/asset_admin_detail_peminjaman` | Detail Peminjaman (admin) | LoadAssetPeminjamanAdminDetail(id) |
 | `/asset_admin_detail_pengembalian` | Detail Pengembalian (admin, `isPengembalian`) | LoadAssetPengembalianAdminDetail(id) |
 
@@ -927,8 +1036,21 @@ Page → Bloc (AssetPeminjamanBloc / AssetPeminjamanAdminBloc) → Api (AssetPem
 
 ## 26. Mobile Screen
 
-### 26.1 Peminjaman Asset (Karyawan)
-Switch **Peminjaman** / **Pengembalian**; tab peminjaman: Pengajuan, Dikonfirmasi, Ditolak, Aktif; tab pengembalian: Pengajuan, Selesai. Kartu: nomor, Tanggal Pengajuan / **Tanggal Diterima** (bila aktif), status (Menunggu Konfirmasi, Dikonfirmasi, Ditolak, Aktif, **Terlambat**), Keperluan, Tanggal Pinjam, Tanggal Kembali, "{jumlah} Asset", info jadwal serah terima, peringatan "Sudah lewat tanggal pengembalian. Silakan kembalikan asset sekarang." Tombol **+**.
+### 26.1 Peminjaman Asset (Karyawan) — 4 tab (v1.6)
+Tab utama (`AssetPeminjamanTabBar`, tanpa badge): **Permintaan Peminjaman**, **Sedang Dipinjam**, **Pengembalian**, **Riwayat Peminjaman**. Enum `AssetPeminjamanPageMode` kini `{peminjaman, sedangDipinjam, pengembalian, riwayat}` (sebelumnya hanya peminjaman/pengembalian). Lebar tiap tab = lebar layar / 4 dengan minimum 88 dp; bila tidak muat (mis. 320 px) bar dapat digulir horizontal dan tab terakhir tetap terjangkau.
+
+| Tab | Chip | Sumber API |
+|---|---|---|
+| Permintaan Peminjaman | Pengajuan, Dikonfirmasi, Ditolak, Dibatalkan | `GET …/peminjaman?tab=<chip>`; chip dari `filters` API tanpa `aktif` dan `riwayat` (fallback enum lokal bila `filters` kosong) |
+| Sedang Dipinjam | Semua, Jatuh Tempo, Terlambat | `tab=aktif` selalu dikirim; `kondisi=jatuh_tempo`/`terlambat`, `Semua` tidak mengirim `kondisi` |
+| Pengembalian | Pengajuan, Selesai (tidak berubah) | `GET …/pengembalian?tab=` |
+| Riwayat Peminjaman | – | `tab=riwayat` |
+
+Daftar peminjaman di Bloc dipakai bersama tab Permintaan, Sedang Dipinjam, dan Riwayat; `_listMatchesMode` mencegah data tab lain bocor (mis. daftar aktif tidak tampil di tab Permintaan) dan menampilkan loading sampai daftar tab yang benar dimuat. Pemanggil lama dipetakan oleh `_assetPeminjamanModeFrom` (router): argumen enum dipakai apa adanya, `true` → Pengembalian, lainnya → Permintaan Peminjaman. `NavigateToAssetPeminjaman` menerima `mode:` atau `pengembalian: true`; menu Peminjaman di Asset Saya membuka Permintaan Peminjaman.
+
+Kartu Permintaan/Sedang Dipinjam/Pengembalian: nomor, Tanggal Pengajuan / **Tanggal Diterima** (bila aktif), status (Menunggu Konfirmasi, Dikonfirmasi, Ditolak, **Dibatalkan**, Aktif, **Terlambat**), Keperluan, Tanggal Pinjam, Tanggal Kembali, "{jumlah} Asset", info jadwal serah terima, peringatan "Sudah lewat tanggal pengembalian. Silakan kembalikan asset sekarang." Tombol **+**.
+
+**Kartu Riwayat** (`AssetPeminjamanRiwayatCard`): nomor transaksi, periode (Tanggal Pinjam / Tanggal Kembali), "{jumlah} Asset", badge **Selesai**, dan ringkasan pengembalian: satu pengembalian → "Dikembalikan {tgl} · N normal · M rusak"; lebih dari satu → dijumlahkan dengan tanggal terakhir dan jumlah transaksi ("Dikembalikan terakhir {tgl} · {n} pengembalian · …"). Bila peminjaman tidak punya `pengembalian`, ringkasan tidak ditampilkan; bila tanggalnya kosong tertulis "Dikembalikan -" (RISK-013). Kunci lokalisasi baru di `assets/{id,en}/asset.json`: `menu.permintaan_peminjaman`, `menu.sedang_dipinjam`, `menu.riwayat_peminjaman`, `label.ringkasan_pengembalian(_banyak)`, `pesan.belum_ada_riwayat_peminjaman`, `tab.dibatalkan`, `status.dibatalkan`, serta `tab.semua/jatuh_tempo/terlambat` untuk chip kondisi.
 
 ### 26.2 Tambah Peminjaman Asset
 | Field UI | Widget | Required | Source |
@@ -941,16 +1063,19 @@ Switch **Peminjaman** / **Pengembalian**; tab peminjaman: Pengajuan, Dikonfirmas
 
 ### 26.3 Detail Peminjaman / Pengembalian (Karyawan)
 Header (Tanggal Pengajuan/Diterima, status, Nomor Pengajuan), Data Karyawan (Jabatan, Cabang, Departemen), Detail Peminjaman (Tanggal Pinjam, Tanggal Kembali, Keperluan, Tujuan Peminjaman), Jadwal Serah Terima, daftar asset dengan status **Disetujui Admin**/**Ditolak Admin** (+Alasan Penolakan) atau kondisi **Normal**/**Rusak** (+Keterangan Kerusakan) untuk pengembalian.
+- Status `pengajuan` (v1.6): hanya tombol **Batalkan** (`_EmployeeCancelAction`, dialog "Peminjaman yang dibatalkan tidak dapat dipulihkan.").
 - Status `dikonfirmasi`: panel "Siap untuk meminjam Asset?" + instruksi, tombol **Batalkan** dan **Terima Asset** (dialog konfirmasi).
+- Status `dibatalkan` (v1.6): badge **Dibatalkan** (abu-abu), tanpa tombol aksi.
+- Detail peminjaman memuat bagian **Pengembalian** (`AssetPeminjamanPengembalianSection`): satu kartu per transaksi pengembalian (nomor, status, tanggal, kondisi Normal/Rusak + keterangan kerusakan + lokasi tujuan per asset). Bagian disembunyikan bila `pengembalian` kosong atau pada detail pengembalian.
 - `dapat_dikembalikan`: tombol **Kembalikan Asset** (dialog "Asset aktif pada peminjaman ini akan diajukan untuk dikembalikan.").
 
 **Alur status**: `AssetAlurStepper.peminjaman` (Pengajuan → Konfirmasi → Dipinjam → Pengembalian → Selesai; transaksi pengembalian mulai dari langkah Pengembalian; disembunyikan bila ditolak) dan satu kartu timeline per aset (`AssetPeminjamanTimelineCards`). Transaksi peminjaman: Pengajuan (keperluan, periode) · Konfirmasi (jadwal serah terima; chip **Ditolak** per aset) · Dipinjam (tanggal diterima, batas kembali; chip **Terlambat**) · Pengembalian · Selesai (lokasi gudang). Transaksi pengembalian: Pengembalian (jadwal) · Konfirmasi (kondisi Normal/Rusak; chip **Rusak**) · Selesai (lokasi gudang). Alasan penolakan tetap di kartu aset. File: `Shared/Widgets/AssetAlurWidgets.dart`, `Shared/Widgets/AssetPeminjamanTimeline.dart`.
 
 ### 26.4 Peminjaman Asset (Admin)
-Switch Peminjaman/Pengembalian dan tab seperti karyawan; kartu menampilkan karyawan, keperluan, periode, jumlah asset.
+Empat tab dan chip sama seperti karyawan (§26.1; `kondisi` dikirim ke `GET /asset/peminjaman-karyawan`). "Lihat semua" pada panel jatuh tempo di Asset Karyawan membuka tab **Sedang Dipinjam** (`NavigateToAssetAdminPeminjaman(mode: sedangDipinjam)`); aksi Peminjaman dan panel "perlu diproses" membuka Permintaan Peminjaman. Kartu menampilkan karyawan, keperluan, periode, jumlah asset; tab Riwayat memakai `AssetPeminjamanRiwayatCard(showKaryawan: true)` (+ nama/NIK karyawan).
 
 ### 26.5 Detail Peminjaman (Admin)
-Data karyawan (Jabatan, Cabang, Departemen), detail peminjaman, daftar asset. Status `pengajuan`: tiap asset tombol **Setujui**/**Tolak** (+Alasan Penolakan) dan tombol bawah **Konfirmasi** → sheet **Konfirmasi Peminjaman Asset** (ringkasan, Jadwal Serah Terima dibatasi periode pinjam, Jam Serah Terima, Catatan Tambahan, **Submit**). Jadwal hanya diminta bila ada asset disetujui.
+Data karyawan (Jabatan, Cabang, Departemen), detail peminjaman, daftar asset. Status `pengajuan`: tiap asset tombol **Setujui**/**Tolak** (+Alasan Penolakan) dan tombol bawah **Konfirmasi** → sheet **Konfirmasi Peminjaman Asset** (ringkasan, Jadwal Serah Terima dibatasi periode pinjam, Jam Serah Terima, Catatan Tambahan, **Submit**). Jadwal hanya diminta bila ada asset disetujui. Admin **read-only** pada peminjaman `selesai` (v1.6: kondisi `editable` kini memeriksa `!isSelesai`, sehingga form keputusan tidak muncul), label dan warna status **Selesai** benar di detail admin dan karyawan, serta bagian **Pengembalian** ikut tampil.
 
 Stepper dan kartu timeline sama seperti §26.3; kartu timeline disembunyikan saat form keputusan admin terbuka.
 
@@ -980,6 +1105,9 @@ Banner per peminjaman `dikonfirmasi` (aksi terima), banner jatuh tempo (label da
 | Normal / Rusak (admin pengembalian) | `AssetPengembalianAdminKondisi.kondisi` | `items[].kondisi` | string | Ya |
 | Lokasi Tujuan Asset (admin pengembalian) | `AssetPengembalianAdminKondisi.idLokasi` | `items[].id_asset_lokasi_m` | string | Ya (v1.1) |
 | Keterangan Kerusakan | `keteranganKerusakan.trim()` | `items[].keterangan_kerusakan` | string | Bila rusak |
+| Chip Permintaan Peminjaman | `_permintaanTab` / `activePeminjamanTab` | query `tab` | string | Ya |
+| Chip Sedang Dipinjam | `AssetPeminjamanKondisi.apiValue` | query `tab=aktif` + `kondisi` (`semua` tidak dikirim) | string | Tidak |
+| Tab Riwayat | `_tabRiwayat` | query `tab=riwayat` | string | Ya |
 | Terima / Batalkan / Kembalikan | – | (tanpa body) | – | – |
 
 ---
@@ -1002,7 +1130,9 @@ Banner per peminjaman `dikonfirmasi` (aksi terima), banner jatuh tempo (label da
 | `karyawan.*` (termasuk `karyawan.jabatan` ← `master_jabatan.nama`) | karyawan (`jabatan` default `''`) | Data Karyawan: Jabatan, Cabang (`cabang`), Departemen (`divisi`) |
 | `assets[]` | assets (`AssetPeminjamanAsset`) | Daftar asset, keputusan/kondisi |
 | `lokasi_gudang[]`, `karyawan.id_cabang`, `assets[].nama_lokasi_tujuan` | AssetPeminjamanRecord.lokasiGudang, AssetPeminjamanKaryawan.idCabang, AssetPeminjamanAsset | Dropdown Lokasi Tujuan Asset; lokasi tujuan di kartu |
-| `filters`, `records`, `pagination` | AssetPeminjamanPage | Tab, list, infinite scroll |
+| `pengembalian[]` (list riwayat: `id,no_trx,tgl_selesai,jumlah_normal,jumlah_rusak`; detail: + `status_approval,status_label,tgl_pengajuan,assets[]`) | AssetPeminjamanRecord.pengembalian (`AssetPeminjamanPengembalian`, `AssetPeminjamanPengembalianAsset`) | Kartu Riwayat (ringkasan), bagian Pengembalian di detail |
+| `status_approval = dibatalkan` | `AssetPeminjamanApproval.dibatalkan` | Badge Dibatalkan, chip Dibatalkan |
+| `filters`, `records`, `pagination` | AssetPeminjamanPage | Chip, list, infinite scroll |
 
 ---
 
@@ -1020,6 +1150,9 @@ Banner per peminjaman `dikonfirmasi` (aksi terima), banner jatuh tempo (label da
 | Alasan Penolakan | `ketTolak` | `items[].ket_tolak` | `$ketTolak` | item | ket_tolak |
 | Jadwal | `tanggalSerahTerima`, `jamSerahTerima` | `tgl_serah_terima`, `jam_serah_terima` | Carbon | header | tgl_serah_terima, jam_serah_terima (H:i:s) |
 | Catatan Tambahan | `keteranganSerahTerima` | `keterangan_serah_terima` | trim | header | keterangan_serah_terima |
+| Tab / chip peminjaman | `activePeminjamanTab` | query `tab` | `applyPeminjamanTabFilter` | header | status |
+| Chip Jatuh Tempo / Terlambat | `activePeminjamanKondisi` | query `kondisi` (hanya `tab=aktif`) | `applyKondisiAktifFilter` | header | tgl_dikembalikan |
+| Batalkan | – | – | `batalkanKaryawan` | asset_data / header | tersedia (proses+gudang) / status = dibatalkan, ket_tolak |
 | Terima Asset | – | – | `terimaKaryawan` | asset_data / header / asset_trx_log | dipinjam, pemegang karyawan / aktif / peminjaman_karyawan |
 | Kembalikan Asset | – | – | `ajukanPengembalianKaryawan` | header (baru) | jenis_status = pengembalian, id_peminjaman_asal |
 | Normal/Rusak | `kondisi` | `items[].kondisi` | `$condition` | item / asset_data | status_item (disetujui/ditolak) / status_asset (tersedia/rusak) |
@@ -1043,6 +1176,9 @@ Banner per peminjaman `dikonfirmasi` (aksi terima), banner jatuh tempo (label da
 | item | ket_tolak | getDetail | `assets[].ket_tolak` | ketTolak | Alasan / Keterangan Kerusakan |
 | asset_data | kode_asset, merek | LEFT JOIN | `kode_asset`, `merek` | – | Kartu asset |
 | header (jatuh tempo) | tgl_dikembalikan | getJatuhTempo | `sisa_hari` | sisaHari | Banner jatuh tempo |
+| header (pengembalian selesai) + item | tgl_approval, COUNT status_item | attachRiwayatPengembalian | `pengembalian[].tgl_selesai`, `jumlah_normal`, `jumlah_rusak` | AssetPeminjamanPengembalian | Ringkasan kartu Riwayat |
+| header (pengembalian) + item + asset_lokasi_m | status, tgl_input, status_item, ket_tolak, nama_lokasi | pengembalianForDetail | `pengembalian[]` (detail) | AssetPeminjamanPengembalian(+Asset) | Bagian Pengembalian di detail |
+| header | status = dibatalkan | peminjamanStatusMetadata | `status_approval`, `status_label = Dibatalkan`, `tab = dibatalkan` | AssetPeminjamanApproval.dibatalkan | Badge Dibatalkan |
 
 ---
 
@@ -1061,11 +1197,12 @@ Banner per peminjaman `dikonfirmasi` (aksi terima), banner jatuh tempo (label da
 | Detail pengembalian admin | Semua kondisi diisi; rusak wajib keterangan | "Pilih kondisi untuk seluruh asset." / "Keterangan kerusakan wajib diisi." |
 | Detail pengembalian admin | Setiap asset wajib punya lokasi gudang (v1.1) | "Pilih lokasi gudang tujuan untuk seluruh asset." |
 | Terima/Batalkan/Kembalikan | Dialog konfirmasi | – |
+| API list | `tab` ∈ pengajuan, dikonfirmasi, ditolak, aktif, dibatalkan, riwayat; `kondisi` ∈ semua, jatuh_tempo, terlambat (v1.6) | "Filter peminjaman asset tidak valid." / "Filter kondisi peminjaman asset tidak valid." |
 
 ### 31.2 Backend — lihat §9 dan §24.
 
 ### 31.3 Database
-ENUM `jenis_status`, `status`, `status_item`; NOT NULL + default untuk tanggal (`CURRENT_DATE`, `0000-00-00`) dan teks; `no_trx` tidak unique.
+ENUM `jenis_status`, `status` (membutuhkan nilai `dibatalkan` dari SQL v1.6; pada MariaDB non-strict nilai enum tak dikenal tersimpan kosong, RISK-010), `status_item`; NOT NULL + default untuk tanggal (`CURRENT_DATE`, `0000-00-00`) dan teks; `no_trx` tidak unique.
 
 ### 31.4 Ringkasan per Field
 | Field | Mobile | Backend | Database |
@@ -1086,7 +1223,8 @@ ENUM `jenis_status`, `status`, `status_item`; NOT NULL + default untuk tanggal (
 | Error | HTTP | Backend | Mobile |
 |---|---:|---|---|
 | Field tidak valid | 422 | VALIDATION_ERROR + errors | Error field / snackbar |
-| Aturan bisnis | 422 | BUSINESS_RULE_VIOLATION | Snackbar error |
+| Aturan bisnis (termasuk Batalkan pada status tidak valid) | 422 | BUSINESS_RULE_VIOLATION | Snackbar error |
+| Parameter list `tab`/`kondisi` tidak valid | 422 | VALIDATION_ERROR: "Parameter daftar peminjaman asset tidak valid.", `errors.tab` "Filter peminjaman asset tidak valid.", `errors.kondisi` "Filter kondisi peminjaman asset tidak valid." (EN: "Invalid asset loan filter." / "Invalid asset loan condition filter.") | Snackbar / halaman error + Coba Lagi |
 | Detail tidak ditemukan | 404 | NOT_FOUND | Halaman error + Coba Lagi |
 | Token | 401 | UNAUTHORIZED | Refresh & retry |
 | Bukan admin | 403 | FORBIDDEN | Pesan error |
@@ -1105,7 +1243,7 @@ ENUM `jenis_status`, `status`, `status_item`; NOT NULL + default untuk tanggal (
 | Admin pemutus & waktu | ✅ | `user_approval`, `tgl_approval` |
 | Keputusan per asset + alasan | ✅ | item `status_item`, `ket_tolak` |
 | Waktu diterima karyawan | ⚠️ tidak langsung | `tgl_update` saat `aktif` (tertimpa bila ada update lain) |
-| Pembatalan karyawan | ⚠️ | status `ditolak` + `ket_tolak` teks, `user_update` |
+| Pembatalan karyawan | ✅ (v1.6) | status `dibatalkan` + `ket_tolak` teks, `user_update`, `tgl_update` (data sebelum v1.6: `ditolak` + teks yang sama) |
 | Serah terima fisik | ✅ | `asset_trx_log peminjaman_karyawan` |
 | Pengembalian + kondisi | ✅ | item pengembalian + `asset_trx_log pengembalian_karyawan` |
 | Histori status | ❌ | ⚠️ Belum ditemukan |
@@ -1120,7 +1258,7 @@ ENUM `jenis_status`, `status`, `status_item`; NOT NULL + default untuk tanggal (
 | `peminjaman.disetujui` | Konfirmasi (≥1 disetujui) | Karyawan | Peminjaman Asset Disetujui | Peminjaman asset {no_trx} telah dikonfirmasi admin. | `asset_detail_peminjaman` |
 | `peminjaman.ditolak` | Konfirmasi (semua ditolak) | Karyawan | Peminjaman Asset Ditolak | Peminjaman asset {no_trx} ditolak admin. | `asset_detail_peminjaman` |
 | `peminjaman.diterima` | Terima Asset | Semua admin | Asset Peminjaman Diterima | {nama} telah menerima asset peminjaman {no_trx}. | `asset_admin_detail_peminjaman` |
-| `peminjaman.dibatalkan` | Batalkan | Semua admin | Peminjaman Asset Dibatalkan | {nama} membatalkan peminjaman asset {no_trx}. | `asset_admin_detail_peminjaman` |
+| `peminjaman.dibatalkan` | Batalkan (status pengajuan atau dikonfirmasi) | Semua admin | Peminjaman Asset Dibatalkan | {nama} membatalkan peminjaman asset {no_trx}. | `asset_admin_detail_peminjaman` |
 | `pengembalian.diajukan` | Kembalikan Asset | Semua admin | Pengajuan Pengembalian Asset | {nama} mengajukan pengembalian asset {no_trx}. | `asset_admin_detail_pengembalian` |
 | `pengembalian.dikonfirmasi` | Konfirmasi pengembalian | Karyawan | Pengembalian Asset Dikonfirmasi | Pengembalian asset {no_trx} telah dikonfirmasi admin. | `asset_detail_pengembalian` |
 
@@ -1135,7 +1273,7 @@ Pengingat jatuh tempo **bukan** notifikasi push: hanya daftar/banner (`getJatuhT
 | Autentikasi | Bearer JWT; context dari token |
 | Isolasi company | Semua query `id_company = ctx.id_company` |
 | Otorisasi admin | `accessError` + `findAssetAdmin` |
-| Kepemilikan | Endpoint karyawan memfilter `id_karyawan = ctx.id_karyawan`; pengajuan selalu atas nama user login |
+| Kepemilikan | Endpoint karyawan memfilter `id_karyawan = ctx.id_karyawan`; pengajuan selalu atas nama user login. Batalkan hanya untuk header `jenis_status = peminjaman` milik pemanggil; baris pengembalian atau milik orang lain → "Peminjaman asset tidak ditemukan." Tab Riwayat dan `pengembalian[]` hanya menempelkan pengembalian dengan `id_karyawan` dan company yang sama dengan peminjaman |
 | Integritas asset | Lock company + `lockForUpdate`; cek status & pemegang asset di setiap langkah |
 | Pemisahan offboarding | Pengembalian offboarding tidak bisa diproses di menu peminjaman |
 | Catatan | Validasi request dijalankan sebelum cek admin (konfirmasi peminjaman/pengembalian) |
@@ -1151,9 +1289,10 @@ Pengingat jatuh tempo **bukan** notifikasi push: hanya daftar/banner (`getJatuhT
 2. **Pilih Asset** → **Tambah Asset** → cari dan pilih asset → **Pilih**. Ulangi bila perlu.
 3. Di **Form Peminjaman**: **Pilih Keperluan** (Kantor/Dinas/Pelatihan/Lainnya), isi **Tujuan Peminjaman**, pilih **Tanggal Pinjam** dan **Tanggal Kembali**.
 4. Tekan **Ajukan Peminjaman**. Status **Menunggu Konfirmasi**.
+5. Salah mengajukan? Selama masih **Menunggu Konfirmasi**, buka detail transaksi (tab **Permintaan Peminjaman**, chip **Pengajuan**) → **Batalkan** → konfirmasi. Status menjadi **Dibatalkan** (chip **Dibatalkan**) dan asset kembali tersedia.
 
 ### B. Admin — Menyetujui Peminjaman
-1. **Asset Karyawan** → aksi **Peminjaman** → tab **Pengajuan** → pilih transaksi.
+1. **Asset Karyawan** → aksi **Peminjaman** → tab **Permintaan Peminjaman** → chip **Pengajuan** → pilih transaksi.
 2. Untuk setiap asset pilih **Setujui** atau **Tolak** (isi **Alasan Penolakan**).
 3. Tekan **Konfirmasi** → isi **Jadwal Serah Terima**, **Jam Serah Terima** (dalam periode pinjam) dan **Catatan Tambahan** → **Submit**.
 
@@ -1161,18 +1300,23 @@ Pengingat jatuh tempo **bukan** notifikasi push: hanya daftar/banner (`getJatuhT
 1. Buka notifikasi **Peminjaman Asset Disetujui** atau banner di Asset Saya.
 2. Datang sesuai jadwal serah terima, periksa asset secara fisik.
 3. Tekan **Terima Asset** → konfirmasi. Status **Aktif**.
-   - Tidak jadi meminjam: tekan **Batalkan** (tidak dapat dipulihkan).
+   - Tidak jadi meminjam: tekan **Batalkan** (tidak dapat dipulihkan). Status menjadi **Dibatalkan**, bukan Ditolak.
 
 ### D. Karyawan — Mengembalikan Asset
-1. Perhatikan pengingat jatuh tempo di Asset Saya; lewat tanggal akan tertulis **Terlambat**.
+1. Perhatikan pengingat jatuh tempo di Asset Saya; lewat tanggal akan tertulis **Terlambat**. Tab **Sedang Dipinjam** dengan chip **Jatuh Tempo** / **Terlambat** menyaring peminjaman aktif.
 2. Buka detail peminjaman aktif → **Kembalikan Asset** → konfirmasi.
-3. Serahkan asset ke admin; pantau di switch **Pengembalian**.
+3. Serahkan asset ke admin; pantau di tab **Pengembalian**. Setelah admin mengonfirmasi, peminjaman tampil di tab **Riwayat Peminjaman** beserta ringkasan pengembaliannya (mis. "Dikembalikan 28 Okt 2026 · 0 normal · 1 rusak").
 
 ### E. Admin — Menerima Pengembalian
-1. **Peminjaman** → switch **Pengembalian** → tab **Pengajuan** → pilih transaksi.
+1. **Peminjaman** → tab **Pengembalian** → chip **Pengajuan** → pilih transaksi.
 2. Periksa setiap asset: **Normal** atau **Rusak** (isi **Keterangan Kerusakan**).
 3. Pilih **Lokasi Tujuan Asset** (gudang) untuk setiap asset; default-nya gudang di cabang karyawan.
 4. Tekan **Konfirmasi**. Asset normal kembali tersedia, asset rusak berstatus rusak, keduanya di gudang yang dipilih; peminjaman otomatis selesai.
+
+### F. Melihat Riwayat Peminjaman (Karyawan & Admin)
+1. Buka tab **Riwayat Peminjaman**. Daftar berisi peminjaman yang sudah selesai (terbaru di atas); admin melihat seluruh karyawan di company, karyawan hanya miliknya.
+2. Kartu menampilkan nomor, periode, jumlah asset, badge **Selesai**, dan ringkasan pengembalian. Pengembalian yang berasal dari proses offboarding juga ikut dihitung di sini.
+3. Buka kartu untuk melihat detail; bagian **Pengembalian** merinci kondisi tiap asset. Detail selesai bersifat baca-saja bagi admin.
 
 ---
 
@@ -1182,7 +1326,11 @@ Pengingat jatuh tempo **bukan** notifikasi push: hanya daftar/banner (`getJatuhT
 |---|---|---|---|---|
 | + | Karyawan | Peminjaman Asset | Selalu | Form peminjaman |
 | Ajukan Peminjaman | Karyawan | Form | Tidak submitting | POST peminjaman |
+| Batalkan | Karyawan | Detail | Status `pengajuan` (v1.6; tombol tunggal) | Dialog → POST batalkan |
 | Terima Asset / Batalkan | Karyawan | Detail | Status `dikonfirmasi` | Dialog → POST terima / batalkan |
+| Tab Permintaan / Sedang Dipinjam / Pengembalian / Riwayat | Karyawan, Admin | Peminjaman Asset | Selalu (v1.6; tanpa badge) | Ganti daftar; bar dapat digulir di layar sempit |
+| Chip Pengajuan / Dikonfirmasi / Ditolak / Dibatalkan | Karyawan, Admin | Tab Permintaan Peminjaman | Selalu | `tab=<chip>` |
+| Chip Semua / Jatuh Tempo / Terlambat | Karyawan, Admin | Tab Sedang Dipinjam | Selalu | `tab=aktif` (+ `kondisi`) |
 | Kembalikan Asset | Karyawan | Detail | `dapat_dikembalikan = true` | Dialog → POST pengembalian |
 | Setujui / Tolak per asset | Admin | Detail peminjaman | Tab `pengajuan` | Set keputusan |
 | Konfirmasi | Admin | Detail peminjaman | Tab `pengajuan` | Sheet jadwal → POST konfirmasi |
@@ -1190,7 +1338,7 @@ Pengingat jatuh tempo **bukan** notifikasi push: hanya daftar/banner (`getJatuhT
 | Normal / Rusak per asset | Admin | Detail pengembalian | Tab `pengajuan` | Set kondisi |
 | Lokasi Tujuan Asset per asset | Admin | Detail pengembalian | Tab `pengajuan` | Pilih gudang (wajib, v1.1) |
 | Konfirmasi | Admin | Detail pengembalian | Tab `pengajuan` | POST konfirmasi pengembalian |
-| Tolak pengembalian / Batalkan pengajuan / Perpanjang | – | – | ⚠️ Belum ditemukan | – |
+| Tolak pengembalian / Perpanjang | – | – | ⚠️ Belum ditemukan | – |
 
 ---
 
@@ -1204,7 +1352,7 @@ Pengingat jatuh tempo **bukan** notifikasi push: hanya daftar/banner (`getJatuhT
 | TC-03 | Setujui sebagian | 1 setujui, 1 tolak + alasan | `dikonfirmasi`; asset ditolak `tersedia`; item ditolak tampil "Ditolak Admin" |
 | TC-04 | Tolak semua | Semua tolak | `ditolak`, `ket_tolak` "Seluruh asset peminjaman ditolak."; asset `tersedia` |
 | TC-05 | Terima asset | Karyawan Terima Asset | `aktif`; asset `dipinjam` @karyawan; `asset_trx_log peminjaman_karyawan`; notif admin |
-| TC-06 | Batalkan | Karyawan Batalkan saat dikonfirmasi | `ditolak`, "Dibatalkan oleh karyawan."; asset `tersedia` |
+| TC-06 | Batalkan saat dikonfirmasi | Karyawan Batalkan saat dikonfirmasi | `dibatalkan` (bukan `ditolak`), "Dibatalkan oleh karyawan."; asset disetujui `tersedia`; tidak ada log |
 | TC-07 | Ajukan pengembalian | Kembalikan Asset | Header pengembalian `pengajuan` dengan `id_peminjaman_asal`; notif admin |
 | TC-08 | Pengembalian normal | Admin Normal → Konfirmasi | Asset `tersedia`; log; pengembalian & peminjaman asal `selesai` |
 | TC-09 | Pengembalian rusak | Rusak + keterangan | Asset `rusak`, `ket_rusak`; log kondisi_akhir rusak |
@@ -1229,7 +1377,7 @@ Pengingat jatuh tempo **bukan** notifikasi push: hanya daftar/banner (`getJatuhT
 |---|---|---|
 | TC-21 | Konfirmasi ulang peminjaman | 422 "…sudah tidak menunggu konfirmasi." |
 | TC-22 | Terima saat masih pengajuan | 422 "Peminjaman asset belum dapat diterima." |
-| TC-23 | Batalkan saat aktif | 422 "…sudah tidak dapat dibatalkan." |
+| TC-23 | Batalkan saat aktif / selesai / ditolak / dibatalkan | 422 "…sudah tidak dapat dibatalkan." |
 | TC-24 | Kembalikan saat belum aktif | 422 "Hanya peminjaman aktif yang dapat dikembalikan." |
 | TC-25 | Ajukan pengembalian dua kali | 422 "Pengembalian asset sedang menunggu konfirmasi." |
 | TC-26 | Konfirmasi pengembalian dua kali | 422 |
@@ -1256,6 +1404,41 @@ Pengingat jatuh tempo **bukan** notifikasi push: hanya daftar/banner (`getJatuhT
 | TC-39 | Konfirmasi pengembalian tanpa lokasi / lokasi tidak ada / lokasi bertipe ruangan | 422 "Lokasi gudang tujuan setiap asset wajib dipilih." atau "Lokasi gudang tujuan tidak valid."; status tetap `pengajuan` |
 | TC-40 | Karyawan Terima Asset pinjaman (asset keluar gudang) | `asset_data.id_asset_lokasi_m` dikosongkan; status `dipinjam` @karyawan |
 
+### Pembatalan (v1.6)
+| TC | Scenario | Expected |
+|---|---|---|
+| TC-41 | Batalkan saat `pengajuan` (sebelum admin memutuskan) | 200 "Peminjaman asset berhasil dibatalkan."; header `dibatalkan`, `ket_tolak` "Dibatalkan oleh karyawan."; semua asset item (status_asset `proses`) kembali `tersedia` @gudang; notif `peminjaman.dibatalkan` ke admin; tidak ada `asset_trx_log` |
+| TC-42 | Batalkan saat `dikonfirmasi` dengan 1 disetujui + 1 ditolak | Hanya asset disetujui yang diubah ke `tersedia` (asset ditolak sudah tersedia sejak konfirmasi); header `dibatalkan` |
+| TC-43 | Batalkan saat asset item sudah bukan `proses` + gudang | Asset itu tidak disentuh; header tetap `dibatalkan` |
+| TC-44 | Batalkan peminjaman karyawan lain, id tidak ada, atau id baris pengembalian | 422 "Peminjaman asset tidak ditemukan."; tidak ada perubahan |
+| TC-45 | Konfirmasi admin pada peminjaman yang sudah `dibatalkan` | 422 "Peminjaman asset sudah tidak menunggu konfirmasi." |
+
+### List: tab Dibatalkan, kondisi, Riwayat (v1.6)
+| TC | Scenario | Expected |
+|---|---|---|
+| TC-46 | `tab=dibatalkan` (karyawan dan admin) | Hanya header `dibatalkan`; `filters` memuat Pengajuan, Dikonfirmasi, Ditolak, Aktif, Dibatalkan |
+| TC-47 | `tab=aktif&kondisi=terlambat` | Hanya aktif dengan `tgl_kembali` < hari ini |
+| TC-48 | `tab=aktif&kondisi=jatuh_tempo` | Hanya aktif dengan `tgl_kembali` hari ini sampai besok; yang terlambat tidak muncul |
+| TC-49 | `tab=pengajuan&kondisi=terlambat` | `kondisi` diabaikan; daftar pengajuan biasa |
+| TC-50 | `kondisi=xyz` | 422; `errors.kondisi` "Filter kondisi peminjaman asset tidak valid." (EN "Invalid asset loan condition filter.") |
+| TC-51 | `kondisi` tanpa `tab`/`limit`/`offset` | Respons array lama (non-paginasi); `kondisi` diabaikan |
+| TC-52 | `kondisi` dengan `limit` kecil | Filter diterapkan sebelum paginasi: `has_more` dan `next_offset` konsisten dengan hasil tersaring |
+| TC-53 | `tab=riwayat` | Hanya `selesai`, urut `tgl_update` desc lalu id desc; tiap item punya `pengembalian[]` (hanya `selesai`, `id,no_trx,tgl_selesai,jumlah_normal,jumlah_rusak`) |
+| TC-54 | `tab=riwayat` dengan `limit` kecil | `limit+1`: `has_more` benar, `next_offset` = offset + jumlah record |
+| TC-55 | Pengembalian dari offboarding pada peminjaman selesai | Tampil di tab Riwayat dan detail peminjaman; tidak tampil di tab/list/detail Pengembalian |
+| TC-56 | Riwayat karyawan vs admin | Karyawan hanya miliknya; admin seluruh company; tidak lintas company |
+| TC-57 | Detail peminjaman | `pengembalian[]` berisi semua status (urut `tgl_input` asc) dengan `assets[].kondisi/keterangan_kerusakan/lokasi_tujuan`; kosong bila belum ada; tidak ada pada detail pengembalian |
+
+### Mobile (v1.6)
+| TC | Scenario | Expected |
+|---|---|---|
+| TC-58 | Tab bar di layar 320 px | Empat tab dapat digulir horizontal dan tab terakhir terjangkau |
+| TC-59 | Berpindah Permintaan → Sedang Dipinjam → Riwayat → kembali | Tidak ada data tab lain yang bocor; tab Permintaan kembali ke chip terakhir |
+| TC-60 | Sedang Dipinjam: chip Terlambat, lalu Semua | Request `tab=aktif&kondisi=terlambat`; `Semua` mengirim `tab=aktif` tanpa `kondisi`. Tab lain tidak mengirim `kondisi` |
+| TC-61 | Kartu Riwayat: 1 pengembalian, >1 pengembalian, tanpa pengembalian | "Dikembalikan {tgl} · N normal · M rusak"; dijumlah + tanggal terakhir + jumlah transaksi; ringkasan disembunyikan |
+| TC-62 | Detail karyawan: pengajuan / dibatalkan | Pengajuan: hanya tombol Batalkan (tanpa Terima); Dibatalkan: badge Dibatalkan tanpa aksi |
+| TC-63 | Detail admin peminjaman `selesai` | Read-only (tanpa Setujui/Tolak/Konfirmasi), label dan warna Selesai, bagian Pengembalian tampil |
+
 ---
 
 ## 39. Temuan Ketidaksesuaian
@@ -1264,13 +1447,15 @@ Pengingat jatuh tempo **bukan** notifikasi push: hanya daftar/banner (`getJatuhT
 |---|---|---|---|---|
 | INC-01 | DB ↔ Backend | Status pengembalian `ditolak` tidak pernah di-set; `dikonfirmasi` hanya dipakai pengembalian offboarding | Enum membingungkan | Dokumentasikan / implementasi tolak pengembalian |
 | INC-02 | DB | Enum item `approval_item` (disetujui/ditolak) dipakai ulang untuk kondisi pengembalian (normal/rusak); `ket_tolak` menyimpan keterangan kerusakan | Makna kolom bergantung jenis baris | Kolom kondisi terpisah |
-| INC-03 | Backend | Pembatalan karyawan disimpan sebagai `ditolak` | Tidak bisa dibedakan dari penolakan admin kecuali teks `ket_tolak` | Status `dibatalkan` |
-| INC-04 | Backend ↔ Mobile | Daftar peminjaman tidak menampilkan `selesai` (tidak ada tab Selesai); peminjaman yang sudah kembali hanya terlihat lewat daftar Pengembalian | Riwayat peminjaman sulit ditelusuri | Tambah tab Selesai |
+| INC-03 | Backend | ✅ **Diperbaiki v1.6**: pembatalan karyawan kini status `dibatalkan`. Sisa: data lama masih `ditolak` + teks "Dibatalkan oleh karyawan." | Data lama tidak terbedakan dari penolakan admin kecuali teks; tab Dibatalkan tidak memuatnya | Jalankan SQL langkah 3 (opsional) |
+| INC-04 | Backend ↔ Mobile | ✅ **Diperbaiki v1.6**: tab **Riwayat Peminjaman** menampilkan peminjaman `selesai` beserta pengembaliannya | – | – |
 | INC-05 | Mobile ↔ Backend | Field Tujuan Peminjaman tanpa batas panjang di mobile; backend maks 255 | Error 422 setelah submit | `maxLength: 255` |
 | INC-06 | Backend | `keperluan` tidak divalidasi terhadap daftar opsi | Nilai bebas via API | `in:kantor,dinas,pelatihan,lainnya` |
 | INC-07 | Backend | `tgl_diterima` diambil dari `tgl_update` | Bisa bergeser jika header di-update | Kolom khusus |
 | INC-08 | Backend | Validasi request sebelum cek admin | 422 vs 403 | Pindahkan cek akses |
 | INC-09 | Backend | `konfirmasiAdmin` tidak memeriksa karyawan masih aktif (baru dicek saat terima) | Asset tertahan bila karyawan nonaktif | Cek di konfirmasi |
+| INC-10 | Backend ↔ Mobile | Chip **Jatuh Tempo** (`kondisi=jatuh_tempo`) hanya hari ini–besok dan tidak mengecualikan peminjaman yang pengembaliannya sedang diajukan; hitungan jatuh tempo dashboard/banner (`jatuhTempoQuery`) mencakup yang sudah lewat (≤ besok) dan mengecualikan yang pengembaliannya `pengajuan`/`dikonfirmasi` | Jumlah chip dan angka dashboard bisa berbeda | Sepakati definisi tunggal atau beri label |
+| INC-11 | Backend ↔ DB | Kode memakai nilai enum `dibatalkan` yang baru ada setelah SQL manual dijalankan; DBML sudah diperbarui, migrasi tidak ada | Urutan deploy menentukan (RISK-010) | Jadikan migration atau cek otomatis sebelum rilis |
 
 ---
 
@@ -1279,7 +1464,12 @@ Pengingat jatuh tempo **bukan** notifikasi push: hanya daftar/banner (`getJatuhT
 | Edge Case | Current Behavior | Impact | Recommendation |
 |---|---|---|---|
 | Karyawan tidak pernah menekan Terima | Status `dikonfirmasi` selamanya, asset `proses` | Asset terkunci | Kedaluwarsa otomatis / batal oleh admin |
-| Karyawan ingin membatalkan sebelum admin memutuskan | Tidak bisa | Asset terkunci sampai admin menolak | Endpoint batal pengajuan |
+| Karyawan ingin membatalkan sebelum admin memutuskan | ✅ Bisa (v1.6): `batalkan` pada status `pengajuan` → `dibatalkan`, semua asset item dilepas | – | – |
+| Karyawan membatalkan bersamaan dengan admin mengonfirmasi | Keduanya memakai lock company dan lock header; yang kedua gagal 422 ("…sudah tidak menunggu konfirmasi." / "…sudah tidak dapat dibatalkan.") | Aman | – |
+| Data pembatalan sebelum v1.6 | Tersimpan `ditolak` + "Dibatalkan oleh karyawan."; tidak muncul di chip Dibatalkan | Riwayat pembatalan terbagi dua status | SQL langkah 3 (opsional) |
+| Peminjaman dengan pengembalian dari offboarding | Peminjaman `selesai` tampil di Riwayat dan detail memuat pengembalian offboarding; tab/list/detail Pengembalian tetap menyembunyikannya | Keputusan produk | – |
+| Pengembalian `selesai` tanpa `tgl_approval` | Kartu Riwayat menampilkan "Dikembalikan -" | Kosmetik | Fallback ke `tgl_update` |
+| API v1.6 jalan sebelum SQL enum | Batalkan menulis `dibatalkan` ke kolom enum lama; MariaDB non-strict menyimpan string kosong, mode SQL strict menolak query | Status rusak / 500 | Jalankan SQL dulu (RISK-010) |
 | Admin tidak memproses pengembalian | Pengembalian `pengajuan` terus; asset tetap `dipinjam`; pengingat jatuh tempo hilang | Asset lepas dari pantauan | SLA / pengingat admin |
 | Pengembalian perlu ditolak (asset belum diserahkan) | Tidak ada aksi tolak | Admin terpaksa konfirmasi | Endpoint tolak |
 | Tanggal pinjam sudah lewat saat admin konfirmasi | Jadwal tetap harus di dalam periode (bisa di masa lalu) | Jadwal tidak realistis | Validasi jadwal ≥ hari ini |
@@ -1299,8 +1489,8 @@ Pengingat jatuh tempo **bukan** notifikasi push: hanya daftar/banner (`getJatuhT
 **Impact:** Asset disetujui tetap `proses` tanpa batas waktu, tidak bisa dipinjam/diberikan ke orang lain.
 **Recommendation:** Pembatalan oleh admin dan/atau kedaluwarsa otomatis (mis. lewat `tgl_dikembalikan`).
 
-### RISK-002 — Pengajuan tidak bisa dibatalkan karyawan (SEDANG)
-Asset `proses` sejak diajukan; karyawan tidak punya aksi batal pada status `pengajuan`.
+### RISK-002 — Pengajuan tidak bisa dibatalkan karyawan (SEDANG) — ✅ DITUTUP v1.6
+Karyawan kini dapat membatalkan pada status `pengajuan` dan `dikonfirmasi`; asset yang dikunci dilepas (`proses` → `tersedia`) dan status menjadi `dibatalkan`. Syarat deploy: SQL enum `dibatalkan` (RISK-010).
 
 ### RISK-003 — Tidak ada pengingat otomatis (SEDANG)
 `Kernel::schedule` kosong; pengingat jatuh tempo hanya muncul ketika aplikasi dibuka. Tidak ada push/notif H-1 atau terlambat.
@@ -1323,6 +1513,24 @@ Insert memakai `0000-00-00`/`00:00:00`; ⚠️ Asumsi: gagal pada MySQL strict m
 ### RISK-009 — Notifikasi di luar transaksi (RENDAH)
 Kegagalan notif hanya di-log.
 
+### RISK-010 — Urutan deploy: SQL enum harus sebelum API v1.6 (TINGGI)
+**Lokasi:** `batalkanKaryawan` menulis `status = 'dibatalkan'`; filter `tab=dibatalkan`.
+**Masalah:** Nilai `dibatalkan` hanya ada di kolom setelah `sql-peminjaman-status-dibatalkan.sql` dijalankan. Bila API v1.6 dipakai lebih dulu, pada MariaDB non-strict nilai enum tak dikenal tersimpan sebagai string kosong (`''`), sedangkan mode strict menolak query. Status eksekusi SQL di server tidak dapat diverifikasi dari kode.
+**Impact:** Peminjaman yang dibatalkan tidak bisa dikenali statusnya (asset sudah dilepas, header tidak terbaca sebagai `dibatalkan`).
+**Recommendation:** Jalankan SQL (langkah 0–2) lebih dulu dan verifikasi `COLUMN_TYPE`; pertimbangkan migration atau pemeriksaan pra-rilis.
+
+### RISK-011 — Data pembatalan lama tetap `ditolak` (RENDAH)
+Pembatalan sebelum v1.6 tersimpan `ditolak` + "Dibatalkan oleh karyawan.". Tab Dibatalkan hanya memuat status baru; SQL langkah 3 bersifat opsional.
+
+### RISK-012 — Detail peminjaman menjalankan beberapa query per pengembalian (RENDAH)
+`pengembalianForDetail` memanggil `getDetail` per transaksi pengembalian (sedikitnya query header dan item per pengembalian, selain satu query daftar). Jumlah pengembalian per peminjaman umumnya kecil (satu pengembalian menutup seluruh asset), tetapi pola ini N+1 bila bertambah.
+
+### RISK-013 — Kartu Riwayat "Dikembalikan -" (RENDAH)
+Bila `tgl_approval` pengembalian kosong, `tgl_selesai` bernilai `""` dan mobile menampilkan "-" pada ringkasan "Dikembalikan {tgl}".
+
+### RISK-014 — Definisi jatuh tempo berbeda antara chip dan dashboard (RENDAH)
+Lihat INC-10: chip tidak mengecualikan peminjaman yang pengembaliannya sedang diajukan dan tidak memasukkan yang sudah lewat; dashboard sebaliknya.
+
 ---
 
 ## 42. Dependency
@@ -1342,6 +1550,7 @@ Terkait:
   - Onboarding & Request: hasActiveOnboardingAsset dipakai saat pengajuan
   - Offboarding: membuat pengembalian anak (asset_trx_offboarding_relasi); hasActiveOffboardingAsset mencegah pengembalian ganda
   - Asset Saya & Summary Admin: getPendingForEmployee, getPendingForAdmin, getJatuhTempo, getPeminjamanPage (aktif)
+  - SQL manual `sql-peminjaman-status-dibatalkan.sql` (enum `dibatalkan`) harus dijalankan sebelum API v1.6
 ```
 
 ---
@@ -1359,7 +1568,12 @@ Terkait:
 | `API/app/Models/Asset/AssetOffboardingKaryawan_m.php` | Model | Pengembalian via offboarding, `hasActiveOffboardingAsset` |
 | `API/app/Models/Asset/AssetKaryawan_m.php`, `AssetAdmin_m.php` | Model | Asset Saya, summary |
 | `API/app/Support/Asset/AssetNotification.php` | Support | Event `peminjaman.*`, `pengembalian.*` |
-| `API/diagram-asset.dbml`; migrations `2026_09_17_000006`, `2026_09_17_000009` | DB | Struktur, index, enum |
+| `API/diagram-asset.dbml`; migrations `2026_09_17_000006`, `2026_09_17_000009` | DB | Struktur, index, enum (`status_peminjaman` + `dibatalkan` bertanda `[NEW KRY05]`) |
+| `Claude outputs/sql-peminjaman-status-dibatalkan.sql` | SQL manual | `ALTER … MODIFY COLUMN status` + verifikasi + opsi merapikan data lama + rollback |
+| `API/routes/modules/asset/README.md` | Dokumentasi API | Kontrak list/detail/batalkan v1.6 |
+| `API/tests/Asset/AssetModelTest.php`, `AssetPeminjamanLocaleTest.php` | Test API | Batal pengajuan/dikonfirmasi, kondisi, riwayat, pengembalian offboarding, validasi locale |
+| `MOBILE/test/asset/asset_peminjaman_test.dart`, `asset_peminjaman_admin_test.dart` | Test mobile | 4 tab, kondisi, riwayat, detail pengembalian, 320 px |
+| `MOBILE/lib/Repository/Model/PageModel/mAssetPage.dart` | i18n model | Kunci lokalisasi baru |
 | `MOBILE/lib/Repository/Service/assetPeminjamanApi.dart`, `assetPeminjamanAdminApi.dart` | Api | Endpoint |
 | `MOBILE/lib/Repository/Model/Asset/mAssetPeminjaman.dart`, `mAssetPeminjamanAdmin.dart` | Model | – |
 | `MOBILE/lib/Bloc/Asset/AssetPeminjamanBloc.dart`, `AssetPeminjamanAdminBloc.dart` | Bloc | – |
@@ -1381,7 +1595,11 @@ Terkait:
 - **Jadwal serah terima** divalidasi di model (bukan di request rule) terhadap periode pinjam.
 - **`sisa_hari`** dihitung `today → tgl_dikembalikan` (negatif = terlambat); pengingat mulai H-1.
 - **Konstanta status** memakai `PeminjamanStatus` enum (konsisten), berbeda dengan modul Request.
-- **Technical debt**: RISK-001–004, INC-02/03/07.
+- **Status `dibatalkan` (v1.6)**: hanya untuk baris `jenis_status = peminjaman`; deploy SQL enum lebih dulu. Hanya asset `proses` + gudang yang dilepas, tanpa `asset_trx_log`.
+- **List peminjaman paginasi**: `limit+1` tanpa COUNT; `kondisi` hanya untuk `tab=aktif`; tab `riwayat` memakai `reorder()` ke `tgl_update` desc dan tidak ada di `filters` statis.
+- **Riwayat & detail**: `pengembalian[]` ditempel dari query terpisah (satu query per halaman di list, `getDetail` per pengembalian di detail). Pengembalian offboarding sengaja ikut (keputusan produk).
+- **Mobile**: `AssetPeminjamanPageMode` kini empat nilai; pemanggil lama dipetakan di `_assetPeminjamanModeFrom`. State daftar per tab dijaga `_listMatchesMode`.
+- **Technical debt**: RISK-001, 003, 004, 010, INC-02/07/10.
 
 ---
 
@@ -1692,7 +1910,7 @@ Tombol **Kembalikan Asset** hilang karena sudah ada pengembalian berjalan.
 
 #### Langkah 5 — Admin memeriksa pengembalian
 
-**Mobile:** Peminjaman (admin) → switch **Pengembalian** → tab Pengajuan → `/asset_admin_detail_pengembalian` → `GET /asset/pengembalian-karyawan/CMP001202610002`. Detail memuat `lokasi_gudang[]` (gudang milik company) untuk dropdown **Lokasi Tujuan Asset**. Admin memilih **Rusak** pada proyektor, mengetik "Lensa tergores", memilih **Gudang Servis**, lalu **Konfirmasi** (langsung dikirim, tanpa sheet).
+**Mobile:** Peminjaman (admin) → tab **Pengembalian** → chip Pengajuan → `/asset_admin_detail_pengembalian` → `GET /asset/pengembalian-karyawan/CMP001202610002`. Detail memuat `lokasi_gudang[]` (gudang milik company) untuk dropdown **Lokasi Tujuan Asset**. Admin memilih **Rusak** pada proyektor, mengetik "Lensa tergores", memilih **Gudang Servis**, lalu **Konfirmasi** (langsung dikirim, tanpa sheet).
 
 **Dikirim**
 ```http
@@ -1749,7 +1967,7 @@ POST /asset/pengembalian-karyawan/CMP001202610002/konfirmasi
             "id_peminjaman_asal": "CMP001202610001", "status_approval": "selesai", "status_label": "Selesai",
             "tab": "selesai", "jumlah_normal": 0, "jumlah_rusak": 1 } }
 ```
-Peminjaman asal berstatus `selesai` sehingga tidak tampil lagi di daftar peminjaman.
+Peminjaman asal berstatus `selesai` sehingga tidak tampil lagi di tab Permintaan Peminjaman maupun Sedang Dipinjam; peminjaman itu kini dapat ditelusuri di tab Riwayat Peminjaman (lihat variasi di bawah).
 
 ---
 
@@ -1780,7 +1998,48 @@ Perhatikan bahwa pada item pengembalian, `status_item` **dipakai ulang** untuk k
 
 **Semua asset ditolak.** Pada langkah 2, bila kedua item `ditolak`: tanggal dan jam serah terima tidak diminta, header `status = ditolak`, `ket_tolak = "Seluruh asset peminjaman ditolak."`, jadwal tetap `0000-00-00`/`00:00:00`, kedua asset kembali `tersedia`, notifikasi `peminjaman.ditolak` ke peminjam, message "Peminjaman asset berhasil ditolak.".
 
-**Karyawan membatalkan setelah dikonfirmasi.** Pada langkah 3, tombol **Batalkan** → `POST /asset/karyawan/peminjaman/{id}/batalkan` (tanpa body). Syarat status `dikonfirmasi`. Asset yang disetujui (A9) kembali `tersedia`/`gudang`, header `status = ditolak`, `ket_tolak = "Dibatalkan oleh karyawan."`, notifikasi `peminjaman.dibatalkan` ke admin, message "Peminjaman asset berhasil dibatalkan.". Tidak ada baris log.
+**Karyawan membatalkan setelah dikonfirmasi.** Pada langkah 3, tombol **Batalkan** → `POST /asset/karyawan/peminjaman/{id}/batalkan` (tanpa body). Syarat status `pengajuan` atau `dikonfirmasi`. Asset yang disetujui (A9) kembali `tersedia`/`gudang`, header `status = dibatalkan` (v1.6; sebelumnya `ditolak`), `ket_tolak = "Dibatalkan oleh karyawan."`, notifikasi `peminjaman.dibatalkan` ke admin, message "Peminjaman asset berhasil dibatalkan.". Tidak ada baris log.
+
+**Karyawan membatalkan saat pengajuan (v1.6).** Andi menyadari salah memilih asset segera setelah langkah 1, sebelum admin memutuskan. Pada detail transaksi yang masih **Menunggu Konfirmasi** hanya ada tombol **Batalkan** (dialog "Peminjaman yang dibatalkan tidak dapat dipulihkan.").
+```http
+POST /asset/karyawan/peminjaman/CMP001202610001/batalkan
+```
+Diproses `batalkanKaryawan`: header `pengajuan` diterima; karena status pengajuan, semua item (`status_item` NULL: A9 dan A10) diambil; kedua asset yang masih `proses` + `gudang` diubah menjadi `tersedia`, `gudang`, `id_pemegang_asset = ''`; header menjadi `dibatalkan`, `ket_tolak = "Dibatalkan oleh karyawan."`, `tgl_update`/`user_update` = EMP-003 - Andi Contoh. Tidak ada baris `asset_trx_log`. Notifikasi `peminjaman.dibatalkan` dikirim ke kedua admin ("Andi Contoh membatalkan peminjaman asset KRY05-202610001."). Peminjaman tampil di tab Permintaan Peminjaman → chip Dibatalkan.
+```json
+{ "code": "UPDATED", "message": "Peminjaman asset berhasil dibatalkan.",
+  "data": { "id": "CMP001202610001", "no_trx": "KRY05-202610001", "status_approval": "dibatalkan",
+            "status_label": "Dibatalkan", "tab": "dibatalkan" } }
+```
+Mencoba membatalkan lagi, atau membatalkan peminjaman yang sudah `aktif`, ditolak dengan HTTP 422 "Peminjaman asset sudah tidak dapat dibatalkan.". Bila admin lebih dulu mengonfirmasi, Andi tetap bisa membatalkan (status `dikonfirmasi`); bila Andi lebih dulu membatalkan, konfirmasi admin ditolak 422 "Peminjaman asset sudah tidak menunggu konfirmasi.".
+
+**Tab Riwayat dengan pengembalian (v1.6).** Setelah langkah 5, peminjaman `CMP001202610001` berstatus `selesai` dan muncul di tab Riwayat Peminjaman sebagai satu entri bersama pengembaliannya.
+```http
+GET /asset/karyawan/peminjaman?tab=riwayat&limit=20&offset=0
+```
+```json
+{ "code": "SUCCESS", "message": "Data peminjaman asset berhasil ditemukan.",
+  "data": {
+    "filters": [
+      {"value": "pengajuan", "label": "Pengajuan"},
+      {"value": "dikonfirmasi", "label": "Dikonfirmasi"},
+      {"value": "ditolak", "label": "Ditolak"},
+      {"value": "aktif", "label": "Aktif"},
+      {"value": "dibatalkan", "label": "Dibatalkan"}
+    ],
+    "records": [
+      { "id": "CMP001202610001", "no_trx": "KRY05-202610001", "tgl_pengajuan": "2026-10-22",
+        "keperluan": "dinas", "tujuan_peminjaman": "Presentasi klien di Surabaya",
+        "tgl_pinjam": "2026-10-24", "tgl_kembali": "2026-10-28",
+        "jenis_status": "peminjaman", "status_approval": "selesai", "status_label": "Selesai", "tab": "selesai",
+        "jumlah_asset": 2, "tgl_diterima": "", "terlambat": false,
+        "pengembalian": [
+          { "id": "CMP001202610002", "no_trx": "KRY05-202610002", "tgl_selesai": "2026-10-28",
+            "jumlah_normal": 0, "jumlah_rusak": 1 }
+        ] }
+    ],
+    "pagination": { "limit": 20, "offset": 0, "next_offset": 1, "has_more": false } } }
+```
+Daftar diurut `tgl_update` desc. `jumlah_asset = 2` karena header menghitung semua item (A9 disetujui dan A10 ditolak). Mobile menampilkan kartu: nomor `KRY05-202610001`, periode 24–28 Okt 2026, "2 Asset", badge **Selesai**, dan ringkasan "Dikembalikan 28 Okt 2026 · 0 normal · 1 rusak". Membuka kartu memanggil detail (API-010) yang memuat `pengembalian[]` lengkap (status Selesai, aset A9 `kondisi = rusak`, `keterangan_kerusakan = Lensa tergores`, `lokasi_tujuan = Gudang Servis`). Admin melihat entri yang sama lewat `GET /asset/peminjaman-karyawan?tab=riwayat` (semua karyawan) dan detailnya read-only.
 
 **Pengembalian normal.** Pada langkah 5, bila `kondisi = normal`: item `disetujui`, A9 → `tersedia` @gudang pilihan admin, `ket_rusak = ''`, log `kondisi_akhir = normal`, `jumlah_normal = 1`.
 
@@ -1804,7 +2063,7 @@ Perhatikan bahwa pada item pengembalian, `status_item` **dipakai ulang** untuk k
 | Konfirmasi dua kali | 2 | 422 | Peminjaman asset sudah tidak menunggu konfirmasi. | Tidak ada |
 | Pengembalian milik offboarding dikonfirmasi lewat menu ini | 5 | 422 | Pengembalian ini diproses melalui offboarding. | Tidak ada |
 | Terima sebelum dikonfirmasi admin | 3 | 422 | Peminjaman asset belum dapat diterima. | Tidak ada |
-| Batalkan setelah aktif | 3 | 422 | Peminjaman asset sudah tidak dapat dibatalkan. | Tidak ada |
+| Batalkan setelah aktif / selesai / ditolak / dibatalkan | 3 | 422 | Peminjaman asset sudah tidak dapat dibatalkan. | Tidak ada |
 | Kembalikan peminjaman yang tidak aktif | 4 | 422 | Hanya peminjaman aktif yang dapat dikembalikan. | Tidak ada |
 | Sudah ada pengembalian berjalan | 4 | 422 | Pengembalian asset sedang menunggu konfirmasi. | Tidak ada |
 | Asset sedang di offboarding | 4 | 422 | Asset sedang diproses pada offboarding. | Tidak ada |
@@ -1823,7 +2082,8 @@ Semua pelanggaran aturan dilempar sebagai `InvalidArgumentException` di dalam `D
 |---|---|---|---|
 | Ajukan | Pilih asset, keperluan, tujuan, rentang tanggal; `AssetPeminjamanRequest` | Validasi, lock, cek asset, ID, insert, reservasi | header, item, `asset_data → proses`, `notif_data` |
 | Konfirmasi admin | Setujui/tolak per asset, sheet jadwal | Validasi keputusan dan jadwal dalam periode, lepas asset ditolak | item, header, `asset_data` (ditolak → tersedia), `notif_data` |
-| Terima / batalkan | Dialog konfirmasi | Cek status dan asset, serah terima atau pelepasan | header, `asset_data`, `asset_trx_log` (terima), `notif_data` |
+| Terima / batalkan | Dialog konfirmasi | Cek status (batal: pengajuan atau dikonfirmasi) dan asset, serah terima atau pelepasan | header (aktif / dibatalkan), `asset_data`, `asset_trx_log` (terima saja), `notif_data` |
+| Riwayat | Tab Riwayat Peminjaman, kartu ringkasan pengembalian | `tab=riwayat` + `attachRiwayatPengembalian` / `pengembalian[]` di detail | `SELECT` saja |
 | Ajukan pengembalian | Tombol Kembalikan Asset | Cek asset masih dipinjam dan tidak di offboarding, salin item | header + item baru, `notif_data` |
 | Konfirmasi pengembalian | Kondisi + gudang per asset | Validasi lokasi, update asset, tutup peminjaman asal | item, `asset_data`, `asset_trx_log`, header (2), `notif_data` |
 | Tampilan | JSON → model → widget; stepper dan timeline | `peminjamanStatusMetadata`, `terlambat`, `dapat_dikembalikan` | `SELECT` saja |
@@ -1837,7 +2097,7 @@ Semua pelanggaran aturan dilempar sebagai `InvalidArgumentException` di dalam `D
 | Ajukan peminjaman | header, item, notif | asset_data → proses | – |
 | Konfirmasi admin | notif | item (keputusan), header (dikonfirmasi/ditolak, jadwal), asset_data (ditolak → tersedia) | – |
 | Terima Asset | asset_trx_log, notif | asset_data → dipinjam @karyawan, header → aktif | – |
-| Batalkan | notif | asset_data → tersedia, header → ditolak | – |
+| Batalkan (pengajuan atau dikonfirmasi) | notif | asset_data → tersedia (pengajuan: semua item; dikonfirmasi: item disetujui; hanya `proses` + gudang), header → dibatalkan | – |
 | Ajukan pengembalian | header pengembalian, item, notif | – | – |
 | Konfirmasi pengembalian | asset_trx_log, notif | item (kondisi, lokasi tujuan), asset_data → tersedia/rusak @gudang + lokasi, header pengembalian → selesai, peminjaman asal → selesai | – |
 
@@ -1850,6 +2110,8 @@ Semua pelanggaran aturan dilempar sebagai `InvalidArgumentException` di dalam `D
 - [x] Relasi `id_peminjaman_asal`
 - [x] Index list admin & karyawan
 - [x] Enum status
+- [x] Nilai enum `dibatalkan` di DBML dan SQL manual `sql-peminjaman-status-dibatalkan.sql` (eksekusi di server: ⚠️ belum diverifikasi, prasyarat deploy)
+- [ ] Rapikan data lama "Dibatalkan oleh karyawan." dari `ditolak` ke `dibatalkan` (SQL langkah 3, opsional)
 - [x] Log serah terima & pengembalian
 - [ ] Migration CREATE TABLE baseline
 - [ ] Kolom tanggal diterima & kondisi terpisah
@@ -1859,7 +2121,8 @@ Semua pelanggaran aturan dilempar sebagai `InvalidArgumentException` di dalam `D
 - [x] Ajukan & konfirmasi pengembalian
 - [x] Jatuh tempo & terlambat (tampilan)
 - [x] Integrasi offboarding
-- [ ] Batal pengajuan oleh karyawan
+- [x] Batal pengajuan oleh karyawan (v1.6)
+- [x] Filter `kondisi` dan tab `dibatalkan`/`riwayat`; `pengembalian[]` di list riwayat dan detail
 - [ ] Batal/kedaluwarsa oleh admin
 - [ ] Tolak pengembalian
 - [ ] Scheduler pengingat jatuh tempo
@@ -1874,11 +2137,13 @@ Semua pelanggaran aturan dilempar sebagai `InvalidArgumentException` di dalam `D
 - [x] Lokasi gudang tujuan per asset saat pengembalian; lokasi dikosongkan saat asset keluar gudang (v1.1)
 - [ ] Backfill lokasi asset yang sudah di gudang
 - [x] Banner & kartu di Asset Saya
-- [ ] Tab riwayat Selesai untuk peminjaman
+- [x] Halaman 4 tab (Permintaan, Sedang Dipinjam, Pengembalian, Riwayat) dengan chip kondisi dan kartu Riwayat (v1.6)
+- [x] Batalkan pada detail status pengajuan; admin read-only pada peminjaman selesai
 - [ ] `maxLength` tujuan peminjaman
 
 ### Documentation
 - [x] Business Flow, DB, API, Mobile, Mapping, Manual Book, Testing
+- [x] Disinkronkan dengan kode 2026-10-27 (v1.6)
 - [ ] Screenshot
 
 ---
@@ -1887,7 +2152,8 @@ Semua pelanggaran aturan dilempar sebagai `InvalidArgumentException` di dalam `D
 
 | Version | Date | Changes |
 |---|---|---|
-| 1.5 | 2026-10-22 | Menambah §45.4 *Walkthrough Lengkap dengan Contoh Data* (ajukan, konfirmasi admin per asset, terima, ajukan pengembalian, konfirmasi pengembalian dengan lokasi gudang; variasi tolak semua, batalkan, pengembalian normal, terlambat; kasus gagal). Sinkronisasi kode: tabel log ternyata `asset_trx_log` (`id_asset_trx_log`), bukan `asset_log`. |
+| 1.6 | 2026-10-27 | (A) Status baru **`dibatalkan`** (enum `status_peminjaman`; SQL manual `sql-peminjaman-status-dibatalkan.sql`, prasyarat deploy): karyawan dapat membatalkan saat `pengajuan` dan `dikonfirmasi`, hasil `dibatalkan` (bukan `ditolak`), semua/asset disetujui dilepas, tanpa `asset_trx_log`; BR-012, §14, §15, §21.4, API-012, notifikasi; RISK-002 ditutup, INC-03 diperbaiki. (B) Halaman **4 tab** (Permintaan Peminjaman, Sedang Dipinjam, Pengembalian, Riwayat Peminjaman) untuk karyawan dan admin; `AssetPeminjamanPageMode` = {peminjaman, sedangDipinjam, pengembalian, riwayat}; pemetaan pemanggil lama; §25–§30, §37. (C) API list: parameter `kondisi` (`semua|jatuh_tempo|terlambat`, hanya `tab=aktif`, difilter sebelum paginasi), BR-019, INC-10. (D) Tab **Riwayat** = peminjaman `selesai` + `pengembalian[]` (list) dan `pengembalian[]` pada detail; pengembalian offboarding sengaja ikut tampil; kartu Riwayat, bagian Pengembalian, admin read-only pada selesai (BR-017, BR-020, INC-04 diperbaiki). (E) §39/§41: RISK-010–014, INC-10/11. (F) Tes: API `tests/Asset` 386 lulus (4850 assertion, sqlite); mobile `test/asset` 466 lulus + 5 gagal lama tidak terkait (hasil eksekusi sesi 2026-10-27, tidak dijalankan ulang saat dokumen ini disusun); TC-41–TC-63; §45.4 menambah skenario batal saat pengajuan dan tab Riwayat. Jumlah rute tetap 15. |
+| 1.5 | 2026-10-22 | Menambah §45.4 *Walkthrough Lengkap dengan Contoh Data* (ajukan, konfirmasi admin per asset, terima, ajukan pengembalian, konfirmasi pengembalian dengan lokasi gudang; variasi tolak semua, batalkan, pengembalian normal, terlambat; kasus gagal). Sinkronisasi kode: nama tabel log yang benar adalah `asset_trx_log` (`id_asset_trx_log`). |
 | 1.4 | 2026-10-20 | Detail peminjaman (karyawan & admin): kartu Data Karyawan kini menampilkan Jabatan, Cabang, Departemen (label Divisi diganti Departemen). API: `karyawan.jabatan` ditambahkan di `getDetail` (leftJoin `master_jabatan`, tanpa SQL/migrasi); mobile: field `jabatan` di `AssetPeminjamanKaryawan`; tes `asset_karyawan_jabatan_test.dart`. |
 | 1.3 | 2026-10-12 | Mobile: stepper alur status (`AssetAlurStepper.peminjaman`) dan kartu timeline vertikal per aset (`AssetPeminjamanTimelineCards`) di detail peminjaman/pengembalian karyawan dan admin (§26.3, 26.5, 26.6). Teks langkah di grup JSON `alur`. Tidak ada perubahan API. |
 | 1.2 | 2026-10-12 | Sinkronisasi dengan kode 12 Okt 2026: path file mobile mengikuti struktur folder baru (`UI/Modul/Asset/<Fitur>/` berhuruf kapital, model di `Repository/Model/Asset/`). |
