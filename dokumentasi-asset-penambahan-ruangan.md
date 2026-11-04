@@ -17,8 +17,8 @@
 | Database | `API/diagram-asset.dbml` (tanda `[REVISI ALK-RGN04]`) + SQL manual `Claude outputs/sql-alk-rgn04-request-penambahan-ruangan.sql` |
 | Mobile | Flutter (`professional_flutter_3_35`), `flutter_bloc`, `dio` |
 | Web | ⚠️ Belum ditemukan: tidak ada source web di workspace |
-| Test otomatis | API `tests/Asset/AssetRequestRuanganTest.php` (12 test) · Mobile `test/asset/asset_request_ruangan_test.dart` (11 test) |
-| Versi dokumen | 1.1 — 22 Oktober 2026 |
+| Test otomatis | API `tests/Asset/AssetRequestRuanganTest.php` (33 test) · Mobile `test/asset/asset_request_ruangan_test.dart` (18 test) + `test/asset/asset_admin_ruangan_pending_test.dart` (17 test) |
+| Versi dokumen | 1.3 — 3 November 2026 |
 | Dokumen terkait | Onboarding Ruangan (ALK-RGN01), Request & Penambahan Karyawan (KRY-03-1), Master Lokasi & PIC Ruangan |
 
 ## 2. Daftar Isi
@@ -27,7 +27,7 @@ Lihat panel navigasi di samping.
 
 ## 3. Quick Overview
 
-Ruangan yang sudah beroperasi bisa **ditambah aset** lewat dua jalur dalam **satu tabel** (`asset_trx_request_ruangan`), dibedakan kolom `sumber_pengajuan` seperti request karyawan KRY-03-1. Pada **Jalur A** PIC Ruangan mengajukan (jenis aset, alasan, urgensi); Admin/HR menyetujui dengan memilih aset gudang dan jadwal, atau menolak dengan alasan. Pada **Jalur B** Admin/HR langsung memilih aset dan jadwal tanpa persetujuan. Setelah dijadwalkan, alurnya sama dengan RGN01: aset gudang `tersedia` → `proses`, PIC menilai **setiap aset Normal atau Rusak**, Admin/HR mereview lalu **mengonfirmasi** (aset menjadi `terpakai` di ruangan) atau **menjadwalkan pengganti** untuk aset rusak (ronde berikutnya) sampai semua normal.
+Ruangan yang sudah beroperasi bisa **ditambah aset** lewat dua jalur dalam **satu tabel** (`asset_trx_request_ruangan`), dibedakan kolom `sumber_pengajuan` seperti request karyawan KRY-03-1. Pada **Jalur A** PIC Ruangan mengajukan (jenis aset berupa teks bebas, alasan); Admin/HR menyetujui dengan memilih aset gudang dan jadwal, atau menolak dengan alasan. Pada **Jalur B** Admin/HR langsung memilih aset dan jadwal tanpa persetujuan. Setelah dijadwalkan, alurnya sama dengan RGN01: aset gudang `tersedia` → `proses`, PIC menilai **setiap aset Normal atau Rusak**, Admin/HR mereview lalu **mengonfirmasi** (aset menjadi `terpakai` di ruangan) atau **menjadwalkan pengganti** untuk aset rusak (ronde berikutnya) sampai semua normal.
 
 | Aspek | Ringkasan |
 |---|---|
@@ -43,7 +43,7 @@ Ruangan yang sudah beroperasi bisa **ditambah aset** lewat dua jalur dalam **sat
 
 | Fitur | Aktor | Keterangan |
 |---|---|---|
-| Ajukan penambahan aset | PIC Ruangan | Pilih ruangan miliknya, jenis aset (kategori), alasan, urgensi. Status `proses`, belum ada jadwal. |
+| Ajukan penambahan aset | PIC Ruangan | Pilih ruangan miliknya, ketik jenis aset (teks bebas), isi alasan. Status `proses`, belum ada jadwal. |
 | Setujui pengajuan | Admin/HR | Memilih aset gudang `tersedia` + jadwal. Aset menjadi `proses`, PIC dinotifikasi. |
 | Tolak pengajuan | Admin/HR | Alasan penolakan wajib. Status `ditolak`, tidak ada aset yang dikunci. |
 | Inisiasi langsung | Admin/HR | Memilih ruangan aktif, aset, jadwal. PIC otomatis dari master PIC ruangan. |
@@ -55,7 +55,7 @@ Ruangan yang sudah beroperasi bisa **ditambah aset** lewat dua jalur dalam **sat
 ## 5. Tujuan Fitur
 
 - Menambah aset ke ruangan yang sudah aktif tanpa mengulang onboarding ruangan (RGN01).
-- Memberi PIC Ruangan jalur resmi untuk meminta aset tambahan, lengkap dengan alasan dan urgensi.
+- Memberi PIC Ruangan jalur resmi untuk meminta aset tambahan, lengkap dengan jenis aset dan alasan.
 - Memberi Admin/HR keputusan terdokumentasi: setujui (dengan aset dan jadwal) atau tolak (dengan alasan).
 - Memastikan serah terima fisik tercatat (waktu dan identitas PIC) dan aset rusak diganti sebelum selesai.
 
@@ -95,7 +95,7 @@ Ruangan yang sudah beroperasi bisa **ditambah aset** lewat dua jalur dalam **sat
 | BR-01 | Hanya ruangan aktif yang bisa ditambah aset | `ruanganAktif()`: tipe `ruangan`, `status_aktif='1'`, ada baris `asset_lokasi_pic_m`. |
 | BR-02 | Ruangan harus sudah beroperasi | Ada onboarding `dikonfirmasi` untuk ruangan itu **atau** ada `asset_data` dengan `pemegang_asset='ruangan'` di ruangan itu. |
 | BR-03 | PIC pengaju harus PIC ruangan tersebut | `ajukanPic` memakai `ruanganAktif($idCompany, $idKaryawan)`; ruangan lain ditolak. |
-| BR-04 | Pengajuan wajib berisi jenis aset, alasan, urgensi | Jenis aset harus ada di `asset_kategori_m`; alasan tidak kosong; urgensi ∈ `normal`, `secepatnya`, `mendesak`. |
+| BR-04 | Pengajuan wajib berisi jenis aset dan alasan | Jenis aset berupa teks bebas (wajib, maksimal 150 karakter, di-trim), seperti request karyawan; alasan tidak kosong. Urgensi tidak lagi dipakai pada pengajuan PIC. |
 | BR-05 | Jalur B tidak perlu persetujuan | `storeAdmin` langsung membuat item + jadwal + mengunci aset. |
 | BR-06 | Penolakan wajib beralasan | `tolak` menolak alasan kosong (`Alasan penolakan wajib diisi.`). |
 | BR-07 | Hanya aset `tersedia` di gudang yang dipilih | `getLockedAssets`: `status_asset='tersedia'` dan `pemegang_asset='gudang'`, dikunci `FOR UPDATE`. |
@@ -110,8 +110,8 @@ Ruangan yang sudah beroperasi bisa **ditambah aset** lewat dua jalur dalam **sat
 
 ## 10. Business Flow
 
-1. **Jalur A.** PIC mengisi form (ruangan, jenis aset, alasan, urgensi) dan mengirim. Admin/HR dinotifikasi (`request_ruangan.diajukan`).
-2. Admin/HR membuka tab **Pengajuan**, mereview.
+1. **Jalur A.** PIC mengisi form (ruangan, jenis aset sebagai teks bebas, alasan) dan mengirim. Admin/HR dinotifikasi (`request_ruangan.diajukan`).
+2. Admin/HR membuka **Asset → Ruangan → Pengajuan** (atau kartu **Pengajuan Aset Ruangan Perlu Diproses** di beranda), tab **Pengajuan**, mereview.
    - **Tolak:** isi alasan → status `ditolak`, PIC dinotifikasi. Selesai.
    - **Setujui:** pilih aset gudang dan jadwal → aset `proses`, item ronde 1 dan jadwal dibuat, PIC dinotifikasi (`disetujui`).
 3. **Jalur B.** Admin/HR memilih ruangan aktif, aset, jadwal → langsung seperti langkah setujui; PIC dinotifikasi (`dikirim`).
@@ -125,7 +125,7 @@ Ruangan yang sudah beroperasi bisa **ditambah aset** lewat dua jalur dalam **sat
 | Role | Langkah |
 |---|---|
 | PIC Ruangan | Ajukan → (tunggu keputusan) → terima notifikasi jadwal → periksa fisik → isi checklist → kirim → (bila ada pengganti, ulangi) → selesai. |
-| Admin/HR | Tab Pengajuan → setujui/tolak → (tab Proses) ubah jadwal bila perlu → review checklist → konfirmasi atau jadwalkan pengganti → selesai. Atau tombol **Tambah Asset** untuk Jalur B. |
+| Admin/HR | Menu **Pengajuan**, tab Pengajuan → setujui/tolak → (tab Proses) ubah jadwal bila perlu → review checklist → konfirmasi atau jadwalkan pengganti → selesai. Untuk Jalur B: menu **Penambahan** → tombol **Tambah Asset**, lalu review di tab Proses. |
 | Sistem | Mengunci/melepas aset, menurunkan fase, mencatat log, mengirim notifikasi. |
 
 ## 12. Flow Diagram
@@ -133,7 +133,7 @@ Ruangan yang sudah beroperasi bisa **ditambah aset** lewat dua jalur dalam **sat
 ```mermaid
 flowchart TD
     A([Mulai]) --> J{Jalur}
-    J -->|A: PIC mengajukan| P[Pengajuan: ruangan, jenis aset, alasan, urgensi]
+    J -->|A: PIC mengajukan| P[Pengajuan: ruangan, jenis aset (teks bebas), alasan]
     J -->|B: Admin langsung| B[Pilih ruangan, aset gudang, jadwal]
     P --> R{Admin/HR review}
     R -->|Tolak + alasan| T([Ditolak - selesai])
@@ -234,9 +234,9 @@ PIC pada header disimpan sebagai `id_karyawan_pic` (snapshot `nama_pic`, `nik_pi
 | `sumber_pengajuan` | enum(`admin`,`karyawan`) | Jalur B / Jalur A |
 | `id_asset_lokasi_m` + snapshot `nama_asset_ruangan`, `nama_cabang`, `nama_departemen` | varchar | Ruangan tujuan |
 | `id_karyawan_pic`, `nama_pic`, `nik_pic` | varchar | PIC penerima/pengaju; dasar notifikasi dan hak akses |
-| `id_asset_kategori_m`, `nama_kategori` | varchar | Jenis aset yang diminta (Jalur A); kosong pada Jalur B |
+| `id_asset_kategori_m`, `nama_kategori` | varchar | Jenis aset yang diminta (Jalur A): `nama_kategori` berisi teks bebas dari PIC, `id_asset_kategori_m` selalu `''`; kosong pada Jalur B |
 | `keterangan` | text | Jalur A: alasan (wajib). Jalur B: catatan opsional |
-| `urgensi` | varchar(50) | `normal` / `secepatnya` / `mendesak` (Jalur A) |
+| `urgensi` | varchar(50) | NULL pada pengajuan PIC (urgensi tidak dipakai lagi); data lama berisi `normal` / `secepatnya` / `mendesak` |
 | `ket_tolak` | varchar(255) | Alasan penolakan |
 | `id_karyawan`, `nik_karyawan`, `nama_karyawan` | varchar | Pembuat transaksi (PIC pada Jalur A, Admin pada Jalur B) |
 | `tgl_pengajuan` | date | Default tanggal hari ini |
@@ -277,7 +277,7 @@ Controller memvalidasi input, memanggil model dalam `DB::transaction`, lalu meng
 
 ## 21. Backend Business Logic
 
-- **`ajukanPic`**: kunci company; validasi karyawan aktif, ruangan milik PIC (BR-03), kategori, alasan, urgensi; buat header `proses` tanpa jadwal.
+- **`ajukanPic`**: kunci company; validasi karyawan aktif, ruangan milik PIC (BR-03), jenis aset (teks bebas, maksimal 150 karakter), alasan; buat header `proses` tanpa jadwal.
 - **`storeAdmin`**: validasi admin dan ruangan; PIC dari master ruangan; buat header lalu `alokasikan()`.
 - **`setujui`**: header harus fase `menunggu_persetujuan`; `alokasikan()`; isi `user_approval` dan `tgl_approval`.
 - **`alokasikan`**: kunci aset `tersedia` (`FOR UPDATE`), pastikan jumlah sama dengan yang diminta, buat item ronde 1 (`belum_dicek`) + jadwal ronde 1, isi jadwal terkini di header, set aset `proses`.
@@ -305,7 +305,7 @@ Base `asset/`. Semua memakai JWT dan envelope `ApiResponse`.
 | ID | Method | Path | Peran | Fungsi |
 |---|---|---|---|---|
 | API-01 | GET | `request-ruangan/options` | Admin | Aset gudang, kategori, ruangan aktif |
-| API-02 | GET | `request-ruangan?tab&limit&offset` | Admin | Daftar (`pengajuan`/`proses`/`selesai`) |
+| API-02 | GET | `request-ruangan?tab&sumber&limit&offset` | Admin | Daftar (`pengajuan`/`proses`/`selesai`). `sumber=karyawan` = Jalur A (halaman Pengajuan); `sumber=admin` = Jalur B (halaman Penambahan, tab `proses`/`selesai`; tab `pengajuan` kosong). Tanpa `sumber` = semua (perilaku lama). Nilai lain: 422 key `sumber`. |
 | API-03 | GET | `request-ruangan/{id}` | Admin | Detail + flag aksi |
 | API-04 | POST | `request-ruangan` | Admin | Jalur B: kirim aset langsung |
 | API-05 | POST | `request-ruangan/{id}/setujui` | Admin | Jalur A: setujui + aset + jadwal |
@@ -313,7 +313,7 @@ Base `asset/`. Semua memakai JWT dan envelope `ApiResponse`.
 | API-07 | PUT | `request-ruangan/{id}/jadwal` | Admin | Ubah jadwal |
 | API-08 | POST | `request-ruangan/{id}/pengganti` | Admin | Jadwalkan pengganti |
 | API-09 | POST | `request-ruangan/{id}/konfirmasi` | Admin | Konfirmasi selesai |
-| API-10 | GET | `karyawan/pic-ruangan/request/options` | PIC | Ruangan miliknya, kategori, urgensi |
+| API-10 | GET | `karyawan/pic-ruangan/request/options` | PIC | Ruangan miliknya |
 | API-11 | GET | `karyawan/pic-ruangan/request?tab` | PIC | Daftar milik PIC (`proses`/`selesai`) |
 | API-12 | POST | `karyawan/pic-ruangan/request` | PIC | Ajukan penambahan |
 | API-13 | GET | `karyawan/pic-ruangan/request/{id}` | PIC | Detail |
@@ -334,10 +334,10 @@ Respons `CREATED`: `{ "id": "COMP202610001", "no_trx": "RGN04-202610001", "fase"
 **API-12 · POST `asset/karyawan/pic-ruangan/request`** (Jalur A)
 
 ```json
-{ "id_asset_lokasi_m": "RGN-1", "id_asset_kategori_m": "KAT-KOM",
-  "keterangan": "Tim bertambah dua orang", "urgensi": "mendesak" }
+{ "id_asset_lokasi_m": "RGN-1", "jenis_asset": "Komputer",
+  "keterangan": "Tim bertambah dua orang" }
 ```
-Respons `CREATED`: `{ "id": "...", "no_trx": "RGN04-...", "fase": "menunggu_persetujuan" }`. `urgensi` ∈ `normal|secepatnya|mendesak`.
+Respons `CREATED`: `{ "id": "...", "no_trx": "RGN04-...", "fase": "menunggu_persetujuan" }`. `jenis_asset` teks bebas (wajib, maksimal 150 karakter, di-trim). `id_asset_kategori_m` dan `urgensi` tidak lagi diterima: bila klien lama masih mengirimnya nilainya diabaikan tanpa error, tetapi permintaan tanpa `jenis_asset` ditolak 422.
 
 **API-05 · POST `.../{id}/setujui`**
 
@@ -367,7 +367,7 @@ Respons: `{ "ronde": 2, "jumlah_pengganti": 1 }`.
 ```
 Respons: `{ "ada_rusak": true, "fase": "menunggu_review" }`.
 
-**API-03 / API-13 · Detail** mengembalikan: `id`, `no_trx`, `sumber_pengajuan`, ruangan + cabang + departemen, PIC, `nama_kategori`, `alasan`, `urgensi`, `ket_tolak`, `tgl_pengajuan`, jadwal terkini, `ronde`, `fase`, `fase_label`, `jadwal[]` (riwayat), `items[]` (`id_item`, `parent_id`, `nama_asset`, `ronde`, `status_item`, `ket_rusak`, `diganti`, `perlu_dicek`). Khusus admin ditambah `bisa_setujui`, `bisa_ubah_jadwal`, `bisa_konfirmasi`, `perlu_pengganti[]`; khusus PIC `bisa_diterima`.
+**API-03 / API-13 · Detail** mengembalikan: `id`, `no_trx`, `sumber_pengajuan`, ruangan + cabang + departemen, PIC, `nama_kategori`, `alasan`, `urgensi` (kosong pada pengajuan baru), `ket_tolak`, `tgl_pengajuan`, jadwal terkini, `ronde`, `fase`, `fase_label`, `jadwal[]` (riwayat), `items[]` (`id_item`, `parent_id`, `nama_asset`, `ronde`, `status_item`, `ket_rusak`, `diganti`, `perlu_dicek`). Khusus admin ditambah `bisa_setujui`, `bisa_ubah_jadwal`, `bisa_konfirmasi`, `perlu_pengganti[]`; khusus PIC `bisa_diterima`.
 
 ## 25. Mobile Architecture
 
@@ -376,7 +376,7 @@ Flutter + `flutter_bloc` + `dio`. Halaman RGN01 **dipakai ulang lewat parameter*
 | Komponen | Cara pakai ulang |
 |---|---|
 | `AssetAdminRuanganApi(base:)` | `requestBase = 'asset/request-ruangan'`; metode baru `setujui`, `tolak` |
-| `HalamanAssetAdminOnboardingRuangan(untukRequest:)` | Daftar dengan tab Pengajuan/Proses/Selesai |
+| `HalamanAssetAdminOnboardingRuangan(untukRequest:, sumber:)` | Daftar request ruangan. `sumber: 'karyawan'` = halaman Pengajuan (tab Pengajuan/Proses/Selesai, tanpa tombol Tambah); `sumber: 'admin'` = halaman Penambahan (tab Proses/Selesai, dengan tombol Tambah) |
 | `HalamanAssetAdminAddOnboardingRuangan(untukRequest:)` | Form Jalur B tanpa pemilih PIC |
 | `HalamanAssetAdminDetailOnboardingRuangan` | Mendeteksi `isRequest`; panel Setujui + dialog Tolak |
 | `AssetPicRuanganDetailBloc(jenis:)` | `AssetPicRuanganJenis.request` memanggil endpoint request |
@@ -387,21 +387,23 @@ File baru: `Bloc/Asset/AssetPicRuanganRequestFormBloc.dart`, `UI/Modul/Asset/Pic
 
 | Layar | Rute | Pengguna |
 |---|---|---|
+| Dashboard Ruangan → item **Pengajuan** | `/asset_admin_pengajuan_ruangan` | Admin/HR |
 | Dashboard Ruangan → item **Penambahan** | `/asset_admin_request_ruangan` | Admin/HR |
-| Daftar penambahan (3 tab) | `/asset_admin_request_ruangan` | Admin/HR |
+| Daftar pengajuan PIC (3 tab: Pengajuan/Proses/Selesai, tanpa Tambah; argumen tab awal opsional) | `/asset_admin_pengajuan_ruangan` | Admin/HR |
+| Daftar penambahan Admin (2 tab: Proses/Selesai, dengan tombol Tambah) | `/asset_admin_request_ruangan` | Admin/HR |
 | Form Tambah Asset (Jalur B) | `/asset_admin_add_request_ruangan` | Admin/HR |
 | Detail penambahan | `/asset_admin_detail_request_ruangan` | Admin/HR |
 | PIC Ruangan + banner + tombol Ajukan | `/asset_pic_ruangan` | PIC |
 | Form Ajukan Penambahan | `/asset_pic_ruangan_ajukan` | PIC |
 | Detail / serah terima | `/asset_pic_ruangan_request` | PIC |
 
-Detail Admin menampilkan kartu info pengajuan (jenis aset, urgensi, alasan, penolakan), stepper, dan timeline per aset. Saat `bisa_setujui`, muncul panel pilih aset gudang + jadwal serta tombol **Tolak** dan **Setujui & Jadwalkan**.
+Detail Admin menampilkan kartu info pengajuan (jenis aset, alasan, penolakan; urgensi hanya tampil bila terisi, yaitu data lama), stepper, dan timeline per aset. Saat `bisa_setujui`, muncul panel pilih aset gudang + jadwal serta tombol **Tolak** dan **Setujui & Jadwalkan**.
 
 ## 27. Mobile → API
 
 | Aksi di layar | Pemanggilan |
 |---|---|
-| Buka daftar / pindah tab | `getPage(tab)` → API-02 |
+| Buka daftar / pindah tab | `getPage(tab, sumber)` → API-02 |
 | Buka form Jalur B | `getOptions()` → API-01; kirim → `store` → API-04 |
 | Buka detail Admin | `getDetail` → API-03 |
 | Setujui | `setujui` → API-05 |
@@ -413,7 +415,9 @@ Detail Admin menampilkan kartu info pengajuan (jenis aset, urgensi, alasan, peno
 
 ## 28. API → Mobile
 
-Model: `mAssetPicRuangan.dart` (`AssetPicRuanganRequest`, `AssetPicRuanganRequestOptions`, `AssetPicRuanganAjukanRequest`, detail diperluas dengan `sumberPengajuan`, `namaKategori`, `alasan`, `urgensi`, `ketTolak`) dan `mAssetAdminRuangan.dart` (`AssetAdminRuanganSetujuiRequest`, `bisaSetujui`, daftar membaca key `requests` selain `onboardings`). Fase baru: `menunggu_persetujuan` dan `ditolak`.
+Model: `mAssetPicRuangan.dart` (`AssetPicRuanganRequest`, `AssetPicRuanganRequestOptions` (hanya daftar ruangan), `AssetPicRuanganAjukanRequest` (payload `id_asset_lokasi_m`, `jenis_asset`, `keterangan`), detail diperluas dengan `sumberPengajuan`, `namaKategori`, `alasan`, `urgensi`, `ketTolak`) dan `mAssetAdminRuangan.dart` (`AssetAdminRuanganSetujuiRequest`, `bisaSetujui`, daftar membaca key `requests` selain `onboardings`). Fase baru: `menunggu_persetujuan` dan `ditolak`.
+
+Ringkasan beranda admin (`GET asset/summary`): `ruangan_pengajuan_perlu_proses` / `ruangan_pengajuan_pending` kini hanya sumber `karyawan` (fase `menunggu_persetujuan` atau `menunggu_review`); kunci baru `ruangan_penambahan_perlu_proses` / `ruangan_penambahan_pending` hanya sumber `admin` dengan fase `menunggu_review`. Masing-masing maksimal 3 item (`id`, `no_trx`, `nama_asset`, `nama_karyawan`, `urgensi` kosong, `status_approval`, `tahap`), terlama dulu, scope `id_company`, dihitung sekali per request lewat `AssetRequestRuangan_m::pendingSummaryForAdmin($idCompany, $sumber, $limit)`. Di mobile: `mAssetSummary.ruanganPengajuan*` dan `ruanganPenambahan*` menjadi dua kartu `AssetPendingTrxSection` di `HalamanAssetAdminRuangan`, dan badge tab Asset Ruangan = jumlah keduanya. "Lihat semua" kartu Pengajuan membuka halaman Pengajuan (tab `pengajuan` bila ada item `menunggu_persetujuan`, selain itu `proses`); kartu Penambahan membuka halaman Penambahan.
 
 ## 29. Mapping Mobile → API → Database
 
@@ -433,7 +437,7 @@ Model: `mAssetPicRuangan.dart` (`AssetPicRuanganRequest`, `AssetPicRuanganReques
 | Kolom | API | Tampilan |
 |---|---|---|
 | `sumber_pengajuan` | `sumber_pengajuan` | "Diajukan Oleh": PIC Ruangan / Admin/HR |
-| `nama_kategori`, `urgensi`, `keterangan` | `nama_kategori`, `urgensi`, `alasan` | Kartu info pengajuan |
+| `nama_kategori`, `urgensi`, `keterangan` | `nama_kategori`, `urgensi`, `alasan` | Kartu info pengajuan (urgensi hanya bila terisi) |
 | `ket_tolak` | `ket_tolak` | Kotak merah "Alasan Penolakan" |
 | jadwal terakhir + `tgl_terima_pic` | `fase` | Chip fase, stepper, banner beranda |
 | `status_item`, `ket_rusak`, `parent_id`, `ronde` | `items[]` | Timeline per aset |
@@ -443,16 +447,16 @@ Model: `mAssetPicRuangan.dart` (`AssetPicRuanganRequest`, `AssetPicRuanganReques
 | Field | Aturan | Pesan |
 |---|---|---|
 | `id_asset_lokasi_m` | wajib | Ruangan wajib dipilih. |
-| `id_asset_kategori_m` | wajib (Jalur A) | Jenis aset wajib dipilih. |
+| `jenis_asset` | wajib, teks bebas, ≤ 150, di-trim (Jalur A) | Jenis asset wajib diisi. / Jenis asset maksimal 150 karakter. |
 | `keterangan` | wajib, ≤ 1000 (Jalur A) | Alasan wajib diisi. |
-| `urgensi` | wajib, ∈ 3 nilai (Jalur A) | Urgensi wajib dipilih. / Urgensi pengajuan tidak valid. |
+| `id_asset_kategori_m`, `urgensi` | tidak lagi diterima (Jalur A) | Diabaikan bila dikirim klien lama |
 | `asset_ids` | wajib, ≥ 1, tidak ganda | Minimal satu asset wajib dipilih. |
 | `tanggal` / `jam` | wajib, `Y-m-d` / `H:i` | Tanggal/Jam serah terima wajib diisi. |
 | `ket_tolak` | wajib, ≤ 255 | Alasan penolakan wajib diisi. |
 | `items.*.status_item` | `normal` atau `rusak` | Kondisi item harus normal atau rusak. |
 | `items.*.ket_rusak` | wajib bila rusak | Keterangan kerusakan wajib diisi. |
 
-Mobile menampilkan error wajib pada form pengajuan (ruangan, jenis, urgensi, alasan) dan menonaktifkan tombol **Setujui** sampai aset dan jadwal dipilih serta tombol **Tolak** pada dialog sampai alasan diisi.
+Mobile menampilkan error wajib pada form pengajuan (ruangan, jenis asset, alasan; error validasi dari server tampil di field jenis dan alasan) dan menonaktifkan tombol **Setujui** sampai aset dan jadwal dipilih serta tombol **Tolak** pada dialog sampai alasan diisi.
 
 ## 32. Error Handling
 
@@ -503,7 +507,7 @@ Rute tujuan di aplikasi: `asset_pic_ruangan_request` (PIC) dan `asset_admin_deta
 
 **PIC Ruangan: mengajukan penambahan**
 1. Buka **Asset → PIC Ruangan**, ketuk **Ajukan Penambahan Asset**.
-2. Pilih **Ruangan**, **Jenis Asset**, **Urgensi**, isi **Alasan**, ketuk **Kirim Pengajuan**.
+2. Pilih **Ruangan**, ketik **Jenis Asset** (teks bebas, maksimal 150 karakter), isi **Alasan**, ketuk **Kirim Pengajuan**.
 3. Pantau status di banner beranda ("Menunggu persetujuan Admin/HR"). Bila ditolak, alasan terlihat di detail.
 
 **PIC Ruangan: menerima aset**
@@ -512,15 +516,15 @@ Rute tujuan di aplikasi: `asset_pic_ruangan_request` (PIC) dan `asset_admin_deta
 3. Ketuk **Terima & Kirim Checklist**. Checklist tidak dapat diubah setelah dikirim.
 
 **Admin/HR: memproses pengajuan**
-1. Buka **Asset → Ruangan → Penambahan**, tab **Pengajuan**, pilih transaksi.
-2. Tinjau jenis aset, urgensi, alasan. Pilih **Tolak** (isi alasan) atau pilih aset gudang + tanggal + jam lalu **Setujui & Jadwalkan**.
+1. Buka **Asset → Ruangan → Pengajuan** (atau ketuk **Lihat semua** pada kartu **Pengajuan Aset Ruangan Perlu Diproses** di beranda), tab **Pengajuan**, pilih transaksi.
+2. Tinjau jenis aset, alasan. Pilih **Tolak** (isi alasan) atau pilih aset gudang + tanggal + jam lalu **Setujui & Jadwalkan**.
 
 **Admin/HR: inisiasi langsung (Jalur B)**
-1. Di daftar Penambahan, ketuk **Tambah Asset**.
+1. Buka **Asset → Ruangan → Penambahan**, ketuk **Tambah Asset**.
 2. Pilih ruangan (PIC tampil otomatis), tambah aset, tetapkan jadwal, **Kirim ke PIC Ruangan**.
 
 **Admin/HR: review**
-1. Tab **Proses**, buka transaksi. Bila PIC belum menerima, **Ubah Jadwal** tersedia.
+1. Di menu **Pengajuan** (Jalur A) atau **Penambahan** (Jalur B), tab **Proses**, buka transaksi; atau dari kartu **perlu diproses** di beranda. Bila PIC belum menerima, **Ubah Jadwal** tersedia.
 2. Setelah checklist masuk: semua normal → **Konfirmasi Selesai**; ada rusak → pilih pengganti untuk setiap aset rusak, tetapkan jadwal, **Jadwalkan Pengganti**.
 
 ## 37. Kondisi Button
@@ -546,7 +550,7 @@ Hasil terakhir: API 207 test di `tests/Asset` lolos; mobile 29 test ruangan lolo
 | TC-02 | Jalur B | Aset `proses`, item + jadwal terbuat, fase serah terima | ✔ API |
 | TC-03 | Jalur B ruangan/aset/jadwal tidak sah | Ditolak dengan pesan, aset tetap `tersedia` | ✔ API |
 | TC-04 | Jalur A pengajuan | Fase menunggu persetujuan, tanpa item, masuk tab Pengajuan | ✔ API |
-| TC-05 | Jalur A validasi | Ruangan milik PIC lain, alasan/urgensi/jenis salah ditolak | ✔ API |
+| TC-05 | Jalur A validasi | Ruangan milik PIC lain, jenis asset atau alasan kosong, atau jenis asset lebih dari 150 karakter ditolak (422 per field) | ✔ API |
 | TC-06 | Setujui | Aset `proses`, `user_approval` terisi, pindah ke tab Proses, setujui ulang ditolak | ✔ API |
 | TC-07 | Tolak | Alasan wajib; status `ditolak`; PIC melihat alasan | ✔ API |
 | TC-08 | Ubah jadwal | Berhasil sebelum PIC menerima, ditolak sesudahnya | ✔ API |
@@ -555,11 +559,14 @@ Hasil terakhir: API 207 test di `tests/Asset` lolos; mobile 29 test ruangan lolo
 | TC-11 | Checklist PIC | Wajib lengkap, rusak wajib keterangan, PIC lain ditolak | ✔ API |
 | TC-12 | Hak akses | Non-admin ditolak; PIC hanya melihat miliknya | ✔ API |
 | TC-13 | Form PIC | Error wajib, kirim payload benar | ✔ Mobile |
-| TC-14 | Daftar admin | Tab Pengajuan, kartu fase, buka detail | ✔ Mobile |
+| TC-14 | Daftar admin | Halaman Pengajuan (3 tab, tanpa Tambah, `sumber=karyawan`) dan Penambahan (2 tab, Tambah, `sumber=admin`), kartu fase, buka detail | ✔ Mobile |
 | TC-15 | Detail admin | Tombol Tolak/Setujui, Setujui nonaktif sebelum pilih, tolak wajib alasan, tampil alasan penolakan | ✔ Mobile |
 | TC-16 | Model | Parsing `request_ruangan`, `requests`, `bisa_setujui`, payload | ✔ Mobile |
 | TC-17 | Push notifikasi end-to-end | Notif tiba dan membuka rute yang benar | ✘ manual |
 | TC-18 | Alur penuh di server/emulator | Jalur A dan B sampai selesai | ✘ manual |
+| TC-19 | API daftar per sumber | `sumber=karyawan`/`admin`/tanpa sumber pada tiap tab, 422 untuk nilai lain, paginasi dan isolasi company | ✔ API |
+| TC-20 | API ringkasan beranda per sumber | `ruangan_pengajuan_*` hanya Jalur A (persetujuan/review); `ruangan_penambahan_*` hanya Jalur B menunggu review; maksimal 3 item, terlama dulu; baris admin tanpa jadwal tidak masuk | ✔ API |
+| TC-21 | Mobile kartu beranda dan badge | Dua kartu terpisah, kartu kosong disembunyikan, Lihat semua ke halaman benar (tab awal `pengajuan`/`proses`), badge = jumlah keduanya (`9+`) | ✔ Mobile |
 
 ## 39. Temuan Ketidaksesuaian
 
@@ -570,7 +577,7 @@ Perbandingan dengan dokumen bisnis RGN04 v1.0.
 | INC-01 | Header menulis **ALK-RGN03**, judul file RGN04; ruang lingkup memakai RGN04 juga untuk "Pelaporan Kerusakan" | Kode **RGN04** (keputusan pengguna); `no_trx` `RGN04-` | Dokumen bisnis perlu dirapikan |
 | INC-02 | Checklist per Daftar Atribut (Aset Utama + Kelengkapan) | Satu baris per **aset utama**, seperti RGN01 | Kelengkapan tidak dinilai terpisah |
 | INC-03 | Pre-condition 3: "Aset **pengganti** berstatus TERSEDIA" | Dibaca sebagai aset yang dipilih Admin harus `tersedia` | Salah ketik di dokumen |
-| INC-04 | Jenis aset "Teks / Dropdown" | Dipilih dari kategori master (`asset_kategori_m`), id + nama disimpan | Seragam dengan request karyawan |
+| INC-04 | Jenis aset "Teks / Dropdown" | Sejak v1.2 teks bebas maksimal 150 karakter, disimpan di `nama_kategori` (`id_asset_kategori_m` = `''`) | Seragam dengan request karyawan |
 | INC-05 | Status "DIALOKASIKAN" | `asset_data.status_asset='proses'` | Tidak ada nilai enum baru |
 | INC-06 | Tabel status: item rusak → RUSAK saat ditemukan | Aset rusak berubah `rusak` saat Admin menjadwalkan pengganti, bukan saat PIC mengirim | Aset tetap `proses` selama menunggu review |
 | INC-07 | "Ruangan sudah memiliki aset" | Onboarding `dikonfirmasi` **atau** ada aset berpemegang ruangan itu | Mencakup ruangan yang diisi lewat jalur lain |
@@ -584,7 +591,7 @@ Perbandingan dengan dokumen bisnis RGN04 v1.0.
 | Pengajuan lebih dari satu untuk ruangan yang sama | Diperbolehkan; tiap transaksi berdiri sendiri (RISK-004). |
 | Dua admin menyetujui bersamaan | Header dikunci `FOR UPDATE`; yang kedua mendapat "sudah tidak menunggu persetujuan". |
 | Dua admin memilih aset yang sama | Aset dikunci; yang kedua gagal "tidak tersedia". |
-| Aset dipilih berkategori beda dari permintaan | Tidak dicegah (RISK-003). |
+| Aset dipilih berbeda dari jenis yang diminta PIC (teks bebas) | Tidak dicegah (RISK-003). |
 | Seluruh aset rusak pada satu ronde | Semua wajib diganti sekaligus; ronde bertambah satu. |
 | Pengganti rusak lagi | Ronde berikutnya; rantai `parent_id` berlanjut. |
 | PIC ruangan diganti saat transaksi berjalan | Transaksi tetap pada `id_karyawan_pic` saat dibuat. |
@@ -598,11 +605,12 @@ Perbandingan dengan dokumen bisnis RGN04 v1.0.
 |---|---|---|---|
 | RISK-001 | TINGGI | Bergantung pada SQL manual: `status_approval` harus enum (`proses`/`ditolak`/`dikonfirmasi`). Bila masih `tinyint`, penyimpanan gagal. | Jalankan blok 1b SQL dan verifikasi tipe kolom sebelum rilis. |
 | RISK-002 | SEDANG | Belum ada pembatalan oleh Admin; transaksi tertahan menahan aset di `proses`. | Tambahkan aksi batal yang melepas aset. |
-| RISK-003 | SEDANG | Aset yang disetujui tidak diperiksa sesuai kategori yang diminta. | Peringatan di UI atau validasi kategori. |
+| RISK-003 | SEDANG | Aset yang disetujui tidak diperiksa sesuai jenis yang diminta (kini teks bebas, tidak bisa dicocokkan otomatis). | Admin mencocokkan manual dengan jenis yang tampil di kartu info pengajuan. |
 | RISK-004 | RENDAH | Pengajuan ganda untuk satu ruangan dibolehkan. | Batasi satu pengajuan aktif per ruangan bila diperlukan. |
 | RISK-005 | SEDANG | Belum diuji di server/emulator nyata, termasuk push notifikasi dan rute notifikasi. | Uji alur penuh dua jalur. |
 | RISK-006 | RENDAH | `sumber_pengajuan='karyawan'` dipakai untuk PIC (enum dipakai bersama KRY-03-1). | Dokumentasikan; ubah bila enum dipisah. |
 | RISK-007 | RENDAH | Data lama `asset_trx_penambahan_ruangan` tidak dimigrasi dan tabelnya hanya dihapus manual. | Periksa jumlah baris sebelum `DROP`. |
+| RISK-008 | RENDAH | Aplikasi versi lama dengan API baru: kartu Pengajuan menyempit (tanpa penambahan Admin yang menunggu review) dan daftar tidak terpisah. | Rilis API dan mobile bersamaan. |
 
 ## 42. Dependency
 
@@ -677,7 +685,7 @@ Company `CMP001`. Tanggal 22 Oktober 2026, periode ID `202610`.
 
 **`asset_lokasi_m`**: `LOK0007` "Ruang Meeting Lt.2" (`tipe = ruangan`, `status_aktif = 1`, cabang "Jakarta", departemen "Operasional"). **`asset_lokasi_pic_m`** menunjuk `LOK0007` → `KRY0030`. Ruangan sudah beroperasi: ada onboarding `dikonfirmasi` untuk `LOK0007` (syarat BR-02; tanpa itu ruangan tidak muncul di opsi).
 
-**`asset_kategori_m`**: `KAT-MON` "Monitor".
+**Jenis aset (teks bebas yang diketik PIC):** `Monitor`.
 
 **`asset_data`** (semua `tersedia`, `pemegang_asset = gudang`, `id_asset_lokasi_m = LOK0001`)
 
@@ -701,13 +709,13 @@ GET /asset/karyawan/pic-ruangan/request/options
 Authorization: Bearer <access_token_dewi>
 ```
 
-**Diproses API:** `getOptionsPic` hanya membaca: ruangan aktif yang **dimiliki PIC login** (join `asset_lokasi_pic_m`) dan sudah beroperasi, daftar kategori, dan pilihan urgensi (`normal`, `secepatnya`, `mendesak`). **Database:** hanya `SELECT`.
+**Diproses API:** `getOptionsPic` hanya membaca: ruangan aktif yang **dimiliki PIC login** (join `asset_lokasi_pic_m`) dan sudah beroperasi (kategori dan urgensi tidak lagi dikirim). **Database:** hanya `SELECT`.
 
-**Diterima mobile:** `LOK0007` sebagai satu-satunya ruangan pilihan, kategori (termasuk Monitor), dan tiga pilihan urgensi.
+**Diterima mobile:** `LOK0007` sebagai satu-satunya ruangan pilihan.
 
 #### Langkah 1 — PIC mengajukan penambahan monitor
 
-**Mobile:** Dewi memilih ruangan, jenis aset **Monitor**, urgensi **Mendesak**, mengisi alasan, lalu **Kirim**.
+**Mobile:** Dewi memilih ruangan, mengetik jenis asset **Monitor**, mengisi alasan, lalu **Kirim**.
 
 **Dikirim**
 ```http
@@ -715,15 +723,15 @@ POST /asset/karyawan/pic-ruangan/request
 Authorization: Bearer <access_token_dewi>
 ```
 ```json
-{ "id_asset_lokasi_m": "LOK0007", "id_asset_kategori_m": "KAT-MON",
-  "keterangan": "Tim bertambah dua orang", "urgensi": "mendesak" }
+{ "id_asset_lokasi_m": "LOK0007", "jenis_asset": "Monitor",
+  "keterangan": "Tim bertambah dua orang" }
 ```
 
 **Diproses API** (`AssetKaryawanRequestRuangan_c` → `AssetRequestRuangan_m::ajukanPic`, satu `DB::transaction(…, 3)`)
-1. Validasi controller: `id_asset_lokasi_m` ("Ruangan wajib dipilih."), `id_asset_kategori_m` ("Jenis aset wajib dipilih."), `keterangan` ("Alasan wajib diisi.", maksimal 1000), `urgensi` ("Urgensi wajib dipilih." / "Urgensi pengajuan tidak valid.").
+1. Validasi controller: `id_asset_lokasi_m` ("Ruangan wajib dipilih."), `jenis_asset` ("Jenis asset wajib diisi.", maksimal 150 karakter), `keterangan` ("Alasan wajib diisi.", maksimal 1000).
 2. `lockCompany`; karyawan harus aktif ("Karyawan tidak ditemukan atau tidak aktif.").
 3. `findRuanganTujuan` dengan filter PIC: ruangan harus aktif, punya PIC, **milik Dewi**, dan sudah beroperasi ("Ruangan tujuan tidak ditemukan, tidak aktif, atau belum memiliki aset.").
-4. Kategori harus ada ("Jenis aset tidak ditemukan."), alasan tidak kosong ("Alasan wajib diisi."), urgensi salah satu dari tiga nilai ("Urgensi wajib dipilih.").
+4. Jenis asset tidak kosong dan tidak lebih dari 150 karakter (dihitung per karakter, termasuk multibyte), alasan tidak kosong ("Alasan wajib diisi."); tanpa pengecekan ke `asset_kategori_m` dan tanpa urgensi.
 5. Nomor header: `nextHeaderId` → `CMP001202610001`, `RGN04-202610001`.
 6. INSERT header saja (belum ada item, jadwal, dan **belum ada aset yang dikunci**).
 7. Controller mengirim `request_ruangan.diajukan` ke semua admin asset.
@@ -739,8 +747,8 @@ Authorization: Bearer <access_token_dewi>
 | id_asset_lokasi_m / nama_asset_ruangan | LOK0007 / Ruang Meeting Lt.2 |
 | nama_cabang / nama_departemen | Jakarta / Operasional |
 | id_karyawan_pic / nama_pic / nik_pic | KRY0030 / Dewi PIC / EMP-030 |
-| id_asset_kategori_m / nama_kategori | KAT-MON / Monitor |
-| keterangan / urgensi | Tim bertambah dua orang / mendesak |
+| id_asset_kategori_m / nama_kategori | '' / Monitor (teks bebas dari PIC) |
+| keterangan / urgensi | Tim bertambah dua orang / NULL |
 | id_karyawan / nik_karyawan / nama_karyawan | KRY0030 / EMP-030 / Dewi PIC (pengaju) |
 | tgl_pengajuan | 2026-10-22 |
 | tgl_serah_terima / jam_serah_terima | NULL / NULL |
@@ -760,7 +768,7 @@ Tabel item dan jadwal masih kosong; `asset_data` tidak berubah. Karena belum ada
 
 #### Langkah 2 — Admin menyetujui dan memilih aset
 
-**Mobile:** tab **Pengajuan** menampilkan RGN04-202610001; Siti membuka detail (`GET /asset/request-ruangan/CMP001202610001` dan opsi aset), memilih Monitor LG dan Monitor Dell, jadwal 23 Okt 2026 pukul 09:00, lalu **Setujui**.
+**Mobile:** menu **Pengajuan** (tab **Pengajuan**) menampilkan RGN04-202610001; Siti membuka detail (`GET /asset/request-ruangan/CMP001202610001` dan opsi aset), memilih Monitor LG dan Monitor Dell, jadwal 23 Okt 2026 pukul 09:00, lalu **Setujui**.
 
 **Dikirim**
 ```http
@@ -975,8 +983,8 @@ Semua kesalahan aturan bisnis dilempar sebagai `InvalidArgumentException` di dal
 | Situasi | Langkah | Pesan |
 |---|---|---|
 | Ruangan bukan milik PIC, nonaktif, atau belum beroperasi | 1, Jalur B | Ruangan tujuan tidak ditemukan, tidak aktif, atau belum memiliki aset. |
-| Kategori tidak ada | 1 | Jenis aset tidak ditemukan. |
-| Alasan kosong / urgensi di luar daftar | 1 | Alasan wajib diisi. / Urgensi wajib dipilih. |
+| Jenis asset kosong / lebih dari 150 karakter | 1 | Jenis asset wajib diisi. / Jenis asset maksimal 150 karakter. |
+| Alasan kosong | 1 | Alasan wajib diisi. |
 | Pengguna bukan admin asset | 2–7 | Pengguna tidak terdaftar sebagai admin asset. |
 | Setujui/tolak setelah diproses | 2 | Pengajuan sudah tidak menunggu persetujuan. |
 | Alasan penolakan kosong | Variasi | Alasan penolakan wajib diisi. |
@@ -1001,7 +1009,7 @@ Semua kesalahan aturan bisnis dilempar sebagai `InvalidArgumentException` di dal
 | Pihak | Tugas dalam alur ini |
 |---|---|
 | **Mobile PIC** | Memuat opsi, mengirim pengajuan, menampilkan jadwal, mengumpulkan penilaian Normal/Rusak, mengirim checklist |
-| **Mobile Admin/HR** | Mereview tab Pengajuan, memilih aset dan jadwal, menolak dengan alasan, mengubah jadwal, menjadwalkan pengganti, mengonfirmasi |
+| **Mobile Admin/HR** | Mereview menu Pengajuan, tab Pengajuan, memilih aset dan jadwal, menolak dengan alasan, mengubah jadwal, menjadwalkan pengganti, mengonfirmasi |
 | **API** | Validasi, penguncian company dan aset, pembatasan ruangan milik PIC, penomoran, penurunan fase dari data (ada tidaknya jadwal dan `tgl_terima_pic`), perubahan `asset_data`, `asset_trx_log`, notifikasi bilingual |
 | **Database** | Menyimpan satu header untuk dua jalur, item per ronde (rantai `parent_id`), riwayat jadwal append-only, status aset, log, dan notifikasi |
 
@@ -1024,9 +1032,9 @@ Semua kesalahan aturan bisnis dilempar sebagai `InvalidArgumentException` di dal
 - [ ] SQL manual dijalankan lengkap, `status_approval` bertipe enum (**periksa**)
 - [ ] `DROP` tabel lama penambahan (hanya bila kosong)
 - [x] Model, controller, route, notifikasi API
-- [x] Test API (12) dan seluruh `tests/Asset` (207) lolos
+- [x] Test API (33) lolos; `tests/Asset` penuh (528 test) hanya gagal di 5 test lama `AssetRusakKaryawanTest` yang tidak terkait
 - [x] Model, API client, bloc, halaman, route, teks mobile
-- [x] Test mobile (11) dan 29 test ruangan lolos
+- [x] Test mobile (18) dan file test ruangan terkait (admin 9, pending 17) lolos
 - [ ] Uji di server/emulator, termasuk push notifikasi
 - [ ] Pembatalan oleh Admin (belum ada)
 
@@ -1036,3 +1044,5 @@ Semua kesalahan aturan bisnis dilempar sebagai `InvalidArgumentException` di dal
 |---|---|---|
 | 1.0 | 14 Oktober 2026 | Dokumen awal ALK-RGN04: skema satu tabel dua jalur, API admin dan PIC, mobile, notifikasi, test. |
 | 1.1 | 22 Okt 2026 | Menambah §45.4 walkthrough lengkap Jalur A (mobile → payload → proses API → hasil database), variasi penolakan dan Jalur B, tabel kasus gagal; log aset ditulis ke `asset_trx_log`. |
+| 1.2 | 3 Nov 2026 | Pengajuan PIC (Jalur A) disamakan dengan request karyawan: jenis asset teks bebas (maks 150 karakter) menggantikan pemilih kategori, urgensi dihapus; opsi PIC hanya mengirim ruangan; pengajuan baru menyimpan `id_asset_kategori_m` = `''` dan `urgensi` NULL; klien lama tanpa `jenis_asset` ditolak 422; tanpa perubahan skema. Memperbarui §3, §4, §5, BR-04, §10, §12, §18, §21, §23, §24, §26, §29, §31, §36, §38, §39, §41, §45.4, §47. |
+| 1.3 | 3 Nov 2026 | Daftar admin request ruangan dipisah per sumber seperti karyawan: menu **Pengajuan** (pengajuan PIC, `sumber=karyawan`, 3 tab, tanpa Tambah) dan **Penambahan** (langsung Admin/HR, `sumber=admin`, 2 tab, dengan Tambah); parameter `sumber` pada API-02; kartu beranda dipecah menjadi Pengajuan dan Penambahan dengan kunci ringkasan `ruangan_penambahan_*` dan badge gabungan; skenario uji TC-19 sampai TC-21 dan RISK-008. Tanpa perubahan skema. Memperbarui §1, §3, §10, §11, §23, §24, §26, §28, §36, §38, §41, §45.4, §47. |

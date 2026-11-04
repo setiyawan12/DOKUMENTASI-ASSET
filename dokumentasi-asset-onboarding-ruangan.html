@@ -195,7 +195,7 @@ footer{margin-top:64px;padding-top:18px;border-top:1px solid var(--line);color:v
       </div>
       <div class="tag" aria-label="Identitas dokumen">
         <dl>
-          <dt>Kode</dt><dd>ALK-RGN01</dd><dt>Modul</dt><dd>Ruangan</dd><dt>Versi</dt><dd>1.1 · 22 Okt 2026</dd><dt>Stack</dt><dd>Lumen 10 · Flutter</dd><dt>API</dt><dd>10 endpoint</dd>
+          <dt>Kode</dt><dd>ALK-RGN01</dd><dt>Modul</dt><dd>Ruangan</dd><dt>Versi</dt><dd>1.2 · 3 Nov 2026</dd><dt>Stack</dt><dd>Lumen 10 · Flutter</dd><dt>API</dt><dd>10 endpoint</dd>
         </dl>
         <div class="barcode" aria-hidden="true"></div>
         <div class="trx">RGN01-YYYYMMNNN</div>
@@ -295,11 +295,11 @@ footer{margin-top:64px;padding-top:18px;border-top:1px solid var(--line);color:v
 </tr>
 <tr>
 <td>Test otomatis</td>
-<td>API <code>tests/Asset/AssetAdminRuanganTest.php</code> (10 test) + <code>tests/Asset/AssetLokasiPicTest.php</code> (7 test) · Mobile <code>test/asset/asset_admin_ruangan_test.dart</code> (9 test) + <code>test/asset/asset_pic_ruangan_test.dart</code> (9 test)</td>
+<td>API <code>tests/Asset/AssetAdminRuanganTest.php</code> (14 test) + <code>tests/Asset/AssetLokasiPicTest.php</code> (7 test) · Mobile <code>test/asset/asset_admin_ruangan_test.dart</code> (9 test) + <code>test/asset/asset_pic_ruangan_test.dart</code> (9 test) + <code>test/asset/asset_admin_ruangan_pending_test.dart</code> (11 test)</td>
 </tr>
 <tr>
 <td>Versi dokumen</td>
-<td>1.1 — 22 Oktober 2026</td>
+<td>1.2 — 3 November 2026</td>
 </tr>
 <tr>
 <td>Dokumen terkait</td>
@@ -943,6 +943,8 @@ footer{margin-top:64px;padding-top:18px;border-top:1px solid var(--line);color:v
 <p>Fase <code>menunggu_review</code>, tanpa rusak → semua aset aktif divalidasi <code>proses</code>/<code>gudang</code> → <code>terpakai</code>/<code>ruangan</code> + lokasi → <code>asset_trx_log</code> → header <code>dikonfirmasi</code>.</p>
 <h3>21.6 Query baca</h3>
 <p><code>getOptions</code> (aset tersedia + pohon kategori, ruangan aktif belum onboarding beserta PIC, karyawan aktif), <code>getPage</code> (tab <code>proses</code>/<code>selesai</code>, paginasi), <code>getDetail</code> (+ <code>bisa_ubah_jadwal</code>, <code>bisa_konfirmasi</code>, <code>perlu_pengganti</code>), sisi PIC <code>getAssetRuanganSaya</code>, <code>getDetailOnboardingSaya</code>.</p>
+<h3>21.7 Ringkasan beranda admin — <code>pendingSummaryForAdmin</code></h3>
+<p>Dipanggil <code>AssetAdmin_m::getSummary</code> satu kali per request. Mengambil onboarding berstatus <code>proses</code> dengan fase <code>menunggu_review</code> (fase dihitung dengan <code>rondeSaatIni</code> + <code>jadwalTerakhir</code> + <code>AssetLokasiPic_m::fase</code>, sama dengan <code>getPage</code>/<code>getDetail</code>), dibatasi <code>id_company</code>, urut <code>tgl_input</code> lalu id (terlama dulu). Mengembalikan <code>jumlah</code> (total) dan <code>item</code> (maksimal 3). <code>countPendingForAdmin</code> dan <code>getPendingForAdmin</code> tetap tersedia. Catatan performa: fase dihitung per baris berstatus <code>proses</code> (sekitar 3 query per baris), wajar selama antrean proses kecil.</p>
 <h2 id="s22"><span class="sec-no">22</span>Dampak terhadap asset_data</h2>
 <div class="table-wrap"><table>
 <thead>
@@ -1127,10 +1129,13 @@ footer{margin-top:64px;padding-top:18px;border-top:1px solid var(--line);color:v
 <p>Tab Proses/Selesai, kartu transaksi, tombol Tambah Alokasi.</p>
 <h3>26.4 Admin — Form (<code>HalamanAssetAdminAddOnboardingRuangan</code>)</h3>
 <p>Seragam dengan form onboarding karyawan: Ruangan Tujuan, PIC Ruangan (terkunci bila ada PIC master), Asset On Boarding (pemilih kategori → asset), Jadwal, Catatan, <strong>Kirim ke PIC Ruangan</strong>.</p>
+<p>Tanggal serah terima dipilih lewat bottom sheet Cupertino (<code>DatePickCupertinoSingle</code>, tombol <strong>Terapkan</strong> / <strong>Apply</strong>, seragam dengan fitur karyawan); jam tetap memakai pemilih jam Material.</p>
 <h3>26.5 Admin — Detail (<code>HalamanAssetAdminDetailOnboardingRuangan</code>)</h3>
 <p>Seragam dengan detail klaim garansi: kartu utama bergradien, stepper (Dijadwalkan, Serah Terima, Review, Selesai), timeline vertikal per aset (<code>AssetRuanganAsetTimeline</code>: Penjadwalan, Serah Terima &amp; Checklist, Review, Selesai), kartu pengganti, informasi ruangan, riwayat jadwal. Tombol bawah: <strong>Ubah Jadwal</strong> / <strong>Jadwalkan Pengganti</strong> / <strong>Konfirmasi Selesai</strong> sesuai fase.</p>
+<p>Tanggal pada bagian Setujui, Jadwalkan Pengganti, dan dialog Ubah Jadwal memakai pemilih tanggal Cupertino yang sama. <strong>Konfirmasi Selesai</strong> membuka dialog konfirmasi bersama (<code>showAssetConfirmDialog</code> / <code>AssetDialogFrame</code>: ikon, judul "Selesaikan alokasi?", tombol Batal dan Ya, Selesaikan), seragam dengan dialog Asset Karyawan.</p>
 <h3>26.6 Entry point</h3>
 <p>Kartu <strong>PIC Ruangan</strong> di <code>HalamanHomeAsset</code>; tombol <strong>On Boarding</strong> di <code>HalamanAssetAdminRuangan</code>; notifikasi (<code>asset_pic_ruangan_onboarding</code>, <code>asset_admin_detail_onboarding_ruangan</code> terdaftar di <code>assetNotifRoutes</code>).</p>
+<p>Beranda admin (<code>HalamanAssetAdminRuangan</code>) menampilkan kartu <strong>Onboarding Ruangan Perlu Diproses</strong> (<code>AssetPendingTrxSection</code>, warna oranye) bila <code>ruangan_onboarding_pending</code> tidak kosong. Item membuka detail (<code>NavigateToAssetAdminDetailOnboardingRuangan</code> dengan <code>fromAdminHome: true</code>, dan setelah kembali ringkasan beranda dimuat ulang), <strong>Lihat semua</strong> membuka daftar On Board, label aksi <strong>Review &amp; konfirmasi</strong>.</p>
 <h2 id="s27"><span class="sec-no">27</span>Mobile → API</h2>
 <div class="table-wrap"><table>
 <thead>
@@ -1175,6 +1180,7 @@ footer{margin-top:64px;padding-top:18px;border-top:1px solid var(--line);color:v
 </table></div>
 <h2 id="s28"><span class="sec-no">28</span>API → Mobile</h2>
 <p>Kunci JSON dipetakan ke model (<code>AssetPicRuanganDetail</code>, <code>AssetAdminRuanganDetail</code>, dll.). <code>fase</code> menentukan stepper dan tombol; flag <code>bisa_*</code> menentukan aksi; <code>perlu_pengganti[]</code> membentuk kartu pengganti.</p>
+<p>Ringkasan admin (<code>GET asset/summary</code>) menambah kunci <code>ruangan_onboarding_perlu_proses</code> (int) dan <code>ruangan_onboarding_pending</code> (maksimal 3 item: <code>id</code> = id onboarding ruangan, <code>no_trx</code>, <code>nama_asset</code>, <code>nama_karyawan</code> = PIC, <code>urgensi</code> (selalu kosong), <code>status_approval</code>, <code>tahap</code>). Dipetakan ke <code>mAssetSummary.ruanganOnboardingPerluProses</code> / <code>ruanganOnboardingPending</code> (<code>AssetPendingTrx</code>); <code>tahap</code> menjadi <code>fase</code> item.</p>
 <h2 id="s29"><span class="sec-no">29</span>Mapping Mobile → API → Database</h2>
 <div class="table-wrap"><table>
 <thead>
@@ -1342,7 +1348,7 @@ footer{margin-top:64px;padding-top:18px;border-top:1px solid var(--line);color:v
 <li>Menu Asset → Ruangan → <strong>On Boarding</strong> → <strong>Tambah Alokasi</strong>.</li>
 <li>Pilih <strong>Ruangan Tujuan</strong>. PIC terisi otomatis dan terkunci; bila ruangan belum punya PIC, pilih karyawan (akan tersimpan sebagai PIC ruangan).</li>
 <li><strong>Tambah Asset</strong>: pilih kategori lalu asset (ulangi untuk asset lain).</li>
-<li>Pilih tanggal dan jam serah terima, isi catatan bila perlu, tekan <strong>Kirim ke PIC Ruangan</strong>.</li>
+<li>Pilih tanggal (bottom sheet Cupertino, tekan <strong>Terapkan</strong>) dan jam serah terima, isi catatan bila perlu, tekan <strong>Kirim ke PIC Ruangan</strong>.</li>
 </ol>
 <h3>B. PIC Ruangan — Menerima aset</h3>
 <ol>
@@ -1352,8 +1358,8 @@ footer{margin-top:64px;padding-top:18px;border-top:1px solid var(--line);color:v
 </ol>
 <h3>C. Admin/HR — Review</h3>
 <ol>
-<li>Buka transaksi di tab <strong>Proses</strong>; periksa timeline tiap aset.</li>
-<li>Semua normal: tekan <strong>Konfirmasi Selesai</strong>.</li>
+<li>Buka transaksi dari kartu <strong>Onboarding Ruangan Perlu Diproses</strong> di beranda Asset Ruangan, atau dari tab <strong>Proses</strong>; periksa timeline tiap aset.</li>
+<li>Semua normal: tekan <strong>Konfirmasi Selesai</strong>, lalu <strong>Ya, Selesaikan</strong> pada dialog konfirmasi.</li>
 <li>Ada rusak: pada kartu pengganti pilih asset pengganti untuk <strong>setiap</strong> aset rusak, tetapkan jadwal baru, tekan <strong>Jadwalkan Pengganti</strong>. PIC mengecek unit pengganti; ulangi review.</li>
 </ol>
 <h3>D. Admin/HR — Mengubah jadwal</h3>
@@ -1449,6 +1455,21 @@ footer{margin-top:64px;padding-top:18px;border-top:1px solid var(--line);color:v
 <td>T-10</td>
 <td>Mobile: form, daftar tab, detail aksi, halaman PIC</td>
 <td>Lulus (18 test mobile)</td>
+</tr>
+<tr>
+<td>T-11</td>
+<td>API ringkasan admin: hanya fase <code>menunggu_review</code>; isolasi company; batas 3 item, terlama dulu; kembali ke serah terima setelah ronde pengganti</td>
+<td>Lulus (<code>AssetAdminRuanganTest</code>, <code>AssetModelTest</code>)</td>
+</tr>
+<tr>
+<td>T-12</td>
+<td>Mobile beranda: kartu tampil hanya bila ada item; tap membuka detail (<code>fromAdminHome: true</code>); Lihat semua; reload ringkasan vs daftar</td>
+<td>Lulus (<code>asset_admin_ruangan_pending_test</code>)</td>
+</tr>
+<tr>
+<td>T-13</td>
+<td>Mobile: pemilih tanggal Cupertino (<strong>Terapkan</strong>) dan dialog konfirmasi bersama (<code>AssetDialogFrame</code>)</td>
+<td>Lulus (<code>asset_admin_ruangan_test</code>)</td>
 </tr>
 </tbody>
 </table></div>
@@ -2544,6 +2565,11 @@ Authorization: Bearer &lt;access_token_dewi&gt;
 <td>1.1</td>
 <td>22 Okt 2026</td>
 <td>Menambah §45.4 walkthrough lengkap (mobile → payload → proses API → hasil database); koreksi nama master PIC menjadi <code>asset_lokasi_pic_m</code> / <code>id_asset_lokasi_pic_m</code> / <code>AssetLokasiPic_m</code>; log aset ditulis ke <code>asset_trx_log</code>.</td>
+</tr>
+<tr>
+<td>1.2</td>
+<td>3 Nov 2026</td>
+<td>Kartu Onboarding Ruangan Perlu Diproses di beranda admin (kunci ringkasan <code>ruangan_onboarding_perlu_proses</code> / <code>ruangan_onboarding_pending</code>; §21.7, §26.6, §28); pemilih tanggal Cupertino dan dialog konfirmasi bersama (§26.4, §26.5, §36); skenario uji T-11 sampai T-13. Tidak ada perubahan skema atau endpoint.</td>
 </tr>
 </tbody>
 </table></div>

@@ -7,6 +7,7 @@ Dokumentasi teknis dan manual book fitur Asset (API Lumen + MOBILE Flutter). Buk
 | Dokumentasi Teknis & Manual Book — Disposal Asset (PML04) | [HTML](dokumentasi-asset-disposal.html) | [Markdown](dokumentasi-asset-disposal.md) |
 | Dokumentasi Teknis & Manual Book — Klaim Garansi Asset (PML03) | [HTML](dokumentasi-asset-garansi.html) | [Markdown](dokumentasi-asset-garansi.md) |
 | Dokumentasi Teknis & Manual Book — Laporan Kerusakan Asset Karyawan | [HTML](dokumentasi-asset-kerusakan-karyawan.html) | [Markdown](dokumentasi-asset-kerusakan-karyawan.md) |
+| Dokumentasi Teknis & Manual Book — Laporan Kerusakan Asset Ruangan (ALK-RGN05) | [HTML](dokumentasi-asset-kerusakan-ruangan.html) | [Markdown](dokumentasi-asset-kerusakan-ruangan.md) |
 | Dokumentasi Teknis & Manual Book — Off Boarding Asset Karyawan | [HTML](dokumentasi-asset-offboarding-karyawan.html) | [Markdown](dokumentasi-asset-offboarding-karyawan.md) |
 | Dokumentasi Teknis & Manual Book — Asset Onboarding Karyawan | [HTML](dokumentasi-asset-onboarding-karyawan.html) | [Markdown](dokumentasi-asset-onboarding-karyawan.md) |
 | Dokumentasi Teknis & Manual Book — Alokasi Asset ke Ruangan / Onboarding Ruangan (ALK-RGN01) | [HTML](dokumentasi-asset-onboarding-ruangan.html) | [Markdown](dokumentasi-asset-onboarding-ruangan.md) |

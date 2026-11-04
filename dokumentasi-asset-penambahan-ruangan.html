@@ -195,7 +195,7 @@ footer{margin-top:64px;padding-top:18px;border-top:1px solid var(--line);color:v
       </div>
       <div class="tag" aria-label="Identitas dokumen">
         <dl>
-          <dt>Kode</dt><dd>ALK-RGN04</dd><dt>Modul</dt><dd>Ruangan</dd><dt>Versi</dt><dd>1.1 · 22 Okt 2026</dd><dt>Stack</dt><dd>Lumen 10 · Flutter</dd><dt>API</dt><dd>14 endpoint</dd>
+          <dt>Kode</dt><dd>ALK-RGN04</dd><dt>Modul</dt><dd>Ruangan</dd><dt>Versi</dt><dd>1.3 · 3 Nov 2026</dd><dt>Stack</dt><dd>Lumen 10 · Flutter</dd><dt>API</dt><dd>14 endpoint</dd>
         </dl>
         <div class="barcode" aria-hidden="true"></div>
         <div class="trx">RGN04-YYYYMMNNN</div>
@@ -295,11 +295,11 @@ footer{margin-top:64px;padding-top:18px;border-top:1px solid var(--line);color:v
 </tr>
 <tr>
 <td>Test otomatis</td>
-<td>API <code>tests/Asset/AssetRequestRuanganTest.php</code> (12 test) · Mobile <code>test/asset/asset_request_ruangan_test.dart</code> (11 test)</td>
+<td>API <code>tests/Asset/AssetRequestRuanganTest.php</code> (33 test) · Mobile <code>test/asset/asset_request_ruangan_test.dart</code> (18 test) + <code>test/asset/asset_admin_ruangan_pending_test.dart</code> (17 test)</td>
 </tr>
 <tr>
 <td>Versi dokumen</td>
-<td>1.1 — 22 Oktober 2026</td>
+<td>1.3 — 3 November 2026</td>
 </tr>
 <tr>
 <td>Dokumen terkait</td>
@@ -310,7 +310,7 @@ footer{margin-top:64px;padding-top:18px;border-top:1px solid var(--line);color:v
 <h2 id="s2"><span class="sec-no">02</span>Daftar Isi</h2>
 <p>Lihat panel navigasi di samping.</p>
 <h2 id="s3"><span class="sec-no">03</span>Quick Overview</h2>
-<p>Ruangan yang sudah beroperasi bisa <strong>ditambah aset</strong> lewat dua jalur dalam <strong>satu tabel</strong> (<code>asset_trx_request_ruangan</code>), dibedakan kolom <code>sumber_pengajuan</code> seperti request karyawan KRY-03-1. Pada <strong>Jalur A</strong> PIC Ruangan mengajukan (jenis aset, alasan, urgensi); Admin/HR menyetujui dengan memilih aset gudang dan jadwal, atau menolak dengan alasan. Pada <strong>Jalur B</strong> Admin/HR langsung memilih aset dan jadwal tanpa persetujuan. Setelah dijadwalkan, alurnya sama dengan RGN01: aset gudang <code>tersedia</code> → <code>proses</code>, PIC menilai <strong>setiap aset Normal atau Rusak</strong>, Admin/HR mereview lalu <strong>mengonfirmasi</strong> (aset menjadi <code>terpakai</code> di ruangan) atau <strong>menjadwalkan pengganti</strong> untuk aset rusak (ronde berikutnya) sampai semua normal.</p>
+<p>Ruangan yang sudah beroperasi bisa <strong>ditambah aset</strong> lewat dua jalur dalam <strong>satu tabel</strong> (<code>asset_trx_request_ruangan</code>), dibedakan kolom <code>sumber_pengajuan</code> seperti request karyawan KRY-03-1. Pada <strong>Jalur A</strong> PIC Ruangan mengajukan (jenis aset berupa teks bebas, alasan); Admin/HR menyetujui dengan memilih aset gudang dan jadwal, atau menolak dengan alasan. Pada <strong>Jalur B</strong> Admin/HR langsung memilih aset dan jadwal tanpa persetujuan. Setelah dijadwalkan, alurnya sama dengan RGN01: aset gudang <code>tersedia</code> → <code>proses</code>, PIC menilai <strong>setiap aset Normal atau Rusak</strong>, Admin/HR mereview lalu <strong>mengonfirmasi</strong> (aset menjadi <code>terpakai</code> di ruangan) atau <strong>menjadwalkan pengganti</strong> untuk aset rusak (ronde berikutnya) sampai semua normal.</p>
 <div class="table-wrap"><table>
 <thead>
 <tr>
@@ -362,7 +362,7 @@ footer{margin-top:64px;padding-top:18px;border-top:1px solid var(--line);color:v
 <tr>
 <td>Ajukan penambahan aset</td>
 <td>PIC Ruangan</td>
-<td>Pilih ruangan miliknya, jenis aset (kategori), alasan, urgensi. Status <code>proses</code>, belum ada jadwal.</td>
+<td>Pilih ruangan miliknya, ketik jenis aset (teks bebas), isi alasan. Status <code>proses</code>, belum ada jadwal.</td>
 </tr>
 <tr>
 <td>Setujui pengajuan</td>
@@ -404,7 +404,7 @@ footer{margin-top:64px;padding-top:18px;border-top:1px solid var(--line);color:v
 <h2 id="s5"><span class="sec-no">05</span>Tujuan Fitur</h2>
 <ul>
 <li>Menambah aset ke ruangan yang sudah aktif tanpa mengulang onboarding ruangan (RGN01).</li>
-<li>Memberi PIC Ruangan jalur resmi untuk meminta aset tambahan, lengkap dengan alasan dan urgensi.</li>
+<li>Memberi PIC Ruangan jalur resmi untuk meminta aset tambahan, lengkap dengan jenis aset dan alasan.</li>
 <li>Memberi Admin/HR keputusan terdokumentasi: setujui (dengan aset dan jadwal) atau tolak (dengan alasan).</li>
 <li>Memastikan serah terima fisik tercatat (waktu dan identitas PIC) dan aset rusak diganti sebelum selesai.</li>
 </ul>
@@ -536,8 +536,8 @@ footer{margin-top:64px;padding-top:18px;border-top:1px solid var(--line);color:v
 </tr>
 <tr>
 <td>BR-04</td>
-<td>Pengajuan wajib berisi jenis aset, alasan, urgensi</td>
-<td>Jenis aset harus ada di <code>asset_kategori_m</code>; alasan tidak kosong; urgensi ∈ <code>normal</code>, <code>secepatnya</code>, <code>mendesak</code>.</td>
+<td>Pengajuan wajib berisi jenis aset dan alasan</td>
+<td>Jenis aset berupa teks bebas (wajib, maksimal 150 karakter, di-trim), seperti request karyawan; alasan tidak kosong. Urgensi tidak lagi dipakai pada pengajuan PIC.</td>
 </tr>
 <tr>
 <td>BR-05</td>
@@ -598,8 +598,8 @@ footer{margin-top:64px;padding-top:18px;border-top:1px solid var(--line);color:v
 </table></div>
 <h2 id="s10"><span class="sec-no">10</span>Business Flow</h2>
 <ol>
-<li><strong>Jalur A.</strong> PIC mengisi form (ruangan, jenis aset, alasan, urgensi) dan mengirim. Admin/HR dinotifikasi (<code>request_ruangan.diajukan</code>).</li>
-<li>Admin/HR membuka tab <strong>Pengajuan</strong>, mereview.
+<li><strong>Jalur A.</strong> PIC mengisi form (ruangan, jenis aset sebagai teks bebas, alasan) dan mengirim. Admin/HR dinotifikasi (<code>request_ruangan.diajukan</code>).</li>
+<li>Admin/HR membuka <strong>Asset → Ruangan → Pengajuan</strong> (atau kartu <strong>Pengajuan Aset Ruangan Perlu Diproses</strong> di beranda), tab <strong>Pengajuan</strong>, mereview.
    - <strong>Tolak:</strong> isi alasan → status <code>ditolak</code>, PIC dinotifikasi. Selesai.
    - <strong>Setujui:</strong> pilih aset gudang dan jadwal → aset <code>proses</code>, item ronde 1 dan jadwal dibuat, PIC dinotifikasi (<code>disetujui</code>).</li>
 <li><strong>Jalur B.</strong> Admin/HR memilih ruangan aktif, aset, jadwal → langsung seperti langkah setujui; PIC dinotifikasi (<code>dikirim</code>).</li>
@@ -623,7 +623,7 @@ footer{margin-top:64px;padding-top:18px;border-top:1px solid var(--line);color:v
 </tr>
 <tr>
 <td>Admin/HR</td>
-<td>Tab Pengajuan → setujui/tolak → (tab Proses) ubah jadwal bila perlu → review checklist → konfirmasi atau jadwalkan pengganti → selesai. Atau tombol <strong>Tambah Asset</strong> untuk Jalur B.</td>
+<td>Menu <strong>Pengajuan</strong>, tab Pengajuan → setujui/tolak → (tab Proses) ubah jadwal bila perlu → review checklist → konfirmasi atau jadwalkan pengganti → selesai. Untuk Jalur B: menu <strong>Penambahan</strong> → tombol <strong>Tambah Asset</strong>, lalu review di tab Proses.</td>
 </tr>
 <tr>
 <td>Sistem</td>
@@ -634,7 +634,7 @@ footer{margin-top:64px;padding-top:18px;border-top:1px solid var(--line);color:v
 <h2 id="s12"><span class="sec-no">12</span>Flow Diagram</h2>
 <div class="diagram"><pre class="mermaid">flowchart TD
     A([Mulai]) --> J{Jalur}
-    J -->|A: PIC mengajukan| P[Pengajuan: ruangan, jenis aset, alasan, urgensi]
+    J -->|A: PIC mengajukan| P[Pengajuan: ruangan, jenis aset (teks bebas), alasan]
     J -->|B: Admin langsung| B[Pilih ruangan, aset gudang, jadwal]
     P --> R{Admin/HR review}
     R -->|Tolak + alasan| T([Ditolak - selesai])
@@ -792,7 +792,7 @@ footer{margin-top:64px;padding-top:18px;border-top:1px solid var(--line);color:v
 <tr>
 <td><code>id_asset_kategori_m</code>, <code>nama_kategori</code></td>
 <td>varchar</td>
-<td>Jenis aset yang diminta (Jalur A); kosong pada Jalur B</td>
+<td>Jenis aset yang diminta (Jalur A): <code>nama_kategori</code> berisi teks bebas dari PIC, <code>id_asset_kategori_m</code> selalu <code>''</code>; kosong pada Jalur B</td>
 </tr>
 <tr>
 <td><code>keterangan</code></td>
@@ -802,7 +802,7 @@ footer{margin-top:64px;padding-top:18px;border-top:1px solid var(--line);color:v
 <tr>
 <td><code>urgensi</code></td>
 <td>varchar(50)</td>
-<td><code>normal</code> / <code>secepatnya</code> / <code>mendesak</code> (Jalur A)</td>
+<td>NULL pada pengajuan PIC (urgensi tidak dipakai lagi); data lama berisi <code>normal</code> / <code>secepatnya</code> / <code>mendesak</code></td>
 </tr>
 <tr>
 <td><code>ket_tolak</code></td>
@@ -934,7 +934,7 @@ footer{margin-top:64px;padding-top:18px;border-top:1px solid var(--line);color:v
 <p>Controller memvalidasi input, memanggil model dalam <code>DB::transaction</code>, lalu mengirim notifikasi <strong>setelah</strong> transaksi sukses. Aksi admin memakai <code>mutateAssetTrx</code>.</p>
 <h2 id="s21"><span class="sec-no">21</span>Backend Business Logic</h2>
 <ul>
-<li><strong><code>ajukanPic</code></strong>: kunci company; validasi karyawan aktif, ruangan milik PIC (BR-03), kategori, alasan, urgensi; buat header <code>proses</code> tanpa jadwal.</li>
+<li><strong><code>ajukanPic</code></strong>: kunci company; validasi karyawan aktif, ruangan milik PIC (BR-03), jenis aset (teks bebas, maksimal 150 karakter), alasan; buat header <code>proses</code> tanpa jadwal.</li>
 <li><strong><code>storeAdmin</code></strong>: validasi admin dan ruangan; PIC dari master ruangan; buat header lalu <code>alokasikan()</code>.</li>
 <li><strong><code>setujui</code></strong>: header harus fase <code>menunggu_persetujuan</code>; <code>alokasikan()</code>; isi <code>user_approval</code> dan <code>tgl_approval</code>.</li>
 <li><strong><code>alokasikan</code></strong>: kunci aset <code>tersedia</code> (<code>FOR UPDATE</code>), pastikan jumlah sama dengan yang diminta, buat item ronde 1 (<code>belum_dicek</code>) + jadwal ronde 1, isi jadwal terkini di header, set aset <code>proses</code>.</li>
@@ -1016,9 +1016,9 @@ footer{margin-top:64px;padding-top:18px;border-top:1px solid var(--line);color:v
 <tr>
 <td>API-02</td>
 <td>GET</td>
-<td><code>request-ruangan?tab&amp;limit&amp;offset</code></td>
+<td><code>request-ruangan?tab&amp;sumber&amp;limit&amp;offset</code></td>
 <td>Admin</td>
-<td>Daftar (<code>pengajuan</code>/<code>proses</code>/<code>selesai</code>)</td>
+<td>Daftar (<code>pengajuan</code>/<code>proses</code>/<code>selesai</code>). <code>sumber=karyawan</code> = Jalur A (halaman Pengajuan); <code>sumber=admin</code> = Jalur B (halaman Penambahan, tab <code>proses</code>/<code>selesai</code>; tab <code>pengajuan</code> kosong). Tanpa <code>sumber</code> = semua (perilaku lama). Nilai lain: 422 key <code>sumber</code>.</td>
 </tr>
 <tr>
 <td>API-03</td>
@@ -1074,7 +1074,7 @@ footer{margin-top:64px;padding-top:18px;border-top:1px solid var(--line);color:v
 <td>GET</td>
 <td><code>karyawan/pic-ruangan/request/options</code></td>
 <td>PIC</td>
-<td>Ruangan miliknya, kategori, urgensi</td>
+<td>Ruangan miliknya</td>
 </tr>
 <tr>
 <td>API-11</td>
@@ -1114,10 +1114,10 @@ footer{margin-top:64px;padding-top:18px;border-top:1px solid var(--line);color:v
 </code></pre>
 <p>Respons <code>CREATED</code>: <code>{ "id": "COMP202610001", "no_trx": "RGN04-202610001", "fase": "menunggu_serah_terima" }</code>. Validasi: <code>asset_ids</code> wajib, minimal 1, tidak boleh ganda; <code>tanggal</code> <code>Y-m-d</code>; <code>jam</code> <code>H:i</code>.</p>
 <p><strong>API-12 · POST <code>asset/karyawan/pic-ruangan/request</code></strong> (Jalur A)</p>
-<pre><code class="language-json">{ &quot;id_asset_lokasi_m&quot;: &quot;RGN-1&quot;, &quot;id_asset_kategori_m&quot;: &quot;KAT-KOM&quot;,
-  &quot;keterangan&quot;: &quot;Tim bertambah dua orang&quot;, &quot;urgensi&quot;: &quot;mendesak&quot; }
+<pre><code class="language-json">{ &quot;id_asset_lokasi_m&quot;: &quot;RGN-1&quot;, &quot;jenis_asset&quot;: &quot;Komputer&quot;,
+  &quot;keterangan&quot;: &quot;Tim bertambah dua orang&quot; }
 </code></pre>
-<p>Respons <code>CREATED</code>: <code>{ "id": "...", "no_trx": "RGN04-...", "fase": "menunggu_persetujuan" }</code>. <code>urgensi</code> ∈ <code>normal|secepatnya|mendesak</code>.</p>
+<p>Respons <code>CREATED</code>: <code>{ "id": "...", "no_trx": "RGN04-...", "fase": "menunggu_persetujuan" }</code>. <code>jenis_asset</code> teks bebas (wajib, maksimal 150 karakter, di-trim). <code>id_asset_kategori_m</code> dan <code>urgensi</code> tidak lagi diterima: bila klien lama masih mengirimnya nilainya diabaikan tanpa error, tetapi permintaan tanpa <code>jenis_asset</code> ditolak 422.</p>
 <p><strong>API-05 · POST <code>.../{id}/setujui</code></strong></p>
 <pre><code class="language-json">{ &quot;asset_ids&quot;: [&quot;AST-1&quot;], &quot;tanggal&quot;: &quot;2026-10-20&quot;, &quot;jam&quot;: &quot;09:00&quot;, &quot;catatan&quot;: &quot;Bawa kunci&quot; }
 </code></pre>
@@ -1135,7 +1135,7 @@ footer{margin-top:64px;padding-top:18px;border-top:1px solid var(--line);color:v
   { &quot;id_item&quot;: &quot;ITM-2&quot;, &quot;status_item&quot;: &quot;rusak&quot;, &quot;ket_rusak&quot;: &quot;Layar retak&quot; } ] }
 </code></pre>
 <p>Respons: <code>{ "ada_rusak": true, "fase": "menunggu_review" }</code>.</p>
-<p><strong>API-03 / API-13 · Detail</strong> mengembalikan: <code>id</code>, <code>no_trx</code>, <code>sumber_pengajuan</code>, ruangan + cabang + departemen, PIC, <code>nama_kategori</code>, <code>alasan</code>, <code>urgensi</code>, <code>ket_tolak</code>, <code>tgl_pengajuan</code>, jadwal terkini, <code>ronde</code>, <code>fase</code>, <code>fase_label</code>, <code>jadwal[]</code> (riwayat), <code>items[]</code> (<code>id_item</code>, <code>parent_id</code>, <code>nama_asset</code>, <code>ronde</code>, <code>status_item</code>, <code>ket_rusak</code>, <code>diganti</code>, <code>perlu_dicek</code>). Khusus admin ditambah <code>bisa_setujui</code>, <code>bisa_ubah_jadwal</code>, <code>bisa_konfirmasi</code>, <code>perlu_pengganti[]</code>; khusus PIC <code>bisa_diterima</code>.</p>
+<p><strong>API-03 / API-13 · Detail</strong> mengembalikan: <code>id</code>, <code>no_trx</code>, <code>sumber_pengajuan</code>, ruangan + cabang + departemen, PIC, <code>nama_kategori</code>, <code>alasan</code>, <code>urgensi</code> (kosong pada pengajuan baru), <code>ket_tolak</code>, <code>tgl_pengajuan</code>, jadwal terkini, <code>ronde</code>, <code>fase</code>, <code>fase_label</code>, <code>jadwal[]</code> (riwayat), <code>items[]</code> (<code>id_item</code>, <code>parent_id</code>, <code>nama_asset</code>, <code>ronde</code>, <code>status_item</code>, <code>ket_rusak</code>, <code>diganti</code>, <code>perlu_dicek</code>). Khusus admin ditambah <code>bisa_setujui</code>, <code>bisa_ubah_jadwal</code>, <code>bisa_konfirmasi</code>, <code>perlu_pengganti[]</code>; khusus PIC <code>bisa_diterima</code>.</p>
 <div class="group-divider" id="g4"><span>Mobile</span></div>
 <h2 id="s25"><span class="sec-no">25</span>Mobile Architecture</h2>
 <p>Flutter + <code>flutter_bloc</code> + <code>dio</code>. Halaman RGN01 <strong>dipakai ulang lewat parameter</strong> agar tidak menggandakan kode.</p>
@@ -1152,8 +1152,8 @@ footer{margin-top:64px;padding-top:18px;border-top:1px solid var(--line);color:v
 <td><code>requestBase = 'asset/request-ruangan'</code>; metode baru <code>setujui</code>, <code>tolak</code></td>
 </tr>
 <tr>
-<td><code>HalamanAssetAdminOnboardingRuangan(untukRequest:)</code></td>
-<td>Daftar dengan tab Pengajuan/Proses/Selesai</td>
+<td><code>HalamanAssetAdminOnboardingRuangan(untukRequest:, sumber:)</code></td>
+<td>Daftar request ruangan. <code>sumber: 'karyawan'</code> = halaman Pengajuan (tab Pengajuan/Proses/Selesai, tanpa tombol Tambah); <code>sumber: 'admin'</code> = halaman Penambahan (tab Proses/Selesai, dengan tombol Tambah)</td>
 </tr>
 <tr>
 <td><code>HalamanAssetAdminAddOnboardingRuangan(untukRequest:)</code></td>
@@ -1181,12 +1181,22 @@ footer{margin-top:64px;padding-top:18px;border-top:1px solid var(--line);color:v
 </thead>
 <tbody>
 <tr>
+<td>Dashboard Ruangan → item <strong>Pengajuan</strong></td>
+<td><code>/asset_admin_pengajuan_ruangan</code></td>
+<td>Admin/HR</td>
+</tr>
+<tr>
 <td>Dashboard Ruangan → item <strong>Penambahan</strong></td>
 <td><code>/asset_admin_request_ruangan</code></td>
 <td>Admin/HR</td>
 </tr>
 <tr>
-<td>Daftar penambahan (3 tab)</td>
+<td>Daftar pengajuan PIC (3 tab: Pengajuan/Proses/Selesai, tanpa Tambah; argumen tab awal opsional)</td>
+<td><code>/asset_admin_pengajuan_ruangan</code></td>
+<td>Admin/HR</td>
+</tr>
+<tr>
+<td>Daftar penambahan Admin (2 tab: Proses/Selesai, dengan tombol Tambah)</td>
 <td><code>/asset_admin_request_ruangan</code></td>
 <td>Admin/HR</td>
 </tr>
@@ -1217,7 +1227,7 @@ footer{margin-top:64px;padding-top:18px;border-top:1px solid var(--line);color:v
 </tr>
 </tbody>
 </table></div>
-<p>Detail Admin menampilkan kartu info pengajuan (jenis aset, urgensi, alasan, penolakan), stepper, dan timeline per aset. Saat <code>bisa_setujui</code>, muncul panel pilih aset gudang + jadwal serta tombol <strong>Tolak</strong> dan <strong>Setujui &amp; Jadwalkan</strong>.</p>
+<p>Detail Admin menampilkan kartu info pengajuan (jenis aset, alasan, penolakan; urgensi hanya tampil bila terisi, yaitu data lama), stepper, dan timeline per aset. Saat <code>bisa_setujui</code>, muncul panel pilih aset gudang + jadwal serta tombol <strong>Tolak</strong> dan <strong>Setujui &amp; Jadwalkan</strong>.</p>
 <h2 id="s27"><span class="sec-no">27</span>Mobile → API</h2>
 <div class="table-wrap"><table>
 <thead>
@@ -1229,7 +1239,7 @@ footer{margin-top:64px;padding-top:18px;border-top:1px solid var(--line);color:v
 <tbody>
 <tr>
 <td>Buka daftar / pindah tab</td>
-<td><code>getPage(tab)</code> → API-02</td>
+<td><code>getPage(tab, sumber)</code> → API-02</td>
 </tr>
 <tr>
 <td>Buka form Jalur B</td>
@@ -1266,7 +1276,8 @@ footer{margin-top:64px;padding-top:18px;border-top:1px solid var(--line);color:v
 </tbody>
 </table></div>
 <h2 id="s28"><span class="sec-no">28</span>API → Mobile</h2>
-<p>Model: <code>mAssetPicRuangan.dart</code> (<code>AssetPicRuanganRequest</code>, <code>AssetPicRuanganRequestOptions</code>, <code>AssetPicRuanganAjukanRequest</code>, detail diperluas dengan <code>sumberPengajuan</code>, <code>namaKategori</code>, <code>alasan</code>, <code>urgensi</code>, <code>ketTolak</code>) dan <code>mAssetAdminRuangan.dart</code> (<code>AssetAdminRuanganSetujuiRequest</code>, <code>bisaSetujui</code>, daftar membaca key <code>requests</code> selain <code>onboardings</code>). Fase baru: <code>menunggu_persetujuan</code> dan <code>ditolak</code>.</p>
+<p>Model: <code>mAssetPicRuangan.dart</code> (<code>AssetPicRuanganRequest</code>, <code>AssetPicRuanganRequestOptions</code> (hanya daftar ruangan), <code>AssetPicRuanganAjukanRequest</code> (payload <code>id_asset_lokasi_m</code>, <code>jenis_asset</code>, <code>keterangan</code>), detail diperluas dengan <code>sumberPengajuan</code>, <code>namaKategori</code>, <code>alasan</code>, <code>urgensi</code>, <code>ketTolak</code>) dan <code>mAssetAdminRuangan.dart</code> (<code>AssetAdminRuanganSetujuiRequest</code>, <code>bisaSetujui</code>, daftar membaca key <code>requests</code> selain <code>onboardings</code>). Fase baru: <code>menunggu_persetujuan</code> dan <code>ditolak</code>.</p>
+<p>Ringkasan beranda admin (<code>GET asset/summary</code>): <code>ruangan_pengajuan_perlu_proses</code> / <code>ruangan_pengajuan_pending</code> kini hanya sumber <code>karyawan</code> (fase <code>menunggu_persetujuan</code> atau <code>menunggu_review</code>); kunci baru <code>ruangan_penambahan_perlu_proses</code> / <code>ruangan_penambahan_pending</code> hanya sumber <code>admin</code> dengan fase <code>menunggu_review</code>. Masing-masing maksimal 3 item (<code>id</code>, <code>no_trx</code>, <code>nama_asset</code>, <code>nama_karyawan</code>, <code>urgensi</code> kosong, <code>status_approval</code>, <code>tahap</code>), terlama dulu, scope <code>id_company</code>, dihitung sekali per request lewat <code>AssetRequestRuangan_m::pendingSummaryForAdmin($idCompany, $sumber, $limit)</code>. Di mobile: <code>mAssetSummary.ruanganPengajuan*</code> dan <code>ruanganPenambahan*</code> menjadi dua kartu <code>AssetPendingTrxSection</code> di <code>HalamanAssetAdminRuangan</code>, dan badge tab Asset Ruangan = jumlah keduanya. "Lihat semua" kartu Pengajuan membuka halaman Pengajuan (tab <code>pengajuan</code> bila ada item <code>menunggu_persetujuan</code>, selain itu <code>proses</code>); kartu Penambahan membuka halaman Penambahan.</p>
 <h2 id="s29"><span class="sec-no">29</span>Mapping Mobile → API → Database</h2>
 <div class="table-wrap"><table>
 <thead>
@@ -1337,7 +1348,7 @@ footer{margin-top:64px;padding-top:18px;border-top:1px solid var(--line);color:v
 <tr>
 <td><code>nama_kategori</code>, <code>urgensi</code>, <code>keterangan</code></td>
 <td><code>nama_kategori</code>, <code>urgensi</code>, <code>alasan</code></td>
-<td>Kartu info pengajuan</td>
+<td>Kartu info pengajuan (urgensi hanya bila terisi)</td>
 </tr>
 <tr>
 <td><code>ket_tolak</code></td>
@@ -1373,9 +1384,9 @@ footer{margin-top:64px;padding-top:18px;border-top:1px solid var(--line);color:v
 <td>Ruangan wajib dipilih.</td>
 </tr>
 <tr>
-<td><code>id_asset_kategori_m</code></td>
-<td>wajib (Jalur A)</td>
-<td>Jenis aset wajib dipilih.</td>
+<td><code>jenis_asset</code></td>
+<td>wajib, teks bebas, ≤ 150, di-trim (Jalur A)</td>
+<td>Jenis asset wajib diisi. / Jenis asset maksimal 150 karakter.</td>
 </tr>
 <tr>
 <td><code>keterangan</code></td>
@@ -1383,9 +1394,9 @@ footer{margin-top:64px;padding-top:18px;border-top:1px solid var(--line);color:v
 <td>Alasan wajib diisi.</td>
 </tr>
 <tr>
-<td><code>urgensi</code></td>
-<td>wajib, ∈ 3 nilai (Jalur A)</td>
-<td>Urgensi wajib dipilih. / Urgensi pengajuan tidak valid.</td>
+<td><code>id_asset_kategori_m</code>, <code>urgensi</code></td>
+<td>tidak lagi diterima (Jalur A)</td>
+<td>Diabaikan bila dikirim klien lama</td>
 </tr>
 <tr>
 <td><code>asset_ids</code></td>
@@ -1414,7 +1425,7 @@ footer{margin-top:64px;padding-top:18px;border-top:1px solid var(--line);color:v
 </tr>
 </tbody>
 </table></div>
-<p>Mobile menampilkan error wajib pada form pengajuan (ruangan, jenis, urgensi, alasan) dan menonaktifkan tombol <strong>Setujui</strong> sampai aset dan jadwal dipilih serta tombol <strong>Tolak</strong> pada dialog sampai alasan diisi.</p>
+<p>Mobile menampilkan error wajib pada form pengajuan (ruangan, jenis asset, alasan; error validasi dari server tampil di field jenis dan alasan) dan menonaktifkan tombol <strong>Setujui</strong> sampai aset dan jadwal dipilih serta tombol <strong>Tolak</strong> pada dialog sampai alasan diisi.</p>
 <h2 id="s32"><span class="sec-no">32</span>Error Handling</h2>
 <div class="table-wrap"><table>
 <thead>
@@ -1549,20 +1560,20 @@ footer{margin-top:64px;padding-top:18px;border-top:1px solid var(--line);color:v
 <h2 id="s36"><span class="sec-no">36</span>Manual Book User/Admin</h2>
 <p><strong>PIC Ruangan: mengajukan penambahan</strong>
 1. Buka <strong>Asset → PIC Ruangan</strong>, ketuk <strong>Ajukan Penambahan Asset</strong>.
-2. Pilih <strong>Ruangan</strong>, <strong>Jenis Asset</strong>, <strong>Urgensi</strong>, isi <strong>Alasan</strong>, ketuk <strong>Kirim Pengajuan</strong>.
+2. Pilih <strong>Ruangan</strong>, ketik <strong>Jenis Asset</strong> (teks bebas, maksimal 150 karakter), isi <strong>Alasan</strong>, ketuk <strong>Kirim Pengajuan</strong>.
 3. Pantau status di banner beranda ("Menunggu persetujuan Admin/HR"). Bila ditolak, alasan terlihat di detail.</p>
 <p><strong>PIC Ruangan: menerima aset</strong>
 1. Setelah disetujui/dikirim, banner berubah menjadi serah terima dengan jadwal.
 2. Pada jadwal, periksa fisik tiap aset, pilih <strong>Normal</strong> atau <strong>Rusak</strong> (isi keterangan bila rusak).
 3. Ketuk <strong>Terima &amp; Kirim Checklist</strong>. Checklist tidak dapat diubah setelah dikirim.</p>
 <p><strong>Admin/HR: memproses pengajuan</strong>
-1. Buka <strong>Asset → Ruangan → Penambahan</strong>, tab <strong>Pengajuan</strong>, pilih transaksi.
-2. Tinjau jenis aset, urgensi, alasan. Pilih <strong>Tolak</strong> (isi alasan) atau pilih aset gudang + tanggal + jam lalu <strong>Setujui &amp; Jadwalkan</strong>.</p>
+1. Buka <strong>Asset → Ruangan → Pengajuan</strong> (atau ketuk <strong>Lihat semua</strong> pada kartu <strong>Pengajuan Aset Ruangan Perlu Diproses</strong> di beranda), tab <strong>Pengajuan</strong>, pilih transaksi.
+2. Tinjau jenis aset, alasan. Pilih <strong>Tolak</strong> (isi alasan) atau pilih aset gudang + tanggal + jam lalu <strong>Setujui &amp; Jadwalkan</strong>.</p>
 <p><strong>Admin/HR: inisiasi langsung (Jalur B)</strong>
-1. Di daftar Penambahan, ketuk <strong>Tambah Asset</strong>.
+1. Buka <strong>Asset → Ruangan → Penambahan</strong>, ketuk <strong>Tambah Asset</strong>.
 2. Pilih ruangan (PIC tampil otomatis), tambah aset, tetapkan jadwal, <strong>Kirim ke PIC Ruangan</strong>.</p>
 <p><strong>Admin/HR: review</strong>
-1. Tab <strong>Proses</strong>, buka transaksi. Bila PIC belum menerima, <strong>Ubah Jadwal</strong> tersedia.
+1. Di menu <strong>Pengajuan</strong> (Jalur A) atau <strong>Penambahan</strong> (Jalur B), tab <strong>Proses</strong>, buka transaksi; atau dari kartu <strong>perlu diproses</strong> di beranda. Bila PIC belum menerima, <strong>Ubah Jadwal</strong> tersedia.
 2. Setelah checklist masuk: semua normal → <strong>Konfirmasi Selesai</strong>; ada rusak → pilih pengganti untuk setiap aset rusak, tetapkan jadwal, <strong>Jadwalkan Pengganti</strong>.</p>
 <h2 id="s37"><span class="sec-no">37</span>Kondisi Button</h2>
 <div class="table-wrap"><table>
@@ -1656,7 +1667,7 @@ footer{margin-top:64px;padding-top:18px;border-top:1px solid var(--line);color:v
 <tr>
 <td>TC-05</td>
 <td>Jalur A validasi</td>
-<td>Ruangan milik PIC lain, alasan/urgensi/jenis salah ditolak</td>
+<td>Ruangan milik PIC lain, jenis asset atau alasan kosong, atau jenis asset lebih dari 150 karakter ditolak (422 per field)</td>
 <td>✔ API</td>
 </tr>
 <tr>
@@ -1710,7 +1721,7 @@ footer{margin-top:64px;padding-top:18px;border-top:1px solid var(--line);color:v
 <tr>
 <td>TC-14</td>
 <td>Daftar admin</td>
-<td>Tab Pengajuan, kartu fase, buka detail</td>
+<td>Halaman Pengajuan (3 tab, tanpa Tambah, <code>sumber=karyawan</code>) dan Penambahan (2 tab, Tambah, <code>sumber=admin</code>), kartu fase, buka detail</td>
 <td>✔ Mobile</td>
 </tr>
 <tr>
@@ -1736,6 +1747,24 @@ footer{margin-top:64px;padding-top:18px;border-top:1px solid var(--line);color:v
 <td>Alur penuh di server/emulator</td>
 <td>Jalur A dan B sampai selesai</td>
 <td>✘ manual</td>
+</tr>
+<tr>
+<td>TC-19</td>
+<td>API daftar per sumber</td>
+<td><code>sumber=karyawan</code>/<code>admin</code>/tanpa sumber pada tiap tab, 422 untuk nilai lain, paginasi dan isolasi company</td>
+<td>✔ API</td>
+</tr>
+<tr>
+<td>TC-20</td>
+<td>API ringkasan beranda per sumber</td>
+<td><code>ruangan_pengajuan_*</code> hanya Jalur A (persetujuan/review); <code>ruangan_penambahan_*</code> hanya Jalur B menunggu review; maksimal 3 item, terlama dulu; baris admin tanpa jadwal tidak masuk</td>
+<td>✔ API</td>
+</tr>
+<tr>
+<td>TC-21</td>
+<td>Mobile kartu beranda dan badge</td>
+<td>Dua kartu terpisah, kartu kosong disembunyikan, Lihat semua ke halaman benar (tab awal <code>pengajuan</code>/<code>proses</code>), badge = jumlah keduanya (<code>9+</code>)</td>
+<td>✔ Mobile</td>
 </tr>
 </tbody>
 </table></div>
@@ -1772,7 +1801,7 @@ footer{margin-top:64px;padding-top:18px;border-top:1px solid var(--line);color:v
 <tr>
 <td>INC-04</td>
 <td>Jenis aset "Teks / Dropdown"</td>
-<td>Dipilih dari kategori master (<code>asset_kategori_m</code>), id + nama disimpan</td>
+<td>Sejak v1.2 teks bebas maksimal 150 karakter, disimpan di <code>nama_kategori</code> (<code>id_asset_kategori_m</code> = <code>''</code>)</td>
 <td>Seragam dengan request karyawan</td>
 </tr>
 <tr>
@@ -1829,7 +1858,7 @@ footer{margin-top:64px;padding-top:18px;border-top:1px solid var(--line);color:v
 <td>Aset dikunci; yang kedua gagal "tidak tersedia".</td>
 </tr>
 <tr>
-<td>Aset dipilih berkategori beda dari permintaan</td>
+<td>Aset dipilih berbeda dari jenis yang diminta PIC (teks bebas)</td>
 <td>Tidak dicegah (RISK-003).</td>
 </tr>
 <tr>
@@ -1884,8 +1913,8 @@ footer{margin-top:64px;padding-top:18px;border-top:1px solid var(--line);color:v
 <tr>
 <td>RISK-003</td>
 <td>SEDANG</td>
-<td>Aset yang disetujui tidak diperiksa sesuai kategori yang diminta.</td>
-<td>Peringatan di UI atau validasi kategori.</td>
+<td>Aset yang disetujui tidak diperiksa sesuai jenis yang diminta (kini teks bebas, tidak bisa dicocokkan otomatis).</td>
+<td>Admin mencocokkan manual dengan jenis yang tampil di kartu info pengajuan.</td>
 </tr>
 <tr>
 <td>RISK-004</td>
@@ -1910,6 +1939,12 @@ footer{margin-top:64px;padding-top:18px;border-top:1px solid var(--line);color:v
 <td>RENDAH</td>
 <td>Data lama <code>asset_trx_penambahan_ruangan</code> tidak dimigrasi dan tabelnya hanya dihapus manual.</td>
 <td>Periksa jumlah baris sebelum <code>DROP</code>.</td>
+</tr>
+<tr>
+<td>RISK-008</td>
+<td>RENDAH</td>
+<td>Aplikasi versi lama dengan API baru: kartu Pengajuan menyempit (tanpa penambahan Admin yang menunggu review) dan daftar tidak terpisah.</td>
+<td>Rilis API dan mobile bersamaan.</td>
 </tr>
 </tbody>
 </table></div>
@@ -2145,7 +2180,7 @@ footer{margin-top:64px;padding-top:18px;border-top:1px solid var(--line);color:v
 </tbody>
 </table></div>
 <p><strong><code>asset_lokasi_m</code></strong>: <code>LOK0007</code> "Ruang Meeting Lt.2" (<code>tipe = ruangan</code>, <code>status_aktif = 1</code>, cabang "Jakarta", departemen "Operasional"). <strong><code>asset_lokasi_pic_m</code></strong> menunjuk <code>LOK0007</code> → <code>KRY0030</code>. Ruangan sudah beroperasi: ada onboarding <code>dikonfirmasi</code> untuk <code>LOK0007</code> (syarat BR-02; tanpa itu ruangan tidak muncul di opsi).</p>
-<p><strong><code>asset_kategori_m</code></strong>: <code>KAT-MON</code> "Monitor".</p>
+<p><strong>Jenis aset (teks bebas yang diketik PIC):</strong> <code>Monitor</code>.</p>
 <p><strong><code>asset_data</code></strong> (semua <code>tersedia</code>, <code>pemegang_asset = gudang</code>, <code>id_asset_lokasi_m = LOK0001</code>)</p>
 <div class="table-wrap"><table>
 <thead>
@@ -2181,22 +2216,22 @@ footer{margin-top:64px;padding-top:18px;border-top:1px solid var(--line);color:v
 <div class="code"><span class="code-lang">HTTP</span><pre><code class="language-http">GET /asset/karyawan/pic-ruangan/request/options
 Authorization: Bearer &lt;access_token_dewi&gt;
 </code></pre></div>
-<p><strong>Diproses API:</strong> <code>getOptionsPic</code> hanya membaca: ruangan aktif yang <strong>dimiliki PIC login</strong> (join <code>asset_lokasi_pic_m</code>) dan sudah beroperasi, daftar kategori, dan pilihan urgensi (<code>normal</code>, <code>secepatnya</code>, <code>mendesak</code>). <strong>Database:</strong> hanya <code>SELECT</code>.</p>
-<p><strong>Diterima mobile:</strong> <code>LOK0007</code> sebagai satu-satunya ruangan pilihan, kategori (termasuk Monitor), dan tiga pilihan urgensi.</p>
+<p><strong>Diproses API:</strong> <code>getOptionsPic</code> hanya membaca: ruangan aktif yang <strong>dimiliki PIC login</strong> (join <code>asset_lokasi_pic_m</code>) dan sudah beroperasi (kategori dan urgensi tidak lagi dikirim). <strong>Database:</strong> hanya <code>SELECT</code>.</p>
+<p><strong>Diterima mobile:</strong> <code>LOK0007</code> sebagai satu-satunya ruangan pilihan.</p>
 <h4>Langkah 1 — PIC mengajukan penambahan monitor</h4>
-<p><strong>Mobile:</strong> Dewi memilih ruangan, jenis aset <strong>Monitor</strong>, urgensi <strong>Mendesak</strong>, mengisi alasan, lalu <strong>Kirim</strong>.</p>
+<p><strong>Mobile:</strong> Dewi memilih ruangan, mengetik jenis asset <strong>Monitor</strong>, mengisi alasan, lalu <strong>Kirim</strong>.</p>
 <p><strong>Dikirim</strong></p>
 <div class="code"><span class="code-lang">HTTP</span><pre><code class="language-http">POST /asset/karyawan/pic-ruangan/request
 Authorization: Bearer &lt;access_token_dewi&gt;
 </code></pre></div>
-<div class="code"><span class="code-lang">JSON</span><pre><code class="language-json">{ &quot;id_asset_lokasi_m&quot;: &quot;LOK0007&quot;, &quot;id_asset_kategori_m&quot;: &quot;KAT-MON&quot;,
-  &quot;keterangan&quot;: &quot;Tim bertambah dua orang&quot;, &quot;urgensi&quot;: &quot;mendesak&quot; }
+<div class="code"><span class="code-lang">JSON</span><pre><code class="language-json">{ &quot;id_asset_lokasi_m&quot;: &quot;LOK0007&quot;, &quot;jenis_asset&quot;: &quot;Monitor&quot;,
+  &quot;keterangan&quot;: &quot;Tim bertambah dua orang&quot; }
 </code></pre></div>
 <p><strong>Diproses API</strong> (<code>AssetKaryawanRequestRuangan_c</code> → <code>AssetRequestRuangan_m::ajukanPic</code>, satu <code>DB::transaction(…, 3)</code>)
-1. Validasi controller: <code>id_asset_lokasi_m</code> ("Ruangan wajib dipilih."), <code>id_asset_kategori_m</code> ("Jenis aset wajib dipilih."), <code>keterangan</code> ("Alasan wajib diisi.", maksimal 1000), <code>urgensi</code> ("Urgensi wajib dipilih." / "Urgensi pengajuan tidak valid.").
+1. Validasi controller: <code>id_asset_lokasi_m</code> ("Ruangan wajib dipilih."), <code>jenis_asset</code> ("Jenis asset wajib diisi.", maksimal 150 karakter), <code>keterangan</code> ("Alasan wajib diisi.", maksimal 1000).
 2. <code>lockCompany</code>; karyawan harus aktif ("Karyawan tidak ditemukan atau tidak aktif.").
 3. <code>findRuanganTujuan</code> dengan filter PIC: ruangan harus aktif, punya PIC, <strong>milik Dewi</strong>, dan sudah beroperasi ("Ruangan tujuan tidak ditemukan, tidak aktif, atau belum memiliki aset.").
-4. Kategori harus ada ("Jenis aset tidak ditemukan."), alasan tidak kosong ("Alasan wajib diisi."), urgensi salah satu dari tiga nilai ("Urgensi wajib dipilih.").
+4. Jenis asset tidak kosong dan tidak lebih dari 150 karakter (dihitung per karakter, termasuk multibyte), alasan tidak kosong ("Alasan wajib diisi."); tanpa pengecekan ke <code>asset_kategori_m</code> dan tanpa urgensi.
 5. Nomor header: <code>nextHeaderId</code> → <code>CMP001202610001</code>, <code>RGN04-202610001</code>.
 6. INSERT header saja (belum ada item, jadwal, dan <strong>belum ada aset yang dikunci</strong>).
 7. Controller mengirim <code>request_ruangan.diajukan</code> ke semua admin asset.</p>
@@ -2232,11 +2267,11 @@ Authorization: Bearer &lt;access_token_dewi&gt;
 </tr>
 <tr>
 <td>id_asset_kategori_m / nama_kategori</td>
-<td>KAT-MON / Monitor</td>
+<td>'' / Monitor (teks bebas dari PIC)</td>
 </tr>
 <tr>
 <td>keterangan / urgensi</td>
-<td>Tim bertambah dua orang / mendesak</td>
+<td>Tim bertambah dua orang / NULL</td>
 </tr>
 <tr>
 <td>id_karyawan / nik_karyawan / nama_karyawan</td>
@@ -2271,7 +2306,7 @@ Authorization: Bearer &lt;access_token_dewi&gt;
   &quot;data&quot;: { &quot;id&quot;: &quot;CMP001202610001&quot;, &quot;no_trx&quot;: &quot;RGN04-202610001&quot;, &quot;fase&quot;: &quot;menunggu_persetujuan&quot; } }
 </code></pre></div>
 <h4>Langkah 2 — Admin menyetujui dan memilih aset</h4>
-<p><strong>Mobile:</strong> tab <strong>Pengajuan</strong> menampilkan RGN04-202610001; Siti membuka detail (<code>GET /asset/request-ruangan/CMP001202610001</code> dan opsi aset), memilih Monitor LG dan Monitor Dell, jadwal 23 Okt 2026 pukul 09:00, lalu <strong>Setujui</strong>.</p>
+<p><strong>Mobile:</strong> menu <strong>Pengajuan</strong> (tab <strong>Pengajuan</strong>) menampilkan RGN04-202610001; Siti membuka detail (<code>GET /asset/request-ruangan/CMP001202610001</code> dan opsi aset), memilih Monitor LG dan Monitor Dell, jadwal 23 Okt 2026 pukul 09:00, lalu <strong>Setujui</strong>.</p>
 <p><strong>Dikirim</strong></p>
 <div class="code"><span class="code-lang">HTTP</span><pre><code class="language-http">POST /asset/request-ruangan/CMP001202610001/setujui
 Authorization: Bearer &lt;access_token_admin&gt;
@@ -2636,14 +2671,14 @@ Authorization: Bearer &lt;access_token_dewi&gt;
 <td>Ruangan tujuan tidak ditemukan, tidak aktif, atau belum memiliki aset.</td>
 </tr>
 <tr>
-<td>Kategori tidak ada</td>
+<td>Jenis asset kosong / lebih dari 150 karakter</td>
 <td>1</td>
-<td>Jenis aset tidak ditemukan.</td>
+<td>Jenis asset wajib diisi. / Jenis asset maksimal 150 karakter.</td>
 </tr>
 <tr>
-<td>Alasan kosong / urgensi di luar daftar</td>
+<td>Alasan kosong</td>
 <td>1</td>
-<td>Alasan wajib diisi. / Urgensi wajib dipilih.</td>
+<td>Alasan wajib diisi.</td>
 </tr>
 <tr>
 <td>Pengguna bukan admin asset</td>
@@ -2752,7 +2787,7 @@ Authorization: Bearer &lt;access_token_dewi&gt;
 </tr>
 <tr>
 <td><strong>Mobile Admin/HR</strong></td>
-<td>Mereview tab Pengajuan, memilih aset dan jadwal, menolak dengan alasan, mengubah jadwal, menjadwalkan pengganti, mengonfirmasi</td>
+<td>Mereview menu Pengajuan, tab Pengajuan, memilih aset dan jadwal, menolak dengan alasan, mengubah jadwal, menjadwalkan pengganti, mengonfirmasi</td>
 </tr>
 <tr>
 <td><strong>API</strong></td>
@@ -2810,9 +2845,9 @@ Authorization: Bearer &lt;access_token_dewi&gt;
 <li class="task">SQL manual dijalankan lengkap, <code>status_approval</code> bertipe enum (<strong>periksa</strong>)</li>
 <li class="task"><code>DROP</code> tabel lama penambahan (hanya bila kosong)</li>
 <li class="task done">Model, controller, route, notifikasi API</li>
-<li class="task done">Test API (12) dan seluruh <code>tests/Asset</code> (207) lolos</li>
+<li class="task done">Test API (33) lolos; <code>tests/Asset</code> penuh (528 test) hanya gagal di 5 test lama <code>AssetRusakKaryawanTest</code> yang tidak terkait</li>
 <li class="task done">Model, API client, bloc, halaman, route, teks mobile</li>
-<li class="task done">Test mobile (11) dan 29 test ruangan lolos</li>
+<li class="task done">Test mobile (18) dan file test ruangan terkait (admin 9, pending 17) lolos</li>
 <li class="task">Uji di server/emulator, termasuk push notifikasi</li>
 <li class="task">Pembatalan oleh Admin (belum ada)</li>
 </ul>
@@ -2835,6 +2870,16 @@ Authorization: Bearer &lt;access_token_dewi&gt;
 <td>1.1</td>
 <td>22 Okt 2026</td>
 <td>Menambah §45.4 walkthrough lengkap Jalur A (mobile → payload → proses API → hasil database), variasi penolakan dan Jalur B, tabel kasus gagal; log aset ditulis ke <code>asset_trx_log</code>.</td>
+</tr>
+<tr>
+<td>1.2</td>
+<td>3 Nov 2026</td>
+<td>Pengajuan PIC (Jalur A) disamakan dengan request karyawan: jenis asset teks bebas (maks 150 karakter) menggantikan pemilih kategori, urgensi dihapus; opsi PIC hanya mengirim ruangan; pengajuan baru menyimpan <code>id_asset_kategori_m</code> = <code>''</code> dan <code>urgensi</code> NULL; klien lama tanpa <code>jenis_asset</code> ditolak 422; tanpa perubahan skema. Memperbarui §3, §4, §5, BR-04, §10, §12, §18, §21, §23, §24, §26, §29, §31, §36, §38, §39, §41, §45.4, §47.</td>
+</tr>
+<tr>
+<td>1.3</td>
+<td>3 Nov 2026</td>
+<td>Daftar admin request ruangan dipisah per sumber seperti karyawan: menu <strong>Pengajuan</strong> (pengajuan PIC, <code>sumber=karyawan</code>, 3 tab, tanpa Tambah) dan <strong>Penambahan</strong> (langsung Admin/HR, <code>sumber=admin</code>, 2 tab, dengan Tambah); parameter <code>sumber</code> pada API-02; kartu beranda dipecah menjadi Pengajuan dan Penambahan dengan kunci ringkasan <code>ruangan_penambahan_*</code> dan badge gabungan; skenario uji TC-19 sampai TC-21 dan RISK-008. Tanpa perubahan skema. Memperbarui §1, §3, §10, §11, §23, §24, §26, §28, §36, §38, §41, §45.4, §47.</td>
 </tr>
 </tbody>
 </table></div>

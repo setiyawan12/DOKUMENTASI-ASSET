@@ -17,8 +17,8 @@
 | Database | `API/diagram-asset.dbml` (tanda `[NEW ALK-RGN01]` / `[REVISI ALK-RGN01]`) + SQL manual `Claude outputs/sql-alk-rgn01-onboarding-ruangan.sql` (sudah dijalankan di environment pengembang) |
 | Mobile | Flutter (`professional_flutter_3_35`), `flutter_bloc`, `dio`, `dotted_border` |
 | Web | ⚠️ Belum ditemukan: tidak ada source web di workspace |
-| Test otomatis | API `tests/Asset/AssetAdminRuanganTest.php` (10 test) + `tests/Asset/AssetLokasiPicTest.php` (7 test) · Mobile `test/asset/asset_admin_ruangan_test.dart` (9 test) + `test/asset/asset_pic_ruangan_test.dart` (9 test) |
-| Versi dokumen | 1.1 — 22 Oktober 2026 |
+| Test otomatis | API `tests/Asset/AssetAdminRuanganTest.php` (14 test) + `tests/Asset/AssetLokasiPicTest.php` (7 test) · Mobile `test/asset/asset_admin_ruangan_test.dart` (9 test) + `test/asset/asset_pic_ruangan_test.dart` (9 test) + `test/asset/asset_admin_ruangan_pending_test.dart` (11 test) |
+| Versi dokumen | 1.2 — 3 November 2026 |
 | Dokumen terkait | Onboarding Karyawan (KRY01), Master Lokasi & PIC Ruangan |
 
 ## 2. Daftar Isi
@@ -322,6 +322,9 @@ Fase `menunggu_review`, tanpa rusak → semua aset aktif divalidasi `proses`/`gu
 ### 21.6 Query baca
 `getOptions` (aset tersedia + pohon kategori, ruangan aktif belum onboarding beserta PIC, karyawan aktif), `getPage` (tab `proses`/`selesai`, paginasi), `getDetail` (+ `bisa_ubah_jadwal`, `bisa_konfirmasi`, `perlu_pengganti`), sisi PIC `getAssetRuanganSaya`, `getDetailOnboardingSaya`.
 
+### 21.7 Ringkasan beranda admin — `pendingSummaryForAdmin`
+Dipanggil `AssetAdmin_m::getSummary` satu kali per request. Mengambil onboarding berstatus `proses` dengan fase `menunggu_review` (fase dihitung dengan `rondeSaatIni` + `jadwalTerakhir` + `AssetLokasiPic_m::fase`, sama dengan `getPage`/`getDetail`), dibatasi `id_company`, urut `tgl_input` lalu id (terlama dulu). Mengembalikan `jumlah` (total) dan `item` (maksimal 3). `countPendingForAdmin` dan `getPendingForAdmin` tetap tersedia. Catatan performa: fase dihitung per baris berstatus `proses` (sekitar 3 query per baris), wajar selama antrean proses kecil.
+
 ## 22. Dampak terhadap asset_data
 
 | Peristiwa | `status_asset` | `pemegang_asset` | Lokasi |
@@ -408,11 +411,17 @@ Tab Proses/Selesai, kartu transaksi, tombol Tambah Alokasi.
 ### 26.4 Admin — Form (`HalamanAssetAdminAddOnboardingRuangan`)
 Seragam dengan form onboarding karyawan: Ruangan Tujuan, PIC Ruangan (terkunci bila ada PIC master), Asset On Boarding (pemilih kategori → asset), Jadwal, Catatan, **Kirim ke PIC Ruangan**.
 
+Tanggal serah terima dipilih lewat bottom sheet Cupertino (`DatePickCupertinoSingle`, tombol **Terapkan** / **Apply**, seragam dengan fitur karyawan); jam tetap memakai pemilih jam Material.
+
 ### 26.5 Admin — Detail (`HalamanAssetAdminDetailOnboardingRuangan`)
 Seragam dengan detail klaim garansi: kartu utama bergradien, stepper (Dijadwalkan, Serah Terima, Review, Selesai), timeline vertikal per aset (`AssetRuanganAsetTimeline`: Penjadwalan, Serah Terima & Checklist, Review, Selesai), kartu pengganti, informasi ruangan, riwayat jadwal. Tombol bawah: **Ubah Jadwal** / **Jadwalkan Pengganti** / **Konfirmasi Selesai** sesuai fase.
 
+Tanggal pada bagian Setujui, Jadwalkan Pengganti, dan dialog Ubah Jadwal memakai pemilih tanggal Cupertino yang sama. **Konfirmasi Selesai** membuka dialog konfirmasi bersama (`showAssetConfirmDialog` / `AssetDialogFrame`: ikon, judul "Selesaikan alokasi?", tombol Batal dan Ya, Selesaikan), seragam dengan dialog Asset Karyawan.
+
 ### 26.6 Entry point
 Kartu **PIC Ruangan** di `HalamanHomeAsset`; tombol **On Boarding** di `HalamanAssetAdminRuangan`; notifikasi (`asset_pic_ruangan_onboarding`, `asset_admin_detail_onboarding_ruangan` terdaftar di `assetNotifRoutes`).
+
+Beranda admin (`HalamanAssetAdminRuangan`) menampilkan kartu **Onboarding Ruangan Perlu Diproses** (`AssetPendingTrxSection`, warna oranye) bila `ruangan_onboarding_pending` tidak kosong. Item membuka detail (`NavigateToAssetAdminDetailOnboardingRuangan` dengan `fromAdminHome: true`, dan setelah kembali ringkasan beranda dimuat ulang), **Lihat semua** membuka daftar On Board, label aksi **Review & konfirmasi**.
 
 ## 27. Mobile → API
 
@@ -428,6 +437,8 @@ Kartu **PIC Ruangan** di `HalamanHomeAsset`; tombol **On Boarding** di `HalamanA
 ## 28. API → Mobile
 
 Kunci JSON dipetakan ke model (`AssetPicRuanganDetail`, `AssetAdminRuanganDetail`, dll.). `fase` menentukan stepper dan tombol; flag `bisa_*` menentukan aksi; `perlu_pengganti[]` membentuk kartu pengganti.
+
+Ringkasan admin (`GET asset/summary`) menambah kunci `ruangan_onboarding_perlu_proses` (int) dan `ruangan_onboarding_pending` (maksimal 3 item: `id` = id onboarding ruangan, `no_trx`, `nama_asset`, `nama_karyawan` = PIC, `urgensi` (selalu kosong), `status_approval`, `tahap`). Dipetakan ke `mAssetSummary.ruanganOnboardingPerluProses` / `ruanganOnboardingPending` (`AssetPendingTrx`); `tahap` menjadi `fase` item.
 
 ## 29. Mapping Mobile → API → Database
 
@@ -499,7 +510,7 @@ JWT; admin dicek lewat `asset_admin`; PIC dibatasi per transaksi; semua query me
 1. Menu Asset → Ruangan → **On Boarding** → **Tambah Alokasi**.
 2. Pilih **Ruangan Tujuan**. PIC terisi otomatis dan terkunci; bila ruangan belum punya PIC, pilih karyawan (akan tersimpan sebagai PIC ruangan).
 3. **Tambah Asset**: pilih kategori lalu asset (ulangi untuk asset lain).
-4. Pilih tanggal dan jam serah terima, isi catatan bila perlu, tekan **Kirim ke PIC Ruangan**.
+4. Pilih tanggal (bottom sheet Cupertino, tekan **Terapkan**) dan jam serah terima, isi catatan bila perlu, tekan **Kirim ke PIC Ruangan**.
 
 ### B. PIC Ruangan — Menerima aset
 1. Buka menu **PIC Ruangan** di halaman pertama Asset; ketuk banner **Serah Terima Asset Ruangan**.
@@ -507,8 +518,8 @@ JWT; admin dicek lewat `asset_admin`; PIC dibatasi per transaksi; semua query me
 3. Tekan **Terima & Kirim Checklist**. Halaman menjadi hanya-baca sampai Admin/HR mereview.
 
 ### C. Admin/HR — Review
-1. Buka transaksi di tab **Proses**; periksa timeline tiap aset.
-2. Semua normal: tekan **Konfirmasi Selesai**.
+1. Buka transaksi dari kartu **Onboarding Ruangan Perlu Diproses** di beranda Asset Ruangan, atau dari tab **Proses**; periksa timeline tiap aset.
+2. Semua normal: tekan **Konfirmasi Selesai**, lalu **Ya, Selesaikan** pada dialog konfirmasi.
 3. Ada rusak: pada kartu pengganti pilih asset pengganti untuk **setiap** aset rusak, tetapkan jadwal baru, tekan **Jadwalkan Pengganti**. PIC mengecek unit pengganti; ulangi review.
 
 ### D. Admin/HR — Mengubah jadwal
@@ -538,6 +549,9 @@ Selama PIC belum menerima, tekan **Ubah Jadwal**, isi tanggal, jam, dan alasan (
 | T-08 | Rusak → pengganti → ronde 2 → konfirmasi | Aset rusak `rusak`, pengganti `terpakai` |
 | T-09 | Konfirmasi tanpa checklist / dengan rusak | Ditolak |
 | T-10 | Mobile: form, daftar tab, detail aksi, halaman PIC | Lulus (18 test mobile) |
+| T-11 | API ringkasan admin: hanya fase `menunggu_review`; isolasi company; batas 3 item, terlama dulu; kembali ke serah terima setelah ronde pengganti | Lulus (`AssetAdminRuanganTest`, `AssetModelTest`) |
+| T-12 | Mobile beranda: kartu tampil hanya bila ada item; tap membuka detail (`fromAdminHome: true`); Lihat semua; reload ringkasan vs daftar | Lulus (`asset_admin_ruangan_pending_test`) |
+| T-13 | Mobile: pemilih tanggal Cupertino (**Terapkan**) dan dialog konfirmasi bersama (`AssetDialogFrame`) | Lulus (`asset_admin_ruangan_test`) |
 
 ## 39. Temuan Ketidaksesuaian
 
@@ -1068,3 +1082,4 @@ Tabel baru `asset_trx_onboarding_ruangan_jadwal`; kolom `asset_lokasi_m.status_a
 |---|---|---|
 | 1.0 | 13 Okt 2026 | Dokumen awal ALK-RGN01 (sisi PIC Ruangan dan Admin/HR) |
 | 1.1 | 22 Okt 2026 | Menambah §45.4 walkthrough lengkap (mobile → payload → proses API → hasil database); koreksi nama master PIC menjadi `asset_lokasi_pic_m` / `id_asset_lokasi_pic_m` / `AssetLokasiPic_m`; log aset ditulis ke `asset_trx_log`. |
+| 1.2 | 3 Nov 2026 | Kartu Onboarding Ruangan Perlu Diproses di beranda admin (kunci ringkasan `ruangan_onboarding_perlu_proses` / `ruangan_onboarding_pending`; §21.7, §26.6, §28); pemilih tanggal Cupertino dan dialog konfirmasi bersama (§26.4, §26.5, §36); skenario uji T-11 sampai T-13. Tidak ada perubahan skema atau endpoint. |
