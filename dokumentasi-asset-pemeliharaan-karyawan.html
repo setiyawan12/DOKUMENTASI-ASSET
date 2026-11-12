@@ -197,7 +197,7 @@ footer{margin-top:64px;padding-top:18px;border-top:1px solid var(--line);color:v
         <dl>
           <dt>Kode</dt><dd>PML01</dd>
           <dt>Modul</dt><dd>Pemeliharaan Aset</dd>
-          <dt>Versi</dt><dd>1.3 · 22 Okt 2026</dd>
+          <dt>Versi</dt><dd>1.4 · 5 Nov 2026</dd>
           <dt>Stack</dt><dd>Lumen 10 · Flutter</dd>
           <dt>API</dt><dd>16 endpoint</dd>
         </dl>
@@ -303,15 +303,15 @@ footer{margin-top:64px;padding-top:18px;border-top:1px solid var(--line);color:v
 </tr>
 <tr>
 <td>Versi Dokumen</td>
-<td>1.3</td>
+<td>1.4</td>
 </tr>
 <tr>
 <td>Tanggal Dokumentasi</td>
-<td>2026-10-22</td>
+<td>2026-11-05</td>
 </tr>
 <tr>
 <td>Dokumen terkait</td>
-<td>Upgrade (KRY03), Kerusakan (KRY06), Retur (KRY04), Offboarding (KRY02), Request/Penambahan (KRY-03-1, unit pengganti), PML02 Perbaikan &amp; PML04 Disposal (sudah diimplementasikan, tetapi belum dipicu otomatis dari hasil 4–5)</td>
+<td>Upgrade (KRY03), Kerusakan (KRY06), Retur (KRY04), Offboarding (KRY02), Request/Penambahan (KRY-03, unit pengganti), PML02 Perbaikan &amp; PML04 Disposal (sudah diimplementasikan, tetapi belum dipicu otomatis dari hasil 4–5)</td>
 </tr>
 </tbody>
 </table></div>
@@ -663,7 +663,7 @@ Admin: Review &amp; Tindak Lanjut
 <h3>BR-009 — Review hasil 4–5 (asset ditarik)</h3>
 <p>Asset → <code>status_asset = rusak</code>, <code>kondisi_awal = rusak</code>, <code>ket_rusak</code> = keterangan hasil + review, <code>status_rusak = "sudah tidak bisa di gunakan"</code>, <code>pemegang_asset = gudang</code>. Log dengan <code>kondisi_akhir = rusak</code>. <code>nama_tabel_tindak_lanjut</code> = <code>asset_trx_perbaikan</code> (hasil 4) atau <code>asset_trx_disposal</code> (hasil 5); ⚠️ transaksi PML02/PML04 belum dibuat (INC-05). Fase → <code>selesai</code>.</p>
 <h3>BR-010 — Unit pengganti (hasil 4–5, opsional)</h3>
-<p>Bila admin memilih unit pengganti, sistem membuat <strong>Penambahan asset (KRY-03-1)</strong> untuk karyawan yang sama (<code>urgensi = mendesak</code>, jadwal serah terima dari admin) di dalam transaksi review. <code>flag_unit_pengganti = 1</code>, <code>id_trx_request_pengganti</code> diisi, notifikasi <code>penambahan.dikirim</code> dikirim. Aturan Penambahan berlaku (asset harus <code class="chip chip-neutral">tersedia</code> @gudang).</p>
+<p>Bila admin memilih unit pengganti, sistem membuat <strong>Penambahan asset (KRY-03)</strong> untuk karyawan yang sama (<code>urgensi = mendesak</code>, jadwal serah terima dari admin) di dalam transaksi review. <code>flag_unit_pengganti = 1</code>, <code>id_trx_request_pengganti</code> diisi, notifikasi <code>penambahan.dikirim</code> dikirim. Aturan Penambahan berlaku (asset harus <code class="chip chip-neutral">tersedia</code> @gudang).</p>
 <h3>BR-011 — Pengembalian (mekanisme diserahkan, Fase 5)</h3>
 <p>Hanya fase <code>menunggu_pengembalian</code> → "Aset belum dijadwalkan untuk dikembalikan." Karyawan mengisi checklist kondisi seluruh item; asset → <code class="chip chip-done">terpakai</code>, log gudang → karyawan, fase <code>selesai</code>.</p>
 <h3>BR-012 — Ubah jadwal</h3>
@@ -1258,7 +1258,7 @@ DB (header, item, jadwal, asset_pendamping_m, asset_data, asset_trx_log)
 <h3>21.7 Hasil — <code>hasil</code></h3>
 <p>Pengisi = pendamping (payload <code>id_karyawan</code>) atau admin (<code>user_id</code>) → fase <code>pelaksanaan</code> → cek hak pendamping → asset dipegang (status sesuai mekanisme) → <code>normalizeHasilChecklist</code> → hasil terberat → UPDATE item → fase <code>menunggu_review</code>.</p>
 <h3>21.8 Review — <code>review</code></h3>
-<p>Fase <code>menunggu_review</code> → asset dipegang (<code>dalam_perbaikan</code> untuk diserahkan, <code class="chip chip-done">terpakai</code> untuk hadir) → hasil 4/5: tarik asset + log + (opsional) <code>AssetRequestKaryawan_m::store</code> → <code>selesai</code>; hasil 1–3: <code>jadwalBerikutnya</code> (+ rencana penggantian hasil 3) → hadir <code>selesai</code> / diserahkan jadwal pengembalian + <code>menunggu_pengembalian</code>. Respons menambah <code>hasil</code>, <code>ditarik</code>, <code>id_request_pengganti</code>.</p>
+<p>Fase <code>menunggu_review</code> → asset dipegang (<code>dalam_perbaikan</code> untuk diserahkan, <code class="chip chip-done">terpakai</code> untuk hadir) → hasil 4/5: tarik asset (<code>tgl_dialokasikan = '0000-00-00'</code>) + log + (opsional) <code>AssetRequestKaryawan_m::store</code> → <code>selesai</code>; hasil 1–3: <code>jadwalBerikutnya</code> (+ rencana penggantian hasil 3) → hadir <code>selesai</code> / diserahkan jadwal pengembalian + <code>menunggu_pengembalian</code>. Respons menambah <code>hasil</code>, <code>ditarik</code>, <code>id_request_pengganti</code>.</p>
 <h3>21.9 Terima — <code>terima</code></h3>
 <p>Fase <code>menunggu_pengembalian</code> → asset <code>dalam_perbaikan</code> di karyawan → checklist → asset <code class="chip chip-done">terpakai</code> → log gudang → karyawan → <code>selesai</code>, <code>tgl/user_diterima</code>.</p>
 <h3>21.10 Query baca</h3>
@@ -1324,8 +1324,18 @@ DB (header, item, jadwal, asset_pendamping_m, asset_data, asset_trx_log)
 <td>–</td>
 <td>log Penambahan</td>
 </tr>
+<tr>
+<td>Review hasil 4–5 (kolom <code>tgl_dialokasikan</code>)</td>
+<td><code>rusak</code></td>
+<td><code>gudang</code></td>
+<td><code>tgl_dialokasikan = '0000-00-00'</code></td>
+<td>–</td>
+</tr>
 </tbody>
 </table></div>
+<aside class="callout callout-note">
+<p><code>tgl_dialokasikan</code> (date, NULL) ditulis API setiap <code>pemegang_asset</code> berubah: masuk dari gudang ke karyawan = tanggal konfirmasi (Y-m-d); kembali ke gudang = <code>'0000-00-00'</code> (sengaja bukan NULL). Aset yang belum pernah dialokasikan, atau dipegang sebelum fitur ini dan belum di-backfill, bernilai NULL. Tidak ada endpoint, payload, atau layar mobile yang membaca kolom ini. Detail operasional dan backfill: lihat dokumen Onboarding Karyawan (KRY01), RISK-012. Pada PML01 hanya review hasil 4 atau 5 yang mengubah pemegang (ke gudang), sehingga hanya itu yang mengisi <code>'0000-00-00'</code>; Serahkan, Terima kembali, dan hasil 1 sampai 3 tidak mengubah pemegang atau kolom ini.</p>
+</aside>
 <aside class="callout callout-note">
 <p>Mekanisme hadir langsung dengan hasil 1–3 <strong>tidak</strong> menulis <code>asset_trx_log</code>; jejaknya ada di transaksi PM dan <code>jadwal_pemeliharaan</code> baru.</p>
 </aside>
@@ -2456,6 +2466,8 @@ DB (header, item, jadwal, asset_pendamping_m, asset_data, asset_trx_log)
 <p>Notifikasi (termasuk pendamping &amp; penambahan pengganti) dikirim setelah commit; kegagalan hanya dicatat log.</p>
 <h3>RISK-007 — Kapasitas penomoran (RENDAH)</h3>
 <p>999 transaksi per bulan per company (header, item, jadwal).</p>
+<h3>RISK-008 — Pengisian <code>tgl_dialokasikan = '0000-00-00'</code> ditolak bila <code>NO_ZERO_DATE</code> (SEDANG)</h3>
+<p>Nilai <code>'0000-00-00'</code> pada <code>asset_data.tgl_dialokasikan</code> (aset kembali ke gudang) ditolak MySQL/MariaDB bila <code>sql_mode</code> memuat <code>NO_ZERO_DATE</code> atau strict mode, sehingga transaksi terkait gagal. Server dev sudah dicek dan aman; periksa <code>SELECT @@sql_mode</code> di tiap environment sebelum deploy API. Status: Terbuka.</p>
 <hr />
 <div class="group-divider" id="g42"><span>Referensi Developer</span></div><h2 id="s42"><span class="sec-no">42</span>Dependency</h2>
 <div class="code"><span class="code-lang">Alur</span><pre><code class="language-text">asset_data (flag_pemeliharaan, interval, jadwal) + asset_data_item (komponen checklist)
@@ -2464,7 +2476,7 @@ Pemeliharaan PML01 (konfirmasi_jadwal → … → selesai) ──► Notifikasi 
       ↓
 asset_data (dalam_perbaikan ↔ terpakai | rusak @gudang, jadwal_pemeliharaan baru), asset_trx_log pemeliharaan_karyawan
       ↓ (hasil 4–5)
-Penambahan KRY-03-1 (unit pengganti) · PML02 / PML04 (ada, belum terhubung otomatis)
+Penambahan KRY-03 (unit pengganti) · PML02 / PML04 (ada, belum terhubung otomatis)
 
 Aturan silang:
   - PML01 mengecek: pemeliharaan lain, Upgrade, Kerusakan, Retur, Offboarding
@@ -3095,8 +3107,8 @@ Authorization: Bearer &lt;access_token_admin&gt;
 3. <strong>Hasil</strong> diisi admin dari laporan vendor (API-008).
 4. <strong>Review</strong> hasil 1–3: jadwal pengembalian wajib, fase <code>menunggu_pengembalian</code>, notifikasi <code>pemeliharaan.pengembalian</code>.
 5. <strong>Terima Aset</strong> (API-015, karyawan, checklist kondisi semua komponen): <code>asset_data</code> → <code>terpakai</code>, INSERT <code>asset_trx_log</code> (gudang → karyawan), fase <code>selesai</code>, <code>tgl_diterima</code>/<code>user_diterima</code>, notifikasi <code>pemeliharaan.diterima</code>.</p>
-<p><strong>Hasil 4–5 (asset ditarik).</strong> Pada review, hasil <code>komponen_rusak_perlu_segera</code> atau <code>tidak_dapat_diperbaiki</code>: <code>asset_data</code> → <code>status_asset = rusak</code>, <code>kondisi_awal = rusak</code>, <code>ket_rusak</code> (keterangan hasil + review, maks 255), <code>status_rusak = "sudah tidak bisa di gunakan"</code>, <code>pemegang_asset = gudang</code>, <code>id_pemegang_asset = ''</code>; INSERT <code>asset_trx_log</code> (<code>kondisi_akhir = rusak</code>; posisi awal karyawan untuk hadir langsung, gudang untuk diserahkan); <code>nama_tabel_tindak_lanjut</code> = <code>asset_trx_perbaikan</code> (hasil 4) atau <code>asset_trx_disposal</code> (hasil 5), fase <code>selesai</code>, notifikasi <code>pemeliharaan.ditarik</code>. Transaksi Perbaikan atau Disposal <strong>tidak dibuat otomatis</strong>.</p>
-<p><strong>Unit pengganti (hasil 4–5, opsional).</strong> Bila <code>id_asset_pengganti</code> dikirim, review memanggil <code>AssetRequestKaryawan_m::store</code> untuk membuat <strong>Penambahan asset</strong> (KRY-03-1) bagi karyawan yang sama dalam transaksi yang sama (<code>urgensi = mendesak</code>, jadwal serah terima dari admin, <code>keterangan</code> = "Unit pengganti pemeliharaan {no_trx}"). Item PM mendapat <code>flag_unit_pengganti = 1</code> dan <code>id_trx_request_pengganti</code>; aturan Penambahan berlaku (asset harus <code>tersedia</code> @gudang) dan notifikasi <code>penambahan.dikirim</code> ikut terkirim.</p>
+<p><strong>Hasil 4–5 (asset ditarik).</strong> Pada review, hasil <code>komponen_rusak_perlu_segera</code> atau <code>tidak_dapat_diperbaiki</code>: <code>asset_data</code> → <code>status_asset = rusak</code>, <code>kondisi_awal = rusak</code>, <code>ket_rusak</code> (keterangan hasil + review, maks 255), <code>status_rusak = "sudah tidak bisa di gunakan"</code>, <code>pemegang_asset = gudang</code>, <code>id_pemegang_asset = ''</code>, <code>tgl_dialokasikan = '0000-00-00'</code>; INSERT <code>asset_trx_log</code> (<code>kondisi_akhir = rusak</code>; posisi awal karyawan untuk hadir langsung, gudang untuk diserahkan); <code>nama_tabel_tindak_lanjut</code> = <code>asset_trx_perbaikan</code> (hasil 4) atau <code>asset_trx_disposal</code> (hasil 5), fase <code>selesai</code>, notifikasi <code>pemeliharaan.ditarik</code>. Transaksi Perbaikan atau Disposal <strong>tidak dibuat otomatis</strong>.</p>
+<p><strong>Unit pengganti (hasil 4–5, opsional).</strong> Bila <code>id_asset_pengganti</code> dikirim, review memanggil <code>AssetRequestKaryawan_m::store</code> untuk membuat <strong>Penambahan asset</strong> (KRY-03) bagi karyawan yang sama dalam transaksi yang sama (<code>urgensi = mendesak</code>, jadwal serah terima dari admin, <code>keterangan</code> = "Unit pengganti pemeliharaan {no_trx}"). Item PM mendapat <code>flag_unit_pengganti = 1</code> dan <code>id_trx_request_pengganti</code>; aturan Penambahan berlaku (asset harus <code>tersedia</code> @gudang) dan notifikasi <code>penambahan.dikirim</code> ikut terkirim.</p>
 <p><strong>Hasil 1–2.</strong> Hasil <code>normal</code> atau <code>perlu_tindak_lanjut</code>: tanpa tanggal rencana penggantian; jadwal PM berikutnya tetap dihitung bila interval &gt; 0.</p>
 <p><strong>Interval 0.</strong> Bila <code>interval_pemeliharaan = 0</code>, <code>jadwal_pemeliharaan</code> tidak diubah dan item tidak diberi <code>tgl_pemeliharaan_selanjutnya</code>.</p>
 <hr />
@@ -3437,7 +3449,7 @@ Authorization: Bearer &lt;access_token_admin&gt;
 <td>–</td>
 <td>UPDATE</td>
 <td>INSERT</td>
-<td>Request KRY-03-1 (opsional)</td>
+<td>Request KRY-03 (opsional)</td>
 </tr>
 <tr>
 <td>Terima</td>
@@ -3499,6 +3511,11 @@ Authorization: Bearer &lt;access_token_admin&gt;
 </thead>
 <tbody>
 <tr>
+<td>1.4</td>
+<td>2026-11-05</td>
+<td>Kolom baru <code>asset_data.tgl_dialokasikan</code> (date, NULL) pada PML01: review hasil 4 atau 5 yang menarik aset ke gudang mengisinya <code>'0000-00-00'</code>. Hasil 1 sampai 3 tidak mengubah pemegang sehingga tidak mengubah kolom ini. Menambah penyebutan di §21, §22, §45.4, dan RISK-008. Tidak ada perubahan endpoint, payload, response, atau mobile.</td>
+</tr>
+<tr>
 <td>1.3</td>
 <td>2026-10-22</td>
 <td>Menambah §45.4 <em>Walkthrough Lengkap dengan Contoh Data</em> (negosiasi jadwal, atur pelaksanaan hadir langsung, checklist hasil 5 tingkat, review dan jadwal PM berikutnya; variasi diserahkan ke admin, asset ditarik, unit pengganti; kasus gagal). Sinkronisasi kode: tabel log ternyata <code>asset_trx_log</code> (<code>id_asset_trx_log</code>), bukan <code>asset_log</code>; <strong>PIC Pendamping kini ditentukan otomatis</strong> oleh API (pemegang asset untuk hadir langsung, admin pengatur untuk diserahkan) dan <code>id_pic_pendamping</code> pada request diabaikan; mobile mengisinya dengan pemegang asset.</td>
@@ -3522,7 +3539,7 @@ Authorization: Bearer &lt;access_token_admin&gt;
 </table></div>
     </article>
 
-    <footer>Dokumentasi Pemeliharaan Terjadwal Asset v1.0 · 28 September 2026 · Disusun dari source lokal API (Lumen) &amp; MOBILE (Flutter). Contoh ID dan nama pada payload adalah data sintetis.</footer>
+    <footer>Dokumentasi Pemeliharaan Terjadwal Asset v1.4 · 5 November 2026 · Disusun dari source lokal API (Lumen) &amp; MOBILE (Flutter). Contoh ID dan nama pada payload adalah data sintetis.</footer>
   </main>
 </div>
 <button class="to-top" id="to-top" type="button" aria-label="Kembali ke atas">↑</button>

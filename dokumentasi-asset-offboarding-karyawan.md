@@ -18,8 +18,8 @@
 | Mobile | Flutter (`professional_flutter_3_35`), `flutter_bloc`, `dio` |
 | Web | ⚠️ Belum ditemukan: tidak ada source web di workspace |
 | Test otomatis | `API/tests/Asset/AssetOffboardingModelTest.php`, `AssetOffboardingRouteTest.php`, `OffboardingStatusMigrationTest.php`, `OffboardingLegacyStatusMigrationTest.php` |
-| Versi Dokumen | 1.6 |
-| Tanggal Dokumentasi | 2026-10-22 |
+| Versi Dokumen | 1.7 |
+| Tanggal Dokumentasi | 2026-11-05 |
 | Dokumen terkait | Onboarding (KRY01), Request/Penambahan, Retur (KRY04), Peminjaman (KRY05), Kerusakan (KRY06), Upgrade (KRY03) |
 
 ---
@@ -544,7 +544,7 @@ Header `pengajuan`/`dikonfirmasi` → update jadwal, status `pengajuan`, kosongk
 Karyawan aktif → header miliknya `pengajuan` → `assertCurrentHoldings` → semua item diisi → update item → `confirmLoanReturnChildren` → header `dikonfirmasi` (approval = karyawan) → notifikasi `offboarding.dikonfirmasi`.
 
 ### 21.6 Terima admin — `receive`
-Admin → header `dikonfirmasi` → `assertCurrentHoldings` → semua item normal/rusak → `resolveItemLocations` (lokasi gudang per item, v1.2) → lock asset → per item non-pinjaman: update asset (gudang, `id_asset_lokasi_m` sesuai pilihan, tersedia/rusak, `ket_rusak`) + log `offboarding_karyawan` → `finalizeLoanReturnChildren` (validasi child `dikonfirmasi`, status item cocok, update asset + log `pengembalian_karyawan`, child `selesai` + `tgl/jam_serah_terima = now`) → insert log → header `selesai` → `completeLoanSources` (peminjaman asal `aktif → selesai` bila tak ada asset tersisa) → notifikasi `offboarding.diterima`.
+Admin → header `dikonfirmasi` → `assertCurrentHoldings` → semua item normal/rusak → `resolveItemLocations` (lokasi gudang per item, v1.2) → lock asset → per item non-pinjaman: update asset (gudang, `id_asset_lokasi_m` sesuai pilihan, tersedia/rusak, `ket_rusak`, `tgl_dialokasikan = '0000-00-00'`) + log `offboarding_karyawan` → `finalizeLoanReturnChildren` (validasi child `dikonfirmasi`, status item cocok, update asset + log `pengembalian_karyawan`, child `selesai` + `tgl/jam_serah_terima = now`) → insert log → header `selesai` → `completeLoanSources` (peminjaman asal `aktif → selesai` bila tak ada asset tersisa) → notifikasi `offboarding.diterima`.
 
 ### 21.7 Query baca
 - **Opsi**: karyawan aktif yang memegang asset dan tanpa off boarding aktif.
@@ -565,6 +565,9 @@ Admin → header `dikonfirmasi` → `assertCurrentHoldings` → semua item norma
 | id_asset_lokasi_m | (kosong / lokasi lama) | lokasi gudang pilihan admin untuk asset itu (v1.2) | Terima |
 | ket_rusak | – | keterangan karyawan / '' | Terima |
 | tgl_update / user_update | – | now / admin | Terima |
+| tgl_dialokasikan | tanggal alokasi / NULL | '0000-00-00' | Terima (asset tetap dan pinjaman) |
+
+> `tgl_dialokasikan` (date, NULL) ditulis API setiap `pemegang_asset` berubah: masuk dari gudang ke karyawan = tanggal konfirmasi (Y-m-d); kembali ke gudang = `'0000-00-00'` (sengaja bukan NULL). Aset yang belum pernah dialokasikan, atau dipegang sebelum fitur ini dan belum di-backfill, bernilai NULL. Tidak ada endpoint, payload, atau layar mobile yang membaca kolom ini. Detail operasional dan backfill: lihat dokumen Onboarding Karyawan (KRY01), RISK-012. Pada off boarding hanya sisi kembali ke gudang yang relevan: semua aset (termasuk pinjaman lewat pengembalian turunan) di-reset menjadi `'0000-00-00'`.
 
 > Selama off boarding aktif, asset **tidak** berubah status; perlindungan dari flow lain dilakukan lewat `hasActiveOffboardingAsset`.
 
@@ -771,7 +774,7 @@ Body (v1.2): lokasi gudang dipilih **per asset**.
 
 Pesan umum validasi: "Data penerimaan offboarding belum lengkap." Setiap item offboarding wajib muncul tepat satu kali, dan lokasi harus bertipe `gudang` pada company yang sama. Database impact:
 ```text
-UPDATE asset_data (gudang, id_asset_lokasi_m, tersedia/rusak, ket_rusak)
+UPDATE asset_data (gudang, id_asset_lokasi_m, tersedia/rusak, ket_rusak, tgl_dialokasikan = '0000-00-00')
 UPDATE asset_trx_offboarding_karyawan_item (id_asset_lokasi_m_tujuan)
 INSERT asset_trx_log (offboarding_karyawan / pengembalian_karyawan)
 UPDATE asset_trx_peminjaman_karyawan child → selesai; peminjaman asal → selesai
@@ -912,7 +915,7 @@ Panel **Off Boarding Perlu Diproses** (`summary.offboarding_pending`) dengan tom
 | (otomatis) | – | `employeeAssets` + `sourceForAsset` | item | id_asset_data, snapshot, jenis_transaksi, sumber |
 | Kondisi | `items[].status_item` | `confirm()` | item / child item / asset_data | status_item / status_item (disetujui/ditolak) / status_asset |
 | Keterangan Kerusakan | `items[].ket_rusak` | trim | item / child item / asset_data | ket_rusak / ket_tolak / ket_rusak |
-| Terima Penyerahan Asset + Lokasi Tujuan Asset | `items[].id_asset_lokasi_m` | `receive()` + `resolveItemLocations()` | asset_data, item, asset_trx_log, header, child | status, pemegang, id_asset_lokasi_m, id_asset_lokasi_m_tujuan, log, selesai |
+| Terima Penyerahan Asset + Lokasi Tujuan Asset | `items[].id_asset_lokasi_m` | `receive()` + `resolveItemLocations()` | asset_data, item, asset_trx_log, header, child | status, pemegang, tgl_dialokasikan, id_asset_lokasi_m, id_asset_lokasi_m_tujuan, log, selesai |
 
 ---
 
@@ -1160,6 +1163,9 @@ Dikirim setelah commit; kegagalan tidak membatalkan transaksi.
 
 ### RISK-009 — Lokasi gudang belum tersedia (SEDANG)
 Terima Penyerahan mewajibkan lokasi bertipe `gudang` dari `asset_lokasi_m`. Tabel ini hanya terdokumentasi di DBML (tidak ada migration pembuatnya di repo); bila tabel kosong, off boarding tidak dapat diselesaikan. Kolom header `asset_trx_offboarding_karyawan.id_asset_lokasi_m_tujuan` (v1.2 awal) kini tidak dipakai dan dapat dihapus.
+
+### RISK-010 — Pengisian `tgl_dialokasikan = '0000-00-00'` ditolak bila `NO_ZERO_DATE` (SEDANG)
+Nilai `'0000-00-00'` pada `asset_data.tgl_dialokasikan` (aset kembali ke gudang) ditolak MySQL/MariaDB bila `sql_mode` memuat `NO_ZERO_DATE` atau strict mode, sehingga transaksi terkait gagal. Server dev sudah dicek dan aman; periksa `SELECT @@sql_mode` di tiap environment sebelum deploy API. Status: Terbuka.
 
 ---
 
@@ -1530,8 +1536,8 @@ POST /asset/offboarding-karyawan/CMP001202610001/terima
 1. `lockCompany`; `requireAdmin`; header harus `dikonfirmasi` ("Offboarding belum dikonfirmasi karyawan.").
 2. `assertCurrentHoldings` lagi; semua item harus `normal`/`rusak` ("Kondisi asset belum dikonfirmasi karyawan.").
 3. `resolveItemLocations`: lokasi tiap item bertipe `gudang`, company yang sama, satu kali per item.
-4. Asset dikunci. **Asset tetap** (laptop): harus masih dipegang Budi; UPDATE `asset_data` → `gudang`, `id_pemegang_asset = ''`, `id_asset_lokasi_m` pilihan admin, `tersedia` (normal) atau `rusak` + `ket_rusak`; siapkan log `offboarding_karyawan`.
-5. `finalizeLoanReturnChildren` untuk **asset pinjaman**: header turunan harus `dikonfirmasi` dan item cocok dengan kondisi; UPDATE `asset_data` (proyektor → `rusak`, `gudang`, lokasi, `ket_rusak`), siapkan log `pengembalian_karyawan`; header turunan → `selesai` dengan `tgl_serah_terima`/`jam_serah_terima` = sekarang.
+4. Asset dikunci. **Asset tetap** (laptop): harus masih dipegang Budi; UPDATE `asset_data` → `gudang`, `id_pemegang_asset = ''`, `tgl_dialokasikan = '0000-00-00'`, `id_asset_lokasi_m` pilihan admin, `tersedia` (normal) atau `rusak` + `ket_rusak`; siapkan log `offboarding_karyawan`.
+5. `finalizeLoanReturnChildren` untuk **asset pinjaman**: header turunan harus `dikonfirmasi` dan item cocok dengan kondisi; UPDATE `asset_data` (proyektor → `rusak`, `gudang`, `tgl_dialokasikan = '0000-00-00'`, lokasi, `ket_rusak`), siapkan log `pengembalian_karyawan`; header turunan → `selesai` dengan `tgl_serah_terima`/`jam_serah_terima` = sekarang.
 6. UPDATE item offboarding `id_asset_lokasi_m_tujuan`; INSERT `asset_trx_log`; header offboarding → `selesai`.
 7. `completeLoanSources`: peminjaman asal `aktif → selesai` bila tidak ada lagi asset pinjaman yang dipegang karyawan.
 8. Notifikasi `offboarding.diterima` ke karyawan.
@@ -1540,8 +1546,8 @@ POST /asset/offboarding-karyawan/CMP001202610001/terima
 
 | Tabel | Perubahan |
 |---|---|
-| asset_data A20 (laptop) | status_asset `terpakai → tersedia`; pemegang_asset `karyawan → gudang`; id_pemegang_asset `KRY0007 → ''`; id_asset_lokasi_m `NULL → CMP001202601001`; ket_rusak `''`; user_update = ADM-001 - Siti Admin |
-| asset_data A21 (proyektor) | status_asset `dipinjam → rusak`; pemegang_asset `karyawan → gudang`; id_pemegang_asset `KRY0007 → ''`; id_asset_lokasi_m `NULL → CMP001202601002`; ket_rusak = Lensa retak |
+| asset_data A20 (laptop) | status_asset `terpakai → tersedia`; pemegang_asset `karyawan → gudang`; id_pemegang_asset `KRY0007 → ''`; tgl_dialokasikan → `0000-00-00`; id_asset_lokasi_m `NULL → CMP001202601001`; ket_rusak `''`; user_update = ADM-001 - Siti Admin |
+| asset_data A21 (proyektor) | status_asset `dipinjam → rusak`; pemegang_asset `karyawan → gudang`; id_pemegang_asset `KRY0007 → ''`; tgl_dialokasikan → `0000-00-00`; id_asset_lokasi_m `NULL → CMP001202601002`; ket_rusak = Lensa retak |
 | item offboarding `…001` / `…002` | id_asset_lokasi_m_tujuan = CMP001202601001 / CMP001202601002 |
 | header pengembalian turunan `…001` | status `dikonfirmasi → selesai`; tgl_serah_terima 2026-10-30; jam_serah_terima 09:30:00; user_approval/user_update = ADM-001 - Siti Admin |
 | header offboarding | status_approval `dikonfirmasi → selesai`; tgl_update 2026-10-30 09:30:00; user_update = ADM-001 - Siti Admin (user_approval tetap karyawan) |
@@ -1682,6 +1688,7 @@ Semua pelanggaran aturan dilempar sebagai `InvalidArgumentException` di dalam `D
 
 | Version | Date | Changes |
 |---|---|---|
+| 1.7 | 2026-11-05 | Kolom baru `asset_data.tgl_dialokasikan` (date, NULL): Terima Penyerahan (`receive`) dan pengembalian turunan untuk aset pinjaman (`finalizeLoanReturnChildren`) mengisinya `'0000-00-00'` saat aset kembali ke gudang. Menambah penyebutan di §21, §22, mapping, walkthrough §45.4, dan RISK-010. Tidak ada perubahan endpoint, payload, response, atau mobile. |
 | 1.6 | 2026-10-22 | Menambah §45.4 *Walkthrough Lengkap dengan Contoh Data* (draft, submit dengan pengembalian turunan untuk asset pinjaman, konfirmasi karyawan, Terima Penyerahan dengan gudang per asset; variasi ubah jadwal, tanpa asset pinjaman, hapus draft; kasus gagal). Sinkronisasi kode: tabel log ternyata `asset_trx_log` (`id_asset_trx_log`), bukan `asset_log`; ID item dipakai ulang saat draft dikirim karena item lama dihapus sebelum penomoran. |
 | 1.5 | 2026-10-20 | Detail off boarding: kartu Data Karyawan kini menampilkan Jabatan, Cabang, Departemen (label Divisi diganti Departemen). API: `nama_jabatan` ditambahkan di `getDetail` (sejajar `nama_cabang`/`nama_divisi`; leftJoin `master_jabatan`, tanpa SQL/migrasi); mobile: field `jabatan` di `AssetOffboardingRecord`; tes `AssetOffboardingModelTest` meng-assert `nama_jabatan`. |
 | 1.4 | 2026-10-12 | Mobile: stepper alur status (`AssetAlurStepper.offboarding`) dan kartu timeline vertikal per aset (`AssetOffboardingTimelineCards`) di detail off boarding (§26.3). Teks langkah di grup JSON `alur`. Tidak ada perubahan API. |

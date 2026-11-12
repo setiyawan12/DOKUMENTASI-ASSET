@@ -195,7 +195,7 @@ footer{margin-top:64px;padding-top:18px;border-top:1px solid var(--line);color:v
       </div>
       <div class="tag" aria-label="Identitas dokumen">
         <dl>
-          <dt>Kode</dt><dd>ALK-RGN04</dd><dt>Modul</dt><dd>Ruangan</dd><dt>Versi</dt><dd>1.3 · 3 Nov 2026</dd><dt>Stack</dt><dd>Lumen 10 · Flutter</dd><dt>API</dt><dd>14 endpoint</dd>
+          <dt>Kode</dt><dd>ALK-RGN04</dd><dt>Modul</dt><dd>Ruangan</dd><dt>Versi</dt><dd>1.4 · 5 Nov 2026</dd><dt>Stack</dt><dd>Lumen 10 · Flutter</dd><dt>API</dt><dd>14 endpoint</dd>
         </dl>
         <div class="barcode" aria-hidden="true"></div>
         <div class="trx">RGN04-YYYYMMNNN</div>
@@ -212,7 +212,7 @@ footer{margin-top:64px;padding-top:18px;border-top:1px solid var(--line);color:v
         <h3>Ringkasan dalam 1 menit: penambahan aset ruangan</h3>
         <p class="sub">Menambah aset gudang ke ruangan aktif secara terdokumentasi, dengan keputusan Admin/HR dan penerimaan fisik oleh PIC.</p>
         <div class="three">
-          <div class="fact"><b>Satu tabel, dua jalur</b><p><code>sumber_pengajuan</code> membedakan pengajuan PIC (<code>karyawan</code>) dan inisiasi Admin (<code>admin</code>), sama seperti request karyawan KRY-03-1.</p></div>
+          <div class="fact"><b>Satu tabel, dua jalur</b><p><code>sumber_pengajuan</code> membedakan pengajuan PIC (<code>karyawan</code>) dan inisiasi Admin (<code>admin</code>), sama seperti request karyawan KRY-03.</p></div>
           <div class="fact"><b>Keputusan tercatat</b><p>Pengajuan ditolak wajib beralasan. Disetujui berarti Admin memilih aset gudang dan jadwal; aset langsung <code>proses</code>.</p></div>
           <div class="fact"><b>Aset rusak wajib diganti</b><p>Proses tidak selesai selama ada aset rusak. Pengganti dari gudang, serah terima diulang pada ronde berikutnya (<code>parent_id</code> = baris rusak).</p></div>
         </div>
@@ -299,18 +299,18 @@ footer{margin-top:64px;padding-top:18px;border-top:1px solid var(--line);color:v
 </tr>
 <tr>
 <td>Versi dokumen</td>
-<td>1.3 — 3 November 2026</td>
+<td>1.4 — 5 November 2026</td>
 </tr>
 <tr>
 <td>Dokumen terkait</td>
-<td>Onboarding Ruangan (ALK-RGN01), Request &amp; Penambahan Karyawan (KRY-03-1), Master Lokasi &amp; PIC Ruangan</td>
+<td>Onboarding Ruangan (ALK-RGN01), Request &amp; Penambahan Karyawan (KRY-03), Master Lokasi &amp; PIC Ruangan</td>
 </tr>
 </tbody>
 </table></div>
 <h2 id="s2"><span class="sec-no">02</span>Daftar Isi</h2>
 <p>Lihat panel navigasi di samping.</p>
 <h2 id="s3"><span class="sec-no">03</span>Quick Overview</h2>
-<p>Ruangan yang sudah beroperasi bisa <strong>ditambah aset</strong> lewat dua jalur dalam <strong>satu tabel</strong> (<code>asset_trx_request_ruangan</code>), dibedakan kolom <code>sumber_pengajuan</code> seperti request karyawan KRY-03-1. Pada <strong>Jalur A</strong> PIC Ruangan mengajukan (jenis aset berupa teks bebas, alasan); Admin/HR menyetujui dengan memilih aset gudang dan jadwal, atau menolak dengan alasan. Pada <strong>Jalur B</strong> Admin/HR langsung memilih aset dan jadwal tanpa persetujuan. Setelah dijadwalkan, alurnya sama dengan RGN01: aset gudang <code>tersedia</code> → <code>proses</code>, PIC menilai <strong>setiap aset Normal atau Rusak</strong>, Admin/HR mereview lalu <strong>mengonfirmasi</strong> (aset menjadi <code>terpakai</code> di ruangan) atau <strong>menjadwalkan pengganti</strong> untuk aset rusak (ronde berikutnya) sampai semua normal.</p>
+<p>Ruangan yang sudah beroperasi bisa <strong>ditambah aset</strong> lewat dua jalur dalam <strong>satu tabel</strong> (<code>asset_trx_request_ruangan</code>), dibedakan kolom <code>sumber_pengajuan</code> seperti request karyawan KRY-03. Pada <strong>Jalur A</strong> PIC Ruangan mengajukan (jenis aset berupa teks bebas, alasan); Admin/HR menyetujui dengan memilih aset gudang dan jadwal, atau menolak dengan alasan. Pada <strong>Jalur B</strong> Admin/HR langsung memilih aset dan jadwal tanpa persetujuan. Setelah dijadwalkan, alurnya sama dengan RGN01: aset gudang <code>tersedia</code> → <code>proses</code>, PIC menilai <strong>setiap aset Normal atau Rusak</strong>, Admin/HR mereview lalu <strong>mengonfirmasi</strong> (aset menjadi <code>terpakai</code> di ruangan) atau <strong>menjadwalkan pengganti</strong> untuk aset rusak (ronde berikutnya) sampai semua normal.</p>
 <div class="table-wrap"><table>
 <thead>
 <tr>
@@ -333,7 +333,7 @@ footer{margin-top:64px;padding-top:18px;border-top:1px solid var(--line);color:v
 </tr>
 <tr>
 <td>Status header</td>
-<td><code>status_approval</code>: <code>proses</code> → <code>dikonfirmasi</code> atau <code>ditolak</code> (enum <code>status_request_karyawan</code>, sama dengan KRY-03-1)</td>
+<td><code>status_approval</code>: <code>proses</code> → <code>dikonfirmasi</code> atau <code>ditolak</code> (enum <code>status_request_karyawan</code>, sama dengan KRY-03)</td>
 </tr>
 <tr>
 <td>Status asset</td>
@@ -942,7 +942,7 @@ footer{margin-top:64px;padding-top:18px;border-top:1px solid var(--line);color:v
 <li><strong><code>updateJadwal</code></strong>: fase <code>menunggu_serah_terima</code>; tambah baris jadwal; perbarui jadwal terkini header.</li>
 <li><strong><code>terima</code></strong> (PIC): fase <code>menunggu_serah_terima</code>; semua item ronde harus dicek; isi <code>status_item</code>/<code>ket_rusak</code>; isi <code>tgl_terima_pic</code> pada jadwal terakhir. Status aset <strong>tidak berubah</strong> di sini.</li>
 <li><strong><code>jadwalkanPengganti</code></strong>: fase <code>menunggu_review</code>; semua aset rusak ronde ini wajib punya pengganti unik; aset rusak → <code>rusak</code>, <code>id_pemegang_asset=''</code>; pengganti → <code>proses</code>; item ronde + 1 dengan <code>parent_id</code>; jadwal baru.</li>
-<li><strong><code>konfirmasi</code></strong>: fase <code>menunggu_review</code> dan tidak ada aset rusak aktif; aset aktif (belum digantikan) → <code>terpakai</code>, <code>pemegang_asset='ruangan'</code>, <code>id_pemegang_asset</code> dan <code>id_asset_lokasi_m</code> = ruangan; <code>asset_trx_log</code> jenis <code>penambahan_ruangan</code>; header <code>dikonfirmasi</code>.</li>
+<li><strong><code>konfirmasi</code></strong>: fase <code>menunggu_review</code> dan tidak ada aset rusak aktif; aset aktif (belum digantikan) → <code>terpakai</code>, <code>pemegang_asset='ruangan'</code>, <code>id_pemegang_asset</code> dan <code>id_asset_lokasi_m</code> = ruangan, <code>tgl_dialokasikan</code> = tanggal konfirmasi; <code>asset_trx_log</code> jenis <code>penambahan_ruangan</code>; header <code>dikonfirmasi</code>.</li>
 </ul>
 <h2 id="s22"><span class="sec-no">22</span>Dampak terhadap asset_data</h2>
 <div class="table-wrap"><table>
@@ -991,8 +991,17 @@ footer{margin-top:64px;padding-top:18px;border-top:1px solid var(--line);color:v
 <td></td>
 <td>Belum ada aset terkunci</td>
 </tr>
+<tr>
+<td>Konfirmasi (kolom <code>tgl_dialokasikan</code>)</td>
+<td>–</td>
+<td><code>gudang</code> → <code>ruangan</code></td>
+<td><code>tgl_dialokasikan</code> = tanggal konfirmasi Admin (Y-m-d)</td>
+</tr>
 </tbody>
 </table></div>
+<aside class="callout callout-note">
+<p><code>tgl_dialokasikan</code> (date, NULL) ditulis API setiap <code>pemegang_asset</code> berubah: masuk dari gudang ke ruangan = tanggal konfirmasi (Y-m-d); kembali ke gudang = <code>'0000-00-00'</code> (sengaja bukan NULL). Aset yang belum pernah dialokasikan, atau dipegang sebelum fitur ini dan belum di-backfill, bernilai NULL. Tidak ada endpoint, payload, atau layar mobile yang membaca kolom ini. Detail operasional dan backfill: lihat dokumen Onboarding Karyawan (KRY01), RISK-012.</p>
+</aside>
 <h2 id="s23"><span class="sec-no">23</span>API Documentation</h2>
 <p>Base <code>asset/</code>. Semua memakai JWT dan envelope <code>ApiResponse</code>.</p>
 <div class="table-wrap"><table>
@@ -1931,7 +1940,7 @@ footer{margin-top:64px;padding-top:18px;border-top:1px solid var(--line);color:v
 <tr>
 <td>RISK-006</td>
 <td>RENDAH</td>
-<td><code>sumber_pengajuan='karyawan'</code> dipakai untuk PIC (enum dipakai bersama KRY-03-1).</td>
+<td><code>sumber_pengajuan='karyawan'</code> dipakai untuk PIC (enum dipakai bersama KRY-03).</td>
 <td>Dokumentasikan; ubah bila enum dipisah.</td>
 </tr>
 <tr>
@@ -1945,6 +1954,13 @@ footer{margin-top:64px;padding-top:18px;border-top:1px solid var(--line);color:v
 <td>RENDAH</td>
 <td>Aplikasi versi lama dengan API baru: kartu Pengajuan menyempit (tanpa penambahan Admin yang menunggu review) dan daftar tidak terpisah.</td>
 <td>Rilis API dan mobile bersamaan.</td>
+</tr>
+<tr>
+<td>RISK-009</td>
+<td>SEDANG</td>
+<td>Nilai <code>'0000-00-00'</code> pada <code>asset_data.tgl_dialokasikan</code> (aset kembali ke gudang) ditolak MySQL/MariaDB bila <code>sql_mode</code> memuat <code>NO_ZERO_DATE</code> atau strict mode. Pada RGN04 sendiri hanya jalur masuk (tanggal konfirmasi) yang menulis tanggal, tetapi kolom dipakai bersama modul lain.</td>
+<td>Cek <code>SELECT @@sql_mode</code> di tiap environment sebelum deploy API; server dev sudah dicek aman.</td>
+<td>Terbuka</td>
 </tr>
 </tbody>
 </table></div>
@@ -2020,7 +2036,7 @@ footer{margin-top:64px;padding-top:18px;border-top:1px solid var(--line);color:v
 </table></div>
 <h2 id="s44"><span class="sec-no">44</span>Developer Notes</h2>
 <ul>
-<li>Skema mengikuti pola KRY-03-1: satu tabel dua jalur lewat <code>sumber_pengajuan</code>, enum status dipakai bersama.</li>
+<li>Skema mengikuti pola KRY-03: satu tabel dua jalur lewat <code>sumber_pengajuan</code>, enum status dipakai bersama.</li>
 <li>Fase tidak disimpan. Bila menambah fase, ubah <code>AssetRequestRuangan_m::fase()</code> dan stepper mobile (<code>langkahAktifRuangan</code>).</li>
 <li>Aset tidak berpindah pemegang sebelum konfirmasi; PIC mengirim checklist tanpa mengubah <code>asset_data</code>.</li>
 <li><code>terimaPenambahan</code> (bukan <code>terimaRequest</code>) adalah nama metode API mobile agar tidak bentrok dengan field pada fake API di test.</li>
@@ -2587,7 +2603,7 @@ Authorization: Bearer &lt;access_token_dewi&gt;
 <tbody>
 <tr>
 <td><code>asset_data</code> AST0201, AST0203</td>
-<td>status_asset <strong>terpakai</strong>, pemegang_asset <strong>ruangan</strong>, id_pemegang_asset dan id_asset_lokasi_m = <strong>LOK0007</strong></td>
+<td>status_asset <strong>terpakai</strong>, pemegang_asset <strong>ruangan</strong>, id_pemegang_asset dan id_asset_lokasi_m = <strong>LOK0007</strong>, tgl_dialokasikan = <strong>2026-10-26</strong></td>
 </tr>
 <tr>
 <td><code>asset_data</code> AST0202</td>
@@ -2822,7 +2838,7 @@ Authorization: Bearer &lt;access_token_dewi&gt;
 </tr>
 <tr>
 <td><code>asset_data</code></td>
-<td>UPDATE <code>status_asset</code>, <code>pemegang_asset</code>, <code>id_pemegang_asset</code>, <code>id_asset_lokasi_m</code>, <code>ket_rusak</code></td>
+<td>UPDATE <code>status_asset</code>, <code>pemegang_asset</code>, <code>id_pemegang_asset</code>, <code>id_asset_lokasi_m</code>, <code>ket_rusak</code>, <code>tgl_dialokasikan</code></td>
 </tr>
 <tr>
 <td><code>asset_trx_log</code></td>
@@ -2881,11 +2897,16 @@ Authorization: Bearer &lt;access_token_dewi&gt;
 <td>3 Nov 2026</td>
 <td>Daftar admin request ruangan dipisah per sumber seperti karyawan: menu <strong>Pengajuan</strong> (pengajuan PIC, <code>sumber=karyawan</code>, 3 tab, tanpa Tambah) dan <strong>Penambahan</strong> (langsung Admin/HR, <code>sumber=admin</code>, 2 tab, dengan Tambah); parameter <code>sumber</code> pada API-02; kartu beranda dipecah menjadi Pengajuan dan Penambahan dengan kunci ringkasan <code>ruangan_penambahan_*</code> dan badge gabungan; skenario uji TC-19 sampai TC-21 dan RISK-008. Tanpa perubahan skema. Memperbarui §1, §3, §10, §11, §23, §24, §26, §28, §36, §38, §41, §45.4, §47.</td>
 </tr>
+<tr>
+<td>1.4</td>
+<td>5 Nov 2026</td>
+<td>Kolom baru <code>asset_data.tgl_dialokasikan</code> (date, NULL): konfirmasi Admin (<code>AssetRequestRuangan_m::konfirmasi</code>, kedua jalur) mengisinya dengan tanggal konfirmasi saat aset masuk ke ruangan. Menambah penyebutan di §21, §22, walkthrough §45.4, dan RISK-009. Tidak ada perubahan endpoint, payload, response, atau mobile.</td>
+</tr>
 </tbody>
 </table></div>
     </article>
 
-    <footer>Dokumentasi Penambahan Asset ke Ruangan Aktif (ALK-RGN04) v1.0 · 14 Oktober 2026 · Disusun dari source lokal API (Lumen) &amp; MOBILE (Flutter). Contoh ID dan nama pada payload adalah data sintetis.</footer>
+    <footer>Dokumentasi Penambahan Asset ke Ruangan Aktif (ALK-RGN04) v1.4 · 5 November 2026 · Disusun dari source lokal API (Lumen) &amp; MOBILE (Flutter). Contoh ID dan nama pada payload adalah data sintetis.</footer>
   </main>
 </div>
 <button class="to-top" id="to-top" type="button" aria-label="Kembali ke atas">↑</button>

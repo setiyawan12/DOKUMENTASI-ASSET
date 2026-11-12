@@ -18,7 +18,7 @@
 | Mobile | Flutter (`professional_flutter_3_35`), `flutter_bloc`, `dio`, `dotted_border` |
 | Web | ⚠️ Belum ditemukan: tidak ada source web di workspace |
 | Test otomatis | API `tests/Asset/AssetAdminRuanganTest.php` (14 test) + `tests/Asset/AssetLokasiPicTest.php` (7 test) · Mobile `test/asset/asset_admin_ruangan_test.dart` (9 test) + `test/asset/asset_pic_ruangan_test.dart` (9 test) + `test/asset/asset_admin_ruangan_pending_test.dart` (11 test) |
-| Versi dokumen | 1.2 — 3 November 2026 |
+| Versi dokumen | 1.3 — 5 November 2026 |
 | Dokumen terkait | Onboarding Karyawan (KRY01), Master Lokasi & PIC Ruangan |
 
 ## 2. Daftar Isi
@@ -333,6 +333,9 @@ Dipanggil `AssetAdmin_m::getSummary` satu kali per request. Mengambil onboarding
 | Aset dinilai rusak lalu diganti | `proses` → `rusak` | `gudang` | tetap |
 | Pengganti dijadwalkan | `tersedia` → `proses` | `gudang` | tetap |
 | Konfirmasi selesai | `proses` → `terpakai` | `ruangan` (`id_pemegang_asset` = id ruangan) | `id_asset_lokasi_m` = ruangan |
+| Konfirmasi selesai (kolom `tgl_dialokasikan`) | – | `gudang` → `ruangan` | `tgl_dialokasikan` = tanggal konfirmasi Admin/HR (Y-m-d) |
+
+> `tgl_dialokasikan` (date, NULL) ditulis API setiap `pemegang_asset` berubah: masuk dari gudang ke ruangan = tanggal konfirmasi (Y-m-d); kembali ke gudang = `'0000-00-00'` (sengaja bukan NULL). Aset yang belum pernah dialokasikan, atau dipegang sebelum fitur ini dan belum di-backfill, bernilai NULL. Tidak ada endpoint, payload, atau layar mobile yang membaca kolom ini. Detail operasional dan backfill: lihat dokumen Onboarding Karyawan (KRY01), RISK-012.
 
 ## 23. API Documentation
 
@@ -590,6 +593,9 @@ PIC yang dipilih manual menjadi master. Mengganti PIC ruangan hanya lewat data m
 
 ### RISK-006 — Belum diuji di perangkat (SEDANG)
 Test memakai database tiruan dan widget test; belum diverifikasi di emulator/server nyata, termasuk push notifikasi.
+
+### RISK-007 — Pengisian `tgl_dialokasikan = '0000-00-00'` ditolak bila `NO_ZERO_DATE` (SEDANG)
+Nilai `'0000-00-00'` pada `asset_data.tgl_dialokasikan` (aset kembali ke gudang) ditolak MySQL/MariaDB bila `sql_mode` memuat `NO_ZERO_DATE` atau strict mode, sehingga transaksi terkait gagal. Server dev sudah dicek dan aman; periksa `SELECT @@sql_mode` di tiap environment sebelum deploy API. Status: Terbuka. Konvensi tabel transaksi ruangan memakai NULL untuk tanggal kosong, tetapi kolom ini sengaja memakai `'0000-00-00'` (keputusan pemilik produk).
 
 ## 42. Dependency
 
@@ -956,7 +962,7 @@ POST /asset/onboarding-ruangan/CMP001202610001/konfirmasi
 3. Tidak boleh ada aset rusak pada ronde berjalan ("Masih ada asset rusak. Jadwalkan penggantian sebelum menyelesaikan alokasi.").
 4. `asetAktif`: semua baris item yang **belum digantikan** → Laptop (AST0101) dan Monitor Samsung (AST0103). Monitor LG (AST0102) tidak ikut.
 5. Aset aktif dikunci `FOR UPDATE`; semuanya harus `proses` dan `gudang` ("Satu atau beberapa asset tidak dapat diserahkan ke ruangan.").
-6. UPDATE `asset_data` → `terpakai`, `pemegang_asset = ruangan`, `id_pemegang_asset` dan `id_asset_lokasi_m` = `LOK0007`.
+6. UPDATE `asset_data` → `terpakai`, `pemegang_asset = ruangan`, `id_pemegang_asset` dan `id_asset_lokasi_m` = `LOK0007`, `tgl_dialokasikan = 2026-10-26` (tanggal konfirmasi).
 7. INSERT satu `asset_trx_log` per aset (`insertAssetLog`).
 8. UPDATE header → `dikonfirmasi`.
 9. Controller mengirim `onboarding_ruangan.selesai` ke PIC.
@@ -970,6 +976,7 @@ POST /asset/onboarding-ruangan/CMP001202610001/konfirmasi
 | AST0101, AST0103 | status_asset | proses | **terpakai** |
 | | pemegang_asset | gudang | **ruangan** |
 | | id_pemegang_asset | `''` | **LOK0007** |
+| | tgl_dialokasikan | NULL | **2026-10-26** |
 | | id_asset_lokasi_m | LOK0001 | **LOK0007** |
 | AST0102 | status_asset | rusak | rusak (tidak berubah, tetap di gudang) |
 
@@ -1083,3 +1090,4 @@ Tabel baru `asset_trx_onboarding_ruangan_jadwal`; kolom `asset_lokasi_m.status_a
 | 1.0 | 13 Okt 2026 | Dokumen awal ALK-RGN01 (sisi PIC Ruangan dan Admin/HR) |
 | 1.1 | 22 Okt 2026 | Menambah §45.4 walkthrough lengkap (mobile → payload → proses API → hasil database); koreksi nama master PIC menjadi `asset_lokasi_pic_m` / `id_asset_lokasi_pic_m` / `AssetLokasiPic_m`; log aset ditulis ke `asset_trx_log`. |
 | 1.2 | 3 Nov 2026 | Kartu Onboarding Ruangan Perlu Diproses di beranda admin (kunci ringkasan `ruangan_onboarding_perlu_proses` / `ruangan_onboarding_pending`; §21.7, §26.6, §28); pemilih tanggal Cupertino dan dialog konfirmasi bersama (§26.4, §26.5, §36); skenario uji T-11 sampai T-13. Tidak ada perubahan skema atau endpoint. |
+| 1.3 | 5 Nov 2026 | Kolom baru `asset_data.tgl_dialokasikan` (date, NULL): konfirmasi Admin/HR (`AssetAdminRuangan_m::konfirmasi`) mengisinya dengan tanggal konfirmasi saat aset masuk ke ruangan. Menambah penyebutan di §22, walkthrough §45.4, dan RISK-007. Tidak ada perubahan endpoint, payload, response, atau mobile. |

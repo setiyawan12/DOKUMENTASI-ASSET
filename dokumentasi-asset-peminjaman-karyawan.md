@@ -17,8 +17,8 @@
 | Database | Struktur mengacu `API/diagram-asset.dbml` + migrations. ⚠️ Asumsi: MySQL/MariaDB |
 | Mobile | Flutter (package `professional_flutter_3_35`), `flutter_bloc`, `dio` |
 | Web | ⚠️ Belum ditemukan: tidak ada source web di workspace |
-| Versi Dokumen | 1.6 |
-| Tanggal Dokumentasi | 2026-10-27 |
+| Versi Dokumen | 1.7 |
+| Tanggal Dokumentasi | 2026-11-05 |
 | Dokumen terkait | Onboarding, Request/Penambahan (helper & pola bersama), Offboarding (mengembalikan pinjaman saat karyawan keluar) |
 
 ---
@@ -563,7 +563,7 @@ Semua JOIN mencocokkan `id_company`. `id_peminjaman_asal` memiliki `ref` di DBML
 | id_company, tgl_input, user_input | – | – | – | IDX | – |
 
 ### 18.3 asset_data (field yang dipakai)
-`status_asset` (tersedia → proses → dipinjam → tersedia/rusak), `pemegang_asset` (gudang ↔ karyawan), `id_pemegang_asset`, `id_asset_lokasi_m` (lokasi gudang; dikosongkan saat dipinjam, diisi saat kembali), `ket_rusak` (diisi saat kembali rusak), `kondisi_awal` (disalin ke log), `nama_asset`, `kode_asset`, `merek`, `deskripsi`, `tgl_update`, `user_update`.
+`status_asset` (tersedia → proses → dipinjam → tersedia/rusak), `pemegang_asset` (gudang ↔ karyawan), `id_pemegang_asset`, `tgl_dialokasikan` (tanggal Terima Asset; `'0000-00-00'` saat kembali ke gudang), `id_asset_lokasi_m` (lokasi gudang; dikosongkan saat dipinjam, diisi saat kembali), `ket_rusak` (diisi saat kembali rusak), `kondisi_awal` (disalin ke log), `nama_asset`, `kode_asset`, `merek`, `deskripsi`, `tgl_update`, `user_update`.
 
 ### 18.4 asset_trx_log
 | Event | jenis_log | kondisi_awal → kondisi_akhir | posisi_awal → akhir | pemegang |
@@ -619,7 +619,7 @@ Lock → karyawan aktif → `getLockedAssets` (tersedia + gudang) → tidak akti
 Lock → admin → header peminjaman FOR UPDATE → bukan milik offboarding → status `pengajuan` → semua item diputuskan (tolak wajib alasan) → UPDATE item → bila ada disetujui: jadwal wajib, format valid, di dalam periode pinjam → UPDATE header (`dikonfirmasi`/`ditolak`, jadwal atau nol, `ket_tolak`, `user_approval`, `tgl_approval`) → asset ditolak → `tersedia` @gudang → notif `peminjaman.disetujui`/`ditolak`. Response 200 (+`jumlah_disetujui`, `jumlah_ditolak`).
 
 ### 21.3 Terima — `terimaKaryawan`
-Lock → header milik karyawan FOR UPDATE → status `dikonfirmasi` → karyawan aktif → item disetujui → asset harus `proses` @gudang → UPDATE asset `dipinjam` @karyawan (`id_asset_lokasi_m = NULL`) → header `aktif` → INSERT `asset_trx_log peminjaman_karyawan` → notif `peminjaman.diterima`.
+Lock → header milik karyawan FOR UPDATE → status `dikonfirmasi` → karyawan aktif → item disetujui → asset harus `proses` @gudang → UPDATE asset `dipinjam` @karyawan (`id_asset_lokasi_m = NULL`, `tgl_dialokasikan` = tanggal Terima Asset) → header `aktif` → INSERT `asset_trx_log peminjaman_karyawan` → notif `peminjaman.diterima`.
 
 ### 21.4 Batalkan — `batalkanKaryawan` (v1.6)
 Lock company → header milik karyawan FOR UPDATE (`lockedEmployeeHeader`, hanya `jenis_status = peminjaman`) → status harus `pengajuan` **atau** `dikonfirmasi` → karyawan aktif → ambil asset item: dari `pengajuan` semua item dengan `status_item` NULL, dari `dikonfirmasi` item `disetujui` (FOR UPDATE) → UPDATE `asset_data` menjadi `tersedia` @gudang (`id_pemegang_asset = ''`) **hanya** yang masih `proses` + `gudang` → header `dibatalkan`, `ket_tolak = "Dibatalkan oleh karyawan."`, `tgl_update`, `user_update` → notif `peminjaman.dibatalkan`. Tidak ada `asset_trx_log`. Controller: `batalkanPeminjamanSaya` → `prosesSerahTerimaPeminjaman($diterima = false)`. Response 200.
@@ -628,7 +628,7 @@ Lock company → header milik karyawan FOR UPDATE (`lockedEmployeeHeader`, hanya
 Lock → peminjaman milik karyawan `aktif` → item disetujui → semua asset masih `dipinjam` oleh karyawan → tidak ada pengembalian `pengajuan`/`dikonfirmasi` → tidak di offboarding → INSERT header `jenis_status = pengembalian`, `id_peminjaman_asal`, salinan periode/keperluan, `pengajuan` → INSERT item (salinan item disetujui, `status_item` NULL) → notif `pengembalian.diajukan`. Response 201.
 
 ### 21.6 Konfirmasi pengembalian — `konfirmasiPengembalianAdmin`
-Lock → admin → header pengembalian `pengajuan` → peminjaman asal ada & `aktif` → semua item diisi kondisi + lokasi gudang (`resolveItemLocations`) → asset masih `dipinjam` oleh karyawan → per item: UPDATE item (`disetujui` = normal / `ditolak` = rusak + keterangan, `id_asset_lokasi_m_tujuan`), UPDATE asset (`tersedia`/`rusak` @gudang, `id_asset_lokasi_m` pilihan admin, `ket_rusak`), siapkan `asset_trx_log pengembalian_karyawan` → INSERT log → header pengembalian `selesai` (+`user_approval`, `tgl_approval`) → bila tidak ada asset pinjaman yang masih dipegang: peminjaman asal `selesai` → notif `pengembalian.dikonfirmasi`. Response 200 (+`jumlah_normal`, `jumlah_rusak`).
+Lock → admin → header pengembalian `pengajuan` → peminjaman asal ada & `aktif` → semua item diisi kondisi + lokasi gudang (`resolveItemLocations`) → asset masih `dipinjam` oleh karyawan → per item: UPDATE item (`disetujui` = normal / `ditolak` = rusak + keterangan, `id_asset_lokasi_m_tujuan`), UPDATE asset (`tersedia`/`rusak` @gudang, `id_asset_lokasi_m` pilihan admin, `ket_rusak`, `tgl_dialokasikan = '0000-00-00'`), siapkan `asset_trx_log pengembalian_karyawan` → INSERT log → header pengembalian `selesai` (+`user_approval`, `tgl_approval`) → bila tidak ada asset pinjaman yang masih dipegang: peminjaman asal `selesai` → notif `pengembalian.dikonfirmasi`. Response 200 (+`jumlah_normal`, `jumlah_rusak`).
 
 ### 21.7 Query baca
 - **Options**: asset `tersedia` @gudang yang tidak ada di peminjaman berjalan (item tidak ditolak) + daftar keperluan.
@@ -657,6 +657,10 @@ Lock → admin → header pengembalian `pengajuan` → peminjaman asal ada & `ak
 | id_asset_lokasi_m | NULL | lokasi gudang pilihan admin (v1.1) | Pengembalian |
 | ket_rusak | – | keterangan (rusak) / '' (normal) | Pengembalian |
 | tgl_update / user_update | – | now / pelaku | Setiap perubahan |
+| tgl_dialokasikan | NULL | tanggal Terima Asset (Y-m-d) | Terima Asset (konfirmasi pinjam) |
+| tgl_dialokasikan | tanggal Terima Asset | '0000-00-00' | Pengembalian (normal dan rusak) |
+
+> `tgl_dialokasikan` (date, NULL) ditulis API setiap `pemegang_asset` berubah: masuk dari gudang ke karyawan = tanggal konfirmasi (Y-m-d); kembali ke gudang = `'0000-00-00'` (sengaja bukan NULL). Aset yang belum pernah dialokasikan, atau dipegang sebelum fitur ini dan belum di-backfill, bernilai NULL. Tidak ada endpoint, payload, atau layar mobile yang membaca kolom ini. Detail operasional dan backfill: lihat dokumen Onboarding Karyawan (KRY01), RISK-012. Pada peminjaman: Terima Asset mengisi tanggal, konfirmasi pengembalian (normal dan rusak) meresetnya; membatalkan peminjaman tidak mengubahnya karena aset belum pernah keluar dari gudang.
 
 ---
 
@@ -1531,6 +1535,9 @@ Bila `tgl_approval` pengembalian kosong, `tgl_selesai` bernilai `""` dan mobile 
 ### RISK-014 — Definisi jatuh tempo berbeda antara chip dan dashboard (RENDAH)
 Lihat INC-10: chip tidak mengecualikan peminjaman yang pengembaliannya sedang diajukan dan tidak memasukkan yang sudah lewat; dashboard sebaliknya.
 
+### RISK-015 — Pengisian `tgl_dialokasikan = '0000-00-00'` ditolak bila `NO_ZERO_DATE` (SEDANG)
+Nilai `'0000-00-00'` pada `asset_data.tgl_dialokasikan` (aset kembali ke gudang) ditolak MySQL/MariaDB bila `sql_mode` memuat `NO_ZERO_DATE` atau strict mode, sehingga transaksi terkait gagal. Server dev sudah dicek dan aman; periksa `SELECT @@sql_mode` di tiap environment sebelum deploy API. Status: Terbuka.
+
 ---
 
 ## 42. Dependency
@@ -1621,11 +1628,11 @@ Karyawan memilih asset (Tambah Pinjam Asset) → asset_ids
   → store(): item + asset_data.status_asset = proses
 Admin: Setujui → items[].status_item = disetujui → item.status_item
 Karyawan: Terima Asset → terimaKaryawan()
-  → asset_data: dipinjam, pemegang_asset = karyawan, id_pemegang_asset = id_karyawan
+  → asset_data: dipinjam, pemegang_asset = karyawan, id_pemegang_asset = id_karyawan, tgl_dialokasikan = tanggal Terima Asset
   → asset_trx_log (peminjaman_karyawan)
 Karyawan: Kembalikan Asset → header pengembalian (id_peminjaman_asal)
 Admin: Normal → items[].kondisi = normal → item.status_item = disetujui
-  → asset_data: tersedia, pemegang_asset = gudang, id_asset_lokasi_m = items[].id_asset_lokasi_m
+  → asset_data: tersedia, pemegang_asset = gudang, id_asset_lokasi_m = items[].id_asset_lokasi_m, tgl_dialokasikan = '0000-00-00'
   → asset_trx_log (pengembalian_karyawan) → peminjaman asal: selesai
 ```
 
@@ -1827,7 +1834,7 @@ Tanpa body.
 1. `lockCompany`; header milik karyawan (`FOR UPDATE`), status harus `dikonfirmasi` ("Peminjaman asset belum dapat diterima.").
 2. Karyawan aktif; item berstatus `disetujui` = hanya `…001`.
 3. Asset-nya dikunci dan harus `proses` + `gudang` ("Satu atau beberapa asset belum siap diserahterimakan.").
-4. UPDATE `asset_data` A9 → `dipinjam`, `karyawan`, `id_pemegang_asset = KRY0003`, **`id_asset_lokasi_m = NULL`** (asset keluar dari gudang).
+4. UPDATE `asset_data` A9 → `dipinjam`, `karyawan`, `id_pemegang_asset = KRY0003`, `tgl_dialokasikan = 2026-10-24` (tanggal Terima Asset), **`id_asset_lokasi_m = NULL`** (asset keluar dari gudang).
 5. UPDATE header → `aktif` (`tgl_update` menjadi **tanggal diterima**).
 6. INSERT `asset_trx_log` (`jenis_log = peminjaman_karyawan`) per asset.
 7. Notifikasi `peminjaman.diterima` ke admin.
@@ -1836,7 +1843,7 @@ Tanpa body.
 
 | Tabel | Perubahan |
 |---|---|
-| asset_data A9 | status_asset `proses → dipinjam`; pemegang_asset `gudang → karyawan`; id_pemegang_asset `'' → KRY0003`; id_asset_lokasi_m `CMP001202601001 → NULL`; tgl_update 2026-10-24 08:45:00; user_update = EMP-003 - Andi Contoh |
+| asset_data A9 | status_asset `proses → dipinjam`; pemegang_asset `gudang → karyawan`; id_pemegang_asset `'' → KRY0003`; tgl_dialokasikan `NULL → 2026-10-24`; id_asset_lokasi_m `CMP001202601001 → NULL`; tgl_update 2026-10-24 08:45:00; user_update = EMP-003 - Andi Contoh |
 | header | status `dikonfirmasi → aktif`; tgl_update = 2026-10-24 08:45:00; user_update = EMP-003 - Andi Contoh |
 
 `asset_trx_log` (1 baris)
@@ -1930,7 +1937,7 @@ POST /asset/pengembalian-karyawan/CMP001202610002/konfirmasi
 2. Header pengembalian harus `pengajuan`; peminjaman asal harus ada dan `aktif`.
 3. Semua item wajib diisi kondisi dan lokasi (`resolveItemLocations`: lokasi harus bertipe `gudang`, milik company yang sama, tepat satu kali per item).
 4. Asset harus masih `dipinjam` oleh karyawan pemilik transaksi.
-5. Per item: UPDATE item (`status_item`: normal → `disetujui`, rusak → `ditolak`; `ket_tolak` = keterangan kerusakan; `id_asset_lokasi_m_tujuan`), UPDATE `asset_data`, siapkan baris log.
+5. Per item: UPDATE item (`status_item`: normal → `disetujui`, rusak → `ditolak`; `ket_tolak` = keterangan kerusakan; `id_asset_lokasi_m_tujuan`), UPDATE `asset_data` (termasuk `tgl_dialokasikan = '0000-00-00'`), siapkan baris log.
 6. INSERT `asset_trx_log` (`jenis_log = pengembalian_karyawan`).
 7. UPDATE header pengembalian → `selesai` (`user_approval`, `tgl_approval`).
 8. Bila **tidak ada** asset pinjaman yang masih dipegang karyawan, peminjaman asal ikut → `selesai` (di sini A10 tidak pernah dipegang, jadi selesai).
@@ -1941,7 +1948,7 @@ POST /asset/pengembalian-karyawan/CMP001202610002/konfirmasi
 | Tabel | Perubahan |
 |---|---|
 | item `…003` | status_item NULL → **ditolak** (kode untuk "rusak"); ket_tolak = Lensa tergores; id_asset_lokasi_m_tujuan = CMP001202610001 |
-| asset_data A9 | status_asset `dipinjam → rusak`; pemegang_asset `karyawan → gudang`; id_pemegang_asset `KRY0003 → ''`; id_asset_lokasi_m `NULL → CMP001202610001`; ket_rusak = Lensa tergores; user_update = ADM-001 - Siti Admin |
+| asset_data A9 | status_asset `dipinjam → rusak`; pemegang_asset `karyawan → gudang`; id_pemegang_asset `KRY0003 → ''`; tgl_dialokasikan `2026-10-24 → 0000-00-00`; id_asset_lokasi_m `NULL → CMP001202610001`; ket_rusak = Lensa tergores; user_update = ADM-001 - Siti Admin |
 | header pengembalian `…002` | status `pengajuan → selesai`; user_approval = ADM-001 - Siti Admin; tgl_approval = 2026-10-28 16:30:00 |
 | header peminjaman `…001` | status `aktif → selesai`; tgl_update/user_update diisi admin |
 
@@ -2152,6 +2159,7 @@ Semua pelanggaran aturan dilempar sebagai `InvalidArgumentException` di dalam `D
 
 | Version | Date | Changes |
 |---|---|---|
+| 1.7 | 2026-11-05 | Kolom baru `asset_data.tgl_dialokasikan` (date, NULL): Terima Asset (konfirmasi pinjam, `terimaKaryawan`) mengisinya dengan tanggal terima; konfirmasi pengembalian normal maupun rusak (`konfirmasiPengembalianAdmin`) mereset ke `'0000-00-00'`. Batalkan peminjaman tidak mengubahnya (aset tetap di gudang). Menambah penyebutan di §18.3, §21.3, §21.6, §22, walkthrough §45.4, dan RISK-015. Tidak ada perubahan endpoint, payload, response, atau mobile. |
 | 1.6 | 2026-10-27 | (A) Status baru **`dibatalkan`** (enum `status_peminjaman`; SQL manual `sql-peminjaman-status-dibatalkan.sql`, prasyarat deploy): karyawan dapat membatalkan saat `pengajuan` dan `dikonfirmasi`, hasil `dibatalkan` (bukan `ditolak`), semua/asset disetujui dilepas, tanpa `asset_trx_log`; BR-012, §14, §15, §21.4, API-012, notifikasi; RISK-002 ditutup, INC-03 diperbaiki. (B) Halaman **4 tab** (Permintaan Peminjaman, Sedang Dipinjam, Pengembalian, Riwayat Peminjaman) untuk karyawan dan admin; `AssetPeminjamanPageMode` = {peminjaman, sedangDipinjam, pengembalian, riwayat}; pemetaan pemanggil lama; §25–§30, §37. (C) API list: parameter `kondisi` (`semua|jatuh_tempo|terlambat`, hanya `tab=aktif`, difilter sebelum paginasi), BR-019, INC-10. (D) Tab **Riwayat** = peminjaman `selesai` + `pengembalian[]` (list) dan `pengembalian[]` pada detail; pengembalian offboarding sengaja ikut tampil; kartu Riwayat, bagian Pengembalian, admin read-only pada selesai (BR-017, BR-020, INC-04 diperbaiki). (E) §39/§41: RISK-010–014, INC-10/11. (F) Tes: API `tests/Asset` 386 lulus (4850 assertion, sqlite); mobile `test/asset` 466 lulus + 5 gagal lama tidak terkait (hasil eksekusi sesi 2026-10-27, tidak dijalankan ulang saat dokumen ini disusun); TC-41–TC-63; §45.4 menambah skenario batal saat pengajuan dan tab Riwayat. Jumlah rute tetap 15. |
 | 1.5 | 2026-10-22 | Menambah §45.4 *Walkthrough Lengkap dengan Contoh Data* (ajukan, konfirmasi admin per asset, terima, ajukan pengembalian, konfirmasi pengembalian dengan lokasi gudang; variasi tolak semua, batalkan, pengembalian normal, terlambat; kasus gagal). Sinkronisasi kode: nama tabel log yang benar adalah `asset_trx_log` (`id_asset_trx_log`). |
 | 1.4 | 2026-10-20 | Detail peminjaman (karyawan & admin): kartu Data Karyawan kini menampilkan Jabatan, Cabang, Departemen (label Divisi diganti Departemen). API: `karyawan.jabatan` ditambahkan di `getDetail` (leftJoin `master_jabatan`, tanpa SQL/migrasi); mobile: field `jabatan` di `AssetPeminjamanKaryawan`; tes `asset_karyawan_jabatan_test.dart`. |

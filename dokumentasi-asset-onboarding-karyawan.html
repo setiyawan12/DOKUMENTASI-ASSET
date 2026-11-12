@@ -197,7 +197,7 @@ footer{margin-top:64px;padding-top:18px;border-top:1px solid var(--line);color:v
         <dl>
           <dt>Kode</dt><dd>KRY01</dd>
           <dt>Modul</dt><dd>Asset Management</dd>
-          <dt>Versi</dt><dd>1.3 · 22 Okt 2026</dd>
+          <dt>Versi</dt><dd>1.4 · 5 Nov 2026</dd>
           <dt>Stack</dt><dd>Lumen 10 · Flutter</dd>
           <dt>API</dt><dd>11 endpoint</dd>
         </dl>
@@ -299,11 +299,11 @@ footer{margin-top:64px;padding-top:18px;border-top:1px solid var(--line);color:v
 </tr>
 <tr>
 <td>Versi Dokumen</td>
-<td>1.3</td>
+<td>1.4</td>
 </tr>
 <tr>
 <td>Tanggal Dokumentasi</td>
-<td>2026-10-22</td>
+<td>2026-11-05</td>
 </tr>
 <tr>
 <td>Menggantikan</td>
@@ -402,7 +402,7 @@ Semua item aktif Normal → status_approval = dikonfirmasi (&quot;Selesai&quot;)
 <li><strong>Serah terima</strong> terjadi ketika karyawan mengonfirmasi: setiap asset dinilai <strong>Normal</strong> atau <strong>Rusak</strong>. Asset <strong>Normal langsung berpindah</strong> ke karyawan (per item, parsial). Asset <strong>Rusak</strong> tetap di gudang berstatus <code class="chip chip-bad">rusak</code>.</li>
 <li><strong>Penggantian</strong>: bila ada asset rusak, Admin memilih asset pengganti; karyawan mengecek ulang hanya asset pengganti. Siklus ini dapat berulang.</li>
 <li><strong>Transaksi selesai</strong> (<code class="chip chip-done">dikonfirmasi</code>) ketika seluruh item aktif (item yang tidak digantikan) berstatus normal.</li>
-<li><strong>Pemegang asset</strong> berubah pada <code>asset_data.pemegang_asset = 'karyawan'</code> dan <code>id_pemegang_asset = id_karyawan</code>; histori dicatat ke <code>asset_trx_log</code>.</li>
+<li><strong>Pemegang asset</strong> berubah pada <code>asset_data.pemegang_asset = 'karyawan'</code> dan <code>id_pemegang_asset = id_karyawan</code>; histori dicatat ke <code>asset_trx_log</code>; <code>asset_data.tgl_dialokasikan</code> diisi tanggal konfirmasi.</li>
 </ul>
 <hr />
 <h2 id="s5"><span class="sec-no">05</span>Tujuan Fitur</h2>
@@ -1502,6 +1502,11 @@ Tambah (+) → Pilih Karyawan → Tambah Asset (kategori → asset) → Catatan 
 <td><code>id_karyawan</code> pemegang (migration <code>2026_09_14_000002</code>)</td>
 </tr>
 <tr>
+<td>tgl_dialokasikan</td>
+<td>date NULL</td>
+<td>Tanggal aset dialokasikan ke karyawan: diisi tanggal konfirmasi saat Normal; <code>'0000-00-00'</code> bila kembali ke gudang; NULL bila belum pernah dialokasikan</td>
+</tr>
+<tr>
 <td>id_company, tgl_update, user_update</td>
 <td>–</td>
 <td>Isolasi company &amp; audit</td>
@@ -1744,7 +1749,7 @@ ApiResponse (format JSON seragam)   +   AssetNotification (setelah commit)
 <li>Item rusak → <strong>UPDATE asset_data</strong> <code>status_asset='rusak'</code>, <code>id_pemegang_asset=''</code>, <code>ket_rusak</code> (hanya jika masih <code class="chip chip-wait">proses</code> &amp; <code>gudang</code>).</li>
 <li>Hitung <code>semuaNormal</code> atas <strong>seluruh item aktif</strong> → status <code class="chip chip-done">dikonfirmasi</code> atau tetap <code class="chip chip-wait">proses</code>.</li>
 <li><strong>UPDATE header</strong> <code>status_approval</code>, <code>user_approval</code>, <code>tgl_approval = now</code>, <code>tgl_update</code>, <code>user_update</code>.</li>
-<li>Item normal ronde ini: lock <code>asset_data</code>; lewati jika sudah dipegang karyawan ini; selain itu wajib <code class="chip chip-wait">proses</code>+<code>gudang</code> → <strong>UPDATE</strong> <code class="chip chip-done">terpakai</code>/<code>karyawan</code>/<code>id_pemegang_asset</code>; <strong>INSERT asset_trx_log</strong> per asset.</li>
+<li>Item normal ronde ini: lock <code>asset_data</code>; lewati jika sudah dipegang karyawan ini; selain itu wajib <code class="chip chip-wait">proses</code>+<code>gudang</code> → <strong>UPDATE</strong> <code class="chip chip-done">terpakai</code>/<code>karyawan</code>/<code>id_pemegang_asset</code>/<code>tgl_dialokasikan</code> (tanggal konfirmasi); <strong>INSERT asset_trx_log</strong> per asset.</li>
 <li>COMMIT; notifikasi <code>onboarding.dikonfirmasi</code> atau <code>onboarding.rusak</code> ke semua admin; response 200 <code>UPDATED</code>.</li>
 </ol>
 <h3>21.5 Ganti Asset Rusak — <code>gantiAssetRusakOnboarding</code></h3>
@@ -1841,8 +1846,17 @@ ApiResponse (format JSON seragam)   +   AssetNotification (setelah commit)
 <td><strong>Tidak diubah</strong></td>
 <td>–</td>
 </tr>
+<tr>
+<td>tgl_dialokasikan</td>
+<td>NULL</td>
+<td>tanggal konfirmasi (Y-m-d)</td>
+<td>Konfirmasi item Normal</td>
+</tr>
 </tbody>
 </table></div>
+<aside class="callout callout-note">
+<p><code>tgl_dialokasikan</code> (date, NULL) ditulis API setiap <code>pemegang_asset</code> berubah: masuk dari gudang ke karyawan = tanggal konfirmasi (Y-m-d); kembali ke gudang = <code>'0000-00-00'</code> (sengaja bukan NULL). Aset yang belum pernah dialokasikan, atau dipegang sebelum fitur ini dan belum di-backfill, bernilai NULL. Tidak ada endpoint, payload, atau layar mobile yang membaca kolom ini. Backfill data lama: <code>Claude outputs/sql-backfill-tgl-dialokasikan.sql</code> (perkiraan dari <code>asset_trx_log.tgl_input</code>, belum dijalankan oleh siapa pun).</p>
+</aside>
 <div class="code"><span class="code-lang">Alur</span><pre><code class="language-text">asset tersedia @gudang
       ↓ create onboarding
 status_asset = proses (terkunci)
@@ -4476,6 +4490,8 @@ Backend
 <strong>Recommendation:</strong> Index <code>(id_company, id_asset_data)</code> dan <code>(id_company, parent_id)</code> setelah verifikasi EXPLAIN.</p>
 <h3>RISK-011 — Hard delete draft</h3>
 <p>Tidak ada jejak draft yang dihapus.</p>
+<h3>RISK-012 — Pengisian <code>tgl_dialokasikan = '0000-00-00'</code> ditolak bila <code>NO_ZERO_DATE</code> (SEDANG)</h3>
+<p>Nilai <code>'0000-00-00'</code> pada <code>asset_data.tgl_dialokasikan</code> (aset kembali ke gudang) ditolak MySQL/MariaDB bila <code>sql_mode</code> memuat <code>NO_ZERO_DATE</code> atau strict mode, sehingga transaksi terkait gagal. Server dev sudah dicek dan aman; periksa <code>SELECT @@sql_mode</code> di tiap environment sebelum deploy API. Status: Terbuka. Catatan operasional: aset yang sudah dipegang sebelum kolom ini ada bernilai NULL sampai backfill dijalankan (<code>Claude outputs/sql-backfill-tgl-dialokasikan.sql</code>, sumber <code>asset_trx_log.tgl_input</code>, hanya perkiraan; belum dijalankan oleh siapa pun).</p>
 <hr />
 <div class="group-divider" id="g42"><span>Referensi Developer</span></div><h2 id="s42"><span class="sec-no">42</span>Dependency</h2>
 <div class="code"><span class="code-lang">Alur</span><pre><code class="language-text">Master Company (lock, isolasi)
@@ -4665,7 +4681,7 @@ JSON: {&quot;items&quot;:[{&quot;id_item&quot;:&quot;CMP001202609001&quot;,&quot
 AssetKaryawan_m::konfirmasiOnboardingKaryawan
        ↓
 UPDATE asset_trx_onboarding_karyawan_item.status_item = 'normal'
-UPDATE asset_data: status_asset = 'terpakai', pemegang_asset = 'karyawan', id_pemegang_asset = 'KRY0001'
+UPDATE asset_data: status_asset = 'terpakai', pemegang_asset = 'karyawan', id_pemegang_asset = 'KRY0001', tgl_dialokasikan = &lt;tanggal konfirmasi&gt;
 INSERT asset_trx_log (jenis_log = onboarding_karyawan, posisi gudang → karyawan)
        ↓
 Asset menjadi milik (dipegang) karyawan → tampil di Asset Saya (API-008 assets[])
@@ -5195,7 +5211,7 @@ Authorization: Bearer &lt;access_token_budi&gt;
 7. Item rusak: UPDATE <code>asset_data</code> (hanya bila masih <code>proses</code> dan <code>gudang</code>) → <code>status_asset = rusak</code>, <code>id_pemegang_asset = ''</code>, <code>ket_rusak</code> = alasan. Asset tetap di gudang.
 8. Status header dihitung dari <strong>semua item aktif</strong> (item yang sudah diganti tidak dihitung). Laptop <code>rusak</code> → <code>semuaNormal = false</code> → status tetap <strong>proses</strong>.
 9. UPDATE header: <code>user_approval</code>, <code>tgl_approval = now</code> (mulai sekarang dianggap "sudah pernah dicek"), <code>tgl_update</code>, <code>user_update</code>.
-10. Item normal (mouse): <code>asset_data</code> dikunci, harus <code>proses</code> + <code>gudang</code> → <code>terpakai</code>, pemegang <code>karyawan</code>, <code>id_pemegang_asset = KRY0001</code>, <code>id_asset_lokasi_m = NULL</code>. INSERT <code>asset_trx_log</code> per asset normal.
+10. Item normal (mouse): <code>asset_data</code> dikunci, harus <code>proses</code> + <code>gudang</code> → <code>terpakai</code>, pemegang <code>karyawan</code>, <code>id_pemegang_asset = KRY0001</code>, <code>tgl_dialokasikan = 2026-10-22</code> (tanggal konfirmasi), <code>id_asset_lokasi_m = NULL</code>. INSERT <code>asset_trx_log</code> per asset normal.
 11. Commit, lalu <code>AssetNotification::send('onboarding.rusak', …)</code> ke seluruh admin asset di company (semua baris <code>asset_admin</code>).</p>
 <p><strong>Hasil database</strong></p>
 <p>Item (kolom yang berubah)</p>
@@ -5299,6 +5315,12 @@ Authorization: Bearer &lt;access_token_budi&gt;
 <td>id_pemegang_asset</td>
 <td><code>''</code></td>
 <td><strong>KRY0001</strong></td>
+</tr>
+<tr>
+<td>A2</td>
+<td>tgl_dialokasikan</td>
+<td>NULL</td>
+<td><strong>2026-10-22</strong></td>
 </tr>
 <tr>
 <td>A2</td>
@@ -5558,7 +5580,7 @@ Authorization: Bearer &lt;access_token_budi&gt;
 </tr>
 <tr>
 <td>asset_data A3</td>
-<td>status_asset <code>proses → terpakai</code>; pemegang_asset <code>gudang → karyawan</code>; id_pemegang_asset <code>'' → KRY0001</code>; id_asset_lokasi_m → NULL</td>
+<td>status_asset <code>proses → terpakai</code>; pemegang_asset <code>gudang → karyawan</code>; id_pemegang_asset <code>'' → KRY0001</code>; tgl_dialokasikan <code>NULL → 2026-10-22</code>; id_asset_lokasi_m → NULL</td>
 </tr>
 <tr>
 <td>asset_trx_log</td>
@@ -5967,6 +5989,11 @@ Authorization: Bearer &lt;access_token_budi&gt;
 </thead>
 <tbody>
 <tr>
+<td>1.4</td>
+<td>2026-11-05</td>
+<td>Kolom baru <code>asset_data.tgl_dialokasikan</code> (date, NULL): konfirmasi onboarding oleh karyawan mengisinya dengan tanggal konfirmasi (<code>AssetKaryawan_m</code>). Menambah baris di §18.3, §22, langkah §21, walkthrough §45.4, dan RISK-012. Tidak ada perubahan endpoint, payload, response, atau mobile.</td>
+</tr>
+<tr>
 <td>1.3</td>
 <td>2026-10-22</td>
 <td>Menambah §45.4 <em>Walkthrough Lengkap dengan Contoh Data</em> (aksi mobile, request, proses API, isi database per langkah, notifikasi, kasus gagal). Sinkronisasi kode: tabel log ternyata <code>asset_trx_log</code> (<code>id_asset_trx_log</code>), bukan <code>asset_log</code>; aturan satu onboarding per karyawan kini divalidasi di API (BR-020, RISK-003); serah terima mengosongkan <code>asset_data.id_asset_lokasi_m</code>.</td>
@@ -5990,7 +6017,7 @@ Authorization: Bearer &lt;access_token_budi&gt;
 </table></div>
     </article>
 
-    <footer>Dokumentasi v1.0 · 26 September 2026 · Disusun dari source lokal API (Lumen) &amp; MOBILE (Flutter). Contoh ID dan nama pada payload adalah data sintetis.</footer>
+    <footer>Dokumentasi v1.4 · 5 November 2026 · Disusun dari source lokal API (Lumen) &amp; MOBILE (Flutter). Contoh ID dan nama pada payload adalah data sintetis.</footer>
   </main>
 </div>
 <button class="to-top" id="to-top" type="button" aria-label="Kembali ke atas">↑</button>

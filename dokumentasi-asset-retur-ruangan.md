@@ -18,7 +18,7 @@
 | Mobile | Flutter (`professional_flutter_3_35`), `flutter_bloc`, `dio` |
 | Web | ⚠️ Belum ditemukan: tidak ada source web di workspace |
 | Test otomatis | API `tests/Asset/AssetReturRuanganTest.php` (16 test, 269 assertion) · Mobile `test/asset/asset_retur_ruangan_test.dart` (25 test) |
-| Versi dokumen | 1.1 — 22 Oktober 2026 |
+| Versi dokumen | 1.2 — 5 November 2026 |
 | Dokumen terkait | Retur Asset Karyawan (KRY04), Onboarding Ruangan (ALK-RGN01), Penambahan Asset Ruangan (ALK-RGN04), Master Lokasi & PIC Ruangan |
 
 ## 2. Daftar Isi
@@ -344,7 +344,7 @@ Controller memvalidasi input, memanggil model dalam `DB::transaction` (model), l
 - **`getOptionsPic`**: memastikan karyawan PIC ruangan aktif tersebut (null → 403). Mengembalikan `ruangan`, daftar `assets` (milik ruangan, `terpakai`, belum terkunci retur/onboarding/penambahan ruangan, urut nama lalu kode), dan `alasan`.
 - **`store`**: kunci company; validasi karyawan aktif, PIC ruangan, `normalizeItems` (BR-04, BR-05); asset dikunci `FOR UPDATE`; cek milik ruangan, kunci flow lain, status `terpakai`; buat header `pengajuan`/`proses` (jadwal NULL, `flag_jadwalkan='0'`) dan item asal. `asset_data` **tidak** diubah.
 - **`konfirmasiAdmin`**: kunci company; cek admin; header harus `pengajuan`/`proses`; seluruh item asal wajib diputuskan; asset asal masih dipegang ruangan; validasi pengganti dan jadwal; update status item; sisipkan item pengganti (`parent_id`, `status_approval='disetujui'`) dan set aset pengganti `proses`; update header (`disetujui`/`proses` atau `ditolak`/`selesai`).
-- **`terimaAdmin`**: kunci company; cek admin; header harus `disetujui`/`proses`; `resolveItemLocations` memetakan gudang per item asal yang disetujui; cek asal masih dipegang ruangan dan pengganti masih `proses` @gudang; update asset, `id_asset_lokasi_m_tujuan`, sisipkan `asset_trx_log`, header `selesai` dengan `tgl/jam_serah_terima` = sekarang.
+- **`terimaAdmin`**: kunci company; cek admin; header harus `disetujui`/`proses`; `resolveItemLocations` memetakan gudang per item asal yang disetujui; cek asal masih dipegang ruangan dan pengganti masih `proses` @gudang; update asset (termasuk `tgl_dialokasikan`: asal `'0000-00-00'`, pengganti tanggal Terima Asset), `id_asset_lokasi_m_tujuan`, sisipkan `asset_trx_log`, header `selesai` dengan `tgl/jam_serah_terima` = sekarang.
 - **Daftar dan detail**: `getPageAdmin`, `getPagePic` (filter PIC lewat `wherePicRuangan`), `getDetail`, `getDetailAdmin` (menambah `lokasi_gudang`).
 - **Ringkasan**: `countPendingForAdmin`, `getPendingForAdmin` (maks. 3, terlama di atas), `getPerluTindakanPic` (maks. 50, `proses` dan bukan `ditolak`).
 
@@ -360,6 +360,10 @@ Controller memvalidasi input, memanggil model dalam `DB::transaction` (model), l
 | Terima Asset | asal, alasan rusak | → `rusak` | `gudang` | `ket_rusak` = `ket_retur`; lokasi = gudang pilihan |
 | Terima Asset | pengganti | `proses` → `terpakai` | `ruangan` | `id_pemegang_asset` = `id_asset_lokasi_m` = id ruangan |
 | Semua ditolak | – | tidak berubah | – | Tidak ada asset yang berpindah |
+| Terima Asset (kolom `tgl_dialokasikan`) | asal | – | `gudang` | `tgl_dialokasikan = '0000-00-00'` |
+| Terima Asset (kolom `tgl_dialokasikan`) | pengganti | – | `ruangan` | `tgl_dialokasikan` = tanggal Terima Asset (Y-m-d) |
+
+> `tgl_dialokasikan` (date, NULL) ditulis API setiap `pemegang_asset` berubah: masuk dari gudang ke ruangan = tanggal konfirmasi (Y-m-d); kembali ke gudang = `'0000-00-00'` (sengaja bukan NULL). Aset yang belum pernah dialokasikan, atau dipegang sebelum fitur ini dan belum di-backfill, bernilai NULL. Tidak ada endpoint, payload, atau layar mobile yang membaca kolom ini. Detail operasional dan backfill: lihat dokumen Onboarding Karyawan (KRY01), RISK-012. Pada retur ruangan, pengganti diberi tanggal Terima Asset (bukan tanggal konfirmasi admin).
 
 ## 23. API Documentation
 
@@ -846,6 +850,7 @@ Hasil terakhir (dijalankan 15 Oktober 2026): API `AssetReturRuanganTest` 16 test
 | RISK-008 | RENDAH | Retur ruangan tidak memeriksa kunci dari flow karyawan lain dan sebaliknya hanya lewat `hasActiveReturRuanganAsset`; kerusakan/pemeliharaan ruangan belum ada model/API sehingga belum dicek. | Tambahkan pengecekan saat modul tersebut dibuat. | Terbuka / dibiarkan |
 | RISK-009 | SEDANG | ⚠️ Skrip `sql-alk-rgn06-no-trx-unik-per-company.sql` **belum dikonfirmasi dijalankan**. Selama unique global `uq_retur_rgn_no_trx` masih ada, dua company dengan urutan sama pada bulan yang sama gagal menyimpan. | Jalankan skrip dan verifikasi `SHOW INDEX`. | Perlu dikonfirmasi |
 | RISK-010 | SEDANG | Belum diuji di server, emulator, atau MariaDB nyata, termasuk push notifikasi dan rute notifikasi. | Uji alur penuh PIC → Admin/HR. | Terbuka |
+| RISK-011 | SEDANG | Nilai `'0000-00-00'` pada `asset_data.tgl_dialokasikan` (aset asal kembali ke gudang) ditolak MySQL/MariaDB bila `sql_mode` memuat `NO_ZERO_DATE` atau strict mode, sehingga Terima Asset gagal. Tabel transaksi retur ruangan sendiri memakai NULL (INC-03), tetapi kolom ini sengaja memakai `'0000-00-00'` (keputusan pemilik produk). | Cek `SELECT @@sql_mode` di tiap environment sebelum deploy API; server dev sudah dicek aman. | Terbuka |
 
 ## 42. Dependency
 
@@ -1120,7 +1125,7 @@ POST /asset/retur-ruangan/CMP001202610001/terima
 2. `lockCompany`, admin asset, header `FOR UPDATE`; harus `disetujui`/`proses` ("Retur asset belum dikonfirmasi atau sudah selesai.").
 3. Item asal yang `disetujui` dipetakan ke gudang lewat `resolveItemLocations`: setiap item tepat satu kali ("Lokasi gudang tujuan asset tidak sesuai."), semua item terisi, dan lokasi harus bertipe `gudang` pada company yang sama ("Lokasi gudang tujuan tidak valid."). Item yang ditolak **tidak** dimasukkan. Tidak ada item disetujui → "Tidak ada asset retur yang dapat diterima.".
 4. Semua asset terkait dikunci `FOR UPDATE`; asset asal harus masih dipegang ruangan ("Satu atau beberapa asset sudah tidak dipegang oleh ruangan.") dan pengganti harus masih `proses` di gudang ("Asset pengganti sudah tidak siap diserahterimakan.").
-5. Per asset asal: UPDATE `asset_data` ke gudang (rusak → `rusak` + `ket_rusak`, selain itu `tersedia`), simpan `id_asset_lokasi_m_tujuan` di item, siapkan log. Bila ada pengganti: UPDATE `asset_data` → `terpakai` di ruangan, siapkan log.
+5. Per asset asal: UPDATE `asset_data` ke gudang (rusak → `rusak` + `ket_rusak`, selain itu `tersedia`; keduanya `tgl_dialokasikan = '0000-00-00'`), simpan `id_asset_lokasi_m_tujuan` di item, siapkan log. Bila ada pengganti: UPDATE `asset_data` → `terpakai` di ruangan dengan `tgl_dialokasikan` = tanggal Terima Asset (2026-10-24), siapkan log.
 6. INSERT semua baris `asset_trx_log` sekaligus, lalu UPDATE header → `status_transaksi = selesai`.
 7. Controller mengirim `retur_ruangan.diterima_admin` ke PIC.
 
@@ -1132,12 +1137,15 @@ POST /asset/retur-ruangan/CMP001202610001/terima
 |---|---|---|---|
 | AST0401 | status_asset | terpakai | **rusak** |
 | | pemegang_asset / id_pemegang_asset | ruangan / LOK0007 | **gudang** / `''` |
+| | tgl_dialokasikan | tanggal alokasi / NULL | **`0000-00-00`** |
 | | id_asset_lokasi_m | LOK0007 | **LOK0001** |
 | | ket_rusak | `''` | Layar mati total |
 | AST0402 | status_asset | terpakai | **tersedia** |
 | | pemegang_asset / id_asset_lokasi_m | ruangan / LOK0007 | **gudang** / **LOK0002** |
+| | tgl_dialokasikan | tanggal alokasi / NULL | **`0000-00-00`** |
 | AST0501 (pengganti) | status_asset | proses | **terpakai** |
 | | pemegang_asset / id_pemegang_asset | gudang / `''` | **ruangan** / **LOK0007** |
+| | tgl_dialokasikan | NULL / `0000-00-00` | **2026-10-24** |
 | | id_asset_lokasi_m | LOK0001 | **LOK0007** |
 | AST0403 (ditolak) | semua kolom | terpakai @ LOK0007 | tidak berubah |
 
@@ -1253,3 +1261,4 @@ Semua kesalahan aturan bisnis dilempar sebagai `InvalidArgumentException` di dal
 |---|---|---|
 | 1.0 | 15 Oktober 2026 | Dokumen awal ALK-RGN06: skema 2 tabel, API admin (5) dan PIC (4), mobile (pemakaian ulang halaman KRY04), notifikasi, ringkasan admin dan beranda PIC, test. |
 | 1.1 | 22 Okt 2026 | Menambah §45.4 walkthrough lengkap (pengajuan PIC, keputusan per asset dengan pengganti, Terima Asset dengan gudang per asset), variasi, dan tabel kasus gagal. |
+| 1.2 | 5 Nov 2026 | Kolom baru `asset_data.tgl_dialokasikan` (date, NULL): Terima Asset (`terimaAdmin`) mereset aset asal yang kembali ke gudang menjadi `'0000-00-00'` dan mengisi unit pengganti yang masuk ke ruangan dengan tanggal Terima Asset. Menambah penyebutan di §21, §22, walkthrough §45.4, dan RISK-011. Tidak ada perubahan endpoint, payload, response, atau mobile. |

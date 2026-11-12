@@ -18,8 +18,8 @@
 | Database | Relasional; struktur mengacu `API/diagram-asset.dbml` + migrations. ⚠️ Asumsi: MySQL/MariaDB (sintaks `ON UPDATE CURRENT_TIMESTAMP`, `lockForUpdate`) |
 | Mobile | Flutter (package `professional_flutter_3_35`, app v3.11.0), `flutter_bloc ^7.0.0`, `dio ^5.9.0` |
 | Web | ⚠️ Belum ditemukan: tidak ada source web di workspace |
-| Versi Dokumen | 1.3 |
-| Tanggal Dokumentasi | 2026-10-22 |
+| Versi Dokumen | 1.4 |
+| Tanggal Dokumentasi | 2026-11-05 |
 | Menggantikan | `Claude outputs/alur-onboarding-asset-karyawan.md` (usang — lihat §39) |
 
 ---
@@ -131,7 +131,7 @@ Cara kerja berdasarkan kode:
 - **Serah terima** terjadi ketika karyawan mengonfirmasi: setiap asset dinilai **Normal** atau **Rusak**. Asset **Normal langsung berpindah** ke karyawan (per item, parsial). Asset **Rusak** tetap di gudang berstatus `rusak`.
 - **Penggantian**: bila ada asset rusak, Admin memilih asset pengganti; karyawan mengecek ulang hanya asset pengganti. Siklus ini dapat berulang.
 - **Transaksi selesai** (`dikonfirmasi`) ketika seluruh item aktif (item yang tidak digantikan) berstatus normal.
-- **Pemegang asset** berubah pada `asset_data.pemegang_asset = 'karyawan'` dan `id_pemegang_asset = id_karyawan`; histori dicatat ke `asset_trx_log`.
+- **Pemegang asset** berubah pada `asset_data.pemegang_asset = 'karyawan'` dan `id_pemegang_asset = id_karyawan`; histori dicatat ke `asset_trx_log`; `asset_data.tgl_dialokasikan` diisi tanggal konfirmasi.
 
 ---
 
@@ -687,6 +687,7 @@ Relasi **logis** (tanpa `ref` di DBML, hanya lewat query): `id_karyawan` → `da
 | ket_rusak | varchar(255) | Di-UPDATE saat item rusak |
 | pemegang_asset | enum(gudang, ruangan, karyawan) | Filter `gudang` & di-UPDATE `karyawan` |
 | id_pemegang_asset | varchar(150) | `id_karyawan` pemegang (migration `2026_09_14_000002`) |
+| tgl_dialokasikan | date NULL | Tanggal aset dialokasikan ke karyawan: diisi tanggal konfirmasi saat Normal; `'0000-00-00'` bila kembali ke gudang; NULL bila belum pernah dialokasikan |
 | id_company, tgl_update, user_update | – | Isolasi company & audit |
 
 ### 18.4 asset_trx_log (yang diisi fitur)
@@ -798,7 +799,7 @@ Lock → cek admin → header `draft` → asset `proses → tersedia` → **DELE
 7. Item rusak → **UPDATE asset_data** `status_asset='rusak'`, `id_pemegang_asset=''`, `ket_rusak` (hanya jika masih `proses` & `gudang`).
 8. Hitung `semuaNormal` atas **seluruh item aktif** → status `dikonfirmasi` atau tetap `proses`.
 9. **UPDATE header** `status_approval`, `user_approval`, `tgl_approval = now`, `tgl_update`, `user_update`.
-10. Item normal ronde ini: lock `asset_data`; lewati jika sudah dipegang karyawan ini; selain itu wajib `proses`+`gudang` → **UPDATE** `terpakai`/`karyawan`/`id_pemegang_asset`; **INSERT asset_trx_log** per asset.
+10. Item normal ronde ini: lock `asset_data`; lewati jika sudah dipegang karyawan ini; selain itu wajib `proses`+`gudang` → **UPDATE** `terpakai`/`karyawan`/`id_pemegang_asset`/`tgl_dialokasikan` (tanggal konfirmasi); **INSERT asset_trx_log** per asset.
 11. COMMIT; notifikasi `onboarding.dikonfirmasi` atau `onboarding.rusak` ke semua admin; response 200 `UPDATED`.
 
 ### 21.5 Ganti Asset Rusak — `gantiAssetRusakOnboarding`
@@ -832,6 +833,9 @@ Lock → cek admin → header `draft` → asset `proses → tersedia` → **DELE
 | id_asset_lokasi_m | lokasi gudang | NULL | Konfirmasi item Normal |
 | tgl_update / user_update | – | now / `nik - nama` pelaku | Setiap UPDATE di atas |
 | kondisi_awal, status_rusak, tgl_keluar | – | **Tidak diubah** | – |
+| tgl_dialokasikan | NULL | tanggal konfirmasi (Y-m-d) | Konfirmasi item Normal |
+
+> `tgl_dialokasikan` (date, NULL) ditulis API setiap `pemegang_asset` berubah: masuk dari gudang ke karyawan = tanggal konfirmasi (Y-m-d); kembali ke gudang = `'0000-00-00'` (sengaja bukan NULL). Aset yang belum pernah dialokasikan, atau dipegang sebelum fitur ini dan belum di-backfill, bernilai NULL. Tidak ada endpoint, payload, atau layar mobile yang membaca kolom ini. Backfill data lama: `Claude outputs/sql-backfill-tgl-dialokasikan.sql` (perkiraan dari `asset_trx_log.tgl_input`, belum dijalankan oleh siapa pun).
 
 ```text
 asset tersedia @gudang
@@ -1861,6 +1865,9 @@ Lihat INC-12, INC-13.
 ### RISK-011 — Hard delete draft
 Tidak ada jejak draft yang dihapus.
 
+### RISK-012 — Pengisian `tgl_dialokasikan = '0000-00-00'` ditolak bila `NO_ZERO_DATE` (SEDANG)
+Nilai `'0000-00-00'` pada `asset_data.tgl_dialokasikan` (aset kembali ke gudang) ditolak MySQL/MariaDB bila `sql_mode` memuat `NO_ZERO_DATE` atau strict mode, sehingga transaksi terkait gagal. Server dev sudah dicek dan aman; periksa `SELECT @@sql_mode` di tiap environment sebelum deploy API. Status: Terbuka. Catatan operasional: aset yang sudah dipegang sebelum kolom ini ada bernilai NULL sampai backfill dijalankan (`Claude outputs/sql-backfill-tgl-dialokasikan.sql`, sumber `asset_trx_log.tgl_input`, hanya perkiraan; belum dijalankan oleh siapa pun).
+
 ---
 
 ## 42. Dependency
@@ -1988,7 +1995,7 @@ JSON: {"items":[{"id_item":"CMP001202609001","status_item":"normal"}]}
 AssetKaryawan_m::konfirmasiOnboardingKaryawan
        ↓
 UPDATE asset_trx_onboarding_karyawan_item.status_item = 'normal'
-UPDATE asset_data: status_asset = 'terpakai', pemegang_asset = 'karyawan', id_pemegang_asset = 'KRY0001'
+UPDATE asset_data: status_asset = 'terpakai', pemegang_asset = 'karyawan', id_pemegang_asset = 'KRY0001', tgl_dialokasikan = <tanggal konfirmasi>
 INSERT asset_trx_log (jenis_log = onboarding_karyawan, posisi gudang → karyawan)
        ↓
 Asset menjadi milik (dipegang) karyawan → tampil di Asset Saya (API-008 assets[])
@@ -2323,7 +2330,7 @@ POST /asset/karyawan/onboarding/CMP001202610001/konfirmasi
 7. Item rusak: UPDATE `asset_data` (hanya bila masih `proses` dan `gudang`) → `status_asset = rusak`, `id_pemegang_asset = ''`, `ket_rusak` = alasan. Asset tetap di gudang.
 8. Status header dihitung dari **semua item aktif** (item yang sudah diganti tidak dihitung). Laptop `rusak` → `semuaNormal = false` → status tetap **proses**.
 9. UPDATE header: `user_approval`, `tgl_approval = now` (mulai sekarang dianggap "sudah pernah dicek"), `tgl_update`, `user_update`.
-10. Item normal (mouse): `asset_data` dikunci, harus `proses` + `gudang` → `terpakai`, pemegang `karyawan`, `id_pemegang_asset = KRY0001`, `id_asset_lokasi_m = NULL`. INSERT `asset_trx_log` per asset normal.
+10. Item normal (mouse): `asset_data` dikunci, harus `proses` + `gudang` → `terpakai`, pemegang `karyawan`, `id_pemegang_asset = KRY0001`, `tgl_dialokasikan = 2026-10-22` (tanggal konfirmasi), `id_asset_lokasi_m = NULL`. INSERT `asset_trx_log` per asset normal.
 11. Commit, lalu `AssetNotification::send('onboarding.rusak', …)` ke seluruh admin asset di company (semua baris `asset_admin`).
 
 **Hasil database**
@@ -2356,6 +2363,7 @@ Header
 | A2 (mouse) | status_asset | proses | **terpakai** |
 | A2 | pemegang_asset | gudang | **karyawan** |
 | A2 | id_pemegang_asset | `''` | **KRY0001** |
+| A2 | tgl_dialokasikan | NULL | **2026-10-22** |
 | A2 | id_asset_lokasi_m | (nilai sebelumnya) | NULL |
 
 `asset_trx_log` (1 baris, hanya untuk mouse; laptop rusak tidak masuk log)
@@ -2513,7 +2521,7 @@ Hanya item yang `perlu_dicek` yang dikirim; item lain tidak boleh disertakan kar
 |---|---|
 | item `…004` | status_item `belum_dicek → normal` |
 | header | status_approval `proses → dikonfirmasi`; tgl_approval = 2026-10-22 13:00:00; user_approval/user_update = EMP-001 - Budi Contoh |
-| asset_data A3 | status_asset `proses → terpakai`; pemegang_asset `gudang → karyawan`; id_pemegang_asset `'' → KRY0001`; id_asset_lokasi_m → NULL |
+| asset_data A3 | status_asset `proses → terpakai`; pemegang_asset `gudang → karyawan`; id_pemegang_asset `'' → KRY0001`; tgl_dialokasikan `NULL → 2026-10-22`; id_asset_lokasi_m → NULL |
 | asset_trx_log | + `CMP00120261000002`: A3 `CMP00120260100003`, jenis_log `onboarding_karyawan`, id_transaksi `CMP001202610001`, posisi gudang → karyawan, kondisi normal → normal, id_pemegang KRY0001, nama_pemegang Budi Contoh, user_input EMP-001 - Budi Contoh |
 | notif_data | + `CMP00120261000005` (KRY0099) dan `CMP00120261000006` (KRY0100): "Onboarding asset KRY01-202610001 telah dikonfirmasi oleh Budi Contoh.", rute `asset_admin_detail_onboarding` |
 
@@ -2672,6 +2680,7 @@ Semua error bisnis dilempar sebagai `InvalidArgumentException` di dalam `DB::tra
 
 | Version | Date | Changes |
 |---|---|---|
+| 1.4 | 2026-11-05 | Kolom baru `asset_data.tgl_dialokasikan` (date, NULL): konfirmasi onboarding oleh karyawan mengisinya dengan tanggal konfirmasi (`AssetKaryawan_m`). Menambah baris di §18.3, §22, langkah §21, walkthrough §45.4, dan RISK-012. Tidak ada perubahan endpoint, payload, response, atau mobile. |
 | 1.3 | 2026-10-22 | Menambah §45.4 *Walkthrough Lengkap dengan Contoh Data* (aksi mobile, request, proses API, isi database per langkah, notifikasi, kasus gagal). Sinkronisasi kode: tabel log ternyata `asset_trx_log` (`id_asset_trx_log`), bukan `asset_log`; aturan satu onboarding per karyawan kini divalidasi di API (BR-020, RISK-003); serah terima mengosongkan `asset_data.id_asset_lokasi_m`. |
 | 1.2 | 2026-10-12 | Mobile: stepper alur status (`AssetAlurStepper.onboarding`) di detail on boarding admin (§26.3). Teks langkah di grup JSON `alur`. Tidak ada perubahan API. |
 | 1.1 | 2026-10-12 | Sinkronisasi dengan kode 12 Okt 2026: path file mobile mengikuti struktur folder baru (`UI/Modul/Asset/<Fitur>/` berhuruf kapital, model di `Repository/Model/Asset/`). `AssetOnboardingWidgets.dart` dan `labelStatusOnboarding` sudah dihapus (tidak terpakai); `formatTanggalAsset` kini di `Shared/Widgets/AssetCommonWidgets.dart`. Endpoint `GET /asset/karyawan/data/{id}` didokumentasikan (API-011). |

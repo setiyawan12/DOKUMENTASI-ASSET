@@ -191,11 +191,11 @@ footer{margin-top:64px;padding-top:18px;border-top:1px solid var(--line);color:v
       <div>
         <p class="eyebrow">Asset Management · Dokumentasi Teknis &amp; Manual Book</p>
         <h1>Disposal Asset (PML04)</h1>
-        <p class="lede">Aset gudang yang rusak dan tidak layak dipertahankan dihapus dari daftar aktif oleh admin: keputusan dengan riwayat aset, pencatatan pelaksanaan menurut metode (lelang/jual, donasi, pemusnahan) dengan bukti wajib, lalu penyelesaian. Data tetap diarsipkan. Seluruh isi diturunkan dari source code <code>API</code> (Lumen) dan <code>MOBILE</code> (Flutter).</p>
+        <p class="lede">Aset gudang yang rusak dan tidak layak dipertahankan dihapus dari daftar aktif oleh admin dalam satu kali input: satu form lengkap berisi alasan, metode (lelang/jual, donasi, pemusnahan), data pelaksanaan, dan bukti wajib, lalu satu submit langsung menyelesaikan disposal. Data tetap diarsipkan. Seluruh isi diturunkan dari source code <code>API</code> (Lumen) dan <code>MOBILE</code> (Flutter).</p>
       </div>
       <div class="tag" aria-label="Identitas dokumen">
         <dl>
-          <dt>Kode</dt><dd>PML04</dd><dt>Modul</dt><dd>Pemeliharaan Aset</dd><dt>Versi</dt><dd>1.2 · 22 Okt 2026</dd><dt>Stack</dt><dd>Lumen 10 · Flutter</dd><dt>API</dt><dd>6 endpoint</dd>
+          <dt>Kode</dt><dd>PML04</dd><dt>Modul</dt><dd>Pemeliharaan Aset</dd><dt>Versi</dt><dd>1.3 · 11 Nov 2026</dd><dt>Stack</dt><dd>Lumen 10 · Flutter</dd><dt>API</dt><dd>4 endpoint</dd>
         </dl>
         <div class="barcode" aria-hidden="true"></div>
         <div class="trx">PML04-YYYYMMNNN</div>
@@ -209,22 +209,20 @@ footer{margin-top:64px;padding-top:18px;border-top:1px solid var(--line);color:v
 
     <section class="overview" aria-label="Ringkasan">
       <div class="panel">
-        <h3>Ringkasan dalam 1 menit: tiga langkah disposal</h3>
-        <p class="sub">Admin/HR saja, tanpa approval. Satu transaksi = satu aset.</p>
+        <h3>Ringkasan dalam 1 menit: satu kali input</h3>
+        <p class="sub">Admin/HR saja, tanpa approval. Satu transaksi = satu aset, langsung selesai.</p>
         <div class="three">
-          <div class="fact"><b>Keputusan</b><p>Alasan, metode, nilai sisa, catatan setelah meninjau usia, harga perolehan, dan jumlah perbaikan/klaim. Aset → <code>menunggu_disposal</code>.</p></div>
-          <div class="fact"><b>Pelaksanaan</b><p>Fisik di luar sistem. Catat pembeli+harga, penerima donasi, atau cara pemusnahan, plus tanggal dan <strong>bukti wajib</strong>.</p></div>
-          <div class="fact"><b>Penyelesaian</b><p>Selesaikan Disposal → aset <code>disposed</code>, keluar dari daftar aktif; data tetap diarsipkan.</p></div>
+          <div class="fact"><b>Tinjau</b><p>Pilih aset gudang rusak dan tinjau usia, harga perolehan, serta jumlah perbaikan/klaim.</p></div>
+          <div class="fact"><b>Isi satu form</b><p>Alasan, metode, nilai sisa, catatan, pembeli+harga / penerima donasi / cara pemusnahan, tanggal, dan <strong>bukti wajib</strong>.</p></div>
+          <div class="fact"><b>Submit</b><p>Konfirmasi tak-bisa-dibatalkan, lalu aset langsung <code>disposed</code>, keluar dari daftar aktif; data tetap diarsipkan.</p></div>
         </div>
       </div>
 
       <div class="panel">
         <h3>Siklus disposal</h3>
-        <p class="sub">Status transaksi dan dampaknya ke asset.</p>
+        <p class="sub">Satu status efektif dan dampaknya ke asset.</p>
         <div class="flow">
-          <div class="step"><span class="badge b-wait">Menunggu Disposal</span><span class="who">Admin: Submit Keputusan</span><p>Aset rusak di gudang dipilih beserta metode.</p><span class="db">asset → menunggu_disposal</span></div>
-          <div class="step"><span class="badge b-draft">Siap Diselesaikan</span><span class="who">Admin: Catat Pelaksanaan</span><p>Field per metode, tanggal, bukti; dapat diperbarui.</p><span class="db">tgl_pelaksanaan terisi</span></div>
-          <div class="step"><span class="badge b-done">Dihapus (Disposed)</span><span class="who">Admin: Selesaikan Disposal</span><p>Dengan dialog konfirmasi; tidak dapat dibatalkan.</p><span class="db">asset → disposed · asset_trx_log · notifikasi</span></div>
+          <div class="step"><span class="badge b-done">Dihapus (Disposed)</span><span class="who">Admin: Submit Disposal</span><p>Satu POST dengan form lengkap dan bukti; dialog konfirmasi tidak dapat dibatalkan.</p><span class="db">trx selesai · asset → disposed · asset_trx_log · notifikasi</span></div>
         </div>
       </div>
 
@@ -235,7 +233,7 @@ footer{margin-top:64px;padding-top:18px;border-top:1px solid var(--line);color:v
           <div class="role"><h4>Business Analyst / PM</h4><p>Aturan bisnis, status, perbedaan dengan dokumen bisnis.</p><div class="links"><a href="#s3">§3</a><a href="#s9">§9 Rules</a><a href="#s14">§14 Status</a><a href="#s39">§39 INC</a></div></div>
           <div class="role"><h4>Backend Developer</h4><p>Logika, dampak ke asset_data, kontrak API.</p><div class="links"><a href="#s21">§21 Logic</a><a href="#s22">§22 asset_data</a><a href="#s24">§24 API</a></div></div>
           <div class="role"><h4>Mobile Developer</h4><p>Bloc, route, layar, objek aksi.</p><div class="links"><a href="#s25">§25</a><a href="#s26">§26 Screen</a><a href="#s29">§29 Mapping</a></div></div>
-          <div class="role"><h4>QA / Tester</h4><p>7 test API, 13 test mobile, skenario, edge case, risiko.</p><div class="links"><a href="#s38">§38 Test</a><a href="#s40">§40 Edge</a><a href="#s41">§41 Risk</a></div></div>
+          <div class="role"><h4>QA / Tester</h4><p>7 test API, 11 test mobile, skenario, edge case, risiko.</p><div class="links"><a href="#s38">§38 Test</a><a href="#s40">§40 Edge</a><a href="#s41">§41 Risk</a></div></div>
           <div class="role"><h4>Technical Support</h4><p>Pesan error, audit trail, notifikasi.</p><div class="links"><a href="#s32">§32 Error</a><a href="#s33">§33 Audit</a><a href="#s34">§34 Notif</a></div></div>
           <div class="role"><h4>User / Admin Asset</h4><p>Langkah operasional dan kondisi tombol.</p><div class="links"><a href="#s36">§36 Manual Book</a><a href="#s37">§37 Tombol</a></div></div>
         </div>
@@ -247,7 +245,8 @@ footer{margin-top:64px;padding-top:18px;border-top:1px solid var(--line);color:v
         <ul class="attention">
           <li><span class="sev sev-h">TINGGI</span><span>SQL manual belum dijalankan; jalankan setelah SQL PML01 gudang, PML03, PML02. <a href="#s41">RISK-001</a></span></li>
           <li><span class="sev sev-m">SEDANG</span><span>PML01/02/03 hanya mencatat nama tabel disposal; <strong>disposal tidak dibuat otomatis</strong>. <a href="#s39">INC-04</a></span></li>
-          <li><span class="sev sev-m">SEDANG</span><span>Tidak ada pembatalan disposal. <a href="#s39">INC-05</a></span></li>
+          <li><span class="sev sev-m">SEDANG</span><span>Tidak ada pembatalan atau koreksi disposal setelah submit. <a href="#s39">INC-05</a></span></li>
+          <li><span class="sev sev-h">SEDANG-TINGGI</span><span>Data lama berstatus <code>proses</code> / aset <code>menunggu_disposal</code> tidak punya jalur selesai; SQL pemulihan belum dibuat. <a href="#s41">RISK-006</a></span></li>
         </ul>
       </div>
     </section>
@@ -280,7 +279,7 @@ footer{margin-top:64px;padding-top:18px;border-top:1px solid var(--line);color:v
 </tr>
 <tr>
 <td>Database</td>
-<td><code>API/diagram-asset.dbml</code> (tanda <code>[REVISI PML04]</code> / <code>[NEW PML04]</code>) + SQL manual <code>Claude outputs/sql-pml04-disposal.sql</code>. ⚠️ SQL harus dijalankan manual (belum dijalankan saat dokumen ditulis)</td>
+<td><code>API/diagram-asset.dbml</code> (tanda <code>[REVISI PML04]</code> / <code>[NEW PML04]</code>) + SQL manual <code>Claude outputs/sql-pml04-disposal.sql</code>. Alur sekali input <strong>tidak mengubah skema</strong>: kolom fase, enum <code>status</code> (<code>proses</code>), dan nilai <code>menunggu_disposal</code> tetap ada tetapi tidak lagi dipakai alur baru. ⚠️ SQL harus dijalankan manual (belum dijalankan saat dokumen ditulis)</td>
 </tr>
 <tr>
 <td>Mobile</td>
@@ -292,11 +291,11 @@ footer{margin-top:64px;padding-top:18px;border-top:1px solid var(--line);color:v
 </tr>
 <tr>
 <td>Test otomatis</td>
-<td>API <code>tests/Asset/AssetDisposalTest.php</code> (7 test) · Mobile <code>test/asset/asset_disposal_test.dart</code> (13 test)</td>
+<td>API <code>tests/Asset/AssetDisposalTest.php</code> (7 test) · Mobile <code>test/asset/asset_disposal_test.dart</code> (11 test)</td>
 </tr>
 <tr>
 <td>Versi dokumen</td>
-<td>1.2 — 22 Oktober 2026</td>
+<td>1.3 — 11 November 2026</td>
 </tr>
 <tr>
 <td>Dokumen terkait</td>
@@ -305,7 +304,7 @@ footer{margin-top:64px;padding-top:18px;border-top:1px solid var(--line);color:v
 </tbody>
 </table></div>
 <h2 id="s3"><span class="sec-no">03</span>Quick Overview</h2>
-<p>Aset gudang yang rusak dan tidak layak dipertahankan dihapus dari daftar aset aktif lewat tiga langkah. <strong>Fase 1</strong>: admin meninjau riwayat aset (usia, harga perolehan, jumlah perbaikan dan klaim garansi) lalu menyubmit keputusan: alasan, <strong>metode</strong> (lelang/jual, donasi, pemusnahan), nilai sisa, catatan; aset menjadi <code>menunggu_disposal</code>. <strong>Fase 2</strong>: disposal fisik terjadi di luar sistem; admin mencatat hasilnya (pembeli dan harga, penerima donasi, atau cara pemusnahan) beserta <strong>bukti wajib</strong>. <strong>Fase 3</strong>: admin menekan <strong>Selesaikan Disposal</strong>; aset menjadi <code>disposed</code> dan tidak muncul lagi di daftar aktif, sementara datanya tetap tersimpan sebagai arsip audit.</p>
+<p>Aset gudang yang rusak dan tidak layak dipertahankan dihapus dari daftar aset aktif lewat <strong>satu kali input</strong>. Admin meninjau riwayat aset (usia, harga perolehan, jumlah perbaikan dan klaim garansi), lalu mengisi <strong>satu form lengkap</strong>: alasan, <strong>metode</strong> (lelang/jual, donasi, pemusnahan), nilai sisa, catatan, data pelaksanaan sesuai metode (pembeli dan harga, penerima donasi, atau cara pemusnahan), tanggal pelaksanaan, dan <strong>bukti wajib</strong>. Setelah dialog konfirmasi "tidak dapat dibatalkan", satu <code>POST /asset/disposal</code> langsung menyelesaikan disposal: transaksi berstatus <code>selesai</code>, aset <code>rusak</code> menjadi <code>disposed</code> dan tidak muncul lagi di daftar aktif, sementara datanya tetap tersimpan sebagai arsip audit.</p>
 <div class="table-wrap"><table>
 <thead>
 <tr>
@@ -320,11 +319,11 @@ footer{margin-top:64px;padding-top:18px;border-top:1px solid var(--line);color:v
 </tr>
 <tr>
 <td>Status transaksi</td>
-<td><code>proses</code> (menunggu disposal) → <code>selesai</code> (dihapus/disposed)</td>
+<td>Hanya <code>selesai</code> (dihapus/disposed); dibuat langsung saat submit</td>
 </tr>
 <tr>
 <td>Status asset</td>
-<td><code>rusak</code> → <code>menunggu_disposal</code> → <code>disposed</code></td>
+<td><code>rusak</code> → <code>disposed</code> (tanpa status perantara)</td>
 </tr>
 <tr>
 <td>Metode</td>
@@ -332,11 +331,11 @@ footer{margin-top:64px;padding-top:18px;border-top:1px solid var(--line);color:v
 </tr>
 <tr>
 <td>Endpoint</td>
-<td>6 (semua admin)</td>
+<td>4 (semua admin)</td>
 </tr>
 <tr>
 <td>Notifikasi</td>
-<td>1 event (<code>disposal.selesai</code>) ke admin</td>
+<td>1 event (<code>disposal.selesai</code>) ke admin, dikirim setelah commit</td>
 </tr>
 </tbody>
 </table></div>
@@ -357,27 +356,17 @@ footer{margin-top:64px;padding-top:18px;border-top:1px solid var(--line);color:v
 </tr>
 <tr>
 <td>2</td>
-<td>Submit keputusan disposal</td>
+<td>Isi satu form lengkap (keputusan, pelaksanaan per metode, bukti)</td>
 <td>Admin</td>
 </tr>
 <tr>
 <td>3</td>
-<td>Catat pelaksanaan sesuai metode + bukti (dapat diperbarui)</td>
+<td>Submit Disposal dengan dialog konfirmasi tak-bisa-dibatalkan; langsung selesai</td>
 <td>Admin</td>
 </tr>
 <tr>
 <td>4</td>
-<td>Selesaikan disposal (dengan konfirmasi)</td>
-<td>Admin</td>
-</tr>
-<tr>
-<td>5</td>
-<td>Daftar (Menunggu/Selesai) dan detail</td>
-<td>Admin</td>
-</tr>
-<tr>
-<td>6</td>
-<td>Kartu "perlu diproses" di beranda admin</td>
+<td>Daftar disposal selesai (filter tanggal) dan detail read-only</td>
 <td>Admin</td>
 </tr>
 </tbody>
@@ -386,14 +375,14 @@ footer{margin-top:64px;padding-top:18px;border-top:1px solid var(--line);color:v
 <h3>5.1 Tujuan Bisnis (dari dokumen bisnis dan kode)</h3>
 <ul>
 <li>Penghapusan aset punya keputusan, alasan, dan bukti yang dapat diaudit.</li>
-<li>Status perantara <code>menunggu_disposal</code> mencegah penghapusan tanpa bukti pelaksanaan.</li>
+<li>Tidak ada disposal tanpa bukti pelaksanaan: semua data dan bukti dikirim sekaligus, dan transaksi baru terbentuk bila lengkap.</li>
 <li>Data historis aset tidak dihapus, hanya dikeluarkan dari daftar aktif.</li>
 </ul>
 <h3>5.2 Tujuan Sistem</h3>
 <ul>
-<li>Menjaga aset yang sedang di-disposal tidak bisa dipakai alur lain.</li>
-<li>Memvalidasi field wajib per metode dan bukti.</li>
-<li>Mencatat pelaksana, waktu, <code>asset_trx_log</code>, dan notifikasi penyelesaian.</li>
+<li>Menjaga aset yang sudah di-disposal tidak bisa dipakai alur lain.</li>
+<li>Memvalidasi field wajib per metode dan bukti sebelum apa pun disimpan.</li>
+<li>Menulis transaksi, status aset, dan <code>asset_trx_log</code> secara atomik dalam satu transaksi database, lalu mengirim notifikasi penyelesaian setelah commit.</li>
 </ul>
 <h2 id="s6"><span class="sec-no">06</span>Aktor</h2>
 <div class="table-wrap"><table>
@@ -406,16 +395,16 @@ footer{margin-top:64px;padding-top:18px;border-top:1px solid var(--line);color:v
 <tbody>
 <tr>
 <td>Admin/HR (admin asset)</td>
-<td>Memutuskan, memilih metode, mencatat pelaksanaan, menyelesaikan</td>
+<td>Memilih aset, mengisi form lengkap, dan men-submit disposal</td>
 </tr>
 <tr>
 <td>Sistem</td>
-<td>Mengunci status aset, memvalidasi, menulis log dan notifikasi</td>
+<td>Memvalidasi, mengunci status aset, menulis log, dan mengirim notifikasi</td>
 </tr>
 </tbody>
 </table></div>
 <h2 id="s7"><span class="sec-no">07</span>Hak Akses</h2>
-<p>Seluruh endpoint hanya untuk admin asset (<code>Asset_m::isAdmin</code>). Non-admin menerima 403. Tidak ada endpoint karyawan/PIC.</p>
+<p>Seluruh endpoint hanya untuk admin asset (<code>Asset_m::isAdmin</code>). Non-admin menerima 403. Tidak ada endpoint karyawan/PIC. Catatan: pada <code>POST /asset/disposal</code>, validasi request dijalankan <strong>sebelum</strong> cek akses, sehingga non-admin yang mengirim payload tidak valid menerima 422 (bukan 403).</p>
 <h2 id="s8"><span class="sec-no">08</span>Terminologi</h2>
 <div class="table-wrap"><table>
 <thead>
@@ -430,12 +419,16 @@ footer{margin-top:64px;padding-top:18px;border-top:1px solid var(--line);color:v
 <td>Penghapusan aset dari registri aktif</td>
 </tr>
 <tr>
-<td>MENUNGGU DISPOSAL</td>
-<td>Keputusan sudah disubmit, penyelesaian belum dilakukan (<code>status = proses</code>, aset <code>menunggu_disposal</code>)</td>
+<td>Sekali input</td>
+<td>Keputusan, pelaksanaan, dan penyelesaian dicatat dalam satu <code>POST</code></td>
 </tr>
 <tr>
 <td>DIHAPUS (DISPOSED)</td>
-<td>Disposal selesai (<code>status = selesai</code>, aset <code>disposed</code>)</td>
+<td>Disposal selesai (<code>status = selesai</code>, aset <code>disposed</code>); satu-satunya status yang dibuat alur baru</td>
+</tr>
+<tr>
+<td>Data lama</td>
+<td>Transaksi <code>status = proses</code> dan aset <code>menunggu_disposal</code> buatan alur tiga fase sebelum v1.3; tidak dibuat lagi (lihat RISK-006)</td>
 </tr>
 <tr>
 <td>Nilai sisa</td>
@@ -450,11 +443,9 @@ footer{margin-top:64px;padding-top:18px;border-top:1px solid var(--line);color:v
 <h2 id="s9"><span class="sec-no">09</span>Business Rules</h2>
 <h3>BR-001 — Aset yang boleh di-disposal</h3>
 <p>Hanya <code>pemegang_asset = gudang</code> dan <code>status_asset = rusak</code>. Karena proses lain mengubah status (<code>dalam_perbaikan</code>, <code>dalam_proses_klaim</code>, menunggu serah terima), syarat "tidak ada proses aktif" terpenuhi otomatis. Tidak boleh masih dalam onboarding aktif. Pesan: <em>"Hanya asset rusak di gudang yang dapat di-disposal."</em></p>
-<h3>BR-002 — Keputusan</h3>
-<p><code>alasan_disposal</code> wajib; <code>metode_disposal</code> ∈ tiga nilai; <code>nilai_sisa</code> opsional dan tidak negatif; catatan opsional.</p>
-<h3>BR-003 — Status perantara</h3>
-<p>Setelah keputusan, aset menjadi <code>menunggu_disposal</code> dan keluar dari daftar pilihan aset gudang rusak (tidak bisa diajukan dua kali).</p>
-<h3>BR-004 — Pelaksanaan menurut metode</h3>
+<h3>BR-002 — Sekali input</h3>
+<p>Keputusan, pelaksanaan, dan penyelesaian adalah <strong>satu langkah</strong>: satu <code>POST /asset/disposal</code> membuat transaksi langsung <code>selesai</code> dan mengubah aset menjadi <code>disposed</code>. Tidak ada status perantara dan tidak ada endpoint pelaksanaan atau penyelesaian terpisah. <code>alasan_disposal</code> wajib (maks 255); <code>metode_disposal</code> ∈ tiga nilai; <code>nilai_sisa</code> opsional dan tidak negatif; <code>catatan</code> opsional (maks 1000).</p>
+<h3>BR-003 — Field wajib menurut metode</h3>
 <div class="table-wrap"><table>
 <thead>
 <tr>
@@ -477,65 +468,62 @@ footer{margin-top:64px;padding-top:18px;border-top:1px solid var(--line);color:v
 </tr>
 </tbody>
 </table></div>
-<p>Tanggal pelaksanaan tidak boleh setelah hari ini. Field milik metode lain dikosongkan.</p>
-<h3>BR-005 — Bukti wajib</h3>
-<p>Semua metode wajib bukti. Pembaruan tanpa bukti baru mempertahankan bukti lama; bila belum pernah ada bukti, ditolak.</p>
-<h3>BR-006 — Pelaksanaan dapat diperbarui</h3>
-<p>Selama <code>status = proses</code>, admin boleh memperbarui data pelaksanaan. Setelah <code>selesai</code>, tidak dapat diubah.</p>
-<h3>BR-007 — Penyelesaian</h3>
-<p>Hanya bila pelaksanaan sudah dicatat (<code>tgl_pelaksanaan</code> terisi) dan data masih lengkap sesuai metode. Aset harus masih di gudang dengan status <code>menunggu_disposal</code>. Hasil: aset <code>disposed</code>, transaksi <code>selesai</code>, <code>asset_trx_log</code> <code>disposal_gudang</code>.</p>
-<h3>BR-008 — Arsip, bukan hapus</h3>
+<p><code>tgl_pelaksanaan</code> berformat <code>Y-m-d</code> dan tidak boleh setelah hari ini. Field milik metode lain dikosongkan.</p>
+<h3>BR-004 — Bukti wajib</h3>
+<p>Semua metode wajib satu bukti gambar (multipart atau base64). Tanpa bukti, request ditolak sebelum menyimpan apa pun.</p>
+<h3>BR-005 — Tidak dapat diubah atau dibatalkan</h3>
+<p>Setelah submit berhasil, transaksi langsung <code>selesai</code>. Tidak ada endpoint ubah, batal, atau koreksi; mengirim ulang untuk aset yang sama ditolak karena aset sudah <code>disposed</code>. Dialog konfirmasi di mobile adalah satu-satunya pengaman sebelum submit.</p>
+<h3>BR-006 — Arsip, bukan hapus</h3>
 <p>Baris transaksi dan baris <code>asset_data</code> (status <code>disposed</code>) tetap ada. Daftar aset admin dan total ringkasan mengecualikan <code>disposed</code> bila filter status kosong; filter status <code>disposed</code> eksplisit tetap menampilkannya.</p>
-<h3>BR-009 — Penomoran</h3>
+<h3>BR-007 — Penomoran</h3>
 <p><code>id</code> = <code>id_company</code> + <code>YYYYMM</code> + 3 digit; <code>no_trx</code> = <code>PML04-YYYYMMNNN</code>; maksimum 999 per bulan per perusahaan.</p>
-<h3>BR-010 — Skema harus sudah diterapkan</h3>
-<p><code>skemaSiap()</code> menjaga dashboard tetap berjalan sebelum SQL diterapkan.</p>
+<h3>BR-008 — Skema harus sudah diterapkan</h3>
+<p>Endpoint gagal bila <code>sql-pml04-disposal.sql</code> belum dijalankan (lihat RISK-001).</p>
+<p><strong>Catatan:</strong> BR lama "Status perantara" (<code>menunggu_disposal</code>) dan "Pelaksanaan dapat diperbarui" <strong>tidak berlaku</strong> sejak v1.3 dan dihapus; penomoran BR dirapikan.</p>
 <h2 id="s10"><span class="sec-no">10</span>Business Flow</h2>
 <ol>
 <li>Admin membuka Disposal → <strong>+</strong> → memilih satu aset gudang rusak dan meninjau riwayatnya.</li>
-<li>Admin mengisi alasan, metode, nilai sisa, catatan → <strong>Submit Keputusan</strong>. Aset <code>menunggu_disposal</code>.</li>
-<li>Disposal fisik dilakukan di luar sistem.</li>
-<li>Admin membuka detail → <strong>Catat Pelaksanaan</strong> (field sesuai metode + tanggal + bukti).</li>
-<li>Admin menekan <strong>Selesaikan Disposal</strong> dan mengonfirmasi.</li>
-<li>Aset <code>disposed</code>; notifikasi ringkasan dikirim ke admin.</li>
+<li>Admin mengisi form lengkap: alasan, metode, nilai sisa, catatan, field pelaksanaan sesuai metode, tanggal pelaksanaan, dan foto bukti.</li>
+<li>Admin menekan <strong>Submit Disposal</strong> dan mengonfirmasi dialog "tidak dapat dibatalkan".</li>
+<li>API memvalidasi, mengunggah bukti, lalu dalam satu transaksi membuat disposal <code>selesai</code>, mengubah aset menjadi <code>disposed</code>, dan menulis <code>asset_trx_log</code>.</li>
+<li>Notifikasi ringkasan dikirim ke admin; mobile kembali ke daftar dengan pesan sukses.</li>
 </ol>
 <h2 id="s11"><span class="sec-no">11</span>Flow Berdasarkan Role</h2>
 <h3>11.1 Admin/HR</h3>
 <p>Seluruh alur di atas.</p>
 <h3>11.2 System</h3>
-<p>Validasi, kunci status, log, notifikasi, penyaringan daftar aktif.</p>
+<p>Validasi, cek kelayakan aset, unggah bukti, transaksi atomik, log, notifikasi, penyaringan daftar aktif.</p>
 <h2 id="s12"><span class="sec-no">12</span>Flow Diagram</h2>
 <div class="diagram"><pre class="mermaid">flowchart TD
     A[Aset gudang rusak] --&gt; B[Admin tinjau riwayat]
-    B --&gt; C[Submit keputusan&lt;br/&gt;alasan, metode, nilai sisa]
-    C --&gt; D[status proses&lt;br/&gt;asset menunggu_disposal]
-    D --&gt; E[Disposal fisik di luar sistem]
-    E --&gt; F{Metode}
-    F -- lelang_jual --&gt; G[Pembeli, harga, tanggal, bukti]
-    F -- donasi --&gt; H[Penerima, tanggal, bukti]
-    F -- pemusnahan --&gt; I[Cara, tanggal, bukti]
-    G --&gt; J[Pelaksanaan tercatat]
-    H --&gt; J
-    I --&gt; J
-    J --&gt; K[Selesaikan Disposal]
-    K --&gt; L[status selesai&lt;br/&gt;asset disposed, data diarsipkan]
+    B --&gt; C[Isi alasan, metode, nilai sisa, catatan]
+    C --&gt; D{Metode}
+    D -- lelang_jual --&gt; E[Pembeli dan harga jual]
+    D -- donasi --&gt; F[Penerima donasi]
+    D -- pemusnahan --&gt; G[Cara pemusnahan]
+    E --&gt; H[Tanggal pelaksanaan dan foto bukti]
+    F --&gt; H
+    G --&gt; H
+    H --&gt; I[Submit Disposal dan konfirmasi]
+    I --&gt; J[POST asset/disposal]
+    J --&gt; K[status selesai&lt;br/&gt;asset disposed, log, notifikasi]
 </pre></div>
 <h2 id="s13"><span class="sec-no">13</span>Sequence Diagram</h2>
 <div class="diagram"><pre class="mermaid">sequenceDiagram
     actor Admin
     participant App as Mobile
     participant API
+    participant Storage as Object Storage
     participant DB
-    Admin-&gt;&gt;App: Pilih aset + isi keputusan
+    Admin-&gt;&gt;App: Pilih aset, isi form lengkap, foto bukti
+    App-&gt;&gt;Admin: Dialog konfirmasi tak-bisa-dibatalkan
+    Admin-&gt;&gt;App: Konfirmasi Submit Disposal
     App-&gt;&gt;API: POST asset/disposal
-    API-&gt;&gt;DB: insert trx (proses), asset menunggu_disposal
-    Admin-&gt;&gt;App: Catat pelaksanaan + foto bukti
-    App-&gt;&gt;API: POST asset/disposal/{id}/pelaksanaan
-    API-&gt;&gt;DB: simpan pelaksanaan + file_bukti
-    Admin-&gt;&gt;App: Selesaikan Disposal (konfirmasi)
-    App-&gt;&gt;API: POST asset/disposal/{id}/selesai
-    API-&gt;&gt;DB: trx selesai, asset disposed, asset_trx_log
-    API--&gt;&gt;Admin: Notifikasi disposal.selesai
+    API-&gt;&gt;DB: cek aset layak (tanpa lock)
+    API-&gt;&gt;Storage: unggah bukti
+    API-&gt;&gt;DB: transaksi: insert trx selesai, asset disposed, asset_trx_log
+    API--&gt;&gt;Admin: Notifikasi disposal.selesai (setelah commit)
+    API--&gt;&gt;App: 201 CREATED, status selesai
 </pre></div>
 <h2 id="s14"><span class="sec-no">14</span>Status Transaksi</h2>
 <div class="table-wrap"><table>
@@ -549,32 +537,17 @@ footer{margin-top:64px;padding-top:18px;border-top:1px solid var(--line);color:v
 </thead>
 <tbody>
 <tr>
-<td><code>proses</code></td>
-<td><code>tgl_pelaksanaan</code> kosong</td>
-<td>Menunggu Disposal</td>
-<td>Menunggu</td>
-</tr>
-<tr>
-<td><code>proses</code></td>
-<td><code>tgl_pelaksanaan</code> terisi</td>
-<td>Siap Diselesaikan</td>
-<td>Menunggu</td>
-</tr>
-<tr>
 <td><code>selesai</code></td>
-<td>—</td>
+<td>Dibuat langsung saat submit</td>
 <td>Dihapus (Disposed)</td>
 <td>Selesai</td>
 </tr>
 </tbody>
 </table></div>
-<p>Tidak ada kolom fase terpisah; tahap pelaksanaan ditandai terisinya <code>tgl_pelaksanaan</code>.</p>
+<p>Hanya satu status efektif. Nilai enum <code>proses</code> tetap ada di skema tetapi tidak lagi dibuat; baris <code>proses</code> buatan alur lama (jika ada) tampil dengan label yang sama karena <code>statusMeta</code> tidak membedakan, dan tidak punya jalur selesai (RISK-006). Kolom fase (<code>tgl_pelaksanaan</code>, <code>tgl_selesai</code>, dan lain-lain) tetap ada, tetapi semuanya terisi sekaligus.</p>
 <h2 id="s15"><span class="sec-no">15</span>State Transition</h2>
 <div class="diagram"><pre class="mermaid">stateDiagram-v2
-    [*] --&gt; MenungguDisposal: Submit keputusan
-    MenungguDisposal --&gt; SiapDiselesaikan: Catat pelaksanaan
-    SiapDiselesaikan --&gt; SiapDiselesaikan: Perbarui pelaksanaan
-    SiapDiselesaikan --&gt; Dihapus: Selesaikan Disposal
+    [*] --&gt; Dihapus: Submit Disposal (sekali input)
     Dihapus --&gt; [*]
 </pre></div>
 <div class="group-divider" id="g2"><span>Database</span></div><h2 id="s16"><span class="sec-no">16</span>Struktur Database</h2>
@@ -588,11 +561,11 @@ footer{margin-top:64px;padding-top:18px;border-top:1px solid var(--line);color:v
 <tbody>
 <tr>
 <td><code>asset_trx_disposal</code></td>
-<td>Satu baris per disposal (keputusan, pelaksanaan, penyelesaian)</td>
+<td>Satu baris per disposal (keputusan, pelaksanaan, penyelesaian; semua terisi saat insert)</td>
 </tr>
 <tr>
 <td><code>asset_data</code></td>
-<td>Status aset (<code>menunggu_disposal</code>, <code>disposed</code>)</td>
+<td>Status aset (<code>disposed</code>); nilai <code>menunggu_disposal</code> tetap ada di enum tetapi tidak lagi dipakai</td>
 </tr>
 <tr>
 <td><code>asset_trx_log</code></td>
@@ -600,7 +573,7 @@ footer{margin-top:64px;padding-top:18px;border-top:1px solid var(--line);color:v
 </tr>
 </tbody>
 </table></div>
-<p>Tabel lama <code>asset_trx_disposal_item</code> dan kolom approval dihapus (struktur lama berbasis approval, belum dipakai API).</p>
+<p>Tabel lama <code>asset_trx_disposal_item</code> dan kolom approval dihapus (struktur lama berbasis approval, belum dipakai API). Alur sekali input tidak mengubah skema.</p>
 <h2 id="s17"><span class="sec-no">17</span>Relasi Database</h2>
 <div class="diagram"><pre class="mermaid">erDiagram
     asset_trx_disposal }o--|| asset_data : &quot;asset&quot;
@@ -609,6 +582,7 @@ footer{margin-top:64px;padding-top:18px;border-top:1px solid var(--line);color:v
 </pre></div>
 <h2 id="s18"><span class="sec-no">18</span>Data Dictionary</h2>
 <h3>18.1 asset_trx_disposal</h3>
+<p>Kolom bertanda fase tetap ada seperti sebelumnya, tetapi pada alur sekali input <strong>semuanya terisi bersamaan saat insert</strong>.</p>
 <div class="table-wrap"><table>
 <thead>
 <tr>
@@ -636,7 +610,7 @@ footer{margin-top:64px;padding-top:18px;border-top:1px solid var(--line);color:v
 <tr>
 <td><code>nama_asset</code>, <code>deskripsi_asset</code>, <code>kategori_asset</code></td>
 <td>varchar</td>
-<td>Snapshot saat keputusan</td>
+<td>Snapshot saat submit</td>
 </tr>
 <tr>
 <td><code>id_asset_lokasi_m_asal</code></td>
@@ -665,8 +639,8 @@ footer{margin-top:64px;padding-top:18px;border-top:1px solid var(--line);color:v
 </tr>
 <tr>
 <td><code>tgl_pelaksanaan</code></td>
-<td>date null</td>
-<td>NULL = pelaksanaan belum dicatat</td>
+<td>date</td>
+<td>Wajib, tidak setelah hari ini</td>
 </tr>
 <tr>
 <td><code>pembeli</code>, <code>harga_jual</code></td>
@@ -691,22 +665,22 @@ footer{margin-top:64px;padding-top:18px;border-top:1px solid var(--line);color:v
 <tr>
 <td><code>tgl_selesai</code>, <code>user_selesai</code></td>
 <td>timestamp, varchar</td>
-<td>Klik Selesaikan Disposal</td>
+<td>Waktu dan pelaku submit (sama dengan <code>tgl_input</code>/<code>user_input</code>)</td>
 </tr>
 <tr>
 <td><code>status</code></td>
 <td>enum proses/selesai</td>
-<td>Status transaksi</td>
+<td>Selalu <code>selesai</code> pada alur baru; <code>proses</code> hanya data lama</td>
 </tr>
 <tr>
 <td><code>id_company</code>, <code>tgl_input</code>, <code>user_input</code>, <code>tgl_update</code>, <code>user_update</code></td>
 <td></td>
-<td>Audit; <code>tgl_input</code>/<code>user_input</code> = keputusan</td>
+<td>Audit; <code>tgl_update</code> NULL dan <code>user_update</code> kosong karena tidak ada pembaruan</td>
 </tr>
 </tbody>
 </table></div>
 <h3>18.2 asset_trx_log (<code>jenis_log = disposal_gudang</code>)</h3>
-<p>Ditulis saat penyelesaian: posisi gudang → gudang, <code>kondisi_awal</code>/<code>kondisi_akhir</code> = kondisi aset, <code>user_input</code> = pelaksana.</p>
+<p>Ditulis saat submit: posisi gudang → gudang, <code>kondisi_awal</code>/<code>kondisi_akhir</code> = kondisi aset, <code>user_input</code> = pelaksana.</p>
 <h2 id="s19"><span class="sec-no">19</span>Database Index</h2>
 <div class="table-wrap"><table>
 <thead>
@@ -720,12 +694,12 @@ footer{margin-top:64px;padding-top:18px;border-top:1px solid var(--line);color:v
 <tr>
 <td><code>atd_company_status_idx</code></td>
 <td><code>id_company, status, tgl_input, id</code></td>
-<td>Daftar per tab</td>
+<td>Daftar per status</td>
 </tr>
 <tr>
 <td><code>atd_company_asset_status_idx</code></td>
 <td><code>id_company, id_asset_data, status</code></td>
-<td>Cek disposal aktif dan riwayat per aset</td>
+<td>Riwayat per aset</td>
 </tr>
 <tr>
 <td>FK</td>
@@ -745,7 +719,7 @@ footer{margin-top:64px;padding-top:18px;border-top:1px solid var(--line);color:v
 <tbody>
 <tr>
 <td>Route</td>
-<td><code>RouteAsset.php</code> (<code>disposal/*</code>)</td>
+<td><code>RouteAsset.php</code> (grup <code>disposal</code>: <code>options</code>, <code>/</code> GET dan POST, <code>{id}</code>)</td>
 </tr>
 <tr>
 <td>Controller</td>
@@ -761,24 +735,27 @@ footer{margin-top:64px;padding-top:18px;border-top:1px solid var(--line);color:v
 </tr>
 <tr>
 <td>Pendukung</td>
-<td><code>Asset_c::mutateAssetTrx</code> (event <code>null</code> = tanpa notifikasi), <code>Asset_c::uploadAssetImage</code> + <code>AssetImageStorage</code> (object storage)</td>
+<td><code>Asset_c::uploadAssetImage</code>, <code>releaseTrackedObjects</code>, <code>cleanupAssetObjects</code> + <code>AssetImageStorage</code> (object storage)</td>
 </tr>
 <tr>
 <td>Dashboard</td>
-<td><code>AssetAdmin_m</code> (<code>disposal_perlu_proses</code>, <code>disposal_pending</code>; pengecualian <code>disposed</code>)</td>
+<td><code>AssetAdmin_m</code> hanya mengecualikan aset <code>disposed</code> dari daftar dan total; kartu/ringkasan disposal dihapus (lihat changelog v1.3)</td>
 </tr>
 </tbody>
 </table></div>
 <h2 id="s21"><span class="sec-no">21</span>Backend Business Logic</h2>
-<h3>21.1 Keputusan — <code>store</code></h3>
-<p>Kunci perusahaan; validasi alasan, metode, nilai sisa; kunci aset (<code>lockForUpdate</code>), cek BR-001; nomor urut; insert transaksi (snapshot aset dan gudang asal); aset → <code>menunggu_disposal</code>.</p>
-<h3>21.2 Pelaksanaan — <code>pelaksanaan</code></h3>
-<p>Hanya <code>status = proses</code>. <code>pelaksanaanFields</code> memvalidasi tanggal, bukti, dan field sesuai metode; kolom metode lain dikosongkan; <code>harga_jual</code> dinormalisasi.</p>
-<h3>21.3 Penyelesaian — <code>selesai</code></h3>
-<p>Validasi ulang kelengkapan pelaksanaan, cek aset masih <code>menunggu_disposal</code> di gudang; aset → <code>disposed</code>; <code>asset_trx_log</code>; transaksi <code>selesai</code> dengan <code>tgl_selesai</code>/<code>user_selesai</code>.</p>
-<h3>21.4 Query baca</h3>
-<p><code>getPage</code> (tab <code>proses|selesai</code>, paginasi limit+1), <code>getDetail</code> (aset + riwayat, keputusan, pelaksanaan, penyelesaian, <code>aksi</code>), <code>getAdminOptions</code> (aset gudang rusak + metode), <code>getPendingForAdmin</code>, <code>countPendingForAdmin</code>.</p>
-<h3>21.5 Riwayat aset</h3>
+<h3>21.1 Submit — <code>storeDisposal</code> dan <code>store</code></h3>
+<p>Controller (<code>storeDisposal</code>) menjalankan urutan berikut:</p>
+<ol>
+<li>Validasi request (aturan per metode, §31.2), lalu cek akses admin.</li>
+<li><code>AssetDisposal_m::assertDisposable</code>: admin valid dan aset layak (cek <strong>tanpa lock</strong>) agar bukti tidak diunggah untuk aset yang tidak layak.</li>
+<li><code>buktiPath</code>: bukti diunggah ke object storage; file tidak valid → "File bukti tidak valid.".</li>
+<li><code>AssetDisposal_m::store</code> dalam satu <code>DB::transaction</code> (3 percobaan): kunci perusahaan; validasi ulang alasan, metode, nilai sisa; <code>pelaksanaanFields</code> (tanggal, bukti, field per metode, field metode lain dikosongkan); kunci aset (<code>lockForUpdate</code>) dan cek ulang BR-001; nomor urut; insert transaksi <strong>langsung <code>selesai</code></strong> (<code>tgl_selesai</code>, <code>user_selesai</code> terisi, snapshot aset dan gudang asal); aset → <code>disposed</code>; insert <code>asset_trx_log</code>.</li>
+<li>Setelah commit: <code>releaseTrackedObjects()</code> lalu <code>AssetNotification::send('disposal.selesai')</code>. Bila gagal: <code>cleanupAssetObjects()</code> membersihkan bukti yang sempat terunggah, <code>InvalidArgumentException</code> menjadi 422 <code>BUSINESS_RULE_VIOLATION</code>, kegagalan lain 500 <code>SYSTEM_ERROR</code> (dicatat di log).</li>
+</ol>
+<h3>21.2 Query baca</h3>
+<p><code>getPage</code> (tab hanya <code>selesai</code> atau kosong, filter rentang tanggal <code>tgl_input</code>, paginasi limit+1), <code>getDetail</code> (aset + riwayat, keputusan, pelaksanaan, penyelesaian; tanpa blok aksi), <code>getAdminOptions</code> (aset gudang rusak + metode).</p>
+<h3>21.3 Riwayat aset</h3>
 <p><code>riwayat()</code> menghitung usia (bulan) dari <code>tgl_perolehan</code>, <code>harga_perolehan</code>, serta jumlah baris di <code>asset_trx_perbaikan_item</code> dan <code>asset_trx_garansi_item</code> untuk aset tersebut (0 bila tabel belum ada). Biaya perbaikan tidak dicatat sistem.</p>
 <h2 id="s22"><span class="sec-no">22</span>Dampak terhadap asset_data</h2>
 <div class="table-wrap"><table>
@@ -791,18 +768,13 @@ footer{margin-top:64px;padding-top:18px;border-top:1px solid var(--line);color:v
 </thead>
 <tbody>
 <tr>
-<td>Keputusan disubmit</td>
-<td><code>rusak</code> → <code>menunggu_disposal</code></td>
-<td>—</td>
-</tr>
-<tr>
-<td>Disposal selesai</td>
-<td>→ <code>disposed</code></td>
+<td>Disposal disubmit (sekali input)</td>
+<td><code>rusak</code> → <code>disposed</code></td>
 <td><code>tgl_update</code>, <code>user_update</code></td>
 </tr>
 </tbody>
 </table></div>
-<p>Aset <code>disposed</code> tidak muncul di daftar aset admin bawaan dan tidak dihitung pada <code>total_asset</code>.</p>
+<p>Aset <code>disposed</code> tidak muncul di daftar aset admin bawaan dan tidak dihitung pada <code>total_asset</code>. Nilai <code>menunggu_disposal</code> tidak lagi dihasilkan alur baru.</p>
 <h2 id="s23"><span class="sec-no">23</span>API Documentation</h2>
 <div class="table-wrap"><table>
 <thead>
@@ -824,34 +796,23 @@ footer{margin-top:64px;padding-top:18px;border-top:1px solid var(--line);color:v
 <td>API-002</td>
 <td>GET</td>
 <td><code>asset/disposal</code></td>
-<td>Daftar</td>
+<td>Daftar disposal selesai</td>
 </tr>
 <tr>
 <td>API-003</td>
 <td>POST</td>
 <td><code>asset/disposal</code></td>
-<td>Submit keputusan</td>
+<td>Submit disposal sekali input (langsung selesai)</td>
 </tr>
 <tr>
 <td>API-004</td>
-<td>POST</td>
-<td><code>asset/disposal/{id}/pelaksanaan</code></td>
-<td>Catat/perbarui pelaksanaan</td>
-</tr>
-<tr>
-<td>API-005</td>
-<td>POST</td>
-<td><code>asset/disposal/{id}/selesai</code></td>
-<td>Selesaikan disposal</td>
-</tr>
-<tr>
-<td>API-006</td>
 <td>GET</td>
 <td><code>asset/disposal/{id}</code></td>
-<td>Detail</td>
+<td>Detail (read-only)</td>
 </tr>
 </tbody>
 </table></div>
+<p>Dihapus sejak v1.3: <code>POST asset/disposal/{id}/pelaksanaan</code> dan <code>POST asset/disposal/{id}/selesai</code> (kini 404/405; dijaga test). Kode API-004 sebelumnya (pelaksanaan), API-005 (selesai), dan API-006 (detail) dinomori ulang; detail kini API-004.</p>
 <h2 id="s24"><span class="sec-no">24</span>Detail Setiap API</h2>
 <h3>API-001 — Opsi</h3>
 <pre><code class="language-json">{&quot;asset&quot;: [{&quot;id_asset_data&quot;: &quot;LP-1&quot;, &quot;kode_asset&quot;: &quot;KD-LP-1&quot;, &quot;nama_asset&quot;: &quot;Laptop Lama&quot;,
@@ -861,21 +822,22 @@ footer{margin-top:64px;padding-top:18px;border-top:1px solid var(--line);color:v
  &quot;metode&quot;: [{&quot;value&quot;: &quot;lelang_jual&quot;, &quot;label&quot;: &quot;Lelang / Jual&quot;}]}
 </code></pre>
 <h3>API-002 — Daftar</h3>
-<p>Query <code>tab</code> (<code>proses|selesai</code>), <code>limit</code> (1–50, default 20), <code>offset</code>. Respons <code>{filters, records[], pagination}</code>; record: <code>id</code>, <code>no_trx</code>, <code>status</code>, <code>status_label</code>, <code>tab</code>, <code>id_asset_data</code>, <code>nama_asset</code>, <code>kategori_asset</code>, <code>metode_disposal</code>, <code>metode_label</code>, <code>alasan_disposal</code>, <code>pelaksanaan_tercatat</code>, <code>tgl_input</code>.</p>
-<h3>API-003 — Keputusan</h3>
+<p>Query <code>tab</code> (hanya <code>selesai</code>, atau kosong; nilai lain termasuk <code>proses</code> ditolak 422 "Filter disposal tidak valid."), <code>limit</code> (1–50, default 20), <code>offset</code>, dan pasangan <code>range_tanggal_mulai</code>/<code>range_tanggal_selesai</code> (<code>Y-m-d</code>, harus berpasangan; menyaring <code>tgl_input</code>). Respons <code>{filters, records[], pagination}</code>; <code>filters</code> hanya berisi <code>selesai</code>; record: <code>id</code>, <code>no_trx</code>, <code>status</code>, <code>status_label</code>, <code>tab</code>, <code>id_asset_data</code>, <code>nama_asset</code>, <code>kategori_asset</code>, <code>metode_disposal</code>, <code>metode_label</code>, <code>alasan_disposal</code>, <code>tgl_input</code>. Field <code>pelaksanaan_tercatat</code> sudah dihapus.</p>
+<h3>API-003 — Submit disposal</h3>
+<p>Admin saja. Multipart atau JSON; <code>file_bukti</code> berupa file multipart atau string base64 (satu gambar). Contoh (metode donasi):</p>
 <pre><code class="language-json">{&quot;id_asset_data&quot;: &quot;LP-1&quot;, &quot;alasan_disposal&quot;: &quot;Motherboard rusak total&quot;,
- &quot;metode_disposal&quot;: &quot;donasi&quot;, &quot;nilai_sisa&quot;: 250000, &quot;catatan&quot;: &quot;Data sudah dihapus&quot;}
+ &quot;metode_disposal&quot;: &quot;donasi&quot;, &quot;nilai_sisa&quot;: 250000, &quot;catatan&quot;: &quot;Data sudah dihapus&quot;,
+ &quot;tgl_pelaksanaan&quot;: &quot;2026-11-10&quot;, &quot;penerima_donasi&quot;: &quot;Yayasan Pendidikan&quot;,
+ &quot;file_bukti&quot;: &quot;&lt;base64 atau file multipart&gt;&quot;}
 </code></pre>
-<p>Respons <code>CREATED</code> <code>{id, no_trx, status, status_label, tab}</code>.</p>
-<h3>API-004 — Pelaksanaan</h3>
-<pre><code class="language-json">{&quot;tgl_pelaksanaan&quot;: &quot;2026-10-09&quot;, &quot;pembeli&quot;: &quot;PT Pembeli&quot;, &quot;harga_jual&quot;: 1500000,
- &quot;penerima_donasi&quot;: &quot;&quot;, &quot;metode_pemusnahan&quot;: &quot;&quot;, &quot;file_bukti&quot;: &quot;&lt;base64 atau file multipart&gt;&quot;}
+<p>Field wajib: <code>id_asset_data</code>, <code>alasan_disposal</code>, <code>metode_disposal</code>, <code>tgl_pelaksanaan</code> (<code>Y-m-d</code>, <code>before_or_equal:today</code>), <code>file_bukti</code>, ditambah satu field menurut metode (<code>pembeli</code> dan <code>harga_jual</code> / <code>penerima_donasi</code> / <code>metode_pemusnahan</code>). <code>nilai_sisa</code> dan <code>catatan</code> opsional. Hanya field milik metode terpilih yang disimpan. Bukti disimpan di object storage dengan key <code>&lt;company&gt;/asset/disposal/&lt;id_karyawan&gt;/&lt;hex&gt;.&lt;ext&gt;</code>; kolom <code>file_bukti</code> menyimpan key tersebut.</p>
+<p>Respons 201 <code>CREATED</code>, pesan "Disposal berhasil diselesaikan.":</p>
+<pre><code class="language-json">{&quot;code&quot;: &quot;CREATED&quot;, &quot;message&quot;: &quot;Disposal berhasil diselesaikan.&quot;,
+ &quot;data&quot;: {&quot;id&quot;: &quot;CMP001202611001&quot;, &quot;no_trx&quot;: &quot;PML04-202611001&quot;, &quot;status&quot;: &quot;selesai&quot;,
+          &quot;status_label&quot;: &quot;Dihapus (Disposed)&quot;, &quot;tab&quot;: &quot;selesai&quot;}}
 </code></pre>
-<p>Hanya field milik metode transaksi yang dipakai. <code>file_bukti</code> kosong = bukti lama dipertahankan. Bukti disimpan di object storage dengan key <code>&lt;company&gt;/asset/disposal/&lt;id_karyawan&gt;/&lt;hex&gt;.&lt;ext&gt;</code>; kolom <code>file_bukti</code> menyimpan key tersebut.</p>
-<h3>API-005 — Selesai</h3>
-<p>Tanpa body. Respons <code>{id, no_trx, status: "selesai", status_label: "Dihapus (Disposed)"}</code>.</p>
-<h3>API-006 — Detail</h3>
-<p>Grup <code>asset</code> (dengan <code>riwayat</code>), <code>keputusan</code>, <code>pelaksanaan</code> (<code>tercatat</code>, <code>file_bukti_url</code>), <code>penyelesaian</code>, dan <code>aksi: {pelaksanaan, selesai}</code>.</p>
+<h3>API-004 — Detail</h3>
+<p>Grup <code>asset</code> (dengan <code>riwayat</code> dan <code>status_asset</code>), <code>keputusan</code> (<code>alasan_disposal</code>, <code>metode_disposal</code>, <code>metode_label</code>, <code>nilai_sisa</code>, <code>catatan</code>, <code>tgl_keputusan</code>, <code>user_keputusan</code>), <code>pelaksanaan</code> (<code>tgl_pelaksanaan</code>, <code>pembeli</code>, <code>harga_jual</code>, <code>penerima_donasi</code>, <code>metode_pemusnahan</code>, <code>file_bukti</code>, <code>file_bukti_url</code>), dan <code>penyelesaian</code> (<code>tgl_selesai</code>, <code>user_selesai</code>). Blok <code>aksi</code> dan <code>pelaksanaan.tercatat</code> sudah dihapus. ID tidak ditemukan → 404.</p>
 <div class="group-divider" id="g4"><span>Mobile</span></div><h2 id="s25"><span class="sec-no">25</span>Mobile Architecture</h2>
 <div class="table-wrap"><table>
 <thead>
@@ -887,11 +849,11 @@ footer{margin-top:64px;padding-top:18px;border-top:1px solid var(--line);color:v
 <tbody>
 <tr>
 <td>Model</td>
-<td><code>lib/Repository/Model/Asset/mAssetDisposal.dart</code></td>
+<td><code>lib/Repository/Model/Asset/mAssetDisposal.dart</code> (<code>AssetDisposalForm</code> menggantikan dua form lama: keputusan dan pelaksanaan)</td>
 </tr>
 <tr>
 <td>API client</td>
-<td><code>lib/Repository/Service/assetDisposalApi.dart</code></td>
+<td><code>lib/Repository/Service/assetDisposalApi.dart</code> (<code>getList</code>, <code>getDetail</code>, <code>getOptions</code>, <code>store</code>)</td>
 </tr>
 <tr>
 <td>Bloc</td>
@@ -899,29 +861,27 @@ footer{margin-top:64px;padding-top:18px;border-top:1px solid var(--line);color:v
 </tr>
 <tr>
 <td>UI</td>
-<td><code>lib/UI/Modul/Asset/Pemeliharaan/Disposal/*</code> (termasuk <code>AssetDisposalProsesWidgets</code>; pratinjau foto layar penuh memakai <code>Pemeliharaan/AssetFotoPreview.dart</code>)</td>
+<td><code>lib/UI/Modul/Asset/Pemeliharaan/Disposal/*</code> (<code>HalamanAssetDisposal</code>, <code>HalamanBuatDisposal</code>, <code>HalamanDetailAssetDisposal</code>, <code>AssetDisposalWidgets</code>, <code>AssetDisposalProsesWidgets</code>; pratinjau foto layar penuh memakai <code>Pemeliharaan/AssetFotoPreview.dart</code>)</td>
 </tr>
 <tr>
 <td>Teks</td>
-<td>grup <code>disposal</code> di <code>assets/{id,en}/asset.json</code> (81 kunci)</td>
+<td>grup <code>disposal</code> di <code>assets/{id,en}/asset.json</code> (63 kunci per bahasa)</td>
 </tr>
 <tr>
 <td>Navigasi</td>
-<td><code>NavigatorBloc</code> (<code>NavigateToAssetAdminDisposal</code>, <code>…DetailDisposal</code>, <code>…BuatDisposal</code>), <code>router.dart</code></td>
+<td><code>NavigatorBloc</code> (<code>NavigateToAssetAdminDisposal</code>, <code>NavigateToAssetDetailDisposal</code>, <code>NavigateToAssetBuatDisposal</code>), <code>Setting/router.dart</code></td>
 </tr>
 </tbody>
 </table></div>
 <h2 id="s26"><span class="sec-no">26</span>Mobile Screen</h2>
 <h3>26.1 Daftar — <code>HalamanAssetDisposal</code></h3>
-<p>Tab Menunggu/Selesai, <code>AssetDisposalRecordCard</code>, tombol <strong>+</strong>.</p>
-<h3>26.2 Buat — <code>HalamanBuatDisposal</code></h3>
-<p>Pilih satu aset (radio); aset terpilih menampilkan kartu riwayat; <strong>Lanjut</strong> membuka sheet keputusan (alasan, metode chip, nilai sisa, catatan).</p>
-<h3>26.3 Detail — <code>HalamanDetailAssetDisposal</code></h3>
-<p>Kartu status, petunjuk langkah berikutnya, aset + riwayat, keputusan, pelaksanaan (dengan foto bukti), penyelesaian. Tombol bawah: <strong>Catat/Ubah Data Pelaksanaan</strong> dan <strong>Selesaikan Disposal</strong> (dialog konfirmasi).</p>
-<h3>26.4 Sheet pelaksanaan</h3>
-<p>Field mengikuti metode, picker tanggal (tidak boleh melewati hari ini), foto bukti dari kamera/galeri.</p>
-<h3>26.5 Entry point</h3>
-<p>Beranda admin: menu <strong>Disposal</strong> dan kartu "perlu diproses" (langkah berikutnya: Catat pelaksanaan / Selesaikan disposal). Notifikasi membuka <code>asset_admin_detail_disposal</code>.</p>
+<p>Satu daftar disposal selesai (tab filter tidak ditampilkan), <code>AssetDisposalRecordCard</code>, tombol <strong>+</strong>, dan filter rentang tanggal.</p>
+<h3>26.2 Buat — <code>HalamanBuatDisposal</code> (form terpadu)</h3>
+<p>Satu form: pilih satu aset (radio; aset terpilih menampilkan kartu riwayat), alasan, metode (chip), nilai sisa, catatan, field menurut metode, tanggal pelaksanaan (picker, tidak boleh melewati hari ini), dan foto bukti dari kamera/galeri. Tombol <strong>Submit Disposal</strong> memvalidasi seluruh form, lalu menampilkan dialog konfirmasi bahwa aset akan langsung berstatus DIHAPUS dan tindakan ini tidak dapat dibatalkan. Setelah konfirmasi, form dikirim lewat <code>AssetDisposalForm</code> (bukti sebagai base64). Daftar form memakai <code>cacheExtent</code> besar agar state dan validasi tidak hilang saat field di luar layar.</p>
+<h3>26.3 Detail — <code>HalamanDetailAssetDisposal</code> (read-only)</h3>
+<p>Hero status, stepper satu langkah (<code>AssetDisposalProsesStepper</code>, label "Selesai"), <code>AssetDisposalDetailCard</code> (aset + riwayat, data disposal, foto bukti, diinput oleh dan tanggal input). Tidak ada tombol aksi. Sheet pelaksanaan dan dialog selesaikan sudah dihapus.</p>
+<h3>26.4 Entry point</h3>
+<p>Beranda admin: menu <strong>Disposal</strong> (kartu "perlu diproses" dihapus). Notifikasi membuka <code>asset_admin_detail_disposal</code>.</p>
 <h2 id="s27"><span class="sec-no">27</span>Mobile → API</h2>
 <div class="table-wrap"><table>
 <thead>
@@ -935,7 +895,7 @@ footer{margin-top:64px;padding-top:18px;border-top:1px solid var(--line);color:v
 <tr>
 <td>Muat daftar</td>
 <td>GET</td>
-<td><code>asset/disposal?tab=</code></td>
+<td><code>asset/disposal?tab=selesai</code></td>
 </tr>
 <tr>
 <td>Muat opsi</td>
@@ -948,24 +908,14 @@ footer{margin-top:64px;padding-top:18px;border-top:1px solid var(--line);color:v
 <td><code>asset/disposal/{id}</code></td>
 </tr>
 <tr>
-<td>Submit keputusan</td>
+<td>Submit Disposal</td>
 <td>POST</td>
 <td><code>asset/disposal</code></td>
-</tr>
-<tr>
-<td>Simpan pelaksanaan</td>
-<td>POST</td>
-<td><code>asset/disposal/{id}/pelaksanaan</code></td>
-</tr>
-<tr>
-<td>Selesaikan</td>
-<td>POST</td>
-<td><code>asset/disposal/{id}/selesai</code></td>
 </tr>
 </tbody>
 </table></div>
 <h2 id="s28"><span class="sec-no">28</span>API → Mobile</h2>
-<p>Respons dipetakan ke <code>AssetDisposalRecord</code>, <code>Page</code>, <code>Options</code>. Daftar mengirim data datar, detail mengirim grup; model menangani keduanya. 422 tampil snackbar warning, lainnya error; sukses menutup halaman dengan pesan dan memuat ulang daftar/ringkasan.</p>
+<p>Respons dipetakan ke <code>AssetDisposalRecord</code>, <code>Page</code>, <code>Options</code>. Daftar mengirim data datar, detail mengirim grup; model menangani keduanya. 422 tampil snackbar warning, lainnya error; submit sukses menutup halaman dengan pesan, lalu daftar dimuat ulang. Model ringkasan (<code>mAssetSummary</code>) mengabaikan field dashboard disposal yang sudah dihapus.</p>
 <h2 id="s29"><span class="sec-no">29</span>Mapping Mobile → API → Database</h2>
 <div class="table-wrap"><table>
 <thead>
@@ -995,6 +945,11 @@ footer{margin-top:64px;padding-top:18px;border-top:1px solid var(--line);color:v
 <td>Nilai sisa</td>
 <td><code>nilai_sisa</code></td>
 <td><code>nilai_sisa</code></td>
+</tr>
+<tr>
+<td>Catatan</td>
+<td><code>catatan</code></td>
+<td><code>catatan</code></td>
 </tr>
 <tr>
 <td>Tanggal pelaksanaan</td>
@@ -1034,9 +989,9 @@ footer{margin-top:64px;padding-top:18px;border-top:1px solid var(--line);color:v
 </thead>
 <tbody>
 <tr>
-<td><code>status</code>, <code>tgl_pelaksanaan</code></td>
-<td><code>status</code>, <code>pelaksanaan_tercatat</code></td>
-<td>Badge fase</td>
+<td><code>status</code></td>
+<td><code>status</code>, <code>status_label</code></td>
+<td>Badge "Dihapus (Disposed)"</td>
 </tr>
 <tr>
 <td><code>file_bukti</code></td>
@@ -1044,9 +999,14 @@ footer{margin-top:64px;padding-top:18px;border-top:1px solid var(--line);color:v
 <td>Gambar bukti di detail</td>
 </tr>
 <tr>
+<td><code>user_input</code>, <code>tgl_input</code></td>
+<td><code>keputusan.user_keputusan</code>, <code>keputusan.tgl_keputusan</code></td>
+<td>Diinput oleh, tanggal input</td>
+</tr>
+<tr>
 <td><code>user_selesai</code>, <code>tgl_selesai</code></td>
 <td><code>penyelesaian.*</code></td>
-<td>Bagian penyelesaian</td>
+<td>Bagian data disposal</td>
 </tr>
 <tr>
 <td><code>harga_perolehan</code>, <code>tgl_perolehan</code></td>
@@ -1057,9 +1017,9 @@ footer{margin-top:64px;padding-top:18px;border-top:1px solid var(--line);color:v
 </table></div>
 <div class="group-divider" id="g5"><span>Validasi, Error &amp; Keamanan</span></div><h2 id="s31"><span class="sec-no">31</span>Validation</h2>
 <h3>31.1 Mobile</h3>
-<p>Alasan dan metode wajib; nilai sisa angka tidak negatif; pada pelaksanaan: field metode, tanggal, dan bukti wajib.</p>
+<p>Aset, alasan, dan metode wajib; nilai sisa dan harga jual angka valid (koma dinormalisasi menjadi titik); field menurut metode, tanggal, dan foto bukti wajib. Semua divalidasi sebelum dialog konfirmasi muncul.</p>
 <h3>31.2 Backend</h3>
-<p>Aturan Laravel: <code>id_asset_data</code> wajib, <code>alasan_disposal</code> wajib ≤255, <code>metode_disposal</code> ∈ tiga nilai, <code>nilai_sisa</code> numerik ≥ 0, <code>tgl_pelaksanaan</code> <code>Y-m-d</code>, <code>harga_jual</code> numerik ≥ 0. Aturan bisnis di model (§9).</p>
+<p>Aturan Laravel pada <code>storeDisposal</code>: <code>id_asset_data</code> wajib ≤50, <code>alasan_disposal</code> wajib ≤255, <code>metode_disposal</code> ∈ tiga nilai, <code>nilai_sisa</code> numerik ≥ 0, <code>catatan</code> ≤1000, <code>tgl_pelaksanaan</code> wajib <code>Y-m-d</code> dan <code>before_or_equal:today</code>, <code>file_bukti</code> wajib, <code>pembeli</code>/<code>harga_jual</code> wajib untuk <code>lelang_jual</code>, <code>penerima_donasi</code> wajib untuk <code>donasi</code>, <code>metode_pemusnahan</code> wajib untuk <code>pemusnahan</code> (<code>harga_jual</code> numerik ≥ 0). Aturan bisnis di model (§9) diperiksa ulang di dalam transaksi.</p>
 <h3>31.3 Database</h3>
 <p>Enum <code>metode_disposal</code>, <code>status</code>; FK aset dan gudang.</p>
 <h2 id="s32"><span class="sec-no">32</span>Error Handling</h2>
@@ -1075,12 +1035,17 @@ footer{margin-top:64px;padding-top:18px;border-top:1px solid var(--line);color:v
 <tr>
 <td>Validasi request</td>
 <td>422</td>
-<td>"Alasan disposal wajib diisi."</td>
+<td>"Data disposal belum lengkap." + <code>errors</code> per field (mis. "Alasan disposal wajib diisi.")</td>
 </tr>
 <tr>
 <td>Aturan bisnis</td>
 <td>422 <code>BUSINESS_RULE_VIOLATION</code></td>
-<td>"Data pelaksanaan disposal belum dicatat."</td>
+<td>"Hanya asset rusak di gudang yang dapat di-disposal."</td>
+</tr>
+<tr>
+<td>Filter daftar tidak valid</td>
+<td>422</td>
+<td>"Filter disposal tidak valid."</td>
 </tr>
 <tr>
 <td>Bukan admin</td>
@@ -1088,19 +1053,20 @@ footer{margin-top:64px;padding-top:18px;border-top:1px solid var(--line);color:v
 <td>"Pengguna tidak memiliki akses admin asset."</td>
 </tr>
 <tr>
-<td>Tidak ditemukan</td>
+<td>Tidak ditemukan (detail)</td>
 <td>404</td>
 <td>"Disposal tidak ditemukan."</td>
 </tr>
 <tr>
 <td>Sistem</td>
 <td>500 <code>SYSTEM_ERROR</code></td>
-<td>Pesan umum</td>
+<td>"Terjadi kesalahan saat membuat disposal."</td>
 </tr>
 </tbody>
 </table></div>
+<p>Pesan tersedia dalam bahasa Indonesia dan Inggris mengikuti header <code>locale</code>.</p>
 <h2 id="s33"><span class="sec-no">33</span>Audit Trail</h2>
-<p><code>user_input</code>/<code>tgl_input</code> = keputusan, <code>user_update</code>/<code>tgl_update</code> = pelaksanaan terakhir, <code>user_selesai</code>/<code>tgl_selesai</code> = penyelesaian (format <code>nik - nama</code>). <code>asset_trx_log</code> <code>disposal_gudang</code> saat selesai.</p>
+<p><code>user_input</code>/<code>tgl_input</code> dan <code>user_selesai</code>/<code>tgl_selesai</code> berisi pelaku dan waktu submit yang sama (format <code>nik - nama</code>); <code>tgl_update</code> NULL dan <code>user_update</code> kosong karena transaksi tidak pernah diperbarui. <code>asset_trx_log</code> <code>disposal_gudang</code> ditulis pada submit yang sama.</p>
 <h2 id="s34"><span class="sec-no">34</span>Notification</h2>
 <div class="table-wrap"><table>
 <thead>
@@ -1120,24 +1086,19 @@ footer{margin-top:64px;padding-top:18px;border-top:1px solid var(--line);color:v
 </tr>
 </tbody>
 </table></div>
-<p>Pencatatan pelaksanaan tidak mengirim notifikasi. Notifikasi dikirim setelah transaksi commit.</p>
+<p>Notifikasi dikirim <strong>setelah</strong> transaksi commit; bila transaksi gagal tidak ada notifikasi (dijaga test).</p>
 <h2 id="s35"><span class="sec-no">35</span>Security</h2>
-<p>JWT; semua endpoint admin-only; filter <code>id_company</code>; transaksi + <code>lockForUpdate</code>; bukti diunggah ke bucket MinIO privat lewat <code>Asset_c::uploadAssetImage</code> (<code>AssetImageStorage</code>): hanya JPEG/PNG/WebP valid, maks 5 MB dan 25 megapiksel; key memuat <code>id_company</code> dan <code>id_karyawan</code> dari JWT; URL bukti berupa presigned URL berumur singkat (lihat <code>dokumentasi-minio-object-storage.md</code>).</p>
+<p>JWT; semua endpoint admin-only; filter <code>id_company</code>; transaksi + <code>lockForUpdate</code>; bukti diunggah ke bucket MinIO privat lewat <code>Asset_c::uploadAssetImage</code> (<code>AssetImageStorage</code>): hanya JPEG/PNG/WebP valid, maks 5 MB dan 25 megapiksel; key memuat <code>id_company</code> dan <code>id_karyawan</code> dari JWT; URL bukti berupa presigned URL berumur singkat (lihat <code>dokumentasi-minio-object-storage.md</code>). Bukti yang terunggah dibersihkan bila transaksi gagal.</p>
 <div class="group-divider" id="g6"><span>Manual Book</span></div><h2 id="s36"><span class="sec-no">36</span>Manual Book User/Admin</h2>
-<h3>A. Membuat keputusan disposal</h3>
+<h3>Membuat disposal (sekali input)</h3>
 <ol>
 <li>Beranda Asset → <strong>Disposal</strong> → tombol <strong>+</strong>.</li>
 <li>Pilih aset; tinjau usia, harga perolehan, jumlah perbaikan dan klaim.</li>
-<li><strong>Lanjut</strong> → isi alasan, pilih metode, (opsional) nilai sisa dan catatan → <strong>Submit Keputusan</strong>.</li>
+<li>Isi alasan, pilih metode, (opsional) nilai sisa dan catatan.</li>
+<li>Isi field sesuai metode (pembeli dan harga jual, penerima donasi, atau cara pemusnahan), pilih tanggal pelaksanaan, dan lampirkan foto bukti.</li>
+<li>Tekan <strong>Submit Disposal</strong>, baca konfirmasi, lalu konfirmasi. Aset langsung berstatus DIHAPUS dan hilang dari daftar aktif; tindakan ini tidak dapat dibatalkan.</li>
+<li>Hasil dapat dilihat di daftar disposal dan detailnya (read-only).</li>
 </ol>
-<h3>B. Mencatat pelaksanaan</h3>
-<ol>
-<li>Setelah disposal fisik selesai, buka transaksi di tab <strong>Menunggu</strong>.</li>
-<li><strong>Catat Pelaksanaan</strong>: isi field sesuai metode, tanggal, dan foto bukti → <strong>Simpan</strong>.</li>
-<li>Data dapat diubah lagi lewat <strong>Ubah Data Pelaksanaan</strong> sebelum diselesaikan.</li>
-</ol>
-<h3>C. Menyelesaikan disposal</h3>
-<p><strong>Selesaikan Disposal</strong> → baca konfirmasi → konfirmasi. Aset berstatus DIHAPUS dan hilang dari daftar aktif.</p>
 <h2 id="s37"><span class="sec-no">37</span>Kondisi Button</h2>
 <div class="table-wrap"><table>
 <thead>
@@ -1148,16 +1109,20 @@ footer{margin-top:64px;padding-top:18px;border-top:1px solid var(--line);color:v
 </thead>
 <tbody>
 <tr>
-<td>Catat / Ubah Data Pelaksanaan</td>
-<td><code>status = proses</code> (<code>aksi.pelaksanaan</code>)</td>
+<td><strong>+</strong> (daftar)</td>
+<td>Selalu tampil untuk admin</td>
 </tr>
 <tr>
-<td>Selesaikan Disposal</td>
-<td><code>status = proses</code> dan pelaksanaan tercatat (<code>aksi.selesai</code>)</td>
+<td>Submit Disposal</td>
+<td>Form valid (aset dipilih, alasan, metode, field metode, tanggal, bukti); tampil bila ada aset gudang rusak; memicu dialog konfirmasi</td>
 </tr>
 <tr>
-<td>Lanjut (halaman buat)</td>
-<td>Satu aset dipilih</td>
+<td>Submit (dialog konfirmasi)</td>
+<td>Mengirim <code>POST asset/disposal</code>; Batal menutup dialog tanpa mengirim</td>
+</tr>
+<tr>
+<td>Detail</td>
+<td>Tidak ada tombol aksi (read-only)</td>
 </tr>
 </tbody>
 </table></div>
@@ -1183,57 +1148,52 @@ footer{margin-top:64px;padding-top:18px;border-top:1px solid var(--line);color:v
 </tr>
 <tr>
 <td>T-03</td>
-<td>Keputusan valid</td>
-<td><code>PML04-…</code>, aset <code>menunggu_disposal</code>, hilang dari opsi</td>
-</tr>
-<tr>
-<td>T-04</td>
-<td>Pelaksanaan tanpa pembeli/harga/penerima/cara/bukti/tanggal</td>
-<td>Ditolak sesuai metode</td>
-</tr>
-<tr>
-<td>T-05</td>
-<td>Tanggal pelaksanaan besok</td>
+<td>Aset dalam onboarding aktif</td>
 <td>Ditolak</td>
 </tr>
 <tr>
-<td>T-06</td>
-<td>Perbarui tanpa bukti baru</td>
-<td>Bukti lama dipertahankan</td>
+<td>T-04</td>
+<td>Submit valid</td>
+<td><code>PML04-…</code>, status <code>selesai</code>, aset <code>disposed</code>, <code>asset_trx_log</code>, <code>tgl_selesai</code>/<code>user_selesai</code> terisi; aset hilang dari opsi; tidak bisa di-disposal ulang</td>
 </tr>
 <tr>
-<td>T-07</td>
+<td>T-05</td>
+<td>Tanpa pembeli/harga/penerima/cara/bukti/tanggal; tanggal besok</td>
+<td>Ditolak sesuai metode</td>
+</tr>
+<tr>
+<td>T-06</td>
 <td>Field metode lain ikut dikirim</td>
 <td>Dikosongkan</td>
 </tr>
 <tr>
+<td>T-07</td>
+<td>Penulisan log gagal (tabel hilang)</td>
+<td>Rollback penuh, aset tetap <code>rusak</code>; via endpoint 500, bukti terunggah dibersihkan, tanpa notifikasi</td>
+</tr>
+<tr>
 <td>T-08</td>
-<td>Selesai sebelum pelaksanaan</td>
-<td>Ditolak</td>
+<td>Daftar (tab <code>selesai</code> dan kosong) dan detail</td>
+<td>Tanpa <code>pelaksanaan_tercatat</code>, <code>aksi</code>, <code>tercatat</code>; detail id lain atau company lain <code>null</code></td>
 </tr>
 <tr>
 <td>T-09</td>
-<td>Selesai valid</td>
-<td>Aset <code>disposed</code>, <code>asset_trx_log</code>, transaksi <code>selesai</code></td>
+<td>Endpoint <code>pelaksanaan</code>/<code>selesai</code> dan method lama</td>
+<td>404/405; method lama tidak ada</td>
 </tr>
 <tr>
 <td>T-10</td>
-<td>Ubah/selesai ulang setelah selesai</td>
-<td>Ditolak</td>
+<td>Alur penuh via route</td>
+<td>Non-admin 403; payload kosong 422; validasi per metode; aset non-gudang ditolak sebelum bukti terunggah; sukses 201 dengan notifikasi (rute, nama aset, metode); <code>tab=proses</code> 422; kirim ulang 422</td>
 </tr>
 <tr>
 <td>T-11</td>
-<td>Status aset berubah di luar alur</td>
-<td>Ditolak</td>
-</tr>
-<tr>
-<td>T-12</td>
-<td>Alur penuh via route; non-admin</td>
-<td>200; 403</td>
+<td>Pesan validasi 422 menurut <code>locale</code> (id/en)</td>
+<td>Sesuai bahasa</td>
 </tr>
 </tbody>
 </table></div>
-<p>Cakupan otomatis: API 7 test, mobile 13 test (teks id/en, parsing, payload, bloc, detail 320/400 px, konfirmasi selesai, validasi sheet, alur buat).</p>
+<p>Cakupan otomatis: API 7 test di <code>AssetDisposalTest.php</code> (T-01 sampai T-10) ditambah satu test lokalisasi disposal di <code>AssetGaransiDisposalLocaleTest.php</code> (T-11, tidak termasuk hitungan 7); mobile 11 test (teks id/en dan kunci teks, parsing detail, baris daftar dan opsi, ringkasan tanpa field disposal, payload per metode, helper format, bloc, detail read-only 320 dan 400 px, form buat dengan validasi, konfirmasi, dan submit).</p>
 <h2 id="s39"><span class="sec-no">39</span>Temuan Ketidaksesuaian</h2>
 <div class="table-wrap"><table>
 <thead>
@@ -1249,7 +1209,7 @@ footer{margin-top:64px;padding-top:18px;border-top:1px solid var(--line);color:v
 </tr>
 <tr>
 <td>INC-02</td>
-<td>Dokumen bisnis menyebut tahap pelaksanaan per metode sebagai langkah; implementasi memakai satu tabel dengan kolom per metode dan penanda <code>tgl_pelaksanaan</code></td>
+<td>Dokumen bisnis menyebut keputusan, tahap pelaksanaan per metode, dan penyelesaian sebagai langkah berurutan; implementasi menggabungkannya menjadi satu input dengan satu tabel dan kolom per metode</td>
 </tr>
 <tr>
 <td>INC-03</td>
@@ -1261,7 +1221,7 @@ footer{margin-top:64px;padding-top:18px;border-top:1px solid var(--line);color:v
 </tr>
 <tr>
 <td>INC-05</td>
-<td>Tidak ada pembatalan disposal dari <code>menunggu_disposal</code></td>
+<td>Tidak ada pembatalan atau koreksi disposal setelah submit</td>
 </tr>
 <tr>
 <td>INC-06</td>
@@ -1271,22 +1231,30 @@ footer{margin-top:64px;padding-top:18px;border-top:1px solid var(--line);color:v
 </table></div>
 <h2 id="s40"><span class="sec-no">40</span>Edge Case</h2>
 <ul>
-<li>Dua admin memilih aset yang sama: yang kedua gagal karena aset sudah <code>menunggu_disposal</code>.</li>
-<li>Status aset berubah antara keputusan dan penyelesaian: penyelesaian ditolak.</li>
+<li>Dua admin memilih aset yang sama: yang kedua gagal karena aset sudah <code>disposed</code> (cek ulang setelah lock).</li>
+<li>Aset berubah status antara cek awal (tanpa lock) dan lock di <code>store</code>: disposal ditolak dan bukti yang sudah terunggah dibersihkan.</li>
+<li>Respons hilang setelah commit lalu pengguna mengirim ulang: ditolak karena aset sudah <code>disposed</code>, tidak ada duplikasi.</li>
 <li>Harga jual berformat koma (<code>1500,50</code>): dinormalisasi di mobile sebelum dikirim.</li>
 <li>Tabel PML02/PML03 belum ada: riwayat menampilkan 0 tanpa error.</li>
+<li>Data lama berstatus <code>proses</code> atau aset <code>menunggu_disposal</code>: tidak ada jalur selesai lagi (RISK-006).</li>
 </ul>
 <h2 id="s41"><span class="sec-no">41</span>Potential Bug / Technical Risk</h2>
 <h3>RISK-001 — Skema dari SQL manual (TINGGI)</h3>
 <p>Endpoint gagal bila <code>sql-pml04-disposal.sql</code> belum dijalankan. Jalankan setelah SQL PML01 gudang, PML03, dan PML02 (blok enum menulis ulang daftar penuh).</p>
-<h3>RISK-002 — Tidak ada pembatalan (SEDANG)</h3>
-<p>Keputusan yang salah mengunci aset di <code>menunggu_disposal</code>; perbaikan membutuhkan intervensi manual di database.</p>
+<h3>RISK-002 — Tidak ada pembatalan atau koreksi (SEDANG)</h3>
+<p>Disposal langsung <code>selesai</code>; kesalahan input (aset, metode, harga, bukti) tidak dapat dikoreksi lewat aplikasi atau API, sehingga perbaikan membutuhkan intervensi manual di database.</p>
 <h3>RISK-003 — Penyelesaian tidak dapat dibatalkan (SEDANG)</h3>
-<p>Dialog konfirmasi memitigasi di UI; di API tidak ada rollback.</p>
+<p>Dialog konfirmasi memitigasi di UI; di API tidak ada rollback setelah commit, dan kini tidak ada langkah penyelesaian terpisah sebagai jeda sebelum aset menjadi <code>disposed</code>.</p>
 <h3>RISK-004 — Bukti lama di disk lokal (RENDAH)</h3>
-<p>Bukti baru disimpan di object storage. Bukti lama di <code>UPLOAD_DIR</code> tetap terbaca lewat fallback URL lokal. Object lama tidak dihapus saat bukti diganti; object baru yang yatim dibersihkan otomatis bila transaksi gagal.</p>
+<p>Bukti baru disimpan di object storage. Bukti lama di <code>UPLOAD_DIR</code> tetap terbaca lewat fallback URL lokal. Object baru yang yatim dibersihkan otomatis bila transaksi gagal.</p>
 <h3>RISK-005 — Kapasitas penomoran 999/bulan (RENDAH)</h3>
 <p>Batas 999 transaksi per bulan per perusahaan.</p>
+<h3>RISK-006 — Data lama tanpa jalur selesai (SEDANG-TINGGI)</h3>
+<p>Transaksi berstatus <code>proses</code> dan aset <code>menunggu_disposal</code> buatan alur tiga fase tidak punya jalur selesai: endpoint pelaksanaan dan selesai dihapus, dan aset <code>menunggu_disposal</code> tidak lagi muncul di opsi (bukan <code>rusak</code>). Aset tersebut terkunci di status perantara. Diperlukan SQL pemulihan (menyelesaikan transaksi dan mengubah aset menjadi <code>disposed</code>, atau mengembalikan ke <code>rusak</code>); SQL ini <strong>butuh persetujuan user dan belum dibuat</strong>. Periksa dulu apakah ada baris <code>status = proses</code> di environment.</p>
+<h3>RISK-007 — Zona waktu validasi tanggal (RENDAH)</h3>
+<p><code>before_or_equal:today</code> dan pembanding di model memakai zona waktu server (<code>APP_TIMEZONE</code>, default UTC), sedangkan picker mobile membatasi tanggal pada jam perangkat. Pada selisih zona waktu, admin yang memilih "hari ini" dapat ditolak 422 "Tanggal pelaksanaan tidak boleh setelah hari ini." dekat pergantian hari.</p>
+<h3>RISK-008 — Cek kelayakan tanpa lock sebelum unggah (RENDAH)</h3>
+<p><code>assertDisposable</code> berjalan tanpa lock sebelum bukti diunggah, sedangkan lock baru diambil di <code>store</code>. Pada race dua submit untuk aset yang sama, bukti sempat terunggah lalu dibersihkan saat salah satu ditolak; tidak ada data yatim, hanya unggahan sia-sia.</p>
 <div class="group-divider" id="g8"><span>Referensi Developer</span></div><h2 id="s42"><span class="sec-no">42</span>Dependency</h2>
 <p><code>Asset_m</code>/<code>Asset_c</code>, <code>AssetImageStorage</code>, <code>AssetNotification</code>, <code>AssetPemeliharaanKaryawan_m</code> (format tanggal), tabel <code>asset_data</code>, <code>asset_kategori_m</code>, <code>asset_lokasi_m</code>, <code>asset_trx_log</code>; <code>asset_trx_perbaikan_item</code> dan <code>asset_trx_garansi_item</code> (riwayat, opsional).</p>
 <h2 id="s43"><span class="sec-no">43</span>Source Code Reference</h2>
@@ -1311,16 +1279,28 @@ footer{margin-top:64px;padding-top:18px;border-top:1px solid var(--line);color:v
 <td><code>API/routes/modules/asset/RouteAsset.php</code></td>
 </tr>
 <tr>
+<td>Ringkasan admin</td>
+<td><code>API/app/Models/Asset/AssetAdmin_m.php</code> (pengecualian <code>disposed</code>)</td>
+</tr>
+<tr>
 <td>SQL</td>
 <td><code>Claude outputs/sql-pml04-disposal.sql</code></td>
 </tr>
 <tr>
 <td>Test API</td>
-<td><code>API/tests/Asset/AssetDisposalTest.php</code></td>
+<td><code>API/tests/Asset/AssetDisposalTest.php</code>, <code>API/tests/Asset/AssetGaransiDisposalLocaleTest.php</code></td>
 </tr>
 <tr>
 <td>Mobile UI</td>
 <td><code>MOBILE/lib/UI/Modul/Asset/Pemeliharaan/Disposal/</code></td>
+</tr>
+<tr>
+<td>Mobile bloc, API, model</td>
+<td><code>MOBILE/lib/Bloc/Asset/AssetDisposalBloc.dart</code>, <code>MOBILE/lib/Repository/Service/assetDisposalApi.dart</code>, <code>MOBILE/lib/Repository/Model/Asset/mAssetDisposal.dart</code></td>
+</tr>
+<tr>
+<td>Navigasi, teks</td>
+<td><code>MOBILE/lib/Bloc/NavigatorBloc.dart</code>, <code>MOBILE/lib/Setting/router.dart</code>, <code>MOBILE/assets/{id,en}/asset.json</code></td>
 </tr>
 <tr>
 <td>Test mobile</td>
@@ -1330,10 +1310,10 @@ footer{margin-top:64px;padding-top:18px;border-top:1px solid var(--line);color:v
 </table></div>
 <h2 id="s44"><span class="sec-no">44</span>Developer Notes</h2>
 <ul>
-<li>Desain disederhanakan dari struktur header+item: satu aset per transaksi, satu tabel.</li>
-<li><code>mutateAssetTrx</code> menerima event <code>null</code> untuk langkah tanpa notifikasi.</li>
-<li><code>pelaksanaanFields</code> dipakai ulang oleh <code>selesai</code> untuk memastikan data tetap lengkap.</li>
-<li>Teks UI memakai <code>AssetDisposalText.t(key)</code>; kunci dinamis: <code>fase_*</code>, <code>hint_*</code>, <code>metode_*</code>, <code>bukti_*</code>, <code>tgl_pelaksanaan_*</code>, <code>aksi_*</code>.</li>
+<li>Desain disederhanakan dari struktur header+item: satu aset per transaksi, satu tabel; sejak v1.3 juga satu langkah.</li>
+<li><code>pelaksanaanFields</code> kini hanya dipanggil dari <code>store</code>.</li>
+<li><code>assertDisposable</code> dipanggil controller sebelum unggah bukti; <code>store</code> memeriksa ulang dengan lock.</li>
+<li>Teks UI memakai <code>AssetDisposalText.t(key)</code>; kunci dinamis: <code>metode_*</code>, <code>bukti_*</code>, <code>tgl_pelaksanaan_*</code>.</li>
 </ul>
 <h2 id="s45"><span class="sec-no">45</span>End-to-End Traceability</h2>
 <div class="table-wrap"><table>
@@ -1355,31 +1335,31 @@ footer{margin-top:64px;padding-top:18px;border-top:1px solid var(--line);color:v
 <td><code>asset_data.status_asset</code>, <code>pemegang_asset</code></td>
 </tr>
 <tr>
+<td>Sekali input, langsung selesai</td>
+<td>BR-002</td>
+<td>API-003</td>
+<td>Submit Disposal + konfirmasi</td>
+<td><code>status = selesai</code>, <code>asset_data.status_asset = disposed</code></td>
+</tr>
+<tr>
 <td>Bukti wajib</td>
-<td>BR-005</td>
-<td>API-004</td>
-<td>Sheet pelaksanaan</td>
+<td>BR-004</td>
+<td>API-003</td>
+<td>Form buat (foto bukti)</td>
 <td><code>file_bukti</code></td>
 </tr>
 <tr>
-<td>Status perantara</td>
-<td>BR-003</td>
-<td>API-003</td>
-<td>Badge Menunggu</td>
-<td><code>asset_data.status_asset = menunggu_disposal</code></td>
-</tr>
-<tr>
 <td>Arsip bukan hapus</td>
-<td>BR-008</td>
-<td>API-005</td>
-<td>Tab Selesai</td>
+<td>BR-006</td>
+<td>API-002, API-004</td>
+<td>Daftar dan detail</td>
 <td><code>status = selesai</code>, <code>disposed</code></td>
 </tr>
 </tbody>
 </table></div>
 <h3>45.4 Walkthrough Lengkap dengan Contoh Data</h3>
-<p>Bagian ini mengikuti <strong>satu disposal dari keputusan sampai asset dihapus dari daftar aktif</strong>, langkah demi langkah: apa yang dilakukan admin di mobile, apa yang dikirim, apa yang diproses API, dan apa yang tersimpan di database. Data bersifat <strong>sintetis</strong>, tetapi format ID, nama kolom, urutan proses, label status, dan pesan diambil dari kode (<code>AssetDisposal_m</code>, <code>AssetAdminDisposal_c</code>, <code>AssetNotification</code>). Disposal hanya dilakukan <strong>admin</strong> (tanpa approval) dan <strong>tidak ada PIC</strong>.</p>
-<p><strong>Skenario:</strong> Laptop lama di gudang rusak total dan tidak layak dipertahankan. Admin meninjau riwayatnya lalu memutuskan disposal dengan metode <strong>Lelang / Jual</strong>. Setelah laptop terjual, admin mencatat pelaksanaan (pembeli, harga, tanggal, bukti), memperbaruinya satu kali karena harga terkoreksi, lalu menyelesaikan disposal.</p>
+<p>Bagian ini mengikuti <strong>satu disposal dari form sampai asset dihapus dari daftar aktif</strong>, langkah demi langkah: apa yang dilakukan admin di mobile, apa yang dikirim, apa yang diproses API, dan apa yang tersimpan di database. Data bersifat <strong>sintetis</strong>, tetapi format ID, nama kolom, urutan proses, label status, dan pesan diambil dari kode (<code>AssetDisposal_m</code>, <code>AssetAdminDisposal_c</code>, <code>AssetNotification</code>). Disposal hanya dilakukan <strong>admin</strong> (tanpa approval) dan <strong>tidak ada PIC</strong>.</p>
+<p><strong>Skenario:</strong> Laptop lama di gudang rusak total dan tidak layak dipertahankan. Laptop sudah dijual kemarin. Admin meninjau riwayatnya lalu mengisi satu form lengkap (metode <strong>Lelang / Jual</strong>, pembeli, harga, tanggal, foto kwitansi) dan menyubmitnya sekali; disposal langsung selesai.</p>
 <div class="table-wrap"><table>
 <thead>
 <tr>
@@ -1399,66 +1379,59 @@ footer{margin-top:64px;padding-top:18px;border-top:1px solid var(--line);color:v
 <tr>
 <td style="text-align: center;">1</td>
 <td>Admin</td>
-<td><strong>Submit Keputusan</strong></td>
+<td>Mengisi form lengkap lalu <strong>Submit Disposal</strong></td>
 <td>API-003 <code>POST /asset/disposal</code></td>
 </tr>
 <tr>
 <td style="text-align: center;">2</td>
 <td>Admin</td>
-<td><strong>Catat Pelaksanaan</strong> + bukti</td>
-<td>API-004 <code>POST /asset/disposal/{id}/pelaksanaan</code></td>
-</tr>
-<tr>
-<td style="text-align: center;">3</td>
-<td>Admin</td>
-<td><strong>Perbarui Pelaksanaan</strong></td>
-<td>API-004</td>
-</tr>
-<tr>
-<td style="text-align: center;">4</td>
-<td>Admin</td>
-<td><strong>Selesaikan Disposal</strong></td>
-<td>API-005 <code>POST /asset/disposal/{id}/selesai</code></td>
+<td>Melihat hasil (read-only)</td>
+<td>API-004 <code>GET /asset/disposal/{id}</code></td>
 </tr>
 </tbody>
 </table></div>
 <h4>Data awal</h4>
-<p>Company <code>CMP001</code>. Keputusan diambil 22 Oktober 2026, periode ID <code>202610</code>. Belum ada transaksi disposal, log, atau notifikasi pada periode ini.</p>
+<p>Company <code>CMP001</code>. Disposal disubmit 11 November 2026, periode ID <code>202611</code>. Belum ada transaksi disposal, log, atau notifikasi pada periode ini.</p>
 <p><strong><code>asset_data</code></strong> A70: <code>CMP00120260100070</code> (LPT-0070), Laptop Lama, kategori Laptop, <code>pemegang_asset = gudang</code>, <code>status_asset = rusak</code>, <code>kondisi_awal = rusak</code>, <code>ket_rusak = Mati total</code>, <code>id_asset_lokasi_m = CMP001202601001</code> (Gudang Pusat), <code>tgl_perolehan = 2019-10-01</code>, <code>harga_perolehan = 15000000</code>. Asset ini pernah 2 kali masuk Perbaikan dan 1 kali Klaim Garansi.</p>
 <p><strong>Admin:</strong> KRY0099 (ADM-001, Siti Admin) sebagai pelaksana, KRY0100 (ADM-002, Rudi Admin).</p>
-<p>Penomoran: <code>id_company + YYYYMM + 3 digit</code>, <code>no_trx = PML04-YYYYMMNNN</code>; log dan notifikasi 5 digit. <strong>Satu transaksi = satu asset</strong>; tidak ada tabel item terpisah dan tidak ada kolom fase: tahap pelaksanaan ditandai terisinya <code>tgl_pelaksanaan</code>.</p>
+<p>Penomoran: <code>id_company + YYYYMM + 3 digit</code>, <code>no_trx = PML04-YYYYMMNNN</code>; log dan notifikasi 5 digit. <strong>Satu transaksi = satu asset</strong>; tidak ada tabel item terpisah, dan semua kolom fase terisi sekaligus saat insert.</p>
 <hr />
 <h4>Langkah 0 — Admin memuat opsi dan riwayat</h4>
-<p><strong>Mobile:</strong> Pemeliharaan (admin) → <strong>Disposal</strong> → buat → <code>AssetDisposalApi</code> memuat opsi.</p>
+<p><strong>Mobile:</strong> Pemeliharaan (admin) → <strong>Disposal</strong> → buat → <code>AssetDisposalApi.getOptions</code> memuat opsi.</p>
 <p><strong>Dikirim</strong></p>
 <div class="code"><span class="code-lang">HTTP</span><pre><code class="language-http">GET /asset/disposal/options
 Authorization: Bearer &lt;access_token_admin&gt;
 </code></pre></div>
-<p><strong>Diproses API</strong> (<code>AssetDisposal_m::getAdminOptions</code>): asset <code>gudang</code> berstatus <code>rusak</code> (asset yang sudah <code>menunggu_disposal</code> tidak muncul lagi), masing-masing dengan <strong>riwayat</strong>: usia dalam bulan dari <code>tgl_perolehan</code>, <code>harga_perolehan</code>, jumlah baris di <code>asset_trx_perbaikan_item</code>, dan jumlah baris di <code>asset_trx_garansi_item</code> (0 bila tabel belum ada). Biaya perbaikan tidak dicatat sistem. Ditambah daftar <code>metode</code>.</p>
+<p><strong>Diproses API</strong> (<code>AssetDisposal_m::getAdminOptions</code>): asset <code>gudang</code> berstatus <code>rusak</code> (asset yang sudah <code>disposed</code> tidak muncul lagi), masing-masing dengan <strong>riwayat</strong>: usia dalam bulan dari <code>tgl_perolehan</code>, <code>harga_perolehan</code>, jumlah baris di <code>asset_trx_perbaikan_item</code>, dan jumlah baris di <code>asset_trx_garansi_item</code> (0 bila tabel belum ada). Biaya perbaikan tidak dicatat sistem. Ditambah daftar <code>metode</code>.</p>
 <p><strong>Database:</strong> hanya <code>SELECT</code>.</p>
 <p><strong>Diterima mobile</strong> (ringkas)</p>
 <div class="code"><span class="code-lang">JSON</span><pre><code class="language-json">{ &quot;asset&quot;: [ { &quot;id_asset_data&quot;: &quot;CMP00120260100070&quot;, &quot;kode_asset&quot;: &quot;LPT-0070&quot;, &quot;nama_asset&quot;: &quot;Laptop Lama&quot;,
     &quot;kategori_asset&quot;: &quot;Laptop&quot;, &quot;keterangan_rusak&quot;: &quot;Mati total&quot;, &quot;lokasi_gudang&quot;: &quot;Gudang Pusat&quot;,
-    &quot;riwayat&quot;: { &quot;tgl_perolehan&quot;: &quot;2019-10-01&quot;, &quot;usia_bulan&quot;: 84, &quot;harga_perolehan&quot;: 15000000,
+    &quot;riwayat&quot;: { &quot;tgl_perolehan&quot;: &quot;2019-10-01&quot;, &quot;usia_bulan&quot;: 85, &quot;harga_perolehan&quot;: 15000000,
                  &quot;jumlah_perbaikan&quot;: 2, &quot;jumlah_klaim_garansi&quot;: 1 } } ],
   &quot;metode&quot;: [ { &quot;value&quot;: &quot;lelang_jual&quot;, &quot;label&quot;: &quot;Lelang / Jual&quot; }, { &quot;value&quot;: &quot;donasi&quot;, &quot;label&quot;: &quot;Donasi&quot; },
               { &quot;value&quot;: &quot;pemusnahan&quot;, &quot;label&quot;: &quot;Pemusnahan&quot; } ] }
 </code></pre></div>
-<h4>Langkah 1 — Admin menyubmit keputusan</h4>
-<p><strong>Mobile:</strong> admin memilih laptop, meninjau riwayat, mengisi alasan, memilih metode, nilai sisa, dan catatan → <strong>Submit</strong> → <code>AssetDisposalApi.store</code>.</p>
-<p><strong>Dikirim</strong></p>
+<h4>Langkah 1 — Admin mengisi form lengkap dan men-submit</h4>
+<p><strong>Mobile:</strong> admin memilih laptop, meninjau riwayat, mengisi alasan, memilih metode <strong>Lelang / Jual</strong>, mengisi nilai sisa, catatan, pembeli, harga jual, memilih tanggal pelaksanaan, dan memotret kwitansi → <strong>Submit Disposal</strong> → dialog konfirmasi "Submit disposal?" (aset langsung DIHAPUS, tidak dapat dibatalkan) → <strong>Submit</strong> → <code>AssetDisposalApi.store(AssetDisposalForm)</code>.</p>
+<p><strong>Dikirim</strong> (JSON dengan bukti base64; multipart juga diterima)</p>
 <div class="code"><span class="code-lang">HTTP</span><pre><code class="language-http">POST /asset/disposal
 </code></pre></div>
 <div class="code"><span class="code-lang">JSON</span><pre><code class="language-json">{ &quot;id_asset_data&quot;: &quot;CMP00120260100070&quot;, &quot;alasan_disposal&quot;: &quot;Motherboard rusak total&quot;,
-  &quot;metode_disposal&quot;: &quot;lelang_jual&quot;, &quot;nilai_sisa&quot;: 250000, &quot;catatan&quot;: &quot;Data sudah dihapus&quot; }
+  &quot;metode_disposal&quot;: &quot;lelang_jual&quot;, &quot;nilai_sisa&quot;: &quot;250000&quot;, &quot;catatan&quot;: &quot;Data sudah dihapus&quot;,
+  &quot;tgl_pelaksanaan&quot;: &quot;2026-11-10&quot;, &quot;pembeli&quot;: &quot;PT Pembeli Sejahtera&quot;, &quot;harga_jual&quot;: &quot;1500000&quot;,
+  &quot;file_bukti&quot;: &quot;&lt;base64 gambar kwitansi&gt;&quot; }
 </code></pre></div>
-<p><strong>Diproses API</strong> (<code>AssetAdminDisposal_c::storeDisposal</code> → <code>store</code>, satu <code>DB::transaction</code>)
-1. Validasi: <code>alasan_disposal</code> wajib, <code>metode_disposal</code> ∈ lelang_jual/donasi/pemusnahan; <code>nilai_sisa</code> opsional dan tidak negatif ("Nilai sisa harus berupa angka tidak negatif.").
-2. <code>lockCompany</code>; cek admin; asset dikunci <code>FOR UPDATE</code> dan harus tepat satu ("Asset tidak ditemukan.").
-3. Asset harus <code>gudang</code> dan <code>rusak</code> ("Hanya asset rusak di gudang yang dapat di-disposal."); tidak ada di onboarding aktif. Karena proses lain mengubah status (<code>dalam_perbaikan</code>, <code>dalam_proses_klaim</code>, menunggu serah terima), syarat "tidak ada proses aktif" terpenuhi otomatis.
-4. Generate ID: <code>CMP001202610001</code>, <code>no_trx = PML04-202610001</code>.
-5. INSERT transaksi (snapshot asset dan gudang asal, <code>status = proses</code>, <code>tgl_pelaksanaan</code> NULL) dan UPDATE <code>asset_data</code> → <strong><code>menunggu_disposal</code></strong>.
-6. <strong>Tidak ada notifikasi</strong> pada tahap ini (event <code>null</code>).</p>
+<p><strong>Diproses API</strong> (<code>AssetAdminDisposal_c::storeDisposal</code> → <code>AssetDisposal_m::assertDisposable</code> → unggah bukti → <code>store</code>)</p>
+<ol>
+<li>Validasi request: field wajib, <code>tgl_pelaksanaan</code> <code>Y-m-d</code> dan tidak setelah hari ini, field wajib sesuai metode (<code>pembeli</code> dan <code>harga_jual</code> untuk <code>lelang_jual</code>). Kegagalan → 422 "Data disposal belum lengkap." dengan <code>errors</code> per field; belum ada yang disimpan.</li>
+<li>Cek akses admin, lalu <code>assertDisposable</code> (tanpa lock): aset harus ada, <code>gudang</code>, <code>rusak</code>, dan tidak dalam onboarding aktif. Aset tidak layak ditolak <strong>sebelum</strong> bukti diunggah.</li>
+<li><code>buktiPath</code> mengunggah bukti dengan key <code>CMP001/asset/disposal/KRY0099/&lt;hex&gt;.&lt;ext&gt;</code>. File tidak valid → "File bukti tidak valid.".</li>
+<li><code>store</code> dalam satu <code>DB::transaction</code>: <code>lockCompany</code>; cek admin; validasi ulang alasan, metode, nilai sisa; <code>pelaksanaanFields</code> (tanggal tidak setelah hari ini, bukti, <code>pembeli</code> dan <code>harga_jual</code>; field metode lain dikosongkan); asset dikunci <code>FOR UPDATE</code> dan dicek ulang BR-001.</li>
+<li>Generate ID: <code>CMP001202611001</code>, <code>no_trx = PML04-202611001</code>.</li>
+<li>INSERT transaksi <strong>langsung <code>status = selesai</code></strong> (snapshot asset dan gudang asal, <code>tgl_selesai</code> dan <code>user_selesai</code> terisi), UPDATE <code>asset_data</code> → <strong><code>disposed</code></strong>, INSERT <code>asset_trx_log</code> (<code>jenis_log = disposal_gudang</code>, posisi gudang → gudang, kondisi tidak berubah).</li>
+<li>Setelah commit: <code>releaseTrackedObjects()</code> dan notifikasi <code>disposal.selesai</code> ke <strong>seluruh admin</strong>.</li>
+</ol>
 <p><strong>Hasil database</strong></p>
 <p><code>asset_trx_disposal</code></p>
 <div class="table-wrap"><table>
@@ -1471,7 +1444,7 @@ Authorization: Bearer &lt;access_token_admin&gt;
 <tbody>
 <tr>
 <td>id_asset_trx_disposal / no_trx</td>
-<td>CMP001202610001 / PML04-202610001</td>
+<td>CMP001202611001 / PML04-202611001</td>
 </tr>
 <tr>
 <td>id_asset_data / nama_asset / deskripsi_asset / kategori_asset</td>
@@ -1498,127 +1471,40 @@ Authorization: Bearer &lt;access_token_admin&gt;
 <td>Data sudah dihapus</td>
 </tr>
 <tr>
-<td>tgl_pelaksanaan / pembeli / harga_jual / penerima_donasi / metode_pemusnahan / file_bukti</td>
-<td>NULL / <code>''</code> / NULL / <code>''</code> / <code>''</code> / <code>''</code></td>
-</tr>
-<tr>
-<td>status</td>
-<td><strong>proses</strong></td>
-</tr>
-<tr>
-<td>tgl_selesai / user_selesai</td>
-<td>NULL / <code>''</code></td>
-</tr>
-<tr>
-<td>tgl_input / user_input</td>
-<td>2026-10-22 09:00:00 / ADM-001 - Siti Admin</td>
-</tr>
-</tbody>
-</table></div>
-<p><code>asset_data</code> A70: <code>status_asset</code> <strong>rusak → menunggu_disposal</strong>, <code>tgl_update</code> = 09:00:00, <code>user_update</code> = ADM-001 - Siti Admin.</p>
-<p><strong>Diterima mobile</strong> (HTTP 201)</p>
-<div class="code"><span class="code-lang">JSON</span><pre><code class="language-json">{ &quot;code&quot;: &quot;CREATED&quot;, &quot;message&quot;: &quot;…&quot;,
-  &quot;data&quot;: { &quot;id&quot;: &quot;CMP001202610001&quot;, &quot;no_trx&quot;: &quot;PML04-202610001&quot;, &quot;status&quot;: &quot;proses&quot;,
-            &quot;status_label&quot;: &quot;Menunggu Disposal&quot;, &quot;tab&quot;: &quot;proses&quot; } }
-</code></pre></div>
-<p>Asset kini hilang dari opsi sehingga <strong>tidak dapat diajukan dua kali</strong>.</p>
-<h4>Langkah 2 — Admin mencatat pelaksanaan</h4>
-<p><strong>Mobile:</strong> detail disposal (<code>aksi.pelaksanaan = true</code>) → form pelaksanaan sesuai metode <strong>Lelang / Jual</strong>: tanggal, pembeli, harga jual, dan <strong>foto bukti</strong> (kamera atau galeri) → <strong>Simpan</strong>.</p>
-<p><strong>Dikirim</strong> (multipart karena ada file)</p>
-<div class="code"><span class="code-lang">HTTP</span><pre><code class="language-http">POST /asset/disposal/CMP001202610001/pelaksanaan
-</code></pre></div>
-<div class="code"><span class="code-lang">JSON</span><pre><code class="language-json">{ &quot;tgl_pelaksanaan&quot;: &quot;2026-10-23&quot;, &quot;pembeli&quot;: &quot;PT Pembeli Sejahtera&quot;, &quot;harga_jual&quot;: 1500000,
-  &quot;penerima_donasi&quot;: &quot;&quot;, &quot;metode_pemusnahan&quot;: &quot;&quot;, &quot;file_bukti&quot;: &quot;&lt;file multipart atau base64&gt;&quot; }
-</code></pre></div>
-<p><strong>Diproses API</strong> (<code>buktiPath</code> lalu <code>pelaksanaan</code>)
-1. Validasi controller: <code>tgl_pelaksanaan</code> wajib <code>Y-m-d</code>; <code>harga_jual</code> numerik ≥ 0.
-2. <code>prepareImageUpload</code> memastikan transaksi masih <code>proses</code> <strong>sebelum</strong> file diunggah ("Disposal sudah selesai dan tidak dapat diubah."). File diunggah dengan key <code>CMP001/asset/disposal/&lt;id_karyawan&gt;/&lt;hex&gt;.&lt;ext&gt;</code>; hanya key yang disimpan. File tidak valid → "File bukti tidak valid.".
-3. <code>pelaksanaanFields</code> menerapkan aturan <strong>menurut metode transaksi</strong> (bukan menurut input): tanggal wajib dan <strong>tidak boleh setelah hari ini</strong>; bukti wajib (bila tidak mengunggah baru, bukti lama dipertahankan; bila belum pernah ada, ditolak). Untuk <code>lelang_jual</code>: <code>pembeli</code> dan <code>harga_jual</code> wajib. Field milik metode lain dikosongkan.
-4. UPDATE transaksi dengan kolom pelaksanaan, <code>tgl_update</code>, <code>user_update</code>. <strong><code>asset_data</code> belum berubah.</strong> Tidak ada notifikasi.</p>
-<p><strong>Hasil database</strong></p>
-<div class="table-wrap"><table>
-<thead>
-<tr>
-<th>Kolom (<code>asset_trx_disposal</code>)</th>
-<th>Sebelum</th>
-<th>Sesudah</th>
-</tr>
-</thead>
-<tbody>
-<tr>
 <td>tgl_pelaksanaan</td>
-<td>NULL</td>
-<td>2026-10-23</td>
+<td>2026-11-10</td>
 </tr>
 <tr>
-<td>pembeli</td>
-<td><code>''</code></td>
-<td>PT Pembeli Sejahtera</td>
-</tr>
-<tr>
-<td>harga_jual</td>
-<td>NULL</td>
-<td>1500000.00</td>
+<td>pembeli / harga_jual</td>
+<td>PT Pembeli Sejahtera / 1500000.00</td>
 </tr>
 <tr>
 <td>penerima_donasi / metode_pemusnahan</td>
 <td><code>''</code> / <code>''</code></td>
-<td><code>''</code> / <code>''</code></td>
 </tr>
 <tr>
 <td>file_bukti</td>
-<td><code>''</code></td>
 <td><code>CMP001/asset/disposal/KRY0099/9f3a1c2e.jpg</code></td>
 </tr>
 <tr>
 <td>status</td>
-<td>proses</td>
-<td>proses</td>
+<td><strong>selesai</strong></td>
+</tr>
+<tr>
+<td>tgl_selesai / user_selesai</td>
+<td>2026-11-11 09:00:00 / ADM-001 - Siti Admin</td>
+</tr>
+<tr>
+<td>tgl_input / user_input</td>
+<td>2026-11-11 09:00:00 / ADM-001 - Siti Admin</td>
 </tr>
 <tr>
 <td>tgl_update / user_update</td>
 <td>NULL / <code>''</code></td>
-<td>2026-10-23 10:00:00 / ADM-001 - Siti Admin</td>
 </tr>
 </tbody>
 </table></div>
-<p><strong>Diterima mobile</strong> (HTTP 200): <code>status = proses</code>, <code>status_label = "Siap Diselesaikan"</code> (karena <code>tgl_pelaksanaan</code> sudah terisi), <code>tab = "proses"</code>, message "Data pelaksanaan disposal berhasil disimpan.". Detail menampilkan <code>pelaksanaan.tercatat = true</code> dan <code>file_bukti_url</code>.</p>
-<h4>Langkah 3 — Admin memperbarui pelaksanaan</h4>
-<p>Pelaksanaan boleh diperbarui <strong>selama <code>status = proses</code></strong>. Admin mengoreksi harga jual.</p>
-<p><strong>Dikirim:</strong> <code>POST /asset/disposal/CMP001202610001/pelaksanaan</code> dengan <code>harga_jual = 1750000</code>, tanpa <code>file_bukti</code> baru dan tanpa mengulang field lain.</p>
-<p><strong>Diproses API:</strong> <code>pelaksanaanFields</code> memakai nilai lama untuk field yang tidak dikirim (<code>pakai(key, nilai lama)</code>), sehingga <code>pembeli</code> dan tanggal tetap; bukti lama dipertahankan karena <code>file_bukti</code> kosong. <strong>Hasil database:</strong> <code>harga_jual 1500000.00 → 1750000.00</code>, <code>tgl_update</code> = 2026-10-23 10:30:00; kolom lain tetap.</p>
-<h4>Langkah 4 — Admin menyelesaikan disposal</h4>
-<p><strong>Mobile:</strong> <strong>Selesaikan Disposal</strong> (dialog konfirmasi) → <code>AssetDisposalApi.selesai</code>.</p>
-<p><strong>Dikirim</strong></p>
-<div class="code"><span class="code-lang">HTTP</span><pre><code class="language-http">POST /asset/disposal/CMP001202610001/selesai
-</code></pre></div>
-<p>Tanpa body.</p>
-<p><strong>Diproses API</strong> (<code>selesai</code>)
-1. Transaksi harus <code>proses</code> ("Disposal sudah selesai.").
-2. <code>tgl_pelaksanaan</code> harus terisi ("Data pelaksanaan disposal belum dicatat."); <code>pelaksanaanFields</code> dijalankan ulang untuk memastikan data masih lengkap menurut metode.
-3. Asset dikunci dan harus masih <code>gudang</code> dengan status <code>menunggu_disposal</code> ("Status asset sudah berubah atau tidak lagi berada di gudang.").
-4. UPDATE <code>asset_data</code> → <strong><code>disposed</code></strong>; INSERT <code>asset_trx_log</code> (<code>jenis_log = disposal_gudang</code>, posisi gudang → gudang, kondisi tidak berubah).
-5. UPDATE transaksi: <code>status = selesai</code>, <code>tgl_selesai</code>, <code>user_selesai</code>, <code>tgl_update</code>, <code>user_update</code>.
-6. Notifikasi <code>disposal.selesai</code> ke <strong>seluruh admin</strong>.</p>
-<p><strong>Hasil database</strong></p>
-<div class="table-wrap"><table>
-<thead>
-<tr>
-<th>Tabel</th>
-<th>Perubahan</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>asset_data A70</td>
-<td>status_asset <code>menunggu_disposal → disposed</code>; user_update = ADM-001 - Siti Admin</td>
-</tr>
-<tr>
-<td>asset_trx_disposal</td>
-<td>status <code>proses → selesai</code>; tgl_selesai = 2026-10-23 11:00:00; user_selesai = ADM-001 - Siti Admin</td>
-</tr>
-</tbody>
-</table></div>
+<p><code>asset_data</code> A70: <code>status_asset</code> <strong>rusak → disposed</strong>, <code>tgl_update</code> = 09:00:00, <code>user_update</code> = ADM-001 - Siti Admin.</p>
 <p><code>asset_trx_log</code> (1 baris)</p>
 <div class="table-wrap"><table>
 <thead>
@@ -1630,7 +1516,7 @@ Authorization: Bearer &lt;access_token_admin&gt;
 <tbody>
 <tr>
 <td>id_asset_trx_log</td>
-<td>CMP00120261000001</td>
+<td>CMP00120261100001</td>
 </tr>
 <tr>
 <td>id_asset_data / jenis_log</td>
@@ -1638,7 +1524,7 @@ Authorization: Bearer &lt;access_token_admin&gt;
 </tr>
 <tr>
 <td>id_transaksi / nama_tabel_transaksi</td>
-<td>CMP001202610001 / asset_trx_disposal</td>
+<td>CMP001202611001 / asset_trx_disposal</td>
 </tr>
 <tr>
 <td>kondisi_awal / kondisi_akhir</td>
@@ -1671,34 +1557,38 @@ Authorization: Bearer &lt;access_token_admin&gt;
 </thead>
 <tbody>
 <tr>
-<td>CMP00120261000001</td>
+<td>CMP00120261100001</td>
 <td>KRY0099</td>
-<td>CMP001202610001</td>
+<td>CMP001202611001</td>
 <td>asset_admin_detail_disposal</td>
-<td>Disposal PML04-202610001 selesai: Laptop Lama (Lelang / Jual) telah dihapus dari daftar asset aktif.</td>
+<td>Disposal PML04-202611001 selesai: Laptop Lama (Lelang / Jual) telah dihapus dari daftar asset aktif.</td>
 </tr>
 <tr>
-<td>CMP00120261000002</td>
+<td>CMP00120261100002</td>
 <td>KRY0100</td>
-<td>CMP001202610001</td>
+<td>CMP001202611001</td>
 <td>asset_admin_detail_disposal</td>
-<td>Disposal PML04-202610001 selesai: Laptop Lama (Lelang / Jual) telah dihapus dari daftar asset aktif.</td>
+<td>Disposal PML04-202611001 selesai: Laptop Lama (Lelang / Jual) telah dihapus dari daftar asset aktif.</td>
 </tr>
 </tbody>
 </table></div>
-<p><strong>Diterima mobile</strong> (HTTP 200)</p>
-<div class="code"><span class="code-lang">JSON</span><pre><code class="language-json">{ &quot;code&quot;: &quot;UPDATED&quot;, &quot;message&quot;: &quot;Disposal berhasil diselesaikan.&quot;,
-  &quot;data&quot;: { &quot;id&quot;: &quot;CMP001202610001&quot;, &quot;no_trx&quot;: &quot;PML04-202610001&quot;, &quot;status&quot;: &quot;selesai&quot;,
+<p><strong>Diterima mobile</strong> (HTTP 201)</p>
+<div class="code"><span class="code-lang">JSON</span><pre><code class="language-json">{ &quot;code&quot;: &quot;CREATED&quot;, &quot;message&quot;: &quot;Disposal berhasil diselesaikan.&quot;,
+  &quot;data&quot;: { &quot;id&quot;: &quot;CMP001202611001&quot;, &quot;no_trx&quot;: &quot;PML04-202611001&quot;, &quot;status&quot;: &quot;selesai&quot;,
             &quot;status_label&quot;: &quot;Dihapus (Disposed)&quot;, &quot;tab&quot;: &quot;selesai&quot; } }
 </code></pre></div>
+<p>Mobile menutup form, memuat ulang daftar, dan menampilkan snackbar sukses. Asset kini hilang dari opsi sehingga <strong>tidak dapat diajukan dua kali</strong>.</p>
+<h4>Langkah 2 — Admin melihat hasil</h4>
+<p><strong>Dikirim:</strong> <code>GET /asset/disposal/CMP001202611001</code>.</p>
+<p><strong>Diterima mobile</strong> (ringkas): <code>asset</code> (nama, kategori, <code>status_asset = disposed</code>, lokasi gudang, <code>riwayat</code>), <code>keputusan</code> (alasan, <code>metode_label = "Lelang / Jual"</code>, <code>nilai_sisa = 250000</code>, <code>tgl_keputusan</code>, <code>user_keputusan</code>), <code>pelaksanaan</code> (<code>tgl_pelaksanaan = 2026-11-10</code>, <code>pembeli</code>, <code>harga_jual = 1500000</code>, <code>file_bukti_url</code> presigned), dan <code>penyelesaian</code> (<code>tgl_selesai</code>, <code>user_selesai</code>). Halaman detail read-only: tidak ada tombol aksi.</p>
 <hr />
 <h4>Kondisi akhir data</h4>
-<p><code>asset_trx_disposal</code>: <code>CMP001202610001</code> / <code>PML04-202610001</code>, <code>status = selesai</code>, <code>metode_disposal = lelang_jual</code>, <code>harga_jual = 1750000.00</code>, <code>tgl_pelaksanaan = 2026-10-23</code>, bukti tersimpan sebagai key object storage.</p>
+<p><code>asset_trx_disposal</code>: <code>CMP001202611001</code> / <code>PML04-202611001</code>, <code>status = selesai</code>, <code>metode_disposal = lelang_jual</code>, <code>harga_jual = 1500000.00</code>, <code>tgl_pelaksanaan = 2026-11-10</code>, bukti tersimpan sebagai key object storage.</p>
 <p><code>asset_data</code> A70: <code>status_asset = disposed</code>. Baris asset <strong>tidak dihapus</strong> (arsip): daftar asset admin dan total ringkasan mengecualikan <code>disposed</code> bila filter status kosong, tetapi filter status <code>disposed</code> eksplisit tetap menampilkannya. <code>asset_trx_log</code>: 1 baris. <code>notif_data</code>: 2 baris.</p>
 <hr />
 <h4>Variasi</h4>
-<p><strong>Donasi.</strong> <code>metode_disposal = donasi</code>: pelaksanaan wajib <code>penerima_donasi</code> ("Penerima donasi wajib diisi."), tanggal, dan bukti; <code>pembeli</code>, <code>harga_jual</code>, dan <code>metode_pemusnahan</code> dikosongkan. Notifikasi menyebut "(Donasi)".</p>
-<p><strong>Pemusnahan.</strong> <code>metode_disposal = pemusnahan</code>: pelaksanaan wajib <code>metode_pemusnahan</code> ("Metode pemusnahan wajib diisi."), tanggal, dan bukti; field metode lain dikosongkan. Notifikasi menyebut "(Pemusnahan)".</p>
+<p><strong>Donasi.</strong> <code>metode_disposal = donasi</code>: form wajib <code>penerima_donasi</code> ("Penerima donasi wajib diisi."), tanggal, dan bukti; <code>pembeli</code>, <code>harga_jual</code>, dan <code>metode_pemusnahan</code> dikosongkan. Notifikasi menyebut "(Donasi)".</p>
+<p><strong>Pemusnahan.</strong> <code>metode_disposal = pemusnahan</code>: form wajib <code>metode_pemusnahan</code> ("Metode pemusnahan wajib diisi."), tanggal, dan bukti; field metode lain dikosongkan. Notifikasi menyebut "(Pemusnahan)".</p>
 <p><strong>Disposal sebagai tindak lanjut modul lain.</strong> Asset <code>rusak</code> di gudang yang berasal dari Pemeliharaan (hasil 4–5), Perbaikan ("diganti unit baru" atau "tidak bisa diperbaiki"), atau Klaim Garansi (ditolak dengan tindak lanjut disposal) hanya <strong>ditandai</strong> <code>nama_tabel_tindak_lanjut = asset_trx_disposal</code>; transaksi Disposal tetap harus dibuat manual lewat langkah 1.</p>
 <hr />
 <h4>Kasus gagal yang umum</h4>
@@ -1714,128 +1604,114 @@ Authorization: Bearer &lt;access_token_admin&gt;
 </thead>
 <tbody>
 <tr>
-<td>Asset belum dipilih / tidak ditemukan</td>
+<td>Asset belum dipilih, alasan kosong, atau metode kosong/tidak dikenal</td>
 <td>1</td>
 <td style="text-align: center;">422</td>
-<td>Asset wajib dipilih. / Asset tidak ditemukan.</td>
-<td>Tidak ada</td>
-</tr>
-<tr>
-<td>Alasan kosong</td>
-<td>1</td>
-<td style="text-align: center;">422</td>
-<td>Alasan disposal wajib diisi.</td>
-<td>Tidak ada</td>
-</tr>
-<tr>
-<td>Metode kosong atau tidak dikenal</td>
-<td>1</td>
-<td style="text-align: center;">422</td>
-<td>Metode disposal wajib dipilih. / Metode disposal tidak valid.</td>
+<td>Data disposal belum lengkap. (errors: Asset wajib dipilih. / Alasan disposal wajib diisi. / Metode disposal wajib dipilih. / Metode disposal tidak valid.)</td>
 <td>Tidak ada</td>
 </tr>
 <tr>
 <td>Nilai sisa negatif atau bukan angka</td>
 <td>1</td>
 <td style="text-align: center;">422</td>
-<td>Nilai sisa harus berupa angka tidak negatif.</td>
+<td>Nilai sisa tidak boleh negatif. / Nilai sisa harus berupa angka.</td>
 <td>Tidak ada</td>
 </tr>
 <tr>
-<td>Asset bukan <code>rusak</code> di gudang (mis. sudah <code>menunggu_disposal</code>)</td>
+<td>Tanggal pelaksanaan kosong atau format salah</td>
 <td>1</td>
 <td style="text-align: center;">422</td>
-<td>Hanya asset rusak di gudang yang dapat di-disposal.</td>
-<td>Tidak ada</td>
-</tr>
-<tr>
-<td>Asset di onboarding aktif</td>
-<td>1</td>
-<td style="text-align: center;">422</td>
-<td>Asset sedang diproses pada onboarding.</td>
-<td>Tidak ada</td>
-</tr>
-<tr>
-<td>Tanggal pelaksanaan kosong</td>
-<td>2</td>
-<td style="text-align: center;">422</td>
-<td>Tanggal pelaksanaan wajib diisi.</td>
+<td>Tanggal pelaksanaan wajib diisi. / Format tanggal pelaksanaan harus YYYY-MM-DD.</td>
 <td>Tidak ada</td>
 </tr>
 <tr>
 <td>Tanggal pelaksanaan setelah hari ini</td>
-<td>2</td>
+<td>1</td>
 <td style="text-align: center;">422</td>
 <td>Tanggal pelaksanaan tidak boleh setelah hari ini.</td>
 <td>Tidak ada</td>
 </tr>
 <tr>
-<td>Bukti belum pernah diunggah</td>
-<td>2</td>
+<td>Bukti tidak dikirim</td>
+<td>1</td>
 <td style="text-align: center;">422</td>
 <td>Bukti pelaksanaan wajib diunggah.</td>
 <td>Tidak ada</td>
 </tr>
 <tr>
-<td>File bukti tidak valid</td>
-<td>2</td>
-<td style="text-align: center;">422</td>
-<td>File bukti tidak valid.</td>
-<td>Tidak ada (file tidak tersimpan)</td>
-</tr>
-<tr>
 <td>Pembeli atau harga jual kosong (lelang/jual)</td>
-<td>2</td>
+<td>1</td>
 <td style="text-align: center;">422</td>
-<td>Nama pembeli wajib diisi. / Harga jual wajib diisi.</td>
+<td>Nama pembeli wajib diisi. / Harga jual wajib diisi. / Harga jual tidak boleh negatif.</td>
 <td>Tidak ada</td>
 </tr>
 <tr>
 <td>Penerima donasi kosong (donasi)</td>
-<td>2</td>
+<td>1</td>
 <td style="text-align: center;">422</td>
 <td>Penerima donasi wajib diisi.</td>
 <td>Tidak ada</td>
 </tr>
 <tr>
 <td>Metode pemusnahan kosong (pemusnahan)</td>
-<td>2</td>
+<td>1</td>
 <td style="text-align: center;">422</td>
 <td>Metode pemusnahan wajib diisi.</td>
 <td>Tidak ada</td>
 </tr>
 <tr>
-<td>Mengubah pelaksanaan setelah selesai</td>
-<td>2, 3</td>
+<td>Asset tidak ditemukan</td>
+<td>1</td>
 <td style="text-align: center;">422</td>
-<td>Disposal sudah selesai dan tidak dapat diubah.</td>
+<td>Asset tidak ditemukan.</td>
+<td>Tidak ada (bukti belum diunggah)</td>
+</tr>
+<tr>
+<td>Asset bukan <code>rusak</code> di gudang (mis. sudah <code>disposed</code>)</td>
+<td>1</td>
+<td style="text-align: center;">422</td>
+<td>Hanya asset rusak di gudang yang dapat di-disposal.</td>
+<td>Tidak ada (bukti belum diunggah)</td>
+</tr>
+<tr>
+<td>Asset di onboarding aktif</td>
+<td>1</td>
+<td style="text-align: center;">422</td>
+<td>Asset sedang diproses pada onboarding.</td>
+<td>Tidak ada (bukti belum diunggah)</td>
+</tr>
+<tr>
+<td>File bukti tidak valid</td>
+<td>1</td>
+<td style="text-align: center;">422</td>
+<td>File bukti tidak valid.</td>
+<td>Tidak ada (file tidak tersimpan)</td>
+</tr>
+<tr>
+<td>Asset berubah status setelah cek awal (race)</td>
+<td>1</td>
+<td style="text-align: center;">422</td>
+<td>Hanya asset rusak di gudang yang dapat di-disposal.</td>
+<td>Tidak ada; bukti yang sempat terunggah dibersihkan</td>
+</tr>
+<tr>
+<td>Penulisan database gagal (mis. log)</td>
+<td>1</td>
+<td style="text-align: center;">500</td>
+<td>Terjadi kesalahan saat membuat disposal.</td>
+<td>Rollback penuh; bukti dibersihkan; tanpa notifikasi</td>
+</tr>
+<tr>
+<td>Filter daftar <code>tab=proses</code></td>
+<td>2</td>
+<td style="text-align: center;">422</td>
+<td>Filter disposal tidak valid.</td>
 <td>Tidak ada</td>
 </tr>
 <tr>
-<td>Selesaikan sebelum pelaksanaan dicatat</td>
-<td>4</td>
-<td style="text-align: center;">422</td>
-<td>Data pelaksanaan disposal belum dicatat.</td>
-<td>Tidak ada</td>
-</tr>
-<tr>
-<td>Selesaikan dua kali</td>
-<td>4</td>
-<td style="text-align: center;">422</td>
-<td>Disposal sudah selesai.</td>
-<td>Tidak ada</td>
-</tr>
-<tr>
-<td>Asset sudah berubah status</td>
-<td>4</td>
-<td style="text-align: center;">422</td>
-<td>Status asset sudah berubah atau tidak lagi berada di gudang.</td>
-<td>Tidak ada</td>
-</tr>
-<tr>
-<td>Disposal tidak ditemukan</td>
-<td>2–4</td>
-<td style="text-align: center;">422</td>
+<td>Disposal tidak ditemukan (detail)</td>
+<td>2</td>
+<td style="text-align: center;">404</td>
 <td>Disposal tidak ditemukan.</td>
 <td>Tidak ada</td>
 </tr>
@@ -1855,7 +1731,7 @@ Authorization: Bearer &lt;access_token_admin&gt;
 </tr>
 </tbody>
 </table></div>
-<p>Semua pelanggaran aturan dilempar sebagai <code>InvalidArgumentException</code> di dalam <code>DB::transaction</code>, sehingga seluruh perubahan request itu dibatalkan. Pesan tersedia dalam bahasa Indonesia dan Inggris mengikuti header <code>locale</code>.</p>
+<p>Semua pelanggaran aturan bisnis dilempar sebagai <code>InvalidArgumentException</code> di dalam <code>DB::transaction</code>, sehingga seluruh perubahan request itu dibatalkan. Pesan tersedia dalam bahasa Indonesia dan Inggris mengikuti header <code>locale</code>.</p>
 <h4>Ringkasan siapa mengerjakan apa</h4>
 <div class="table-wrap"><table>
 <thead>
@@ -1874,49 +1750,39 @@ Authorization: Bearer &lt;access_token_admin&gt;
 <td><code>SELECT</code> saja</td>
 </tr>
 <tr>
-<td>Keputusan</td>
-<td>Alasan, metode, nilai sisa, catatan</td>
-<td>Validasi asset gudang rusak, snapshot, kunci status</td>
-<td><code>asset_trx_disposal</code>, <code>asset_data → menunggu_disposal</code></td>
-</tr>
-<tr>
-<td>Pelaksanaan</td>
-<td>Form sesuai metode dan foto bukti</td>
-<td>Validasi menurut metode, unggah bukti setelah validasi</td>
-<td><code>asset_trx_disposal</code> (kolom pelaksanaan)</td>
-</tr>
-<tr>
-<td>Selesai</td>
-<td>Dialog konfirmasi</td>
-<td>Validasi ulang, asset → <code>disposed</code>, log, notifikasi</td>
-<td><code>asset_data</code>, <code>asset_trx_disposal</code>, <code>asset_trx_log</code>, <code>notif_data</code></td>
+<td>Submit (sekali input)</td>
+<td>Form lengkap, foto bukti, dialog konfirmasi</td>
+<td>Validasi, cek kelayakan, unggah bukti, transaksi atomik, notifikasi setelah commit</td>
+<td><code>asset_trx_disposal</code> (<code>selesai</code>), <code>asset_data → disposed</code>, <code>asset_trx_log</code>, <code>notif_data</code></td>
 </tr>
 <tr>
 <td>Tampilan</td>
-<td>JSON → model → widget; objek <code>aksi</code></td>
-<td><code>statusMeta</code> (Menunggu Disposal, Siap Diselesaikan, Dihapus)</td>
+<td>JSON → model → widget read-only</td>
+<td><code>statusMeta</code> (Dihapus (Disposed))</td>
 <td><code>SELECT</code> saja</td>
 </tr>
 </tbody>
 </table></div>
 <h2 id="s46"><span class="sec-no">46</span>Ringkasan Database Impact</h2>
-<p>Tabel <code>asset_trx_disposal</code> dibuat ulang (tabel lama <code>asset_trx_disposal</code> dan <code>_item</code> di-drop bila kosong). <code>asset_data.status_asset</code> +<code>menunggu_disposal</code>; <code>asset_trx_log.jenis_log</code> +<code>disposal_gudang</code>.</p>
+<p>Tabel <code>asset_trx_disposal</code> dibuat ulang (tabel lama <code>asset_trx_disposal</code> dan <code>_item</code> di-drop bila kosong). <code>asset_trx_log.jenis_log</code> +<code>disposal_gudang</code>. Nilai enum <code>asset_data.status_asset</code> <code>menunggu_disposal</code> dan <code>status</code> <code>proses</code> tetap ada di skema tetapi tidak dipakai alur sekali input; v1.3 tidak mengubah skema.</p>
 <h2 id="s47"><span class="sec-no">47</span>Checklist Implementasi</h2>
 <h3>Database</h3>
 <ul>
-<li class="task done">DBML diperbarui</li>
+<li class="task done">DBML diperbarui (komentar sekali input; definisi kolom/enum tidak berubah)</li>
 <li class="task done">SQL manual + guard + rollback</li>
 <li class="task">SQL dijalankan di setiap environment</li>
+<li class="task">SQL pemulihan data lama (<code>proses</code> / <code>menunggu_disposal</code>) belum dibuat, butuh persetujuan user</li>
 </ul>
 <h3>Backend</h3>
 <ul>
 <li class="task done">Model, controller, route, notifikasi, pengecualian aset <code>disposed</code></li>
+<li class="task done">Endpoint pelaksanaan dan selesai dihapus</li>
 <li class="task done">Test otomatis</li>
 </ul>
 <h3>Mobile</h3>
 <ul>
-<li class="task done">Daftar, buat, detail, sheet keputusan dan pelaksanaan</li>
-<li class="task done">Kartu beranda admin, rute notifikasi, teks id/en</li>
+<li class="task done">Daftar, form terpadu dengan konfirmasi, detail read-only</li>
+<li class="task done">Rute notifikasi, teks id/en</li>
 <li class="task done">Test otomatis</li>
 </ul>
 <h3>Documentation</h3>
@@ -1948,11 +1814,16 @@ Authorization: Bearer &lt;access_token_admin&gt;
 <td>22 Okt 2026</td>
 <td>Menambah §45.4 <em>Walkthrough Lengkap dengan Contoh Data</em> (keputusan dengan riwayat asset, pelaksanaan lelang/jual dengan bukti, pembaruan pelaksanaan, penyelesaian dan notifikasi; variasi donasi, pemusnahan, disposal sebagai tindak lanjut modul lain; kasus gagal). Sinkronisasi kode: tabel log ternyata <code>asset_trx_log</code> (<code>id_asset_trx_log</code>), bukan <code>asset_log</code>.</td>
 </tr>
+<tr>
+<td>1.3</td>
+<td>11 Nov 2026</td>
+<td>Alur diubah menjadi <strong>sekali input</strong>: satu form lengkap dan satu <code>POST /asset/disposal</code> langsung menyelesaikan disposal (transaksi <code>selesai</code>, aset <code>rusak</code> → <code>disposed</code> tanpa <code>menunggu_disposal</code>). Dihapus: <code>POST disposal/{id}/pelaksanaan</code>, <code>POST disposal/{id}/selesai</code>, tab <code>proses</code> (<code>tab=proses</code> kini 422), blok <code>aksi</code> dan <code>pelaksanaan.tercatat</code> di detail, <code>pelaksanaan_tercatat</code> di daftar, ringkasan dashboard <code>disposal_perlu_proses</code>/<code>disposal_pending</code>, BR status perantara dan pelaksanaan dapat diperbarui. Endpoint 6 → 4 (detail kini API-004); test mobile 13 → 11. Mobile: form terpadu <code>AssetDisposalForm</code> dengan dialog konfirmasi, detail read-only, stepper satu langkah, sheet pelaksanaan dihapus. Skema tidak berubah. Risiko baru: RISK-006 (data lama tanpa jalur selesai), RISK-007 (zona waktu), RISK-008 (cek tanpa lock).</td>
+</tr>
 </tbody>
 </table></div>
     </article>
 
-    <footer>Dokumentasi Disposal Asset v1.0 · 8 Oktober 2026 · Disusun dari source lokal API (Lumen) &amp; MOBILE (Flutter). Contoh ID dan nama pada payload adalah data sintetis.</footer>
+    <footer>Dokumentasi Disposal Asset v1.3 · 11 November 2026 · Disusun dari source lokal API (Lumen) &amp; MOBILE (Flutter). Contoh ID dan nama pada payload adalah data sintetis.</footer>
   </main>
 </div>
 <button class="to-top" id="to-top" type="button" aria-label="Kembali ke atas">↑</button>

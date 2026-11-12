@@ -196,7 +196,7 @@ footer{margin-top:64px;padding-top:18px;border-top:1px solid var(--line);color:v
       </div>
       <div class="tag" aria-label="Identitas dokumen">
         <dl>
-          <dt>Kode</dt><dd>ALK-RGN06</dd><dt>Modul</dt><dd>Ruangan</dd><dt>Versi</dt><dd>1.1 · 22 Okt 2026</dd><dt>Stack</dt><dd>Lumen 10 · Flutter</dd><dt>API</dt><dd>9 endpoint</dd>
+          <dt>Kode</dt><dd>ALK-RGN06</dd><dt>Modul</dt><dd>Ruangan</dd><dt>Versi</dt><dd>1.2 · 5 Nov 2026</dd><dt>Stack</dt><dd>Lumen 10 · Flutter</dd><dt>API</dt><dd>9 endpoint</dd>
         </dl>
         <div class="barcode" aria-hidden="true"></div>
         <div class="trx">RGN06-YYYYMMNNN</div>
@@ -299,7 +299,7 @@ footer{margin-top:64px;padding-top:18px;border-top:1px solid var(--line);color:v
 </tr>
 <tr>
 <td>Versi dokumen</td>
-<td>1.1 — 22 Oktober 2026</td>
+<td>1.2 — 5 November 2026</td>
 </tr>
 <tr>
 <td>Dokumen terkait</td>
@@ -1135,7 +1135,7 @@ Admin/HR: Terima Asset (pilih gudang per asset)
 <li><strong><code>getOptionsPic</code></strong>: memastikan karyawan PIC ruangan aktif tersebut (null → 403). Mengembalikan <code>ruangan</code>, daftar <code>assets</code> (milik ruangan, <code>terpakai</code>, belum terkunci retur/onboarding/penambahan ruangan, urut nama lalu kode), dan <code>alasan</code>.</li>
 <li><strong><code>store</code></strong>: kunci company; validasi karyawan aktif, PIC ruangan, <code>normalizeItems</code> (BR-04, BR-05); asset dikunci <code>FOR UPDATE</code>; cek milik ruangan, kunci flow lain, status <code>terpakai</code>; buat header <code>pengajuan</code>/<code>proses</code> (jadwal NULL, <code>flag_jadwalkan='0'</code>) dan item asal. <code>asset_data</code> <strong>tidak</strong> diubah.</li>
 <li><strong><code>konfirmasiAdmin</code></strong>: kunci company; cek admin; header harus <code>pengajuan</code>/<code>proses</code>; seluruh item asal wajib diputuskan; asset asal masih dipegang ruangan; validasi pengganti dan jadwal; update status item; sisipkan item pengganti (<code>parent_id</code>, <code>status_approval='disetujui'</code>) dan set aset pengganti <code>proses</code>; update header (<code>disetujui</code>/<code>proses</code> atau <code>ditolak</code>/<code>selesai</code>).</li>
-<li><strong><code>terimaAdmin</code></strong>: kunci company; cek admin; header harus <code>disetujui</code>/<code>proses</code>; <code>resolveItemLocations</code> memetakan gudang per item asal yang disetujui; cek asal masih dipegang ruangan dan pengganti masih <code>proses</code> @gudang; update asset, <code>id_asset_lokasi_m_tujuan</code>, sisipkan <code>asset_trx_log</code>, header <code>selesai</code> dengan <code>tgl/jam_serah_terima</code> = sekarang.</li>
+<li><strong><code>terimaAdmin</code></strong>: kunci company; cek admin; header harus <code>disetujui</code>/<code>proses</code>; <code>resolveItemLocations</code> memetakan gudang per item asal yang disetujui; cek asal masih dipegang ruangan dan pengganti masih <code>proses</code> @gudang; update asset (termasuk <code>tgl_dialokasikan</code>: asal <code>'0000-00-00'</code>, pengganti tanggal Terima Asset), <code>id_asset_lokasi_m_tujuan</code>, sisipkan <code>asset_trx_log</code>, header <code>selesai</code> dengan <code>tgl/jam_serah_terima</code> = sekarang.</li>
 <li><strong>Daftar dan detail</strong>: <code>getPageAdmin</code>, <code>getPagePic</code> (filter PIC lewat <code>wherePicRuangan</code>), <code>getDetail</code>, <code>getDetailAdmin</code> (menambah <code>lokasi_gudang</code>).</li>
 <li><strong>Ringkasan</strong>: <code>countPendingForAdmin</code>, <code>getPendingForAdmin</code> (maks. 3, terlama di atas), <code>getPerluTindakanPic</code> (maks. 50, <code>proses</code> dan bukan <code>ditolak</code>).</li>
 </ul>
@@ -1207,8 +1207,25 @@ Admin/HR: Terima Asset (pilih gudang per asset)
 <td>–</td>
 <td>Tidak ada asset yang berpindah</td>
 </tr>
+<tr>
+<td>Terima Asset (kolom <code>tgl_dialokasikan</code>)</td>
+<td>asal</td>
+<td>–</td>
+<td><code>gudang</code></td>
+<td><code>tgl_dialokasikan = '0000-00-00'</code></td>
+</tr>
+<tr>
+<td>Terima Asset (kolom <code>tgl_dialokasikan</code>)</td>
+<td>pengganti</td>
+<td>–</td>
+<td><code>ruangan</code></td>
+<td><code>tgl_dialokasikan</code> = tanggal Terima Asset (Y-m-d)</td>
+</tr>
 </tbody>
 </table></div>
+<aside class="callout callout-note">
+<p><code>tgl_dialokasikan</code> (date, NULL) ditulis API setiap <code>pemegang_asset</code> berubah: masuk dari gudang ke ruangan = tanggal konfirmasi (Y-m-d); kembali ke gudang = <code>'0000-00-00'</code> (sengaja bukan NULL). Aset yang belum pernah dialokasikan, atau dipegang sebelum fitur ini dan belum di-backfill, bernilai NULL. Tidak ada endpoint, payload, atau layar mobile yang membaca kolom ini. Detail operasional dan backfill: lihat dokumen Onboarding Karyawan (KRY01), RISK-012. Pada retur ruangan, pengganti diberi tanggal Terima Asset (bukan tanggal konfirmasi admin).</p>
+</aside>
 <h2 id="s23"><span class="sec-no">23</span>API Documentation</h2>
 <p>Base <code>asset/</code>. Semua memakai JWT dan envelope <code>ApiResponse</code>.</p>
 <div class="table-wrap"><table>
@@ -2655,6 +2672,13 @@ GET /asset/karyawan/pic-ruangan/retur?tab=dikonfirmasi                   (PIC)
 <td>Uji alur penuh PIC → Admin/HR.</td>
 <td>Terbuka</td>
 </tr>
+<tr>
+<td>RISK-011</td>
+<td>SEDANG</td>
+<td>Nilai <code>'0000-00-00'</code> pada <code>asset_data.tgl_dialokasikan</code> (aset asal kembali ke gudang) ditolak MySQL/MariaDB bila <code>sql_mode</code> memuat <code>NO_ZERO_DATE</code> atau strict mode, sehingga Terima Asset gagal. Tabel transaksi retur ruangan sendiri memakai NULL (INC-03), tetapi kolom ini sengaja memakai <code>'0000-00-00'</code> (keputusan pemilik produk).</td>
+<td>Cek <code>SELECT @@sql_mode</code> di tiap environment sebelum deploy API; server dev sudah dicek aman.</td>
+<td>Terbuka</td>
+</tr>
 </tbody>
 </table></div>
 <div class="group-divider" id="g8"><span>Referensi Developer</span></div>
@@ -3220,7 +3244,7 @@ Authorization: Bearer &lt;access_token_admin&gt;
 2. <code>lockCompany</code>, admin asset, header <code>FOR UPDATE</code>; harus <code>disetujui</code>/<code>proses</code> ("Retur asset belum dikonfirmasi atau sudah selesai.").
 3. Item asal yang <code>disetujui</code> dipetakan ke gudang lewat <code>resolveItemLocations</code>: setiap item tepat satu kali ("Lokasi gudang tujuan asset tidak sesuai."), semua item terisi, dan lokasi harus bertipe <code>gudang</code> pada company yang sama ("Lokasi gudang tujuan tidak valid."). Item yang ditolak <strong>tidak</strong> dimasukkan. Tidak ada item disetujui → "Tidak ada asset retur yang dapat diterima.".
 4. Semua asset terkait dikunci <code>FOR UPDATE</code>; asset asal harus masih dipegang ruangan ("Satu atau beberapa asset sudah tidak dipegang oleh ruangan.") dan pengganti harus masih <code>proses</code> di gudang ("Asset pengganti sudah tidak siap diserahterimakan.").
-5. Per asset asal: UPDATE <code>asset_data</code> ke gudang (rusak → <code>rusak</code> + <code>ket_rusak</code>, selain itu <code>tersedia</code>), simpan <code>id_asset_lokasi_m_tujuan</code> di item, siapkan log. Bila ada pengganti: UPDATE <code>asset_data</code> → <code>terpakai</code> di ruangan, siapkan log.
+5. Per asset asal: UPDATE <code>asset_data</code> ke gudang (rusak → <code>rusak</code> + <code>ket_rusak</code>, selain itu <code>tersedia</code>; keduanya <code>tgl_dialokasikan = '0000-00-00'</code>), simpan <code>id_asset_lokasi_m_tujuan</code> di item, siapkan log. Bila ada pengganti: UPDATE <code>asset_data</code> → <code>terpakai</code> di ruangan dengan <code>tgl_dialokasikan</code> = tanggal Terima Asset (2026-10-24), siapkan log.
 6. INSERT semua baris <code>asset_trx_log</code> sekaligus, lalu UPDATE header → <code>status_transaksi = selesai</code>.
 7. Controller mengirim <code>retur_ruangan.diterima_admin</code> ke PIC.</p>
 <p><strong>Hasil database</strong></p>
@@ -3249,6 +3273,12 @@ Authorization: Bearer &lt;access_token_admin&gt;
 </tr>
 <tr>
 <td></td>
+<td>tgl_dialokasikan</td>
+<td>tanggal alokasi / NULL</td>
+<td><strong><code>0000-00-00</code></strong></td>
+</tr>
+<tr>
+<td></td>
 <td>id_asset_lokasi_m</td>
 <td>LOK0007</td>
 <td><strong>LOK0001</strong></td>
@@ -3272,6 +3302,12 @@ Authorization: Bearer &lt;access_token_admin&gt;
 <td><strong>gudang</strong> / <strong>LOK0002</strong></td>
 </tr>
 <tr>
+<td></td>
+<td>tgl_dialokasikan</td>
+<td>tanggal alokasi / NULL</td>
+<td><strong><code>0000-00-00</code></strong></td>
+</tr>
+<tr>
 <td>AST0501 (pengganti)</td>
 <td>status_asset</td>
 <td>proses</td>
@@ -3282,6 +3318,12 @@ Authorization: Bearer &lt;access_token_admin&gt;
 <td>pemegang_asset / id_pemegang_asset</td>
 <td>gudang / <code>''</code></td>
 <td><strong>ruangan</strong> / <strong>LOK0007</strong></td>
+</tr>
+<tr>
+<td></td>
+<td>tgl_dialokasikan</td>
+<td>NULL / <code>0000-00-00</code></td>
+<td><strong>2026-10-24</strong></td>
 </tr>
 <tr>
 <td></td>
@@ -3582,11 +3624,16 @@ Authorization: Bearer &lt;access_token_admin&gt;
 <td>22 Okt 2026</td>
 <td>Menambah §45.4 walkthrough lengkap (pengajuan PIC, keputusan per asset dengan pengganti, Terima Asset dengan gudang per asset), variasi, dan tabel kasus gagal.</td>
 </tr>
+<tr>
+<td>1.2</td>
+<td>5 Nov 2026</td>
+<td>Kolom baru <code>asset_data.tgl_dialokasikan</code> (date, NULL): Terima Asset (<code>terimaAdmin</code>) mereset aset asal yang kembali ke gudang menjadi <code>'0000-00-00'</code> dan mengisi unit pengganti yang masuk ke ruangan dengan tanggal Terima Asset. Menambah penyebutan di §21, §22, walkthrough §45.4, dan RISK-011. Tidak ada perubahan endpoint, payload, response, atau mobile.</td>
+</tr>
 </tbody>
 </table></div>
     </article>
 
-    <footer>Dokumentasi Retur Asset Ruangan (ALK-RGN06) v1.0 · 15 Oktober 2026 · Disusun dari source lokal API (Lumen) &amp; MOBILE (Flutter). Contoh ID dan nama pada payload adalah data sintetis.</footer>
+    <footer>Dokumentasi Retur Asset Ruangan (ALK-RGN06) v1.2 · 5 November 2026 · Disusun dari source lokal API (Lumen) &amp; MOBILE (Flutter). Contoh ID dan nama pada payload adalah data sintetis.</footer>
   </main>
 </div>
 <button class="to-top" id="to-top" type="button" aria-label="Kembali ke atas">↑</button>

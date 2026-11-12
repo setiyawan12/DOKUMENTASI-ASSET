@@ -11,15 +11,15 @@
 | Informasi | Nilai |
 |---|---|
 | Nama Fitur | Upgrade Asset Karyawan — tipe **Upgrade Komponen** (UI: **"Upgrade Asset"**; menu **"Upgrade"**) |
-| Kode Fitur | **KRY03** (nomor transaksi `KRY03-2-YYYYMMNNN`; docblock model: `ALK-KRY03 tipe Upgrade Komponen`) |
+| Kode Fitur | **KRY-07** (nomor transaksi `KRY-07-YYYYMMNNN`; docblock model masih menulis `ALK-KRY03 tipe Upgrade Komponen`) |
 | Modul | Asset Management |
 | Backend | Laravel **Lumen ^10.0**, PHP ^8.1, JWT, Query Builder |
 | Database | `API/diagram-asset.dbml` + migration `2026_09_26_000001_add_workflow_fields_to_asset_upgrade_karyawan.php`. ⚠️ Asumsi: MySQL/MariaDB |
 | Mobile | Flutter (`professional_flutter_3_35`), `flutter_bloc`, `dio` |
 | Web | ⚠️ Belum ditemukan: tidak ada source web di workspace |
 | Test otomatis | `API/tests/Asset/AssetUpgradeKaryawanTest.php` (5 test, 54 assertion) · `MOBILE/test/asset/asset_upgrade_test.dart` (5 test) |
-| Versi Dokumen | 1.4 |
-| Tanggal Dokumentasi | 2026-10-30 |
+| Versi Dokumen | 1.5 |
+| Tanggal Dokumentasi | 2026-11-11 |
 | Skrip data lama | `Claude outputs/sql-upgrade-hapus-checklist-review-lama.sql` — menyelesaikan transaksi lama di fase `menunggu_review` (**BELUM dijalankan**) |
 | Dokumen terkait | Onboarding (KRY01), Offboarding (KRY02), Retur (KRY04), Peminjaman (KRY05), Kerusakan (KRY06), Request/Penambahan |
 
@@ -195,7 +195,7 @@ Hanya `menunggu_pengembalian` → "Aset belum dijadwalkan untuk dikembalikan." *
 Aksi admin **Selesaikan Upgrade** dan **Kirim Ulang ke Teknisi** beserta endpoint `POST /asset/upgrade-karyawan/{id}/selesai` (API-009) sudah dihapus; penyelesaian terjadi otomatis pada BR-011. Siklus ulang kirim ulang tidak ada lagi. Fase `menunggu_review` tidak dihasilkan lagi (konstanta dan label dipertahankan hanya untuk data lama, lihat BR-015).
 
 ### BR-013 — Penomoran
-Header & item `id_company + YYYYMM + 3 digit`; `no_trx = KRY03-2-YYYYMMNNN`; log 5 digit.
+Header & item `id_company + YYYYMM + 3 digit`; `no_trx = KRY-07-YYYYMMNNN`; log 5 digit.
 
 ### BR-014 — Kondisi saat serah terima tidak tercatat (v1.4)
 Karena checklist dihapus, `asset_trx_log` selalu menulis `kondisi_akhir = kondisi_awal` (nilai `asset_data.kondisi_awal`). Kerusakan yang ditemukan saat pengambilan atau penerimaan harus dilaporkan lewat alur Kerusakan (KRY06), bukan lewat Upgrade.
@@ -430,7 +430,7 @@ erDiagram
 | Field | Type | Default | Description |
 |---|---|---|---|
 | id_asset_trx_upgrade_karyawan | varchar(50) PK | – | `id_company + YYYYMM + 3 digit` |
-| no_trx | varchar(50) | '' | `KRY03-2-YYYYMMNNN` (DBML: unique) |
+| no_trx | varchar(50) | '' | `KRY-07-YYYYMMNNN` (DBML: unique) |
 | sumber_pengajuan | enum(karyawan, admin) | karyawan | Jalur A / B (migration) |
 | id_asset_kategori_m, nama_kategori | varchar | '' | Snapshot kategori |
 | detail_upgrade | varchar(255) | '' | Ringkasan "label: detail; …" (dipotong 255) |
@@ -648,7 +648,7 @@ POST /asset/karyawan/upgrade
 Pesan umum: "Data pengajuan upgrade belum lengkap."
 ```json
 { "code": "CREATED", "message": "Pengajuan upgrade asset berhasil dikirim.",
-  "data": { "id": "CMP001202609006", "no_trx": "KRY03-2-202609006", "status_approval": "proses",
+  "data": { "id": "CMP001202609006", "no_trx": "KRY-07-202609006", "status_approval": "proses",
             "fase_upgrade": "pengajuan", "status_label": "Menunggu Persetujuan", "tab": "pengajuan" } }
 ```
 422: "Karyawan tidak ditemukan atau tidak aktif.", "Asset bukan milik karyawan atau tidak ditemukan.", "Hanya asset berstatus terpakai yang dapat diupgrade.", "Asset sedang diproses pada upgrade lain." / "…laporan kerusakan." / "…retur." / "…offboarding." / "…pemeliharaan.", "Komponen upgrade tidak ditemukan pada asset.", "Komponen yang sama tidak boleh dipilih lebih dari sekali." 500: "Terjadi kesalahan saat menyimpan pengajuan upgrade."
@@ -677,7 +677,7 @@ Rules: `id_karyawan` required max 150, `id_asset_data` required, `catatan` nulla
 ```json
 {
   "id": "CMP001202609006",
-  "no_trx": "KRY03-2-202609006",
+  "no_trx": "KRY-07-202609006",
   "sumber_pengajuan": "karyawan",
   "tgl_pengajuan": "2026-09-28",
   "alasan": "Aplikasi desain sering lambat",
@@ -737,7 +737,7 @@ POST /asset/karyawan/upgrade/{id}/terima
 **Tanpa body dan tanpa checklist** (v1.4); bila body dikirim, isinya diabaikan. Satu request menyelesaikan transaksi: atribut diperbarui (bila `status_hasil = selesai`), asset `terpakai`, log gudang → karyawan, `fase_upgrade = selesai`, `status_transaksi = selesai`, `tgl_diterima` terisi.
 ```json
 { "code": "UPDATED", "message": "Aset hasil upgrade berhasil diterima.",
-  "data": { "id": "CMP001202610001", "no_trx": "KRY03-2-202610001", "status_approval": "disetujui",
+  "data": { "id": "CMP001202610001", "no_trx": "KRY-07-202610001", "status_approval": "disetujui",
             "fase_upgrade": "selesai", "status_label": "Selesai", "tab": "selesai" } }
 ```
 422: "Aset belum dijadwalkan untuk dikembalikan." (fase bukan `menunggu_pengembalian`, termasuk pemanggilan kedua), "Status asset sudah berubah atau tidak lagi dipegang karyawan.", "Karyawan tidak ditemukan atau tidak aktif.", "Upgrade asset tidak ditemukan." (milik karyawan lain / PIC). Notifikasi `upgrade.diterima` ke admin.
@@ -1055,7 +1055,7 @@ Cakupan: TC-01, TC-03, TC-04, TC-06, TC-11, TC-12, TC-13, TC-14, TC-15, TC-20 da
 
 | ID | Component | Finding | Impact | Recommendation |
 |---|---|---|---|---|
-| INC-01 | DBML ↔ Migration/Code | DBML header memakai index milik tabel peminjaman (`jenis_status`, `status`, `id_asset_trx_peminjaman_karyawan`); item DBML punya `review_admin`, `review_karyawan`, `konfirmasi_admin` yang tidak dipakai, tanpa `nilai_lama/nilai_baru`; kolom workflow tidak ada; format `no_trx` "KRY-03-2-" vs kode "KRY03-2-"; kolom `checklist_*` belum ditandai tidak terpakai | Skema tidak akurat | Perbarui DBML |
+| INC-01 | DBML ↔ Migration/Code | DBML header memakai index milik tabel peminjaman (`jenis_status`, `status`, `id_asset_trx_peminjaman_karyawan`); item DBML punya `review_admin`, `review_karyawan`, `konfirmasi_admin` yang tidak dipakai, tanpa `nilai_lama/nilai_baru`; kolom workflow tidak ada; format `no_trx` sudah diselaraskan dengan kode (`KRY-07-`, v1.5); kolom `checklist_*` belum ditandai tidak terpakai | Skema tidak akurat | Perbarui DBML |
 | INC-02 | Backend | List admin upgrade memakai `validateRusakListRequest` → pesan error "Filter laporan kerusakan tidak valid." / "Parameter daftar laporan kerusakan tidak valid." | Pesan salah konteks | Buat validasi list upgrade sendiri |
 | INC-03 | Backend | Log serah terima mencatat `posisi_akhir = gudang` / `pemegang_asset = gudang`, padahal `asset_data.pemegang_asset` tetap karyawan | Log dan master berbeda | Samakan (catat posisi fisik secara eksplisit) |
 | INC-04 | Backend | Satu kolom `keterangan_pengembalian` dipakai untuk catatan jadwal pengambilan dan pengembalian (API: `keterangan_jadwal`) | Catatan tertimpa | Pisahkan kolom |
@@ -1177,7 +1177,7 @@ Ketergantungan rilis v1.4:
 - **`AssetUpgradeApi.terima(id)`** tidak lagi mengirim body; `pelepasan(id)` tetap tanpa body.
 - **Widget `AssetKondisiChecklist`** dipertahankan karena dipakai modul lain; Upgrade Karyawan tidak memakainya.
 - **Jangan mengubah kolom/enum** `checklist_*` dan `menunggu_review` tanpa persetujuan migrasi; data lama masih memakainya.
-- **Nomor transaksi** memakai sufiks tipe `-2` (tipe Upgrade Komponen); tipe KRY03 lainnya ⚠️ Belum ditemukan di kode.
+- **Nomor transaksi** memakai prefix `KRY-07-` sejak v1.5 (sebelumnya `KRY03-2-`); transaksi lama tetap memakai nomor lama.
 
 ---
 
@@ -1185,7 +1185,7 @@ Ketergantungan rilis v1.4:
 
 ```text
 Karyawan: Laptop → atribut RAM (Saat ini: 8) → "8 GB menjadi 16 GB" → Ajukan Upgrade
-  → POST /asset/karyawan/upgrade → storeKaryawan() → header KRY03-2-… (proses/pengajuan) + item nilai_lama "8"
+  → POST /asset/karyawan/upgrade → storeKaryawan() → header KRY-07-… (proses/pengajuan) + item nilai_lama "8"
 Admin: Setujui & Jadwalkan 23 Okt 10:00 → review() → disetujui/menunggu_pengambilan
 Karyawan: Serahkan Aset (tanpa checklist) → pelepasan() → asset dalam_perbaikan + log → dalam_service
 Admin: Upgrade Selesai, Nilai Baru "16", biaya 650.000, jadwal 26 Okt → hasil() → item nilai_baru "16" → menunggu_pengembalian
@@ -1231,7 +1231,7 @@ Company `CMP001`. Pengajuan 22 Oktober 2026, periode ID `202610`. Belum ada upgr
 
 Setiap field `komponen` (kecuali bertipe `file`) menjadi satu **atribut** dengan `id_atribut = id_asset_data_item|id_komponen`, misalnya `CMP001ITEM0101|ram`.
 
-Penomoran: header dan item `id_company + YYYYMM + 3 digit`, `no_trx = KRY03-2-YYYYMMNNN`; log dan notifikasi 5 digit. Selama proses, **`pemegang_asset` tetap karyawan**; hanya `status_asset` yang berubah (`dalam_perbaikan`).
+Penomoran: header dan item `id_company + YYYYMM + 3 digit`, `no_trx = KRY-07-YYYYMMNNN`; log dan notifikasi 5 digit. Selama proses, **`pemegang_asset` tetap karyawan**; hanya `status_asset` yang berubah (`dalam_perbaikan`).
 
 ---
 
@@ -1287,7 +1287,7 @@ POST /asset/karyawan/upgrade
 2. `lockCompany`; `activeKaryawan("KRY0010")`.
 3. Asset diambil `FOR UPDATE`: dipegang Dimas dan **`terpakai`**; `assetBlockMessage` memastikan tidak ada upgrade, kerusakan, retur, offboarding, atau pemeliharaan aktif.
 4. `atributAssets` + `normalizeItems`: setiap atribut harus milik asset itu dan tidak boleh duplikat.
-5. Generate ID: header urutan 1 → `CMP001202610001`, `no_trx = KRY03-2-202610001`.
+5. Generate ID: header urutan 1 → `CMP001202610001`, `no_trx = KRY-07-202610001`.
 6. INSERT header (`sumber_pengajuan = karyawan`, `status_approval = proses`, `fase_upgrade = pengajuan`, jadwal nol) dan INSERT item per atribut (snapshot JSON dan `nilai_lama`).
 7. **`asset_data` tidak berubah.** Notifikasi `upgrade.diajukan` ke seluruh admin.
 
@@ -1298,7 +1298,7 @@ POST /asset/karyawan/upgrade
 | Kolom | Nilai |
 |---|---|
 | id_asset_trx_upgrade_karyawan | CMP001202610001 |
-| no_trx | KRY03-2-202610001 |
+| no_trx | KRY-07-202610001 |
 | sumber_pengajuan | **karyawan** |
 | id_asset_kategori_m / nama_kategori | CMP001202601002 / Laptop |
 | detail_upgrade | RAM: 8 GB menjadi 16 GB |
@@ -1325,13 +1325,13 @@ POST /asset/karyawan/upgrade
 
 | id_notif | id_karyawan | id_ref | rute | ket_notif_id |
 |---|---|---|---|---|
-| CMP00120261000001 | KRY0099 | CMP001202610001 | asset_admin_detail_upgrade | Dimas Contoh mengajukan upgrade asset KRY03-2-202610001. |
-| CMP00120261000002 | KRY0100 | CMP001202610001 | asset_admin_detail_upgrade | Dimas Contoh mengajukan upgrade asset KRY03-2-202610001. |
+| CMP00120261000001 | KRY0099 | CMP001202610001 | asset_admin_detail_upgrade | Dimas Contoh mengajukan upgrade asset KRY-07-202610001. |
+| CMP00120261000002 | KRY0100 | CMP001202610001 | asset_admin_detail_upgrade | Dimas Contoh mengajukan upgrade asset KRY-07-202610001. |
 
 **Diterima mobile** (HTTP 201)
 ```json
 { "code": "CREATED", "message": "Pengajuan upgrade asset berhasil dikirim.",
-  "data": { "id": "CMP001202610001", "no_trx": "KRY03-2-202610001", "status_approval": "proses",
+  "data": { "id": "CMP001202610001", "no_trx": "KRY-07-202610001", "status_approval": "proses",
             "fase_upgrade": "pengajuan", "status_label": "Menunggu Persetujuan", "tab": "pengajuan" } }
 ```
 
@@ -1361,7 +1361,7 @@ POST /asset/upgrade-karyawan/CMP001202610001/review
 |---|---|
 | header | status_approval `proses → disetujui`; fase_upgrade `pengajuan → menunggu_pengambilan`; tgl_pengambilan 2026-10-23; jam_pengambilan 10:00:00; keterangan_pengembalian = Bawa ke ruang IT; user_approval = ADM-001 - Siti Admin; tgl_approval = 2026-10-22 10:00:00; tgl_update/user_update sama |
 | asset_data A12 | **Tidak berubah** |
-| notif_data | + `CMP00120261000003`: KRY0010, id_ref `CMP001202610001`, rute `asset_detail_upgrade`, "Upgrade KRY03-2-202610001 disetujui. Cek jadwal pengambilan asset." |
+| notif_data | + `CMP00120261000003`: KRY0010, id_ref `CMP001202610001`, rute `asset_detail_upgrade`, "Upgrade KRY-07-202610001 disetujui. Cek jadwal pengambilan asset." |
 
 **Diterima mobile** (HTTP 200): `status_approval = disetujui`, `fase_upgrade = menunggu_pengambilan`, `status_label = "Menunggu Pengambilan"`, `tab = "proses"`, message "Review upgrade asset berhasil disimpan.". Sejak saat ini `aksi.pelepasan = true` bagi Dimas (tanpa menunggu checklist). Admin masih bisa **Ubah Jadwal** (API-006) selama fase ini; yang berubah adalah kolom jadwal pengambilan, dengan notifikasi `upgrade.dijadwalkan`.
 
@@ -1401,7 +1401,7 @@ Tanpa body.
 | pemegang_asset / id_pemegang / nama_pemegang | gudang / KRY0010 / Dimas Contoh |
 | user_input | EMP-010 - Dimas Contoh |
 
-`notif_data`: `CMP00120261000004` (KRY0099) dan `CMP00120261000005` (KRY0100), rute `asset_admin_detail_upgrade`, "Dimas Contoh telah menyerahkan asset KRY03-2-202610001 untuk diupgrade."
+`notif_data`: `CMP00120261000004` (KRY0099) dan `CMP00120261000005` (KRY0100), rute `asset_admin_detail_upgrade`, "Dimas Contoh telah menyerahkan asset KRY-07-202610001 untuk diupgrade."
 
 **Diterima mobile** (HTTP 200): `fase_upgrade = dalam_service`, `status_label = "Dalam Service"`, message "Aset berhasil diserahkan untuk upgrade.".
 
@@ -1437,7 +1437,7 @@ POST /asset/upgrade-karyawan/CMP001202610001/hasil
 | item `…001` | nilai_baru `'' → 16`; alasan_tidak_upgrade `''` |
 | header | fase_upgrade `dalam_service → menunggu_pengembalian`; status_hasil = selesai; keterangan_hasil = RAM ditambah 1 keping 8 GB; biaya_upgrade = 650000; tgl_pengembalian 2026-10-26; jam_pengembalian 15:00:00; tgl_diterima NULL |
 | asset_data A12 | Tidak berubah (`dalam_perbaikan`) |
-| notif_data | + `CMP00120261000006`: KRY0010, rute `asset_detail_upgrade`, "Hasil upgrade KRY03-2-202610001 sudah tersedia. Cek jadwal pengembalian." |
+| notif_data | + `CMP00120261000006`: KRY0010, rute `asset_detail_upgrade`, "Hasil upgrade KRY-07-202610001 sudah tersedia. Cek jadwal pengembalian." |
 
 **Diterima mobile** (HTTP 200): `fase_upgrade = menunggu_pengembalian`, `status_label = "Menunggu Pengembalian"`, message "Hasil upgrade berhasil disimpan.". `aksi.terima = true` bagi Dimas. Ubah Jadwal pada fase ini mengubah jadwal **pengembalian**.
 
@@ -1469,7 +1469,7 @@ Tanpa body.
 
 `asset_trx_log` (1 baris baru): `CMP00120261000002`, A12, `upgrade_karyawan`, kondisi normal → normal, posisi **gudang → karyawan**, id_pemegang KRY0010, nama_pemegang Dimas Contoh, `user_input` = EMP-010 - Dimas Contoh.
 
-`notif_data`: `CMP00120261000007` (KRY0099) dan `CMP00120261000008` (KRY0100), rute `asset_admin_detail_upgrade`, "Dimas Contoh telah menerima asset upgrade KRY03-2-202610001. Upgrade selesai."
+`notif_data`: `CMP00120261000007` (KRY0099) dan `CMP00120261000008` (KRY0100), rute `asset_admin_detail_upgrade`, "Dimas Contoh telah menerima asset upgrade KRY-07-202610001. Upgrade selesai."
 
 **Diterima mobile** (HTTP 200): `fase_upgrade = selesai`, `status_label = "Selesai"`, `tab = "selesai"`, message "Aset hasil upgrade berhasil diterima.". Semua nilai `aksi` menjadi `false`.
 
@@ -1477,7 +1477,7 @@ Tanpa body.
 
 #### Kondisi akhir data
 
-`asset_trx_upgrade_karyawan`: `CMP001202610001` / `KRY03-2-202610001`, `status_approval = disetujui`, `fase_upgrade = selesai`, `status_transaksi = selesai`, `status_hasil = selesai`, `biaya_upgrade = 650000`, `tgl_pelepasan = 2026-10-23 10:15:00`, `tgl_diterima = 2026-10-26 15:20:00`, `checklist_pengambilan` dan `checklist_pengembalian` tetap NULL.
+`asset_trx_upgrade_karyawan`: `CMP001202610001` / `KRY-07-202610001`, `status_approval = disetujui`, `fase_upgrade = selesai`, `status_transaksi = selesai`, `status_hasil = selesai`, `biaya_upgrade = 650000`, `tgl_pelepasan = 2026-10-23 10:15:00`, `tgl_diterima = 2026-10-26 15:20:00`, `checklist_pengambilan` dan `checklist_pengembalian` tetap NULL.
 
 `asset_trx_upgrade_karyawan_item`: `CMP001202610001`, `nilai_lama = 8`, `nilai_baru = 16`.
 
@@ -1589,6 +1589,7 @@ Tidak ada lagi event Checklist pengambilan, Selesaikan, dan Kirim ulang (dihapus
 
 | Version | Date | Changes |
 |---|---|---|
+| 1.5 | 2026-11-11 | Prefix nomor transaksi diganti dari `KRY03-2-` menjadi `KRY-07-` (`AssetUpgradeKaryawan_m::store`); format baru `KRY-07-YYYYMMNNN`, selaras dengan Upgrade Ruangan `RGN07-`. Transaksi yang sudah tersimpan tetap memakai nomor lama (tidak ada migrasi data). Kode fitur di dokumen menjadi KRY-07; docblock dan komentar kode masih menulis `ALK-KRY03`. DBML `no_trx` diselaraskan (bagian INC-01). Tidak ada perubahan endpoint, payload, response, atau mobile. |
 | 1.4 | 2026-10-30 | Sinkronisasi dengan kode terbaru: **checklist pengambilan (admin) dan checklist pengembalian/penerimaan (karyawan) dihapus**; aksi admin **Selesaikan** dan **Kirim Ulang ke Teknisi** dihapus; rute `POST upgrade-karyawan/{id}/checklist-pengambilan` (API-007) dan `POST upgrade-karyawan/{id}/selesai` (API-009) dihapus. Penomoran API tidak digeser: kedua nomor tetap ada di tabel §23 sebagai baris "dihapus v1.4" agar rujukan lama tidak bergeser. Endpoint aktif 15 → **13**. Alur baru: Serahkan Aset tanpa checklist; Terima Aset (tanpa body) **langsung menyelesaikan** (atribut diperbarui, asset `terpakai`, log gudang → karyawan, fase `selesai`, `tgl_diterima`). Fase `menunggu_review` tidak dihasilkan lagi (dipertahankan hanya untuk data lama). `aksi` detail kini hanya `review`, `ubah_jadwal`, `pelepasan`, `hasil`, `terima`; field detail `checklist_*` dihapus; pending admin = approval `proses` atau fase `dalam_service`. Notifikasi `upgrade.checklist_pengambilan`, `upgrade.selesai`, `upgrade.kirim_ulang` dihapus; `upgrade.diterima` berakhiran "Upgrade selesai.". Kolom `checklist_pengambilan` / `checklist_pengembalian` tidak diubah tetapi tidak dipakai (ditandai di skema dan ERD). Menulis ulang BR-008/009/011/012 (BR-008 dan BR-012 ditandai dihapus, nomor tidak digeser; menambah BR-014/015), §10–§15, §21, §23–§30, §33–§34, §36–§38, §45.4 (walkthrough 6 langkah, variasi kirim ulang diganti hasil `tidak_dapat_diupgrade`), TC-09 s.d. TC-24, INC-05/06 ditutup, INC-10 s.d. INC-12, RISK-008 s.d. RISK-010, §47. Test: PHPUnit 5 test (54 assertion) dan Flutter 5 test lulus. Skrip `sql-upgrade-hapus-checklist-review-lama.sql` untuk data lama **belum dijalankan** (ketergantungan rilis). Perapihan: checklist Retur (§47) dicentang sesuai RISK-001. |
 | 1.3 | 2026-10-22 | Menambah §45.4 *Walkthrough Lengkap dengan Contoh Data* (Jalur A dari ajukan sampai atribut diperbarui: review, checklist pengambilan, serahkan, hasil, terima, selesaikan; variasi Jalur B, tolak, tidak dapat diupgrade, kirim ulang; kasus gagal). Sinkronisasi kode: tabel log ternyata `asset_trx_log` (`id_asset_trx_log`), bukan `asset_log`. |
 | 1.2 | 2026-10-12 | RISK-001 ditutup: Retur kini menolak asset dalam upgrade aktif (TC-19, edge case). Sinkronisasi dengan kode 12 Okt 2026: path file mobile mengikuti struktur folder baru (`UI/Modul/Asset/<Fitur>/` berhuruf kapital, model di `Repository/Model/Asset/`). |

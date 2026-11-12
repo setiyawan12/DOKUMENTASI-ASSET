@@ -195,7 +195,7 @@ footer{margin-top:64px;padding-top:18px;border-top:1px solid var(--line);color:v
       </div>
       <div class="tag" aria-label="Identitas dokumen">
         <dl>
-          <dt>Kode</dt><dd>ALK-RGN01</dd><dt>Modul</dt><dd>Ruangan</dd><dt>Versi</dt><dd>1.2 · 3 Nov 2026</dd><dt>Stack</dt><dd>Lumen 10 · Flutter</dd><dt>API</dt><dd>10 endpoint</dd>
+          <dt>Kode</dt><dd>ALK-RGN01</dd><dt>Modul</dt><dd>Ruangan</dd><dt>Versi</dt><dd>1.3 · 5 Nov 2026</dd><dt>Stack</dt><dd>Lumen 10 · Flutter</dd><dt>API</dt><dd>10 endpoint</dd>
         </dl>
         <div class="barcode" aria-hidden="true"></div>
         <div class="trx">RGN01-YYYYMMNNN</div>
@@ -299,7 +299,7 @@ footer{margin-top:64px;padding-top:18px;border-top:1px solid var(--line);color:v
 </tr>
 <tr>
 <td>Versi dokumen</td>
-<td>1.2 — 3 November 2026</td>
+<td>1.3 — 5 November 2026</td>
 </tr>
 <tr>
 <td>Dokumen terkait</td>
@@ -980,8 +980,17 @@ footer{margin-top:64px;padding-top:18px;border-top:1px solid var(--line);color:v
 <td><code>ruangan</code> (<code>id_pemegang_asset</code> = id ruangan)</td>
 <td><code>id_asset_lokasi_m</code> = ruangan</td>
 </tr>
+<tr>
+<td>Konfirmasi selesai (kolom <code>tgl_dialokasikan</code>)</td>
+<td>–</td>
+<td><code>gudang</code> → <code>ruangan</code></td>
+<td><code>tgl_dialokasikan</code> = tanggal konfirmasi Admin/HR (Y-m-d)</td>
+</tr>
 </tbody>
 </table></div>
+<aside class="callout callout-note">
+<p><code>tgl_dialokasikan</code> (date, NULL) ditulis API setiap <code>pemegang_asset</code> berubah: masuk dari gudang ke ruangan = tanggal konfirmasi (Y-m-d); kembali ke gudang = <code>'0000-00-00'</code> (sengaja bukan NULL). Aset yang belum pernah dialokasikan, atau dipegang sebelum fitur ini dan belum di-backfill, bernilai NULL. Tidak ada endpoint, payload, atau layar mobile yang membaca kolom ini. Detail operasional dan backfill: lihat dokumen Onboarding Karyawan (KRY01), RISK-012.</p>
+</aside>
 <h2 id="s23"><span class="sec-no">23</span>API Documentation</h2>
 <p>Base: <code>asset/</code> · Admin: Bearer + <code>asset_admin</code>.</p>
 <div class="table-wrap"><table>
@@ -1528,6 +1537,8 @@ footer{margin-top:64px;padding-top:18px;border-top:1px solid var(--line);color:v
 <p>PIC yang dipilih manual menjadi master. Mengganti PIC ruangan hanya lewat data master (belum ada layar).</p>
 <h3>RISK-006 — Belum diuji di perangkat (SEDANG)</h3>
 <p>Test memakai database tiruan dan widget test; belum diverifikasi di emulator/server nyata, termasuk push notifikasi.</p>
+<h3>RISK-007 — Pengisian <code>tgl_dialokasikan = '0000-00-00'</code> ditolak bila <code>NO_ZERO_DATE</code> (SEDANG)</h3>
+<p>Nilai <code>'0000-00-00'</code> pada <code>asset_data.tgl_dialokasikan</code> (aset kembali ke gudang) ditolak MySQL/MariaDB bila <code>sql_mode</code> memuat <code>NO_ZERO_DATE</code> atau strict mode, sehingga transaksi terkait gagal. Server dev sudah dicek dan aman; periksa <code>SELECT @@sql_mode</code> di tiap environment sebelum deploy API. Status: Terbuka. Konvensi tabel transaksi ruangan memakai NULL untuk tanggal kosong, tetapi kolom ini sengaja memakai <code>'0000-00-00'</code> (keputusan pemilik produk).</p>
 <div class="group-divider" id="g8"><span>Referensi Developer</span></div>
 <h2 id="s42"><span class="sec-no">42</span>Dependency</h2>
 <p><code>Asset_m/Asset_c</code>, <code>AssetNotification</code>, <code>asset_admin</code>, <code>asset_lokasi_m</code>, <code>asset_lokasi_pic_m</code>, <code>asset_kategori_m</code>, <code>asset_data</code>, <code>asset_trx_log</code>, <code>data_karyawan</code>, <code>master_cabang</code>, <code>master_departemen</code>; mobile: pemilih aset/karyawan dari <code>HalamanAssetAdminAddOnboardingKaryawan</code>, <code>AssetPemeliharaanStepper</code>, <code>AssetPeminjamanCard</code>.</p>
@@ -2213,7 +2224,7 @@ Authorization: Bearer &lt;access_token_dewi&gt;
 3. Tidak boleh ada aset rusak pada ronde berjalan ("Masih ada asset rusak. Jadwalkan penggantian sebelum menyelesaikan alokasi.").
 4. <code>asetAktif</code>: semua baris item yang <strong>belum digantikan</strong> → Laptop (AST0101) dan Monitor Samsung (AST0103). Monitor LG (AST0102) tidak ikut.
 5. Aset aktif dikunci <code>FOR UPDATE</code>; semuanya harus <code>proses</code> dan <code>gudang</code> ("Satu atau beberapa asset tidak dapat diserahkan ke ruangan.").
-6. UPDATE <code>asset_data</code> → <code>terpakai</code>, <code>pemegang_asset = ruangan</code>, <code>id_pemegang_asset</code> dan <code>id_asset_lokasi_m</code> = <code>LOK0007</code>.
+6. UPDATE <code>asset_data</code> → <code>terpakai</code>, <code>pemegang_asset = ruangan</code>, <code>id_pemegang_asset</code> dan <code>id_asset_lokasi_m</code> = <code>LOK0007</code>, <code>tgl_dialokasikan = 2026-10-26</code> (tanggal konfirmasi).
 7. INSERT satu <code>asset_trx_log</code> per aset (<code>insertAssetLog</code>).
 8. UPDATE header → <code>dikonfirmasi</code>.
 9. Controller mengirim <code>onboarding_ruangan.selesai</code> ke PIC.</p>
@@ -2246,6 +2257,12 @@ Authorization: Bearer &lt;access_token_dewi&gt;
 <td>id_pemegang_asset</td>
 <td><code>''</code></td>
 <td><strong>LOK0007</strong></td>
+</tr>
+<tr>
+<td></td>
+<td>tgl_dialokasikan</td>
+<td>NULL</td>
+<td><strong>2026-10-26</strong></td>
 </tr>
 <tr>
 <td></td>
@@ -2571,11 +2588,16 @@ Authorization: Bearer &lt;access_token_dewi&gt;
 <td>3 Nov 2026</td>
 <td>Kartu Onboarding Ruangan Perlu Diproses di beranda admin (kunci ringkasan <code>ruangan_onboarding_perlu_proses</code> / <code>ruangan_onboarding_pending</code>; §21.7, §26.6, §28); pemilih tanggal Cupertino dan dialog konfirmasi bersama (§26.4, §26.5, §36); skenario uji T-11 sampai T-13. Tidak ada perubahan skema atau endpoint.</td>
 </tr>
+<tr>
+<td>1.3</td>
+<td>5 Nov 2026</td>
+<td>Kolom baru <code>asset_data.tgl_dialokasikan</code> (date, NULL): konfirmasi Admin/HR (<code>AssetAdminRuangan_m::konfirmasi</code>) mengisinya dengan tanggal konfirmasi saat aset masuk ke ruangan. Menambah penyebutan di §22, walkthrough §45.4, dan RISK-007. Tidak ada perubahan endpoint, payload, response, atau mobile.</td>
+</tr>
 </tbody>
 </table></div>
     </article>
 
-    <footer>Dokumentasi Onboarding Ruangan (ALK-RGN01) v1.0 · 13 Oktober 2026 · Disusun dari source lokal API (Lumen) &amp; MOBILE (Flutter). Contoh ID dan nama pada payload adalah data sintetis.</footer>
+    <footer>Dokumentasi Onboarding Ruangan (ALK-RGN01) v1.3 · 5 November 2026 · Disusun dari source lokal API (Lumen) &amp; MOBILE (Flutter). Contoh ID dan nama pada payload adalah data sintetis.</footer>
   </main>
 </div>
 <button class="to-top" id="to-top" type="button" aria-label="Kembali ke atas">↑</button>

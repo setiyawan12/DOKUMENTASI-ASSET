@@ -18,8 +18,8 @@
 | Mobile | Flutter (`professional_flutter_3_35`), `flutter_bloc`, `dio` |
 | Web | ⚠️ Belum ditemukan: tidak ada source web di workspace |
 | Test otomatis | `API/tests/Asset/AssetRusakKaryawanTest.php` (15 test) |
-| Versi Dokumen | 1.6 |
-| Tanggal Dokumentasi | 2026-10-22 |
+| Versi Dokumen | 1.7 |
+| Tanggal Dokumentasi | 2026-11-05 |
 | Dokumen terkait | Onboarding (KRY01), Offboarding (KRY02), Upgrade (KRY03), Retur (KRY04), Peminjaman (KRY05), Request/Penambahan |
 
 ---
@@ -505,13 +505,13 @@ Status `menunggu_pengambilan` → "Jadwal hanya dapat diubah sebelum serah terim
 Karyawan aktif, laporan miliknya, `menunggu_pengambilan` → pengganti terbaru yang belum diterima → bila `tgl_pelepasan` kosong: `releaseOriginalAsset` → set `tgl_serah_terima` pengganti → bila `items` dikirim: simpan checklist (`applyChecklist`), normal → selesai otomatis (`completeReplacement`), rusak → `menunggu_review_checklist`; tanpa `items`: `menunggu_checklist` (alur lama) atau `selesai` bila tanpa pengganti → `tgl/user_pelepasan` (hanya pertama kali) → notifikasi `kerusakan.selesai_otomatis` / `kerusakan.checklist` / `kerusakan.diserahkan`. `items` tanpa unit pengganti ditolak; checklist tidak lengkap membatalkan seluruh transaksi.
 
 ### 21.5 Checklist — `submitChecklist` (karyawan)
-`menunggu_checklist` → pengganti terbaru sudah diterima & `belum_dicek` → komponen pengganti (`komponenAssets`) harus lengkap → simpan hasil JSON, `status_checklist`, ringkasan `ket_rusak`, `tgl_checklist` → normal: selesai otomatis (pengganti `terpakai` @karyawan + log); rusak: header `menunggu_review_checklist` → `kerusakan.checklist`. Response +`status_checklist`.
+`menunggu_checklist` → pengganti terbaru sudah diterima & `belum_dicek` → komponen pengganti (`komponenAssets`) harus lengkap → simpan hasil JSON, `status_checklist`, ringkasan `ket_rusak`, `tgl_checklist` → normal: selesai otomatis (pengganti `terpakai` @karyawan + `tgl_dialokasikan` + log); rusak: header `menunggu_review_checklist` → `kerusakan.checklist`. Response +`status_checklist`.
 
 ### 21.6 Selesaikan — `selesai` (admin)
-Hanya laporan lama (checklist normal baru selesai otomatis): `menunggu_review_checklist` + checklist `normal` → pengganti masih `proses` @gudang → pengganti `terpakai` @karyawan + log → header `selesai` → `kerusakan.selesai`.
+Hanya laporan lama (checklist normal baru selesai otomatis): `menunggu_review_checklist` + checklist `normal` → pengganti masih `proses` @gudang → pengganti `terpakai` @karyawan + `tgl_dialokasikan` + log → header `selesai` → `kerusakan.selesai`.
 
 ### 21.7 Pilih pengganti lain — `gantiPengganti` (admin)
-`menunggu_review_checklist` + checklist `rusak` → jadwal baru → pengganti baru (sekategori, belum dipakai di laporan) → pengganti lama `rusak` @gudang + log → INSERT baris pengganti (`urutan + 1`, `parent_id` = pengganti lama) → header `menunggu_pengambilan` → `kerusakan.pengganti_ulang`. Response +`urutan_penggantian`.
+`menunggu_review_checklist` + checklist `rusak` → jadwal baru → pengganti baru (sekategori, belum dipakai di laporan) → pengganti lama `rusak` @gudang (`tgl_dialokasikan = '0000-00-00'`) + log → INSERT baris pengganti (`urutan + 1`, `parent_id` = pengganti lama) → header `menunggu_pengambilan` → `kerusakan.pengganti_ulang`. Response +`urutan_penggantian`.
 
 ### 21.8 Query baca
 - **Opsi karyawan**: asset `terpakai` miliknya yang tidak diblokir flow lain, beserta komponen (`items`).
@@ -533,6 +533,11 @@ Hanya laporan lama (checklist normal baru selesai otomatis): `menunggu_review_ch
 | status_asset / pemegang (pengganti normal) | proses / gudang | terpakai / karyawan | Selesaikan |
 | status_asset / ket_rusak (pengganti rusak) | proses / – | rusak / ringkasan checklist | Pilih pengganti lain |
 | tgl_update / user_update | – | now / pelaku | Setiap update |
+| tgl_dialokasikan (unit utama disetujui) | tanggal alokasi / NULL | '0000-00-00' | Serah terima pertama (hanya bila unit ditarik) |
+| tgl_dialokasikan (pengganti normal) | NULL / '0000-00-00' | tanggal saat selesai (Y-m-d) | Selesaikan |
+| tgl_dialokasikan (pengganti lama, SPARE lama) | – | '0000-00-00' | Pilih pengganti lain (`gantiPengganti`) |
+
+> `tgl_dialokasikan` (date, NULL) ditulis API setiap `pemegang_asset` berubah: masuk dari gudang ke karyawan = tanggal konfirmasi (Y-m-d); kembali ke gudang = `'0000-00-00'` (sengaja bukan NULL). Aset yang belum pernah dialokasikan, atau dipegang sebelum fitur ini dan belum di-backfill, bernilai NULL. Tidak ada endpoint, payload, atau layar mobile yang membaca kolom ini. Detail operasional dan backfill: lihat dokumen Onboarding Karyawan (KRY01), RISK-012. Pada KRY06: unit utama yang ditarik dan SPARE lama yang diganti di-reset, sedangkan unit pengganti yang masuk ke karyawan (SPARE baru) diberi tanggal saat laporan selesai.
 
 ---
 
@@ -1118,6 +1123,9 @@ Dikirim setelah commit; kegagalan tidak membatalkan transaksi.
 ### RISK-007 — Kapasitas penomoran (RENDAH)
 3 digit/bulan untuk header & item; setiap pengganti ulang memakai satu nomor item.
 
+### RISK-008 — Pengisian `tgl_dialokasikan = '0000-00-00'` ditolak bila `NO_ZERO_DATE` (SEDANG)
+Nilai `'0000-00-00'` pada `asset_data.tgl_dialokasikan` (aset kembali ke gudang) ditolak MySQL/MariaDB bila `sql_mode` memuat `NO_ZERO_DATE` atau strict mode, sehingga transaksi terkait gagal. Server dev sudah dicek dan aman; periksa `SELECT @@sql_mode` di tiap environment sebelum deploy API. Status: Terbuka. Lihat juga RISK-005 (tanggal nol pada kolom jadwal tabel KRY06).
+
 ---
 
 ## 42. Dependency
@@ -1395,7 +1403,7 @@ POST /asset/karyawan/rusak/CMP001202610001/pelepasan
 **Diproses API** (`AssetKaryawanRusak_c::pelepasanRusakSaya` → `pelepasan`)
 1. `lockCompany`; karyawan aktif; header milik Sari, status harus `menunggu_pengambilan` ("Laporan kerusakan belum siap diserahterimakan.").
 2. Pengganti terbaru yang belum diterima = `…002`.
-3. Karena `tgl_pelepasan` masih kosong → **`releaseOriginalAsset`**: asset dilaporkan harus masih dipegang Sari. Unit utama disetujui → A12 menjadi `rusak`, `gudang`, `id_pemegang_asset = ''`; `ket_rusak` = ringkasan "nama: keterangan" item disetujui (maks 255); INSERT `asset_trx_log`. (Bila **hanya kelengkapan** yang disetujui, asset tetap dipegang karyawan dan hanya `ket_rusak` yang terisi.)
+3. Karena `tgl_pelepasan` masih kosong → **`releaseOriginalAsset`**: asset dilaporkan harus masih dipegang Sari. Unit utama disetujui → A12 menjadi `rusak`, `gudang`, `id_pemegang_asset = ''`, `tgl_dialokasikan = '0000-00-00'`; `ket_rusak` = ringkasan "nama: keterangan" item disetujui (maks 255); INSERT `asset_trx_log`. (Bila **hanya kelengkapan** yang disetujui, asset tetap dipegang karyawan dan hanya `ket_rusak` yang terisi.)
 4. UPDATE `tgl_serah_terima` pengganti `…002` = sekarang.
 5. `applyChecklist`: **semua** komponen pengganti wajib dicek (jumlah dan ID harus sama), `kondisi` ∈ normal/rusak, rusak wajib keterangan. Hasil disimpan sebagai JSON di `kelengkapan_item`; `status_checklist = rusak` karena ada satu komponen rusak; `ket_rusak` = ringkasan komponen rusak; `tgl_checklist`.
 6. `settleChecklist`: checklist **rusak** → header `menunggu_review_checklist` (pengganti **tidak** diserahkan ke Sari). Checklist **normal** akan langsung menyelesaikan laporan (lihat langkah 6).
@@ -1406,7 +1414,7 @@ POST /asset/karyawan/rusak/CMP001202610001/pelepasan
 
 | Tabel | Perubahan |
 |---|---|
-| asset_data A12 (laptop lama) | status_asset `terpakai → rusak`; pemegang_asset `karyawan → gudang`; id_pemegang_asset `KRY0009 → ''`; ket_rusak = Laptop 14 inch: Ada garis pada layar; user_update = EMP-009 - Sari Contoh |
+| asset_data A12 (laptop lama) | status_asset `terpakai → rusak`; pemegang_asset `karyawan → gudang`; id_pemegang_asset `KRY0009 → ''`; tgl_dialokasikan → `0000-00-00`; ket_rusak = Laptop 14 inch: Ada garis pada layar; user_update = EMP-009 - Sari Contoh |
 | item pengganti `…002` | tgl_serah_terima = 2026-10-23 10:15:00; status_checklist `belum_dicek → rusak`; ket_rusak = Charger: Kabel charger terkelupas; tgl_checklist sama; kelengkapan_item = `[{"id_item":"CMP001ITEM0201","nama_item":"Laptop 14 inch","jenis":"aset_utama","kondisi":"normal","ket_rusak":""},{"id_item":"CMP001ITEM0202","nama_item":"Charger","jenis":"kelengkapan","kondisi":"rusak","ket_rusak":"Kabel charger terkelupas"}]` |
 | header | status_transaksi `menunggu_pengambilan → menunggu_review_checklist`; tgl_pelepasan = 2026-10-23 10:15:00; user_pelepasan = EMP-009 - Sari Contoh |
 | asset_data A20 | Tidak berubah (masih `proses` @gudang) |
@@ -1453,7 +1461,7 @@ POST /asset/rusak-karyawan/CMP001202610001/ganti-pengganti
 
 | Tabel | Perubahan |
 |---|---|
-| asset_data A20 (pengganti 1) | status_asset `proses → rusak`; pemegang_asset gudang; ket_rusak = Charger: Kabel charger terkelupas |
+| asset_data A20 (pengganti 1) | status_asset `proses → rusak`; pemegang_asset gudang; tgl_dialokasikan → `0000-00-00`; ket_rusak = Charger: Kabel charger terkelupas |
 | asset_data A21 | status_asset `tersedia → proses` |
 | item baru (pengganti 2) | `CMP001202610003`: parent_id **CMP001202610002**, urutan_penggantian **2**, id_asset_data A21, status_approval disetujui, status_checklist belum_dicek, user_input = ADM-001 - Siti Admin |
 | header | status_transaksi `menunggu_review_checklist → menunggu_pengambilan`; tgl_serah_terima 2026-10-24; jam_serah_terima 09:00:00; tgl_update 2026-10-23 14:00:00; user_update = ADM-001 - Siti Admin |
@@ -1484,7 +1492,7 @@ POST /asset/karyawan/rusak/CMP001202610001/pelepasan
 **Diproses API** (`pelepasan`, panggilan kedua)
 1. Status `menunggu_pengambilan`; `tgl_pelepasan` sudah terisi, sehingga **tidak ada pelepasan asset lama lagi**; yang diproses hanya pengganti terbaru (`…003`). Bila tidak ada pengganti yang menunggu, 422 "Tidak ada unit pengganti yang perlu diserahterimakan.".
 2. UPDATE `tgl_serah_terima` pengganti `…003`; `applyChecklist` → `status_checklist = normal`.
-3. `settleChecklist` → `completeReplacement`: `lockReservedReplacement` (A21 harus masih `proses` @gudang), UPDATE A21 → `terpakai`, `karyawan`, `id_pemegang_asset = KRY0009`, **`id_asset_lokasi_m = NULL`**; INSERT `asset_trx_log`; header → `selesai`.
+3. `settleChecklist` → `completeReplacement`: `lockReservedReplacement` (A21 harus masih `proses` @gudang), UPDATE A21 → `terpakai`, `karyawan`, `id_pemegang_asset = KRY0009`, `tgl_dialokasikan = 2026-10-24` (tanggal selesai), **`id_asset_lokasi_m = NULL`**; INSERT `asset_trx_log`; header → `selesai`.
 4. `tgl_pelepasan` dan `user_pelepasan` **tidak ditimpa** (hanya pertama kali).
 5. Notifikasi `kerusakan.selesai_otomatis` ke admin (admin hanya diberi tahu; tidak ada langkah Selesaikan).
 
@@ -1493,7 +1501,7 @@ POST /asset/karyawan/rusak/CMP001202610001/pelepasan
 | Tabel | Perubahan |
 |---|---|
 | item pengganti `…003` | tgl_serah_terima dan tgl_checklist = 2026-10-24 09:20:00; status_checklist `belum_dicek → normal`; ket_rusak `''`; kelengkapan_item = hasil checklist (kondisi normal) |
-| asset_data A21 | status_asset `proses → terpakai`; pemegang_asset `gudang → karyawan`; id_pemegang_asset `'' → KRY0009`; id_asset_lokasi_m → NULL |
+| asset_data A21 | status_asset `proses → terpakai`; pemegang_asset `gudang → karyawan`; id_pemegang_asset `'' → KRY0009`; tgl_dialokasikan → `2026-10-24`; id_asset_lokasi_m → NULL |
 | header | status_transaksi `menunggu_pengambilan → selesai`; tgl_update = 2026-10-24 09:20:00; user_update = EMP-009 - Sari Contoh |
 
 `asset_trx_log` (1 baris baru): `CMP00120261000003`, A21, `rusak_karyawan`, kondisi_awal → **normal**, posisi **gudang → karyawan**, id_pemegang KRY0009, nama_pemegang Sari Contoh, `user_input` = EMP-009 - Sari Contoh.
@@ -1622,6 +1630,7 @@ Semua pelanggaran aturan dilempar sebagai `InvalidArgumentException` di dalam `D
 
 | Version | Date | Changes |
 |---|---|---|
+| 1.7 | 2026-11-05 | Kolom baru `asset_data.tgl_dialokasikan` (date, NULL) pada KRY06: unit utama yang ditarik ke gudang saat serah terima (`releaseOriginalAsset`) dan unit pengganti lama pada `gantiPengganti` di-reset ke `'0000-00-00'`; unit pengganti yang masuk ke karyawan (`completeReplacement`) diberi tanggal saat laporan selesai. Menambah penyebutan di §21, §22, walkthrough §45.4, dan RISK-008. Tidak ada perubahan endpoint, payload, response, atau mobile. |
 | 1.6 | 2026-10-22 | Menambah §45.4 *Walkthrough Lengkap dengan Contoh Data* (lapor, review dengan pengganti sekategori, serah terima dengan checklist rusak, pilih pengganti lain, checklist normal dan selesai otomatis; variasi tolak, tanpa pengganti, checklist normal pertama, alur lama; kasus gagal). Sinkronisasi kode: tabel log ternyata `asset_trx_log` (`id_asset_trx_log`), bukan `asset_log`. |
 | 1.5 | 2026-10-20 | Mobile: kartu Data Karyawan di detail admin Kerusakan kini menampilkan Jabatan, Cabang, Departemen (label Divisi diganti Departemen); model `AssetKerusakanKaryawan` membaca `jabatan`/`nama_jabatan`. API: `AssetRusakKaryawan_m::getDetail` menambah `karyawan.jabatan` (join `master_jabatan`); tes `AssetRusakKaryawanTest` meng-assert `Staff IT`. |
 | 1.4 | 2026-10-12 | Mobile: stepper alur status (`AssetAlurStepper.kerusakan`) dan kartu timeline vertikal `AssetKerusakanTimelineCard` di detail karyawan dan admin (§26.3-26.4); checklist unit pengganti memakai `AssetKondisiChecklist` dengan pilihan Normal/Rusak berwarna. Field `tgl_pelepasan` kini dibaca mobile. Teks langkah di grup JSON `alur`. Tidak ada perubahan API. |

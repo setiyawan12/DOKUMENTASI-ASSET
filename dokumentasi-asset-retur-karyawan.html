@@ -198,7 +198,7 @@ footer{margin-top:64px;padding-top:18px;border-top:1px solid var(--line);color:v
         <dl>
           <dt>Kode</dt><dd>KRY04</dd>
           <dt>Modul</dt><dd>Asset Management</dd>
-          <dt>Versi</dt><dd>1.8 · 22 Okt 2026</dd>
+          <dt>Versi</dt><dd>1.9 · 5 Nov 2026</dd>
           <dt>Stack</dt><dd>Lumen 10 · Flutter</dd>
           <dt>API</dt><dd>9 endpoint</dd>
         </dl>
@@ -300,11 +300,11 @@ footer{margin-top:64px;padding-top:18px;border-top:1px solid var(--line);color:v
 </tr>
 <tr>
 <td>Versi Dokumen</td>
-<td>1.8</td>
+<td>1.9</td>
 </tr>
 <tr>
 <td>Tanggal Dokumentasi</td>
-<td>2026-10-22</td>
+<td>2026-11-05</td>
 </tr>
 <tr>
 <td>Dokumen terkait</td>
@@ -1156,7 +1156,7 @@ Admin: Terima Asset (pilih lokasi gudang per asset)
 </table></div>
 <h3>18.3 asset_data &amp; asset_trx_log</h3>
 <ul>
-<li><code>asset_data</code>: <code>pemegang_asset</code>, <code>id_pemegang_asset</code>, <code>status_asset</code> (terpakai/dipinjam/tersedia/rusak/proses), <code>ket_rusak</code>, <code>kondisi_awal</code>, <code>tgl_update</code>, <code>user_update</code>.</li>
+<li><code>asset_data</code>: <code>pemegang_asset</code>, <code>id_pemegang_asset</code>, <code>tgl_dialokasikan</code>, <code>status_asset</code> (terpakai/dipinjam/tersedia/rusak/proses), <code>ket_rusak</code>, <code>kondisi_awal</code>, <code>tgl_update</code>, <code>user_update</code>.</li>
 <li><code>asset_trx_log</code> (<code>jenis_log = retur_karyawan</code>, <code>nama_tabel_transaksi = asset_trx_retur_karyawan</code>):</li>
 </ul>
 <div class="table-wrap"><table>
@@ -1267,7 +1267,7 @@ DB::transaction (retry 3) → ApiResponse + AssetNotification
 <h3>21.2 Konfirmasi — <code>konfirmasiAdmin</code></h3>
 <p>Lock → admin → header <code>pengajuan</code>/<code class="chip chip-wait">proses</code> FOR UPDATE → item asal FOR UPDATE → semua diputuskan → asset asal masih dipegang karyawan &amp; bukan pinjaman → validasi keputusan &amp; pengganti per item → pengganti <code class="chip chip-neutral">tersedia</code> @gudang (<code>getLockedAssets</code>) → bila ada disetujui: metode serah terima wajib, jadwal bila dijadwalkan (≥ tgl pengajuan) → UPDATE item (<code>status_approval</code>, <code>ket_tolak</code>) → INSERT item pengganti (<code>parent_id</code>, <code>disetujui</code>) → UPDATE pengganti <code class="chip chip-wait">proses</code> → UPDATE header (status, jadwal, <code>flag_jadwalkan</code>, <code>keterangan_serah_terima</code>, <code>user/tgl_approval</code>) → notif <code>retur.dikonfirmasi</code>/<code>retur.ditolak</code>. Response +<code>jumlah_disetujui</code>, <code>jumlah_ditolak</code>, <code>jumlah_pengganti</code>.</p>
 <h3>21.3 Terima — <code>terimaAdmin</code> → <code>finalizeHandover</code></h3>
-<p>Cek admin. Lalu: lock → header <code>disetujui</code>/<code class="chip chip-wait">proses</code> → item asal disetujui (min 1) → <code>resolveItemLocations</code> (lokasi gudang per item asal, v1.4) → asset asal masih dipegang karyawan, bukan pinjaman → pengganti masih <code class="chip chip-wait">proses</code> @gudang → per item asal: UPDATE asset (rusak/tersedia @gudang, <code>id_asset_lokasi_m</code> pilihan admin, <code>ket_rusak</code>) + UPDATE item <code>id_asset_lokasi_m_tujuan</code> + log; bila ada pengganti: UPDATE pengganti <code class="chip chip-done">terpakai</code> @karyawan, <code>id_asset_lokasi_m = NULL</code> + log → INSERT log → header <code>selesai</code>, <code>tgl/jam_serah_terima = now</code> → notif <code>retur.diterima_admin</code> (ke karyawan).</p>
+<p>Cek admin. Lalu: lock → header <code>disetujui</code>/<code class="chip chip-wait">proses</code> → item asal disetujui (min 1) → <code>resolveItemLocations</code> (lokasi gudang per item asal, v1.4) → asset asal masih dipegang karyawan, bukan pinjaman → pengganti masih <code class="chip chip-wait">proses</code> @gudang → per item asal: UPDATE asset (rusak/tersedia @gudang, <code>id_asset_lokasi_m</code> pilihan admin, <code>ket_rusak</code>, <code>tgl_dialokasikan = '0000-00-00'</code>) + UPDATE item <code>id_asset_lokasi_m_tujuan</code> + log; bila ada pengganti: UPDATE pengganti <code class="chip chip-done">terpakai</code> @karyawan, <code>id_asset_lokasi_m = NULL</code>, <code>tgl_dialokasikan</code> = tanggal Terima Asset + log → INSERT log → header <code>selesai</code>, <code>tgl/jam_serah_terima = now</code> → notif <code>retur.diterima_admin</code> (ke karyawan).</p>
 <h3>21.4 Query baca</h3>
 <ul>
 <li><strong>Opsi karyawan</strong>: asset @karyawan miliknya, bukan <code>dipinjam</code>, tidak di retur aktif + daftar alasan.</li>
@@ -1347,8 +1347,23 @@ DB::transaction (retry 3) → ApiResponse + AssetNotification
 <td>now / pelaku</td>
 <td>Setiap update</td>
 </tr>
+<tr>
+<td>tgl_dialokasikan (asal)</td>
+<td>tanggal alokasi / NULL</td>
+<td>'0000-00-00'</td>
+<td>Terima Asset</td>
+</tr>
+<tr>
+<td>tgl_dialokasikan (pengganti)</td>
+<td>NULL / '0000-00-00'</td>
+<td>tanggal Terima Asset (Y-m-d)</td>
+<td>Terima Asset</td>
+</tr>
 </tbody>
 </table></div>
+<aside class="callout callout-note">
+<p><code>tgl_dialokasikan</code> (date, NULL) ditulis API setiap <code>pemegang_asset</code> berubah: masuk dari gudang ke karyawan = tanggal konfirmasi (Y-m-d); kembali ke gudang = <code>'0000-00-00'</code> (sengaja bukan NULL). Aset yang belum pernah dialokasikan, atau dipegang sebelum fitur ini dan belum di-backfill, bernilai NULL. Tidak ada endpoint, payload, atau layar mobile yang membaca kolom ini. Detail operasional dan backfill: lihat dokumen Onboarding Karyawan (KRY01), RISK-012. Pada retur, aset asal yang kembali ke gudang di-reset, sedangkan unit pengganti yang masuk ke karyawan diberi tanggal Terima Asset (bukan tanggal konfirmasi admin).</p>
+</aside>
 <hr />
 <h2 id="s23"><span class="sec-no">23</span>API Documentation</h2>
 <div class="table-wrap"><table>
@@ -1651,7 +1666,7 @@ INSERT notif_data
 </tbody>
 </table></div>
 <p>Pesan umum validasi: "Data penerimaan retur belum lengkap." Database impact:</p>
-<div class="code"><span class="code-lang">Alur</span><pre><code class="language-text">UPDATE asset_data (asal → tersedia/rusak @gudang + id_asset_lokasi_m; pengganti → terpakai @karyawan, id_asset_lokasi_m = NULL)
+<div class="code"><span class="code-lang">Alur</span><pre><code class="language-text">UPDATE asset_data (asal → tersedia/rusak @gudang + id_asset_lokasi_m; pengganti → terpakai @karyawan, id_asset_lokasi_m = NULL; tgl_dialokasikan: asal '0000-00-00', pengganti tanggal Terima Asset)
 UPDATE asset_trx_retur_karyawan_item (id_asset_lokasi_m_tujuan)
 INSERT asset_trx_log (retur_karyawan)
 UPDATE asset_trx_retur_karyawan (status_transaksi selesai, tgl/jam_serah_terima)
@@ -2903,6 +2918,8 @@ INSERT notif_data
 <h3>RISK-006 — Kapasitas penomoran (RENDAH)</h3>
 <p>3 digit/bulan/company untuk header &amp; item (termasuk item pengganti).</p>
 <h3>RISK-007 — Notifikasi di luar transaksi (RENDAH)</h3>
+<h3>RISK-008 — Pengisian <code>tgl_dialokasikan = '0000-00-00'</code> ditolak bila <code>NO_ZERO_DATE</code> (SEDANG)</h3>
+<p>Nilai <code>'0000-00-00'</code> pada <code>asset_data.tgl_dialokasikan</code> (aset kembali ke gudang) ditolak MySQL/MariaDB bila <code>sql_mode</code> memuat <code>NO_ZERO_DATE</code> atau strict mode, sehingga transaksi terkait gagal. Server dev sudah dicek dan aman; periksa <code>SELECT @@sql_mode</code> di tiap environment sebelum deploy API. Status: Terbuka. Lihat juga RISK-005 (tanggal nol pada kolom jadwal tabel retur).</p>
 <hr />
 <div class="group-divider" id="g42"><span>Referensi Developer</span></div><h2 id="s42"><span class="sec-no">42</span>Dependency</h2>
 <div class="code"><span class="code-lang">Alur</span><pre><code class="language-text">Asset milik karyawan (hasil Onboarding / Penambahan / Retur sebelumnya)
@@ -3401,8 +3418,8 @@ Authorization: Bearer &lt;access_token_rina&gt;
 2. Header harus <code>disetujui</code> + <code>proses</code> ("Retur asset belum dikonfirmasi atau sudah selesai.").
 3. Item asal yang disetujui (min 1); <code>resolveItemLocations</code>: tiap item asal punya lokasi bertipe <code>gudang</code>, company yang sama, tepat satu kali.
 4. Semua asset dikunci. Asset asal masih dipegang Rina dan bukan <code>dipinjam</code>; asset pengganti harus masih <code>proses</code> @gudang ("Asset pengganti sudah tidak siap diserahterimakan.").
-5. Per item asal: UPDATE <code>asset_data</code> (<strong>rusak</strong> → <code>status_asset = rusak</code> dan <code>ket_rusak = ket_retur</code>; selain itu <code>tersedia</code>; keduanya <code>gudang</code>, <code>id_pemegang_asset = ''</code>, <code>id_asset_lokasi_m</code> pilihan admin), UPDATE item <code>id_asset_lokasi_m_tujuan</code>, siapkan log.
-6. Bila ada pengganti: UPDATE <code>asset_data</code> pengganti → <code>terpakai</code>, <code>karyawan</code>, <code>id_pemegang_asset = KRY0004</code>, <strong><code>id_asset_lokasi_m = NULL</code></strong>, siapkan log.
+5. Per item asal: UPDATE <code>asset_data</code> (<strong>rusak</strong> → <code>status_asset = rusak</code> dan <code>ket_rusak = ket_retur</code>; selain itu <code>tersedia</code>; keduanya <code>gudang</code>, <code>id_pemegang_asset = ''</code>, <code>tgl_dialokasikan = '0000-00-00'</code>, <code>id_asset_lokasi_m</code> pilihan admin), UPDATE item <code>id_asset_lokasi_m_tujuan</code>, siapkan log.
+6. Bila ada pengganti: UPDATE <code>asset_data</code> pengganti → <code>terpakai</code>, <code>karyawan</code>, <code>id_pemegang_asset = KRY0004</code>, <code>tgl_dialokasikan = 2026-10-23</code> (tanggal Terima Asset), <strong><code>id_asset_lokasi_m = NULL</code></strong>, siapkan log.
 7. INSERT <code>asset_trx_log</code>; UPDATE header: <code>status_transaksi = selesai</code>, <code>tgl_serah_terima</code> dan <code>jam_serah_terima</code> = <strong>waktu Terima Asset diklik</strong>.
 8. Notifikasi <code>retur.diterima_admin</code> ke karyawan.</p>
 <p><strong>Hasil database</strong></p>
@@ -3416,15 +3433,15 @@ Authorization: Bearer &lt;access_token_rina&gt;
 <tbody>
 <tr>
 <td>asset_data A12 (laptop rusak)</td>
-<td>status_asset <code>terpakai → rusak</code>; pemegang_asset <code>karyawan → gudang</code>; id_pemegang_asset <code>KRY0004 → ''</code>; id_asset_lokasi_m <code>NULL → CMP001202610001</code>; ket_rusak = Mati mendadak saat dipakai; user_update = ADM-001 - Siti Admin</td>
+<td>status_asset <code>terpakai → rusak</code>; pemegang_asset <code>karyawan → gudang</code>; id_pemegang_asset <code>KRY0004 → ''</code>; tgl_dialokasikan → <code>0000-00-00</code>; id_asset_lokasi_m <code>NULL → CMP001202610001</code>; ket_rusak = Mati mendadak saat dipakai; user_update = ADM-001 - Siti Admin</td>
 </tr>
 <tr>
 <td>asset_data A13 (keyboard)</td>
-<td>status_asset <code>terpakai → tersedia</code>; pemegang_asset gudang; id_pemegang_asset <code>''</code>; id_asset_lokasi_m <code>NULL → CMP001202601001</code>; ket_rusak <code>''</code></td>
+<td>status_asset <code>terpakai → tersedia</code>; pemegang_asset gudang; id_pemegang_asset <code>''</code>; tgl_dialokasikan → <code>0000-00-00</code>; id_asset_lokasi_m <code>NULL → CMP001202601001</code>; ket_rusak <code>''</code></td>
 </tr>
 <tr>
 <td>asset_data A15 (pengganti)</td>
-<td>status_asset <code>proses → terpakai</code>; pemegang_asset <code>gudang → karyawan</code>; id_pemegang_asset <code>'' → KRY0004</code>; id_asset_lokasi_m <code>CMP001202601001 → NULL</code></td>
+<td>status_asset <code>proses → terpakai</code>; pemegang_asset <code>gudang → karyawan</code>; id_pemegang_asset <code>'' → KRY0004</code>; tgl_dialokasikan → <code>2026-10-23</code>; id_asset_lokasi_m <code>CMP001202601001 → NULL</code></td>
 </tr>
 <tr>
 <td>item <code>…001</code> / <code>…002</code></td>
@@ -3850,6 +3867,11 @@ Authorization: Bearer &lt;access_token_rina&gt;
 </thead>
 <tbody>
 <tr>
+<td>1.9</td>
+<td>2026-11-05</td>
+<td>Kolom baru <code>asset_data.tgl_dialokasikan</code> (date, NULL): Terima Asset (<code>finalizeHandover</code>) mereset aset asal yang kembali ke gudang menjadi <code>'0000-00-00'</code> dan mengisi unit pengganti yang masuk ke karyawan dengan tanggal Terima Asset. Menambah penyebutan di §18.3, §21.3, §22, database impact §24, walkthrough §45.4, dan RISK-008. Tidak ada perubahan endpoint, payload, response, atau mobile.</td>
+</tr>
+<tr>
 <td>1.8</td>
 <td>2026-10-22</td>
 <td>Menambah §45.4 <em>Walkthrough Lengkap dengan Contoh Data</em> (ajukan dengan alasan berbeda, konfirmasi admin dengan pengganti dan jadwal, Terima Asset dengan lokasi gudang per asset; variasi tolak semua/sebagian, serahkan langsung, tukar unit, rusak tanpa pengganti; kasus gagal). Sinkronisasi kode: tabel log ternyata <code>asset_trx_log</code> (<code>id_asset_trx_log</code>), bukan <code>asset_log</code>.</td>
@@ -3898,7 +3920,7 @@ Authorization: Bearer &lt;access_token_rina&gt;
 </table></div>
     </article>
 
-    <footer>Dokumentasi Retur Asset v1.2 · 28 September 2026 · Disusun dari source lokal API (Lumen) &amp; MOBILE (Flutter). Contoh ID dan nama pada payload adalah data sintetis.</footer>
+    <footer>Dokumentasi Retur Asset v1.9 · 5 November 2026 · Disusun dari source lokal API (Lumen) &amp; MOBILE (Flutter). Contoh ID dan nama pada payload adalah data sintetis.</footer>
   </main>
 </div>
 <button class="to-top" id="to-top" type="button" aria-label="Kembali ke atas">↑</button>

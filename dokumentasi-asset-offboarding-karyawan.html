@@ -198,7 +198,7 @@ footer{margin-top:64px;padding-top:18px;border-top:1px solid var(--line);color:v
         <dl>
           <dt>Kode</dt><dd>KRY02</dd>
           <dt>Modul</dt><dd>Asset Management</dd>
-          <dt>Versi</dt><dd>1.6 · 22 Okt 2026</dd>
+          <dt>Versi</dt><dd>1.7 · 5 Nov 2026</dd>
           <dt>Stack</dt><dd>Lumen 10 · Flutter</dd>
           <dt>API</dt><dd>11 endpoint</dd>
         </dl>
@@ -304,11 +304,11 @@ footer{margin-top:64px;padding-top:18px;border-top:1px solid var(--line);color:v
 </tr>
 <tr>
 <td>Versi Dokumen</td>
-<td>1.6</td>
+<td>1.7</td>
 </tr>
 <tr>
 <td>Tanggal Dokumentasi</td>
-<td>2026-10-22</td>
+<td>2026-11-05</td>
 </tr>
 <tr>
 <td>Dokumen terkait</td>
@@ -1324,7 +1324,7 @@ DB::transaction (retry 3) → ApiResponse + AssetNotification
 <h3>21.5 Konfirmasi karyawan — <code>confirm</code></h3>
 <p>Karyawan aktif → header miliknya <code>pengajuan</code> → <code>assertCurrentHoldings</code> → semua item diisi → update item → <code>confirmLoanReturnChildren</code> → header <code class="chip chip-done">dikonfirmasi</code> (approval = karyawan) → notifikasi <code>offboarding.dikonfirmasi</code>.</p>
 <h3>21.6 Terima admin — <code>receive</code></h3>
-<p>Admin → header <code class="chip chip-done">dikonfirmasi</code> → <code>assertCurrentHoldings</code> → semua item normal/rusak → <code>resolveItemLocations</code> (lokasi gudang per item, v1.2) → lock asset → per item non-pinjaman: update asset (gudang, <code>id_asset_lokasi_m</code> sesuai pilihan, tersedia/rusak, <code>ket_rusak</code>) + log <code>offboarding_karyawan</code> → <code>finalizeLoanReturnChildren</code> (validasi child <code class="chip chip-done">dikonfirmasi</code>, status item cocok, update asset + log <code>pengembalian_karyawan</code>, child <code>selesai</code> + <code>tgl/jam_serah_terima = now</code>) → insert log → header <code>selesai</code> → <code>completeLoanSources</code> (peminjaman asal <code>aktif → selesai</code> bila tak ada asset tersisa) → notifikasi <code>offboarding.diterima</code>.</p>
+<p>Admin → header <code class="chip chip-done">dikonfirmasi</code> → <code>assertCurrentHoldings</code> → semua item normal/rusak → <code>resolveItemLocations</code> (lokasi gudang per item, v1.2) → lock asset → per item non-pinjaman: update asset (gudang, <code>id_asset_lokasi_m</code> sesuai pilihan, tersedia/rusak, <code>ket_rusak</code>, <code>tgl_dialokasikan = '0000-00-00'</code>) + log <code>offboarding_karyawan</code> → <code>finalizeLoanReturnChildren</code> (validasi child <code class="chip chip-done">dikonfirmasi</code>, status item cocok, update asset + log <code>pengembalian_karyawan</code>, child <code>selesai</code> + <code>tgl/jam_serah_terima = now</code>) → insert log → header <code>selesai</code> → <code>completeLoanSources</code> (peminjaman asal <code>aktif → selesai</code> bila tak ada asset tersisa) → notifikasi <code>offboarding.diterima</code>.</p>
 <h3>21.7 Query baca</h3>
 <ul>
 <li><strong>Opsi</strong>: karyawan aktif yang memegang asset dan tanpa off boarding aktif.</li>
@@ -1386,8 +1386,17 @@ DB::transaction (retry 3) → ApiResponse + AssetNotification
 <td>now / admin</td>
 <td>Terima</td>
 </tr>
+<tr>
+<td>tgl_dialokasikan</td>
+<td>tanggal alokasi / NULL</td>
+<td>'0000-00-00'</td>
+<td>Terima (asset tetap dan pinjaman)</td>
+</tr>
 </tbody>
 </table></div>
+<aside class="callout callout-note">
+<p><code>tgl_dialokasikan</code> (date, NULL) ditulis API setiap <code>pemegang_asset</code> berubah: masuk dari gudang ke karyawan = tanggal konfirmasi (Y-m-d); kembali ke gudang = <code>'0000-00-00'</code> (sengaja bukan NULL). Aset yang belum pernah dialokasikan, atau dipegang sebelum fitur ini dan belum di-backfill, bernilai NULL. Tidak ada endpoint, payload, atau layar mobile yang membaca kolom ini. Detail operasional dan backfill: lihat dokumen Onboarding Karyawan (KRY01), RISK-012. Pada off boarding hanya sisi kembali ke gudang yang relevan: semua aset (termasuk pinjaman lewat pengembalian turunan) di-reset menjadi <code>'0000-00-00'</code>.</p>
+</aside>
 <aside class="callout callout-note">
 <p>Selama off boarding aktif, asset <strong>tidak</strong> berubah status; perlindungan dari flow lain dilakukan lewat <code>hasActiveOffboardingAsset</code>.</p>
 </aside>
@@ -1688,7 +1697,7 @@ GET /asset/karyawan/offboarding/{id}
 </tbody>
 </table></div>
 <p>Pesan umum validasi: "Data penerimaan offboarding belum lengkap." Setiap item offboarding wajib muncul tepat satu kali, dan lokasi harus bertipe <code>gudang</code> pada company yang sama. Database impact:</p>
-<div class="code"><span class="code-lang">Alur</span><pre><code class="language-text">UPDATE asset_data (gudang, id_asset_lokasi_m, tersedia/rusak, ket_rusak)
+<div class="code"><span class="code-lang">Alur</span><pre><code class="language-text">UPDATE asset_data (gudang, id_asset_lokasi_m, tersedia/rusak, ket_rusak, tgl_dialokasikan = '0000-00-00')
 UPDATE asset_trx_offboarding_karyawan_item (id_asset_lokasi_m_tujuan)
 INSERT asset_trx_log (offboarding_karyawan / pengembalian_karyawan)
 UPDATE asset_trx_peminjaman_karyawan child → selesai; peminjaman asal → selesai
@@ -2116,7 +2125,7 @@ INSERT notif_data
 <td><code>items[].id_asset_lokasi_m</code></td>
 <td><code>receive()</code> + <code>resolveItemLocations()</code></td>
 <td>asset_data, item, asset_trx_log, header, child</td>
-<td>status, pemegang, id_asset_lokasi_m, id_asset_lokasi_m_tujuan, log, selesai</td>
+<td>status, pemegang, tgl_dialokasikan, id_asset_lokasi_m, id_asset_lokasi_m_tujuan, log, selesai</td>
 </tr>
 </tbody>
 </table></div>
@@ -2911,6 +2920,8 @@ INSERT notif_data
 <p>3 digit/bulan/company untuk header, item, relasi; item memakan satu nomor per asset.</p>
 <h3>RISK-009 — Lokasi gudang belum tersedia (SEDANG)</h3>
 <p>Terima Penyerahan mewajibkan lokasi bertipe <code>gudang</code> dari <code>asset_lokasi_m</code>. Tabel ini hanya terdokumentasi di DBML (tidak ada migration pembuatnya di repo); bila tabel kosong, off boarding tidak dapat diselesaikan. Kolom header <code>asset_trx_offboarding_karyawan.id_asset_lokasi_m_tujuan</code> (v1.2 awal) kini tidak dipakai dan dapat dihapus.</p>
+<h3>RISK-010 — Pengisian <code>tgl_dialokasikan = '0000-00-00'</code> ditolak bila <code>NO_ZERO_DATE</code> (SEDANG)</h3>
+<p>Nilai <code>'0000-00-00'</code> pada <code>asset_data.tgl_dialokasikan</code> (aset kembali ke gudang) ditolak MySQL/MariaDB bila <code>sql_mode</code> memuat <code>NO_ZERO_DATE</code> atau strict mode, sehingga transaksi terkait gagal. Server dev sudah dicek dan aman; periksa <code>SELECT @@sql_mode</code> di tiap environment sebelum deploy API. Status: Terbuka.</p>
 <hr />
 <div class="group-divider" id="g42"><span>Referensi Developer</span></div><h2 id="s42"><span class="sec-no">42</span>Dependency</h2>
 <div class="code"><span class="code-lang">Alur</span><pre><code class="language-text">Asset dipegang karyawan (Onboarding / Request-Penambahan / Retur pengganti / Peminjaman)
@@ -3576,8 +3587,8 @@ Authorization: Bearer &lt;access_token_admin&gt;
 1. <code>lockCompany</code>; <code>requireAdmin</code>; header harus <code>dikonfirmasi</code> ("Offboarding belum dikonfirmasi karyawan.").
 2. <code>assertCurrentHoldings</code> lagi; semua item harus <code>normal</code>/<code>rusak</code> ("Kondisi asset belum dikonfirmasi karyawan.").
 3. <code>resolveItemLocations</code>: lokasi tiap item bertipe <code>gudang</code>, company yang sama, satu kali per item.
-4. Asset dikunci. <strong>Asset tetap</strong> (laptop): harus masih dipegang Budi; UPDATE <code>asset_data</code> → <code>gudang</code>, <code>id_pemegang_asset = ''</code>, <code>id_asset_lokasi_m</code> pilihan admin, <code>tersedia</code> (normal) atau <code>rusak</code> + <code>ket_rusak</code>; siapkan log <code>offboarding_karyawan</code>.
-5. <code>finalizeLoanReturnChildren</code> untuk <strong>asset pinjaman</strong>: header turunan harus <code>dikonfirmasi</code> dan item cocok dengan kondisi; UPDATE <code>asset_data</code> (proyektor → <code>rusak</code>, <code>gudang</code>, lokasi, <code>ket_rusak</code>), siapkan log <code>pengembalian_karyawan</code>; header turunan → <code>selesai</code> dengan <code>tgl_serah_terima</code>/<code>jam_serah_terima</code> = sekarang.
+4. Asset dikunci. <strong>Asset tetap</strong> (laptop): harus masih dipegang Budi; UPDATE <code>asset_data</code> → <code>gudang</code>, <code>id_pemegang_asset = ''</code>, <code>tgl_dialokasikan = '0000-00-00'</code>, <code>id_asset_lokasi_m</code> pilihan admin, <code>tersedia</code> (normal) atau <code>rusak</code> + <code>ket_rusak</code>; siapkan log <code>offboarding_karyawan</code>.
+5. <code>finalizeLoanReturnChildren</code> untuk <strong>asset pinjaman</strong>: header turunan harus <code>dikonfirmasi</code> dan item cocok dengan kondisi; UPDATE <code>asset_data</code> (proyektor → <code>rusak</code>, <code>gudang</code>, <code>tgl_dialokasikan = '0000-00-00'</code>, lokasi, <code>ket_rusak</code>), siapkan log <code>pengembalian_karyawan</code>; header turunan → <code>selesai</code> dengan <code>tgl_serah_terima</code>/<code>jam_serah_terima</code> = sekarang.
 6. UPDATE item offboarding <code>id_asset_lokasi_m_tujuan</code>; INSERT <code>asset_trx_log</code>; header offboarding → <code>selesai</code>.
 7. <code>completeLoanSources</code>: peminjaman asal <code>aktif → selesai</code> bila tidak ada lagi asset pinjaman yang dipegang karyawan.
 8. Notifikasi <code>offboarding.diterima</code> ke karyawan.</p>
@@ -3592,11 +3603,11 @@ Authorization: Bearer &lt;access_token_admin&gt;
 <tbody>
 <tr>
 <td>asset_data A20 (laptop)</td>
-<td>status_asset <code>terpakai → tersedia</code>; pemegang_asset <code>karyawan → gudang</code>; id_pemegang_asset <code>KRY0007 → ''</code>; id_asset_lokasi_m <code>NULL → CMP001202601001</code>; ket_rusak <code>''</code>; user_update = ADM-001 - Siti Admin</td>
+<td>status_asset <code>terpakai → tersedia</code>; pemegang_asset <code>karyawan → gudang</code>; id_pemegang_asset <code>KRY0007 → ''</code>; tgl_dialokasikan → <code>0000-00-00</code>; id_asset_lokasi_m <code>NULL → CMP001202601001</code>; ket_rusak <code>''</code>; user_update = ADM-001 - Siti Admin</td>
 </tr>
 <tr>
 <td>asset_data A21 (proyektor)</td>
-<td>status_asset <code>dipinjam → rusak</code>; pemegang_asset <code>karyawan → gudang</code>; id_pemegang_asset <code>KRY0007 → ''</code>; id_asset_lokasi_m <code>NULL → CMP001202601002</code>; ket_rusak = Lensa retak</td>
+<td>status_asset <code>dipinjam → rusak</code>; pemegang_asset <code>karyawan → gudang</code>; id_pemegang_asset <code>KRY0007 → ''</code>; tgl_dialokasikan → <code>0000-00-00</code>; id_asset_lokasi_m <code>NULL → CMP001202601002</code>; ket_rusak = Lensa retak</td>
 </tr>
 <tr>
 <td>item offboarding <code>…001</code> / <code>…002</code></td>
@@ -3993,6 +4004,11 @@ Authorization: Bearer &lt;access_token_admin&gt;
 </thead>
 <tbody>
 <tr>
+<td>1.7</td>
+<td>2026-11-05</td>
+<td>Kolom baru <code>asset_data.tgl_dialokasikan</code> (date, NULL): Terima Penyerahan (<code>receive</code>) dan pengembalian turunan untuk aset pinjaman (<code>finalizeLoanReturnChildren</code>) mengisinya <code>'0000-00-00'</code> saat aset kembali ke gudang. Menambah penyebutan di §21, §22, mapping, walkthrough §45.4, dan RISK-010. Tidak ada perubahan endpoint, payload, response, atau mobile.</td>
+</tr>
+<tr>
 <td>1.6</td>
 <td>2026-10-22</td>
 <td>Menambah §45.4 <em>Walkthrough Lengkap dengan Contoh Data</em> (draft, submit dengan pengembalian turunan untuk asset pinjaman, konfirmasi karyawan, Terima Penyerahan dengan gudang per asset; variasi ubah jadwal, tanpa asset pinjaman, hapus draft; kasus gagal). Sinkronisasi kode: tabel log ternyata <code>asset_trx_log</code> (<code>id_asset_trx_log</code>), bukan <code>asset_log</code>; ID item dipakai ulang saat draft dikirim karena item lama dihapus sebelum penomoran.</td>
@@ -4031,7 +4047,7 @@ Authorization: Bearer &lt;access_token_admin&gt;
 </table></div>
     </article>
 
-    <footer>Dokumentasi Off Boarding Asset v1.1 · 28 September 2026 · Disusun dari source lokal API (Lumen) &amp; MOBILE (Flutter). Contoh ID dan nama pada payload adalah data sintetis.</footer>
+    <footer>Dokumentasi Off Boarding Asset v1.7 · 5 November 2026 · Disusun dari source lokal API (Lumen) &amp; MOBILE (Flutter). Contoh ID dan nama pada payload adalah data sintetis.</footer>
   </main>
 </div>
 <button class="to-top" id="to-top" type="button" aria-label="Kembali ke atas">↑</button>

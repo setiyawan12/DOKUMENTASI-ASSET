@@ -18,8 +18,8 @@
 | Mobile | Flutter (`professional_flutter_3_35`), `flutter_bloc`, `dio` |
 | Web | ⚠️ Belum ditemukan: tidak ada source web di workspace |
 | Test otomatis | API `tests/Asset/AssetRequestRuanganTest.php` (33 test) · Mobile `test/asset/asset_request_ruangan_test.dart` (18 test) + `test/asset/asset_admin_ruangan_pending_test.dart` (17 test) |
-| Versi dokumen | 1.3 — 3 November 2026 |
-| Dokumen terkait | Onboarding Ruangan (ALK-RGN01), Request & Penambahan Karyawan (KRY-03-1), Master Lokasi & PIC Ruangan |
+| Versi dokumen | 1.4 — 5 November 2026 |
+| Dokumen terkait | Onboarding Ruangan (ALK-RGN01), Request & Penambahan Karyawan (KRY-03), Master Lokasi & PIC Ruangan |
 
 ## 2. Daftar Isi
 
@@ -27,14 +27,14 @@ Lihat panel navigasi di samping.
 
 ## 3. Quick Overview
 
-Ruangan yang sudah beroperasi bisa **ditambah aset** lewat dua jalur dalam **satu tabel** (`asset_trx_request_ruangan`), dibedakan kolom `sumber_pengajuan` seperti request karyawan KRY-03-1. Pada **Jalur A** PIC Ruangan mengajukan (jenis aset berupa teks bebas, alasan); Admin/HR menyetujui dengan memilih aset gudang dan jadwal, atau menolak dengan alasan. Pada **Jalur B** Admin/HR langsung memilih aset dan jadwal tanpa persetujuan. Setelah dijadwalkan, alurnya sama dengan RGN01: aset gudang `tersedia` → `proses`, PIC menilai **setiap aset Normal atau Rusak**, Admin/HR mereview lalu **mengonfirmasi** (aset menjadi `terpakai` di ruangan) atau **menjadwalkan pengganti** untuk aset rusak (ronde berikutnya) sampai semua normal.
+Ruangan yang sudah beroperasi bisa **ditambah aset** lewat dua jalur dalam **satu tabel** (`asset_trx_request_ruangan`), dibedakan kolom `sumber_pengajuan` seperti request karyawan KRY-03. Pada **Jalur A** PIC Ruangan mengajukan (jenis aset berupa teks bebas, alasan); Admin/HR menyetujui dengan memilih aset gudang dan jadwal, atau menolak dengan alasan. Pada **Jalur B** Admin/HR langsung memilih aset dan jadwal tanpa persetujuan. Setelah dijadwalkan, alurnya sama dengan RGN01: aset gudang `tersedia` → `proses`, PIC menilai **setiap aset Normal atau Rusak**, Admin/HR mereview lalu **mengonfirmasi** (aset menjadi `terpakai` di ruangan) atau **menjadwalkan pengganti** untuk aset rusak (ronde berikutnya) sampai semua normal.
 
 | Aspek | Ringkasan |
 |---|---|
 | Aktor | Admin/HR (Admin Asset), PIC Ruangan, Sistem |
 | Jalur | A = `sumber_pengajuan='karyawan'` (PIC mengajukan) · B = `sumber_pengajuan='admin'` (Admin langsung) |
 | Fase (diturunkan dari data) | `menunggu_persetujuan` → `menunggu_serah_terima` → `menunggu_review` → `selesai`; cabang `ditolak` (Jalur A) |
-| Status header | `status_approval`: `proses` → `dikonfirmasi` atau `ditolak` (enum `status_request_karyawan`, sama dengan KRY-03-1) |
+| Status header | `status_approval`: `proses` → `dikonfirmasi` atau `ditolak` (enum `status_request_karyawan`, sama dengan KRY-03) |
 | Status asset | `tersedia` → `proses` → `terpakai` (pemegang `ruangan`); aset rusak → `rusak` (kembali ke gudang) |
 | Endpoint | 9 admin + 5 PIC |
 | Notifikasi | 8 event (`request_ruangan.*`) |
@@ -285,7 +285,7 @@ Controller memvalidasi input, memanggil model dalam `DB::transaction`, lalu meng
 - **`updateJadwal`**: fase `menunggu_serah_terima`; tambah baris jadwal; perbarui jadwal terkini header.
 - **`terima`** (PIC): fase `menunggu_serah_terima`; semua item ronde harus dicek; isi `status_item`/`ket_rusak`; isi `tgl_terima_pic` pada jadwal terakhir. Status aset **tidak berubah** di sini.
 - **`jadwalkanPengganti`**: fase `menunggu_review`; semua aset rusak ronde ini wajib punya pengganti unik; aset rusak → `rusak`, `id_pemegang_asset=''`; pengganti → `proses`; item ronde + 1 dengan `parent_id`; jadwal baru.
-- **`konfirmasi`**: fase `menunggu_review` dan tidak ada aset rusak aktif; aset aktif (belum digantikan) → `terpakai`, `pemegang_asset='ruangan'`, `id_pemegang_asset` dan `id_asset_lokasi_m` = ruangan; `asset_trx_log` jenis `penambahan_ruangan`; header `dikonfirmasi`.
+- **`konfirmasi`**: fase `menunggu_review` dan tidak ada aset rusak aktif; aset aktif (belum digantikan) → `terpakai`, `pemegang_asset='ruangan'`, `id_pemegang_asset` dan `id_asset_lokasi_m` = ruangan, `tgl_dialokasikan` = tanggal konfirmasi; `asset_trx_log` jenis `penambahan_ruangan`; header `dikonfirmasi`.
 
 ## 22. Dampak terhadap asset_data
 
@@ -297,6 +297,9 @@ Controller memvalidasi input, memanggil model dalam `DB::transaction`, lalu meng
 | Unit pengganti dipilih | `tersedia` → `proses` | `gudang` | Item ronde + 1 |
 | Konfirmasi | `proses` → `terpakai` | `ruangan` | `id_pemegang_asset` = `id_asset_lokasi_m` = ruangan; log `penambahan_ruangan` |
 | Pengajuan ditolak | tidak berubah | | Belum ada aset terkunci |
+| Konfirmasi (kolom `tgl_dialokasikan`) | – | `gudang` → `ruangan` | `tgl_dialokasikan` = tanggal konfirmasi Admin (Y-m-d) |
+
+> `tgl_dialokasikan` (date, NULL) ditulis API setiap `pemegang_asset` berubah: masuk dari gudang ke ruangan = tanggal konfirmasi (Y-m-d); kembali ke gudang = `'0000-00-00'` (sengaja bukan NULL). Aset yang belum pernah dialokasikan, atau dipegang sebelum fitur ini dan belum di-backfill, bernilai NULL. Tidak ada endpoint, payload, atau layar mobile yang membaca kolom ini. Detail operasional dan backfill: lihat dokumen Onboarding Karyawan (KRY01), RISK-012.
 
 ## 23. API Documentation
 
@@ -608,9 +611,10 @@ Perbandingan dengan dokumen bisnis RGN04 v1.0.
 | RISK-003 | SEDANG | Aset yang disetujui tidak diperiksa sesuai jenis yang diminta (kini teks bebas, tidak bisa dicocokkan otomatis). | Admin mencocokkan manual dengan jenis yang tampil di kartu info pengajuan. |
 | RISK-004 | RENDAH | Pengajuan ganda untuk satu ruangan dibolehkan. | Batasi satu pengajuan aktif per ruangan bila diperlukan. |
 | RISK-005 | SEDANG | Belum diuji di server/emulator nyata, termasuk push notifikasi dan rute notifikasi. | Uji alur penuh dua jalur. |
-| RISK-006 | RENDAH | `sumber_pengajuan='karyawan'` dipakai untuk PIC (enum dipakai bersama KRY-03-1). | Dokumentasikan; ubah bila enum dipisah. |
+| RISK-006 | RENDAH | `sumber_pengajuan='karyawan'` dipakai untuk PIC (enum dipakai bersama KRY-03). | Dokumentasikan; ubah bila enum dipisah. |
 | RISK-007 | RENDAH | Data lama `asset_trx_penambahan_ruangan` tidak dimigrasi dan tabelnya hanya dihapus manual. | Periksa jumlah baris sebelum `DROP`. |
 | RISK-008 | RENDAH | Aplikasi versi lama dengan API baru: kartu Pengajuan menyempit (tanpa penambahan Admin yang menunggu review) dan daftar tidak terpisah. | Rilis API dan mobile bersamaan. |
+| RISK-009 | SEDANG | Nilai `'0000-00-00'` pada `asset_data.tgl_dialokasikan` (aset kembali ke gudang) ditolak MySQL/MariaDB bila `sql_mode` memuat `NO_ZERO_DATE` atau strict mode. Pada RGN04 sendiri hanya jalur masuk (tanggal konfirmasi) yang menulis tanggal, tetapi kolom dipakai bersama modul lain. | Cek `SELECT @@sql_mode` di tiap environment sebelum deploy API; server dev sudah dicek aman. | Terbuka |
 
 ## 42. Dependency
 
@@ -638,7 +642,7 @@ Perbandingan dengan dokumen bisnis RGN04 v1.0.
 
 ## 44. Developer Notes
 
-- Skema mengikuti pola KRY-03-1: satu tabel dua jalur lewat `sumber_pengajuan`, enum status dipakai bersama.
+- Skema mengikuti pola KRY-03: satu tabel dua jalur lewat `sumber_pengajuan`, enum status dipakai bersama.
 - Fase tidak disimpan. Bila menambah fase, ubah `AssetRequestRuangan_m::fase()` dan stepper mobile (`langkahAktifRuangan`).
 - Aset tidak berpindah pemegang sebelum konfirmasi; PIC mengirim checklist tanpa mengubah `asset_data`.
 - `terimaPenambahan` (bukan `terimaRequest`) adalah nama metode API mobile agar tidak bentrok dengan field pada fake API di test.
@@ -940,7 +944,7 @@ POST /asset/request-ruangan/CMP001202610001/konfirmasi
 
 | Tabel | Perubahan |
 |---|---|
-| `asset_data` AST0201, AST0203 | status_asset **terpakai**, pemegang_asset **ruangan**, id_pemegang_asset dan id_asset_lokasi_m = **LOK0007** |
+| `asset_data` AST0201, AST0203 | status_asset **terpakai**, pemegang_asset **ruangan**, id_pemegang_asset dan id_asset_lokasi_m = **LOK0007**, tgl_dialokasikan = **2026-10-26** |
 | `asset_data` AST0202 | tidak berubah (`rusak`, di gudang) |
 | `asset_trx_log` (2 baris) | `CMP00120261000001` (AST0201) dan `CMP00120261000002` (AST0203): `jenis_log = penambahan_ruangan`, `id_transaksi = CMP001202610001`, `nama_tabel_transaksi = asset_trx_request_ruangan`, normal → normal, gudang → ruangan, pemegang `LOK0007` / Ruang Meeting Lt.2 (nomor contoh dengan asumsi log pertama periode 202610) |
 | Header | `status_approval` proses → **dikonfirmasi**, `user_approval = ADM-001 - Siti Admin`, `tgl_approval = 2026-10-26 11:00:00` |
@@ -1020,7 +1024,7 @@ Semua kesalahan aturan bisnis dilempar sebagai `InvalidArgumentException` di dal
 | `asset_trx_request_ruangan` | INSERT (ajukan/inisiasi), UPDATE (jadwal terkini, setujui, tolak, konfirmasi) |
 | `asset_trx_request_ruangan_jadwal` | INSERT (jadwal awal, ubah, pengganti), UPDATE `tgl_terima_pic` |
 | `asset_trx_request_ruangan_item` | INSERT (ronde 1 dan pengganti), UPDATE `status_item`/`ket_rusak` |
-| `asset_data` | UPDATE `status_asset`, `pemegang_asset`, `id_pemegang_asset`, `id_asset_lokasi_m`, `ket_rusak` |
+| `asset_data` | UPDATE `status_asset`, `pemegang_asset`, `id_pemegang_asset`, `id_asset_lokasi_m`, `ket_rusak`, `tgl_dialokasikan` |
 | `asset_trx_log` | INSERT saat konfirmasi |
 | `notif_data` | INSERT per notifikasi |
 | `asset_trx_penambahan_ruangan` (+ `_item`) | Digantikan; `DROP` manual opsional |
@@ -1046,3 +1050,4 @@ Semua kesalahan aturan bisnis dilempar sebagai `InvalidArgumentException` di dal
 | 1.1 | 22 Okt 2026 | Menambah §45.4 walkthrough lengkap Jalur A (mobile → payload → proses API → hasil database), variasi penolakan dan Jalur B, tabel kasus gagal; log aset ditulis ke `asset_trx_log`. |
 | 1.2 | 3 Nov 2026 | Pengajuan PIC (Jalur A) disamakan dengan request karyawan: jenis asset teks bebas (maks 150 karakter) menggantikan pemilih kategori, urgensi dihapus; opsi PIC hanya mengirim ruangan; pengajuan baru menyimpan `id_asset_kategori_m` = `''` dan `urgensi` NULL; klien lama tanpa `jenis_asset` ditolak 422; tanpa perubahan skema. Memperbarui §3, §4, §5, BR-04, §10, §12, §18, §21, §23, §24, §26, §29, §31, §36, §38, §39, §41, §45.4, §47. |
 | 1.3 | 3 Nov 2026 | Daftar admin request ruangan dipisah per sumber seperti karyawan: menu **Pengajuan** (pengajuan PIC, `sumber=karyawan`, 3 tab, tanpa Tambah) dan **Penambahan** (langsung Admin/HR, `sumber=admin`, 2 tab, dengan Tambah); parameter `sumber` pada API-02; kartu beranda dipecah menjadi Pengajuan dan Penambahan dengan kunci ringkasan `ruangan_penambahan_*` dan badge gabungan; skenario uji TC-19 sampai TC-21 dan RISK-008. Tanpa perubahan skema. Memperbarui §1, §3, §10, §11, §23, §24, §26, §28, §36, §38, §41, §45.4, §47. |
+| 1.4 | 5 Nov 2026 | Kolom baru `asset_data.tgl_dialokasikan` (date, NULL): konfirmasi Admin (`AssetRequestRuangan_m::konfirmasi`, kedua jalur) mengisinya dengan tanggal konfirmasi saat aset masuk ke ruangan. Menambah penyebutan di §21, §22, walkthrough §45.4, dan RISK-009. Tidak ada perubahan endpoint, payload, response, atau mobile. |
