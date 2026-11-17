@@ -119,7 +119,7 @@ footer{color:var(--muted);font-size:13px;border-top:1px solid var(--line);paddin
     </div>
     <div class="stats" aria-label="Ringkasan">
       <div><b>19</b>dokumen</div>
-      <div><b>222</b>endpoint</div>
+      <div><b>223</b>endpoint</div>
       <div><b>48</b>bagian/dok</div>
     </div>
   </header>
@@ -224,13 +224,13 @@ footer{color:var(--muted);font-size:13px;border-top:1px solid var(--line);paddin
         <div class="risk"><span class="sev sev-m">SEDANG</span><span>Tidak ada batal/kedaluwarsa setelah disetujui; unit pengganti tertahan.</span></div>
         <span class="open">Buka dokumen →</span>
       </a>
-      <a class="card" href="dokumentasi-asset-offboarding-karyawan.html" data-local="dokumentasi-asset-offboarding-karyawan.html" data-online="https://claude.ai/artifact/XttebPezKBzVWngbzMyvZ5" data-search="offboarding off boarding kry02 resign penarikan seluruh asset draft pengajuan dikonfirmasi">
-        <div class="tagline"><span class="code">KRY02</span><span class="ver">v1.7</span></div>
-        <h3>Off Boarding Asset</h3>
-        <p>Admin menarik seluruh asset karyawan; asset pinjaman otomatis dibuatkan pengembalian sebagai transaksi child.</p>
+      <a class="card" href="dokumentasi-asset-penarikan-karyawan.html" data-local="dokumentasi-asset-penarikan-karyawan.html" data-online="https://claude.ai/artifact/XttebPezKBzVWngbzMyvZ5" data-search="penarikan offboarding off boarding retrieval kry02 resign semua sebagian aset dibawa draft pengajuan dikonfirmasi">
+        <div class="tagline"><span class="code">KRY02</span><span class="ver">v2.0</span></div>
+        <h3>Penarikan Asset</h3>
+        <p>Admin menarik asset karyawan, semua atau sebagian (asset yang dibawa); pada penarikan semua, asset pinjaman otomatis dibuatkan pengembalian sebagai transaksi child.</p>
         <div class="flow">draft → pengajuan → dikonfirmasi → selesai</div>
-        <div class="meta"><span>11 endpoint</span><span>12 test</span></div>
-        <div class="risk"><span class="sev sev-h">TINGGI</span><span>Karyawan yang sudah nonaktif tidak bisa konfirmasi — off boarding macet.</span></div>
+        <div class="meta"><span>12 endpoint</span><span>27 test</span><span>semua / sebagian</span></div>
+        <div class="risk"><span class="sev sev-h">TINGGI</span><span>Rilis wajib bersamaan: tabel, kolom, dan route berganti nama tanpa alias (RISK-011).</span></div>
         <span class="open">Buka dokumen →</span>
       </a>
     </div>
@@ -389,22 +389,22 @@ footer{color:var(--muted);font-size:13px;border-top:1px solid var(--line);paddin
 
   <section class="panel" aria-labelledby="matrix-title">
     <h2 id="matrix-title">Pengecekan lintas fitur</h2>
-    <p>Saat transaksi baru dibuat untuk asset yang dipegang karyawan, apakah sistem menolak asset yang sedang diproses di fitur lain? Hasil penelusuran source yang tercatat di dokumen Retur, Off Boarding, Kerusakan, Upgrade, dan Pemeliharaan (diverifikasi ulang terhadap kode 12 Okt 2026).</p>
+    <p>Saat transaksi baru dibuat untuk asset yang dipegang karyawan, apakah sistem menolak asset yang sedang diproses di fitur lain? Hasil penelusuran source yang tercatat di dokumen Retur, Penarikan, Kerusakan, Upgrade, dan Pemeliharaan (diverifikasi ulang terhadap kode 12 Okt 2026).</p>
     <div class="table-wrap">
       <table>
         <thead>
-          <tr><th>Saat membuat…</th><th>Retur aktif</th><th>Off Boarding aktif</th><th>Kerusakan aktif</th><th>Upgrade aktif</th><th>Pemeliharaan aktif</th></tr>
+          <tr><th>Saat membuat…</th><th>Retur aktif</th><th>Penarikan aktif</th><th>Kerusakan aktif</th><th>Upgrade aktif</th><th>Pemeliharaan aktif</th></tr>
         </thead>
         <tbody>
           <tr><td>Retur (KRY04)</td><td><span class="y">dicek</span></td><td><span class="y">dicek</span></td><td><span class="y">dicek</span></td><td><span class="y">dicek</span></td><td><span class="y">dicek</span></td></tr>
-          <tr><td>Off Boarding (KRY02)</td><td><span class="y">dicek</span></td><td><span class="y">dicek</span></td><td><span class="y">dicek</span></td><td><span class="y">dicek</span></td><td><span class="y">dicek</span></td></tr>
+          <tr><td>Penarikan (KRY02)</td><td><span class="y">dicek</span></td><td><span class="y">dicek</span></td><td><span class="y">dicek</span></td><td><span class="y">dicek</span></td><td><span class="y">dicek</span></td></tr>
           <tr><td>Kerusakan (KRY06)</td><td><span class="y">dicek</span></td><td><span class="y">dicek</span></td><td><span class="y">dicek</span></td><td><span class="y">dicek</span></td><td><span class="y">dicek</span></td></tr>
           <tr><td>Upgrade (KRY03)</td><td><span class="y">dicek</span></td><td><span class="y">dicek</span></td><td><span class="y">dicek</span></td><td><span class="y">dicek</span></td><td><span class="y">dicek</span></td></tr>
           <tr><td>Pemeliharaan (PML01)</td><td><span class="y">dicek</span></td><td><span class="y">dicek</span></td><td><span class="y">dicek</span></td><td><span class="y">dicek</span></td><td><span class="y">dicek</span></td></tr>
         </tbody>
       </table>
     </div>
-    <p class="note">Off Boarding juga menolak pengembalian pinjaman yang masih berjalan; Retur hanya menolak asset berstatus <code>dipinjam</code>. Seluruh sel kini "dicek": Retur menambah pengecekan Kerusakan dan Upgrade (RISK-001 dokumen Kerusakan/Upgrade dan RISK-003 dokumen Retur ditutup).</p>
+    <p class="note">Penarikan juga menolak pengembalian pinjaman yang masih berjalan; Retur hanya menolak asset berstatus <code>dipinjam</code>. Seluruh sel kini "dicek": Retur menambah pengecekan Kerusakan dan Upgrade (RISK-001 dokumen Kerusakan/Upgrade dan RISK-003 dokumen Retur ditutup).</p>
   </section>
 
   <section class="panel" aria-labelledby="structure-title">
@@ -433,7 +433,7 @@ footer{color:var(--muted);font-size:13px;border-top:1px solid var(--line);paddin
       <tr><td>Dokumentasi Teknis & Manual Book — Klaim Garansi Asset (PML03)</td><td><a href="dokumentasi-asset-garansi.html" download>HTML</a></td><td><a href="dokumentasi-asset-garansi.md" download>Markdown</a></td></tr>
       <tr><td>Dokumentasi Teknis & Manual Book — Laporan Kerusakan Asset Karyawan</td><td><a href="dokumentasi-asset-kerusakan-karyawan.html" download>HTML</a></td><td><a href="dokumentasi-asset-kerusakan-karyawan.md" download>Markdown</a></td></tr>
       <tr><td>Dokumentasi Teknis & Manual Book — Laporan Kerusakan Asset Ruangan (ALK-RGN05)</td><td><a href="dokumentasi-asset-kerusakan-ruangan.html" download>HTML</a></td><td><a href="dokumentasi-asset-kerusakan-ruangan.md" download>Markdown</a></td></tr>
-      <tr><td>Dokumentasi Teknis & Manual Book — Off Boarding Asset Karyawan</td><td><a href="dokumentasi-asset-offboarding-karyawan.html" download>HTML</a></td><td><a href="dokumentasi-asset-offboarding-karyawan.md" download>Markdown</a></td></tr>
+      <tr><td>Dokumentasi Teknis & Manual Book — Penarikan Asset Karyawan</td><td><a href="dokumentasi-asset-penarikan-karyawan.html" download>HTML</a></td><td><a href="dokumentasi-asset-penarikan-karyawan.md" download>Markdown</a></td></tr>
       <tr><td>Dokumentasi Teknis & Manual Book — Asset Onboarding Karyawan</td><td><a href="dokumentasi-asset-onboarding-karyawan.html" download>HTML</a></td><td><a href="dokumentasi-asset-onboarding-karyawan.md" download>Markdown</a></td></tr>
       <tr><td>Dokumentasi Teknis & Manual Book — Alokasi Asset ke Ruangan / Onboarding Ruangan (ALK-RGN01)</td><td><a href="dokumentasi-asset-onboarding-ruangan.html" download>HTML</a></td><td><a href="dokumentasi-asset-onboarding-ruangan.md" download>Markdown</a></td></tr>
       <tr><td>Dokumentasi Teknis & Manual Book — Pemeliharaan Terjadwal Asset Gudang</td><td><a href="dokumentasi-asset-pemeliharaan-gudang.html" download>HTML</a></td><td><a href="dokumentasi-asset-pemeliharaan-gudang.md" download>Markdown</a></td></tr>
