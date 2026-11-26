@@ -195,7 +195,7 @@ footer{margin-top:64px;padding-top:18px;border-top:1px solid var(--line);color:v
       </div>
       <div class="tag" aria-label="Identitas dokumen">
         <dl>
-          <dt>Kode</dt><dd>ALK-RGN07</dd><dt>Modul</dt><dd>Ruangan</dd><dt>Versi</dt><dd>1.2 · 30 Okt 2026</dd><dt>Stack</dt><dd>Lumen 10 · Flutter</dd><dt>API</dt><dd>13 endpoint</dd>
+          <dt>Kode</dt><dd>ALK-RGN07</dd><dt>Modul</dt><dd>Ruangan</dd><dt>Versi</dt><dd>1.3 · 19 Nov 2026</dd><dt>Stack</dt><dd>Lumen 10 · Flutter</dd><dt>API</dt><dd>13 endpoint</dd>
         </dl>
         <div class="barcode" aria-hidden="true"></div>
         <div class="trx">RGN07-YYYYMMNNN</div>
@@ -223,7 +223,7 @@ footer{margin-top:64px;padding-top:18px;border-top:1px solid var(--line);color:v
         <p class="sub">Jalur A dimulai dari <strong>Menunggu Persetujuan</strong> (PIC mengajukan, Admin mereview); Jalur B langsung ke Menunggu Pengambilan. Dua kolom status disimpan: <code>status_approval</code> dan <code>fase_upgrade</code>.</p>
         <div class="flow">
           <div class="step"><span class="badge b-wait">Menunggu Pengambilan</span><span class="who">Admin: Setujui / Buat + jadwal</span><p>Tanpa checklist: PIC langsung menekan Serahkan Aset (Pelepasan).</p><span class="db">asset → dalam_perbaikan · log ruangan→gudang</span></div>
-          <div class="step"><span class="badge b-draft">Dalam Service</span><span class="who">Admin: Hasil Upgrade</span><p>Selesai (nilai baru) atau Tidak Dapat Diupgrade, keterangan, biaya, jadwal pengembalian.</p><span class="db">item.nilai_baru · menunggu_pengembalian</span></div>
+          <div class="step"><span class="badge b-draft">Dalam Service</span><span class="who">Admin: Hasil Upgrade</span><p>Selesai (nilai baru) atau Tidak Dapat Diupgrade, keterangan, jadwal pengembalian.</p><span class="db">item.nilai_baru · menunggu_pengembalian</span></div>
           <div class="step"><span class="badge b-draft">Menunggu Pengembalian</span><span class="who">PIC: Terima Aset</span><p>Satu ketukan, tanpa checklist dan tanpa body. Langsung menyelesaikan upgrade.</p><span class="db">atribut diperbarui bila hasil selesai</span></div>
           <div class="step"><span class="badge b-done">Selesai</span><span class="who">Otomatis saat PIC menerima</span><p>Aset kembali aktif di ruangan; tidak ada review akhir admin.</p><span class="db">asset → terpakai · log gudang→ruangan</span></div>
         </div>
@@ -301,7 +301,7 @@ footer{margin-top:64px;padding-top:18px;border-top:1px solid var(--line);color:v
 </tr>
 <tr>
 <td>Versi dokumen</td>
-<td>1.2 — 30 Oktober 2026</td>
+<td>1.3 — 19 November 2026</td>
 </tr>
 <tr>
 <td>Dokumen terkait</td>
@@ -339,7 +339,7 @@ footer{margin-top:64px;padding-top:18px;border-top:1px solid var(--line);color:v
 </tr>
 <tr>
 <td>Hasil</td>
-<td><code>status_hasil</code>: <code>selesai</code> (nilai baru ditulis ke atribut saat PIC menerima) atau <code>tidak_dapat_diupgrade</code> (atribut tidak berubah) + biaya</td>
+<td><code>status_hasil</code>: <code>selesai</code> (nilai baru ditulis ke atribut saat PIC menerima) atau <code>tidak_dapat_diupgrade</code> (atribut tidak berubah)</td>
 </tr>
 <tr>
 <td>Status asset</td>
@@ -397,7 +397,7 @@ footer{margin-top:64px;padding-top:18px;border-top:1px solid var(--line);color:v
 <tr>
 <td>Hasil upgrade</td>
 <td>Admin/HR</td>
-<td><code>selesai</code> atau <code>tidak_dapat_diupgrade</code>, nilai baru, biaya, keterangan, jadwal pengembalian.</td>
+<td><code>selesai</code> atau <code>tidak_dapat_diupgrade</code>, nilai baru, keterangan, jadwal pengembalian.</td>
 </tr>
 <tr>
 <td>Terima aset kembali</td>
@@ -614,7 +614,7 @@ footer{margin-top:64px;padding-top:18px;border-top:1px solid var(--line);color:v
 <tr>
 <td>BR-13</td>
 <td>Hasil upgrade</td>
-<td><code>hasil</code>: fase <code>dalam_service</code>; <code>status_hasil</code> ∈ <code>selesai</code>, <code>tidak_dapat_diupgrade</code>; keterangan wajib; biaya ≥ 0; bila <code>selesai</code>, nilai baru setiap atribut wajib; jadwal pengembalian wajib.</td>
+<td><code>hasil</code>: fase <code>dalam_service</code>; <code>status_hasil</code> ∈ <code>selesai</code>, <code>tidak_dapat_diupgrade</code>; keterangan wajib; bila <code>selesai</code>, nilai baru setiap atribut wajib; jadwal pengembalian wajib.</td>
 </tr>
 <tr>
 <td>BR-14</td>
@@ -659,7 +659,7 @@ footer{margin-top:64px;padding-top:18px;border-top:1px solid var(--line);color:v
 <li><strong>Jalur B.</strong> Admin/HR memilih ruangan, aset, komponen, catatan, dan jadwal pengambilan; transaksi langsung <code>disetujui</code> dan semua PIC dinotifikasi (<code>disetujui</code>). Langkah 1-2 dilewati.</li>
 <li>Jadwal dapat diubah Admin/HR selama fase <code>menunggu_pengambilan</code> (<code>dijadwalkan</code>). Tidak ada pemeriksaan/checklist oleh admin; PIC bisa langsung menyerahkan aset.</li>
 <li>PIC menekan <strong>Serahkan Aset</strong> (Pelepasan, tanpa checklist) pada jadwal. Aset menjadi <code>dalam_perbaikan</code>, log ruangan → gudang, fase <code>dalam_service</code>. Admin dinotifikasi (<code>dilepas</code>).</li>
-<li>Teknisi mengerjakan upgrade di luar sistem. Admin/HR mencatat <strong>hasil</strong> (<code>selesai</code> atau <code>tidak_dapat_diupgrade</code>, nilai baru per atribut, biaya, keterangan) dan jadwal pengembalian. Fase <code>menunggu_pengembalian</code>; semua PIC dinotifikasi (<code>pengembalian</code>). Jadwal pengembalian masih dapat diubah (<code>dijadwalkan</code>).</li>
+<li>Teknisi mengerjakan upgrade di luar sistem. Admin/HR mencatat <strong>hasil</strong> (<code>selesai</code> atau <code>tidak_dapat_diupgrade</code>, nilai baru per atribut, keterangan) dan jadwal pengembalian. Fase <code>menunggu_pengembalian</code>; semua PIC dinotifikasi (<code>pengembalian</code>). Jadwal pengembalian masih dapat diubah (<code>dijadwalkan</code>).</li>
 <li>PIC menekan <strong>Terima Aset</strong> (tanpa checklist dan tanpa body) yang <strong>langsung menyelesaikan upgrade</strong> dalam satu transaksi:<ul>
 <li>bila <code>status_hasil='selesai'</code>, nilai baru ditulis ke <code>asset_data_item.json_value</code>;</li>
 <li>aset kembali <code>terpakai</code>, log gudang → ruangan, <code>tgl_diterima</code> diisi;</li>
@@ -827,7 +827,7 @@ footer{margin-top:64px;padding-top:18px;border-top:1px solid var(--line);color:v
 </tbody>
 </table></div>
 <p>Enum yang dipakai bersama dokumen lain di DBML: <code>sumber_pengajuan</code>, <code>status_approval</code>, <code>status</code>, <code>fase_upgrade</code>, <code>status_hasil_upgrade</code>.</p>
-<p><strong>Skema tidak berubah pada v1.2.</strong> File SQL asal <code>sql-alk-rgn-upgrade-ruangan.sql</code> tidak diubah (sudah dijalankan); kolom <code>checklist_pengambilan</code> dan <code>checklist_pengembalian</code> serta nilai enum <code>menunggu_review</code> tetap ada. Satu-satunya skrip tambahan adalah SQL migrasi data lama <code>sql-upgrade-hapus-checklist-review-lama.sql</code> (belum dijalankan, lihat RISK-011).</p>
+<p><strong>Skema tidak berubah pada v1.2.</strong> File SQL asal <code>sql-alk-rgn-upgrade-ruangan.sql</code> tidak diubah (sudah dijalankan); kolom <code>checklist_pengambilan</code> dan <code>checklist_pengembalian</code> serta nilai enum <code>menunggu_review</code> tetap ada. Satu-satunya skrip tambahan adalah SQL migrasi data lama <code>sql-upgrade-hapus-checklist-review-lama.sql</code> (belum dijalankan, lihat RISK-011). <strong>Perubahan v1.3</strong>: kolom <code>biaya_upgrade</code> dihapus dari <code>asset_trx_upgrade_ruangan</code>; kode tidak lagi membaca/menulisnya.</p>
 <h2 id="s17"><span class="sec-no">17</span>Relasi Database</h2>
 <div class="diagram"><pre class="mermaid">erDiagram
     asset_lokasi_m ||--o{ asset_trx_upgrade_ruangan : "id_asset_lokasi_m"
@@ -939,9 +939,9 @@ footer{margin-top:64px;padding-top:18px;border-top:1px solid var(--line);color:v
 <td>Hasil upgrade</td>
 </tr>
 <tr>
-<td><code>keterangan_hasil</code>, <code>biaya_upgrade</code></td>
-<td>text, bigint</td>
-<td>Keterangan dan biaya (default 0)</td>
+<td><code>keterangan_hasil</code></td>
+<td>text</td>
+<td>Keterangan hasil upgrade</td>
 </tr>
 <tr>
 <td><code>tgl_diterima</code></td>
@@ -1102,7 +1102,7 @@ footer{margin-top:64px;padding-top:18px;border-top:1px solid var(--line);color:v
 <li><strong><code>review</code></strong>: header harus <code>proses</code>. Tolak: alasan wajib, <code>status_approval='ditolak'</code>, <code>fase_upgrade='selesai'</code>, <code>status_transaksi='selesai'</code>. Setujui: aset masih <code>terpakai</code>, jadwal valid, fase <code>menunggu_pengambilan</code>.</li>
 <li><strong><code>updateJadwal</code></strong>: fase <code>menunggu_pengambilan</code> atau <code>menunggu_pengembalian</code>; menulis tanggal/jam pengambilan atau pengembalian sesuai fase.</li>
 <li><strong><code>pelepasan</code></strong> (PIC): <code>lockHeader</code> dengan filter PIC aktif ruangan; fase <code>menunggu_pengambilan</code> (tanpa syarat checklist); aset <code>terpakai</code> atau <code>dalam_perbaikan</code> dan masih dipegang ruangan; aset → <code>dalam_perbaikan</code>; log ruangan → gudang; <code>tgl_pelepasan</code>, <code>user_pelepasan</code>; fase <code>dalam_service</code>.</li>
-<li><strong><code>hasil</code></strong>: fase <code>dalam_service</code>; validasi status/keterangan/biaya/jadwal; tiap item mendapat <code>nilai_baru</code> (hanya bila <code>selesai</code>) atau <code>alasan_tidak_upgrade</code> (bila tidak dapat diupgrade); fase <code>menunggu_pengembalian</code>; <code>tgl_diterima</code> direset <code>NULL</code>.</li>
+<li><strong><code>hasil</code></strong>: fase <code>dalam_service</code>; validasi status/keterangan/jadwal; tiap item mendapat <code>nilai_baru</code> (hanya bila <code>selesai</code>) atau <code>alasan_tidak_upgrade</code> (bila tidak dapat diupgrade); fase <code>menunggu_pengembalian</code>; <code>tgl_diterima</code> direset <code>NULL</code>.</li>
 <li><strong><code>terima</code></strong> (PIC, tanpa body): <code>lockHeader</code> dengan filter PIC aktif ruangan; fase <code>menunggu_pengembalian</code>; aset <code>dalam_perbaikan</code> dan dipegang ruangan. Dalam satu transaksi: bila <code>status_hasil='selesai'</code> jalankan <code>applyAtribut</code> (menulis <code>nilai_baru</code> ke <code>json_value.komponen[].value</code> pada <code>asset_data_item</code>); aset → <code>terpakai</code>; log gudang → ruangan; <code>fase_upgrade='selesai'</code>, <code>status_transaksi='selesai'</code>, <code>tgl_diterima</code> diisi.</li>
 <li><strong>Pending</strong> (<code>getPendingForAdmin</code>, <code>countPendingForAdmin</code>): <code>status_approval='proses'</code> <strong>atau</strong> fase <code>dalam_service</code>. <code>getPendingForPic</code>: fase <code>menunggu_pengambilan</code> (aksi <code>pelepasan</code>) atau <code>menunggu_pengembalian</code> (aksi <code>terima</code>).</li>
 <li><strong>Dihapus v1.2</strong>: <code>checklistPengambilan</code>, <code>selesai</code> (review akhir: <code>terima</code>/<code>kirim_ulang</code>), <code>terima</code> versi lama yang menyimpan checklist dan masuk <code>menunggu_review</code>.</li>
@@ -1290,7 +1290,7 @@ footer{margin-top:64px;padding-top:18px;border-top:1px solid var(--line);color:v
 <p><strong>API-06 · PUT <code>.../{id}/jadwal</code></strong>: <code>{ "tgl_jadwal", "jam_jadwal", "keterangan_jadwal" }</code>. Mengubah jadwal pengambilan atau pengembalian sesuai fase; event <code>upgrade_ruangan.dijadwalkan</code>.</p>
 <p><strong>API-07 dan API-09 (dihapus v1.2)</strong>: <code>POST .../{id}/checklist-pengambilan</code> dan <code>POST .../{id}/selesai</code> (<code>{ "aksi": "terima" | "kirim_ulang" }</code>) tidak lagi terdaftar; keduanya menjawab 404.</p>
 <p><strong>API-08 · POST <code>.../{id}/hasil</code></strong></p>
-<div class="code"><span class="code-lang">JSON</span><pre><code class="language-json">{ &quot;status_hasil&quot;: &quot;selesai&quot;, &quot;keterangan_hasil&quot;: &quot;Dikerjakan vendor&quot;, &quot;biaya_upgrade&quot;: 850000,
+<div class="code"><span class="code-lang">JSON</span><pre><code class="language-json">{ &quot;status_hasil&quot;: &quot;selesai&quot;, &quot;keterangan_hasil&quot;: &quot;Dikerjakan vendor&quot;,
   &quot;items&quot;: [{ &quot;id_item&quot;: &quot;COMP202610001&quot;, &quot;nilai_baru&quot;: &quot;32&quot; }],
   &quot;tgl_jadwal&quot;: &quot;2026-10-22&quot;, &quot;jam_jadwal&quot;: &quot;10:00&quot;, &quot;keterangan_jadwal&quot;: &quot;Ambil di resepsionis&quot; }
 </code></pre></div>
@@ -1299,7 +1299,7 @@ footer{margin-top:64px;padding-top:18px;border-top:1px solid var(--line);color:v
 <p><strong>API-15 · POST <code>.../upgrade/{id}/terima</code></strong>: <strong>tanpa body</strong>. Langsung menyelesaikan upgrade (atribut diperbarui bila hasil <code>selesai</code>, aset <code>terpakai</code>, log gudang → ruangan, <code>fase_upgrade='selesai'</code>). Respons <code>UPDATED</code>: <code>status_label</code> "Selesai", <code>fase_upgrade</code> <code>selesai</code>. Event <code>upgrade_ruangan.diterima</code> ke admin. Body lama <code>{ "items": [...] }</code> (checklist) kini diabaikan.</p>
 <p><strong>API-10 / API-01 · Opsi</strong>: <code>ruangan[]</code> berisi <code>id_asset_lokasi_m</code>, <code>nama_ruangan</code>, <code>cabang</code>, <code>divisi</code>, <code>pic{id_karyawan,nik,nama}</code>, <code>assets[]</code> (<code>id_asset_data</code>, <code>kode_asset</code>, <code>nama_asset</code>, <code>kategori_asset</code>, <code>merek</code>, <code>id_asset_lokasi_m</code>, <code>atribut[]</code>). Hanya ruangan yang punya aset <code>terpakai</code>, bebas kunci lintas modul, dan beratribut spesifikasi yang muncul. API-10 menambah <code>urgensi[]</code> (<code>value</code>, <code>label</code>).</p>
 <p><strong>API-02 / API-11 · Daftar</strong>: <code>filters[]</code>, <code>records[]</code> (<code>id</code>, <code>no_trx</code>, <code>sumber_pengajuan</code>, <code>tgl_pengajuan</code>, <code>urgensi</code>, <code>status_approval</code>, <code>fase_upgrade</code>, <code>status_label</code>, <code>tab</code>, jadwal, <code>jumlah_item</code>, <code>asset</code>, <code>ruangan</code>, <code>pic</code>), <code>pagination</code> (<code>limit</code> default 20 maks 50, <code>offset</code>, <code>next_offset</code>, <code>has_more</code>).</p>
-<p><strong>API-03 / API-13 · Detail</strong>: <code>id</code>, <code>no_trx</code>, <code>sumber_pengajuan</code>, <code>tgl_pengajuan</code>, <code>alasan</code>, <code>urgensi</code>, <code>catatan</code>, <code>ket_tolak</code>, <code>status_approval</code>, <code>fase_upgrade</code>, <code>status_label</code>, <code>tab</code>, jadwal (<code>tgl_pengambilan</code>, <code>jam_pengambilan</code>, <code>tgl_pengembalian</code>, <code>jam_pengembalian</code>), <code>keterangan_jadwal</code>, <code>tgl_pelepasan</code>, <code>tgl_diterima</code>, <code>status_hasil</code>, <code>keterangan_hasil</code>, <code>biaya_upgrade</code>, <code>ruangan</code>, <code>pic</code>, <code>asset</code>, <code>items[]</code> (<code>id_item</code>, <code>nama_item</code>, <code>label</code>, <code>satuan</code>, <code>detail_upgrade</code>, <code>nilai_lama</code>, <code>nilai_baru</code>, <code>alasan_tidak_upgrade</code>), <code>komponen[]</code> (masih dikirim, tidak dipakai layar ruangan), dan <code>aksi{review, ubah_jadwal, pelepasan, hasil, terima}</code>. Field <code>checklist_pengambilan</code>, <code>checklist_pengembalian</code>, <code>checklist_pengembalian_rusak</code>, serta flag <code>aksi.checklist_pengambilan</code> dan <code>aksi.selesai</code> <strong>dihapus v1.2</strong> (diuji tidak ada). Flag <code>aksi</code> <strong>tidak mengenal peran</strong> (RISK-002): detail PIC pun memuat flag yang hanya berlaku untuk admin. Flag mengikuti fase: <code>review</code> saat <code>status_approval='proses'</code>; <code>ubah_jadwal</code> saat <code>menunggu_pengambilan</code>/<code>menunggu_pengembalian</code>; <code>pelepasan</code> saat <code>menunggu_pengambilan</code>; <code>hasil</code> saat <code>dalam_service</code>; <code>terima</code> saat <code>menunggu_pengembalian</code>. Pada transaksi selesai tidak ada flag <code>true</code>.</p>
+<p><strong>API-03 / API-13 · Detail</strong>: <code>id</code>, <code>no_trx</code>, <code>sumber_pengajuan</code>, <code>tgl_pengajuan</code>, <code>alasan</code>, <code>urgensi</code>, <code>catatan</code>, <code>ket_tolak</code>, <code>status_approval</code>, <code>fase_upgrade</code>, <code>status_label</code>, <code>tab</code>, jadwal (<code>tgl_pengambilan</code>, <code>jam_pengambilan</code>, <code>tgl_pengembalian</code>, <code>jam_pengembalian</code>), <code>keterangan_jadwal</code>, <code>tgl_pelepasan</code>, <code>tgl_diterima</code>, <code>status_hasil</code>, <code>keterangan_hasil</code>, <code>ruangan</code>, <code>pic</code>, <code>asset</code>, <code>items[]</code> (<code>id_item</code>, <code>nama_item</code>, <code>label</code>, <code>satuan</code>, <code>detail_upgrade</code>, <code>nilai_lama</code>, <code>nilai_baru</code>, <code>alasan_tidak_upgrade</code>), <code>komponen[]</code> (masih dikirim, tidak dipakai layar ruangan), dan <code>aksi{review, ubah_jadwal, pelepasan, hasil, terima}</code>. Field <code>checklist_pengambilan</code>, <code>checklist_pengembalian</code>, <code>checklist_pengembalian_rusak</code>, serta flag <code>aksi.checklist_pengambilan</code> dan <code>aksi.selesai</code> <strong>dihapus v1.2</strong> (diuji tidak ada). Flag <code>aksi</code> <strong>tidak mengenal peran</strong> (RISK-002): detail PIC pun memuat flag yang hanya berlaku untuk admin. Flag mengikuti fase: <code>review</code> saat <code>status_approval='proses'</code>; <code>ubah_jadwal</code> saat <code>menunggu_pengambilan</code>/<code>menunggu_pengembalian</code>; <code>pelepasan</code> saat <code>menunggu_pengambilan</code>; <code>hasil</code> saat <code>dalam_service</code>; <code>terima</code> saat <code>menunggu_pengembalian</code>. Pada transaksi selesai tidak ada flag <code>true</code>.</p>
 <div class="group-divider" id="g4"><span>Mobile</span></div>
 <h2 id="s25"><span class="sec-no">25</span>Mobile Architecture</h2>
 <p>Flutter + <code>flutter_bloc</code> + <code>dio</code>. Modul Upgrade Karyawan (KRY03) <strong>dipakai ulang lewat flag</strong> agar tidak menggandakan kode.</p>
@@ -1479,7 +1479,7 @@ footer{margin-top:64px;padding-top:18px;border-top:1px solid var(--line);color:v
 <tr>
 <td>Simpan Hasil &amp; Jadwalkan</td>
 <td>API-08</td>
-<td>header (hasil, biaya, jadwal pengembalian), <code>..._item</code> (<code>nilai_baru</code>)</td>
+<td>header (hasil, jadwal pengembalian), <code>..._item</code> (<code>nilai_baru</code>)</td>
 </tr>
 <tr>
 <td>Terima Aset</td>
@@ -1615,11 +1615,6 @@ footer{margin-top:64px;padding-top:18px;border-top:1px solid var(--line);color:v
 <td><code>keterangan_hasil</code></td>
 <td>wajib, ≤ 1000</td>
 <td>Keterangan hasil upgrade wajib diisi.</td>
-</tr>
-<tr>
-<td><code>biaya_upgrade</code></td>
-<td>integer ≥ 0</td>
-<td>Biaya upgrade tidak boleh negatif.</td>
 </tr>
 <tr>
 <td><code>items.*.nilai_baru</code></td>
@@ -1803,7 +1798,7 @@ footer{margin-top:64px;padding-top:18px;border-top:1px solid var(--line);color:v
 <p><strong>Admin/HR: jadwal dan hasil</strong></p>
 <ol>
 <li>Tab <strong>Proses</strong>, buka transaksi. Selama menunggu pengambilan atau pengembalian, <strong>Ubah Jadwal</strong> tersedia.</li>
-<li>Setelah PIC menyerahkan aset (status Dalam Service), pilih status hasil (Selesai atau Tidak Dapat Diupgrade), isi nilai baru tiap komponen (bila selesai), biaya, keterangan, ketuk <strong>Simpan Hasil &amp; Jadwalkan</strong> dan tetapkan jadwal pengembalian.</li>
+<li>Setelah PIC menyerahkan aset (status Dalam Service), pilih status hasil (Selesai atau Tidak Dapat Diupgrade), isi nilai baru tiap komponen (bila selesai), keterangan, ketuk <strong>Simpan Hasil &amp; Jadwalkan</strong> dan tetapkan jadwal pengembalian.</li>
 <li>Selesai bagi admin. Penyelesaian dilakukan PIC saat menekan <strong>Terima Aset</strong>; tidak ada tombol Selesaikan atau Kirim Ulang lagi.</li>
 </ol>
 <h2 id="s37"><span class="sec-no">37</span>Kondisi Button</h2>
@@ -1942,7 +1937,7 @@ footer{margin-top:64px;padding-top:18px;border-top:1px solid var(--line);color:v
 <tr>
 <td>TC-13</td>
 <td>Validasi hasil</td>
-<td>Nilai baru wajib, status hasil, keterangan, biaya tidak negatif; fase tetap <code>dalam_service</code> saat gagal</td>
+<td>Nilai baru wajib, status hasil, keterangan; fase tetap <code>dalam_service</code> saat gagal</td>
 <td>✔ API</td>
 </tr>
 <tr>
@@ -2359,7 +2354,7 @@ footer{margin-top:64px;padding-top:18px;border-top:1px solid var(--line);color:v
 <p><strong>Catatan verifikasi</strong></p>
 <p>Dijalankan ulang saat v1.2 disusun (30 Oktober 2026):</p>
 <ul>
-<li><code>vendor/bin/phpunit tests/Asset/AssetUpgradeRuanganTest.php</code>: 15 test, 186 assertion, lolos.</li>
+<li><code>vendor/bin/phpunit tests/Asset/AssetUpgradeRuanganTest.php</code>: 15 test, 183 assertion (dijalankan ulang v1.3), lolos.</li>
 <li><code>vendor/bin/phpunit tests/Asset</code>: 499 test, 5111 assertion, lolos.</li>
 <li>Jumlah route diambil dari <code>routes/modules/asset/RouteAsset.php</code>: grup <code>upgrade-ruangan</code> 7 route + grup PIC <code>upgrade</code> 6 route = 13. <code>php artisan routes:list</code> dan total route aplikasi <strong>tidak dijalankan ulang</strong> pada v1.2.</li>
 <li>Mobile <code>flutter test --no-pub test/asset/asset_upgrade_ruangan_test.dart</code>: 15 test lolos (Flutter 3.35.6).</li>
@@ -2817,19 +2812,19 @@ Authorization: Bearer &lt;access_token_dewi&gt;
 </table></div>
 <p><strong>Diterima mobile</strong> (HTTP 200): message "Aset berhasil diserahkan untuk upgrade.", <code>fase_upgrade = dalam_service</code>.</p>
 <h4>Langkah 4 — Admin mencatat hasil upgrade</h4>
-<p><strong>Mobile:</strong> setelah upgrade dikerjakan teknisi, Siti membuka <strong>Hasil Upgrade</strong>, memilih status <strong>Selesai</strong>, mengisi nilai baru, biaya, keterangan, dan jadwal pengembalian 26 Okt 2026 pukul 09:00.</p>
+<p><strong>Mobile:</strong> setelah upgrade dikerjakan teknisi, Siti membuka <strong>Hasil Upgrade</strong>, memilih status <strong>Selesai</strong>, mengisi nilai baru, keterangan, dan jadwal pengembalian 26 Okt 2026 pukul 09:00.</p>
 <p><strong>Dikirim</strong></p>
 <div class="code"><span class="code-lang">HTTP</span><pre><code class="language-http">POST /asset/upgrade-ruangan/CMP001202610001/hasil
 </code></pre></div>
-<div class="code"><span class="code-lang">JSON</span><pre><code class="language-json">{ &quot;status_hasil&quot;: &quot;selesai&quot;, &quot;keterangan_hasil&quot;: &quot;RAM diganti 16 GB&quot;, &quot;biaya_upgrade&quot;: 450000,
+<div class="code"><span class="code-lang">JSON</span><pre><code class="language-json">{ &quot;status_hasil&quot;: &quot;selesai&quot;, &quot;keterangan_hasil&quot;: &quot;RAM diganti 16 GB&quot;,
   &quot;tgl_jadwal&quot;: &quot;2026-10-26&quot;, &quot;jam_jadwal&quot;: &quot;09:00&quot;, &quot;keterangan_jadwal&quot;: &quot;Ambil di ruang IT&quot;,
   &quot;items&quot;: [ { &quot;id_item&quot;: &quot;CMP001202610001&quot;, &quot;nilai_baru&quot;: &quot;16&quot; } ] }
 </code></pre></div>
 <p>(<code>id_item</code> adalah id <strong>item upgrade</strong>; satu-satunya jenis <code>id_item</code> sejak checklist dihapus.)</p>
 <p><strong>Diproses API</strong> (<code>hasilUpgradeRuangan</code> → <code>hasil</code>)</p>
 <ol>
-<li>Validasi: <code>status_hasil</code> ∈ selesai/tidak_dapat_diupgrade, <code>keterangan_hasil</code> wajib (maksimal 1000), <code>biaya_upgrade</code> bilangan bulat ≥ 0.</li>
-<li>Fase harus <code>dalam_service</code> ("Aset belum berada dalam proses upgrade."); status hasil, keterangan, dan biaya diperiksa ulang di model ("Status hasil upgrade tidak valid." / "Keterangan hasil upgrade wajib diisi." / "Biaya upgrade tidak boleh negatif."); jadwal pengembalian wajib dan tidak sebelum <code>tgl_pengajuan</code>.</li>
+<li>Validasi: <code>status_hasil</code> ∈ selesai/tidak_dapat_diupgrade, <code>keterangan_hasil</code> wajib (maksimal 1000).</li>
+<li>Fase harus <code>dalam_service</code> ("Aset belum berada dalam proses upgrade."); status hasil dan keterangan diperiksa ulang di model ("Status hasil upgrade tidak valid." / "Keterangan hasil upgrade wajib diisi."); jadwal pengembalian wajib dan tidak sebelum <code>tgl_pengajuan</code>.</li>
 <li>Bila <code>selesai</code>, setiap item wajib punya <code>nilai_baru</code> ("Nilai baru setiap atribut wajib diisi."); bila <code>tidak_dapat_diupgrade</code>, <code>nilai_baru</code> dikosongkan dan <code>alasan_tidak_upgrade</code> diisi keterangan.</li>
 <li>UPDATE item dan header (<code>tgl_diterima</code> direset <code>NULL</code>); <strong>belum ada perubahan data komponen aset</strong>. Controller mengirim <code>upgrade_ruangan.pengembalian</code> ke semua PIC ruangan.</li>
 </ol>
@@ -2848,7 +2843,7 @@ Authorization: Bearer &lt;access_token_dewi&gt;
 </tr>
 <tr>
 <td>header</td>
-<td>fase_upgrade <code>dalam_service → menunggu_pengembalian</code>; status_hasil = selesai; keterangan_hasil = RAM diganti 16 GB; biaya_upgrade = 450000; tgl_pengembalian 2026-10-26; jam_pengembalian 09:00:00; keterangan_pengembalian = Ambil di ruang IT; tgl_diterima NULL</td>
+<td>fase_upgrade <code>dalam_service → menunggu_pengembalian</code>; status_hasil = selesai; keterangan_hasil = RAM diganti 16 GB; tgl_pengembalian 2026-10-26; jam_pengembalian 09:00:00; keterangan_pengembalian = Ambil di ruang IT; tgl_diterima NULL</td>
 </tr>
 <tr>
 <td>asset_data AST0601</td>
@@ -2917,7 +2912,7 @@ Authorization: Bearer &lt;access_token_dewi&gt;
 <tbody>
 <tr>
 <td>Header <code>CMP001202610001</code></td>
-<td><code>disetujui</code>, <code>fase_upgrade = selesai</code>, <code>status_transaksi = selesai</code>, <code>status_hasil = selesai</code>, biaya 450000, <code>tgl_diterima</code> terisi</td>
+<td><code>disetujui</code>, <code>fase_upgrade = selesai</code>, <code>status_transaksi = selesai</code>, <code>status_hasil = selesai</code>, <code>tgl_diterima</code> terisi</td>
 </tr>
 <tr>
 <td>Komponen RAM AST0601</td>
@@ -3018,7 +3013,7 @@ Authorization: Bearer &lt;access_token_dewi&gt;
 <tr>
 <td>Hasil tidak valid</td>
 <td>4</td>
-<td>Status hasil upgrade tidak valid. / Keterangan hasil upgrade wajib diisi. / Biaya upgrade tidak boleh negatif. / Nilai baru setiap atribut wajib diisi.</td>
+<td>Status hasil upgrade tidak valid. / Keterangan hasil upgrade wajib diisi. / Nilai baru setiap atribut wajib diisi.</td>
 </tr>
 <tr>
 <td>PIC menerima sebelum dijadwalkan, atau dua kali</td>
@@ -3116,7 +3111,7 @@ Authorization: Bearer &lt;access_token_dewi&gt;
 <li class="task done">Model, controller, route, notifikasi API (13 endpoint, 7 event; v1.2)</li>
 <li class="task done">Checklist pengambilan/pengembalian dan review akhir (Selesaikan/Kirim Ulang) dihapus dari API dan mobile (v1.2)</li>
 <li class="task done">Perubahan modul lain: retur ruangan, helper KRY03, summary admin, beranda PIC</li>
-<li class="task done">Test API (15, 186 assertion) dan seluruh <code>tests/Asset</code> (499) lolos</li>
+<li class="task done">Test API (15, 183 assertion) dan seluruh <code>tests/Asset</code> (499) lolos</li>
 <li class="task done">Model, API client, halaman, route, teks mobile</li>
 <li class="task done">Test mobile (15) lolos</li>
 <li class="task">Jalankan SQL migrasi data lama <code>sql-upgrade-hapus-checklist-review-lama.sql</code> (guard 0.a, salinan/staging dulu) sebelum atau bersamaan dengan rilis v1.2 (RISK-011)</li>
@@ -3151,11 +3146,16 @@ Authorization: Bearer &lt;access_token_dewi&gt;
 <td>30 Okt 2026</td>
 <td>Menyesuaikan dokumen dengan kode terbaru. Checklist pengambilan (admin) dan checklist pengembalian (PIC) dihapus; rute <code>POST upgrade-ruangan/{id}/checklist-pengambilan</code> (API-07) dan <code>POST upgrade-ruangan/{id}/selesai</code> (API-09) dihapus (nomor API tidak digeser; endpoint total 15 → 13). Alur baru: PIC Pelepasan tanpa checklist, PIC Terima tanpa checklist/body langsung menyelesaikan upgrade (atribut diterapkan bila hasil <code>selesai</code>, aset <code>terpakai</code>, fase <code>selesai</code>, <code>tgl_diterima</code>); fase <code>menunggu_review</code>, aksi admin Selesaikan dan Kirim Ulang tidak dihasilkan lagi. <code>aksi</code> detail menjadi review, ubah_jadwal, pelepasan, hasil, terima; field <code>checklist_*</code> dihapus; pending admin = approval proses atau fase <code>dalam_service</code>. Notifikasi 10 → 7 event (PIC menerima 2 notifikasi per upgrade, sebelumnya 4). Skema DB tidak berubah (kolom checklist tidak dipakai). Mobile: form checklist, tombol checklist, Selesaikan, dan Kirim Ulang dihapus; <code>terima(id)</code> tanpa body. Walkthrough §45.4 ditulis ulang tanpa checklist (variasi Kirim Ulang diganti hasil <code>tidak_dapat_diupgrade</code>). Risiko: RISK-003 dan RISK-004 ditutup, RISK-011 (data lama <code>menunggu_review</code>, SQL migrasi belum dijalankan) dan RISK-012 (kondisi tidak tercatat) ditambah. Test: 15 test API (186 assertion; <code>tests/Asset</code> 499 test) dan 15 test mobile.</td>
 </tr>
+<tr>
+<td>1.3</td>
+<td>19 Nov 2026</td>
+<td>v1.3: biaya upgrade dihapus (kolom <code>biaya_upgrade</code> dihapus dari DB; API mengabaikan field itu bila masih dikirim klien lama). Mobile: input &quot;Biaya Upgrade (Rp)&quot; dan tampilan biaya pada ringkasan hasil/tahap Selesai dihapus; tes API &quot;biaya negatif&quot; dihapus.</td>
+</tr>
 </tbody>
 </table></div>
     </article>
 
-    <footer>Dokumentasi Upgrade Komponen Aset Ruangan (ALK-RGN07) v1.2 · 30 Oktober 2026 · Disusun dari source lokal API (Lumen) &amp; MOBILE (Flutter). Contoh ID dan nama pada payload adalah data sintetis.</footer>
+    <footer>Dokumentasi Upgrade Komponen Aset Ruangan (ALK-RGN07) v1.3 · 19 November 2026 · Disusun dari source lokal API (Lumen) &amp; MOBILE (Flutter). Contoh ID dan nama pada payload adalah data sintetis.</footer>
   </main>
 </div>
 <button class="to-top" id="to-top" type="button" aria-label="Kembali ke atas">↑</button>
@@ -3229,3 +3229,4 @@ if(blocks.length){
 if(art){document.querySelectorAll('a.back').forEach(function(a){a.href='https://claude.ai/artifact/X39UeaJRpBKwqFjswGNqip';a.target='_blank';a.rel='noopener';});
 document.querySelectorAll('.dl').forEach(function(d){d.hidden=true;});}})();
 </script>
+

@@ -17,9 +17,9 @@
 | Database | `API/diagram-asset.dbml` + migration `2026_09_26_000001_add_workflow_fields_to_asset_upgrade_karyawan.php`. ⚠️ Asumsi: MySQL/MariaDB |
 | Mobile | Flutter (`professional_flutter_3_35`), `flutter_bloc`, `dio` |
 | Web | ⚠️ Belum ditemukan: tidak ada source web di workspace |
-| Test otomatis | `API/tests/Asset/AssetUpgradeKaryawanTest.php` (5 test, 54 assertion) · `MOBILE/test/asset/asset_upgrade_test.dart` (5 test) |
-| Versi Dokumen | 1.5 |
-| Tanggal Dokumentasi | 2026-11-11 |
+| Test otomatis | `API/tests/Asset/AssetUpgradeKaryawanTest.php` (5 test, 58 assertion) · `MOBILE/test/asset/asset_upgrade_test.dart` (5 test) |
+| Versi Dokumen | 1.6 |
+| Tanggal Dokumentasi | 2026-11-19 |
 | Skrip data lama | `Claude outputs/sql-upgrade-hapus-checklist-review-lama.sql` — menyelesaikan transaksi lama di fase `menunggu_review` (**BELUM dijalankan**) |
 | Dokumen terkait | Onboarding (KRY01), Offboarding (KRY02), Retur (KRY04), Peminjaman (KRY05), Kerusakan (KRY06), Request/Penambahan |
 
@@ -44,7 +44,7 @@
 | Asset Master | `asset_data` (status `dalam_perbaikan` selama service) + `asset_data_item` (nilai atribut diperbarui saat karyawan menekan **Terima**) |
 | Log | `asset_trx_log` `jenis_log = upgrade_karyawan` |
 | Status | `status_approval` (proses/disetujui/ditolak) + `fase_upgrade` (`pengajuan → menunggu_pengambilan → dalam_service → menunggu_pengembalian → selesai`). Fase `menunggu_review` tidak dihasilkan lagi sejak v1.4 (hanya data lama) |
-| Hasil | `selesai` (nilai baru ditulis ke atribut) atau `tidak_dapat_diupgrade` (atribut tidak berubah) + biaya |
+| Hasil | `selesai` (nilai baru ditulis ke atribut) atau `tidak_dapat_diupgrade` (atribut tidak berubah) |
 | Serah terima | **Tanpa checklist** sejak v1.4. Karyawan menekan **Serahkan Aset** (pelepasan) dan **Terima Aset**; **Terima langsung menyelesaikan** transaksi. Tidak ada review akhir dan tidak ada kirim ulang |
 | API | 7 endpoint admin + 6 endpoint karyawan = **13 endpoint** (sumber: `RouteAsset.php`; berkurang 2 dari v1.3) |
 | Mobile Screen | Upgrade Asset (list), Ajukan / Buat Upgrade Asset (form), Detail Upgrade Asset — dipakai bersama admin & karyawan |
@@ -56,7 +56,7 @@ Jalur A: Karyawan pilih asset + atribut + detail upgrade + alasan + urgensi → 
 Jalur B: Admin pilih karyawan + asset + atribut + catatan + jadwal → Buat Upgrade ─┤
                                                           menunggu_pengambilan ◄────┘
 Karyawan: Serahkan Aset (tanpa checklist) ─────── dalam_service · asset = dalam_perbaikan (pemegang tetap karyawan)
-Admin: Hasil Upgrade (Selesai / Tidak Dapat Diupgrade, nilai baru, biaya, keterangan) + jadwal pengembalian
+Admin: Hasil Upgrade (Selesai / Tidak Dapat Diupgrade, nilai baru, keterangan) + jadwal pengembalian
                                                           menunggu_pengembalian
 Karyawan: Terima Aset (tanpa checklist) ─────────────── selesai
           → atribut diperbarui (bila berhasil), asset = terpakai, log gudang → karyawan
@@ -79,7 +79,7 @@ Selama proses, **pemegang asset tetap karyawan**; hanya `status_asset` yang beru
 ### 5.1 Tujuan Bisnis (diturunkan dari kode)
 - Karyawan dapat meminta peningkatan spesifikasi asset kerja.
 - Admin dapat menjadwalkan upgrade secara proaktif.
-- Biaya dan hasil upgrade terdokumentasi.
+- Hasil upgrade terdokumentasi.
 - Data spesifikasi asset otomatis terbarui setelah upgrade berhasil dan karyawan menerima asset kembali.
 - Sejak v1.4 kondisi fisik komponen sebelum dan sesudah upgrade **tidak lagi dicatat** di sistem (checklist dihapus).
 
@@ -178,7 +178,7 @@ Hanya pada fase `menunggu_pengambilan` → "Aset belum siap diserahkan untuk upg
 ### BR-010 — Hasil upgrade (admin)
 Hanya `dalam_service` → "Aset belum berada dalam proses upgrade."
 
-- `status_hasil`: `selesai` / `tidak_dapat_diupgrade`; keterangan hasil wajib (≤1000); biaya ≥ 0.
+- `status_hasil`: `selesai` / `tidak_dapat_diupgrade`; keterangan hasil wajib (≤1000).
 - `selesai`: nilai baru setiap atribut wajib → "Nilai baru setiap atribut wajib diisi."
 - `tidak_dapat_diupgrade`: `nilai_baru` dikosongkan, `alasan_tidak_upgrade` = keterangan (≤255).
 - Jadwal pengembalian wajib. Fase → `menunggu_pengembalian`; `tgl_diterima` direset. (Sejak v1.4 tidak ada lagi checklist penerimaan yang direset.)
@@ -218,7 +218,7 @@ Jalur B
    → Catatan → Jadwal Pengambilan → Buat Upgrade                                         [Menunggu Pengambilan · notif karyawan]
 Lanjutan (kedua jalur)
 3. Karyawan: Serahkan Aset (tanpa checklist)                                             [Dalam Service · notif admin]
-4. Admin: Hasil Upgrade (Upgrade Selesai / Tidak Dapat Diupgrade, Nilai Baru, Keterangan, Biaya)
+4. Admin: Hasil Upgrade (Upgrade Selesai / Tidak Dapat Diupgrade, Nilai Baru, Keterangan)
    → Simpan Hasil & Jadwalkan (Jadwal Pengembalian)                                      [Menunggu Pengembalian · notif karyawan]
 5. Karyawan: Terima Aset (tanpa checklist) → langsung selesai,
    atribut diperbarui bila berhasil, asset terpakai                                      [Selesai · notif admin]
@@ -291,7 +291,7 @@ sequenceDiagram
     CK->>U: pelepasan()
     U->>DB: asset dalam_perbaikan, INSERT asset_trx_log, fase dalam_service
     CK->>N: upgrade.dilepas (admin)
-    A->>M: Hasil upgrade, nilai baru, biaya, jadwal pengembalian
+    A->>M: Hasil upgrade, nilai baru, jadwal pengembalian
     M->>CA: POST /asset/upgrade-karyawan/{id}/hasil
     CA->>U: hasil()
     U->>DB: UPDATE item nilai_baru, header menunggu_pengembalian
@@ -357,7 +357,7 @@ Status `asset_data`:
 
 | Table | Type | Fungsi |
 |---|---|---|
-| `asset_trx_upgrade_karyawan` | Transaction Header | Pengajuan, jadwal, fase, hasil, biaya (kolom `checklist_pengambilan` / `checklist_pengembalian` **tidak dipakai sejak v1.4**) |
+| `asset_trx_upgrade_karyawan` | Transaction Header | Pengajuan, jadwal, fase, hasil (kolom `checklist_pengambilan` / `checklist_pengembalian` **tidak dipakai sejak v1.4**) |
 | `asset_trx_upgrade_karyawan_item` | Transaction Detail | Atribut target, detail, nilai lama/baru |
 | `asset_data` | Master | Status asset |
 | `asset_data_item` | Master komponen | Nilai atribut (`json_value.komponen[].value`) — **diperbarui** saat karyawan menekan Terima |
@@ -393,7 +393,6 @@ erDiagram
         text checklist_pengambilan "tidak dipakai sejak v1.4"
         text checklist_pengembalian "tidak dipakai sejak v1.4"
         enum status_hasil
-        bigint biaya_upgrade
     }
     ASSET_TRX_UPGRADE_KARYAWAN_ITEM {
         varchar id_asset_trx_upgrade_item PK
@@ -447,7 +446,6 @@ erDiagram
 | tgl_pelepasan / user_pelepasan | timestamp / varchar | NULL / '' | Serahkan aset (terakhir) |
 | status_hasil | enum(selesai, tidak_dapat_diupgrade) | NULL | Hasil upgrade |
 | keterangan_hasil | text | NULL | Wajib saat input hasil |
-| biaya_upgrade | bigint | 0 | Rupiah |
 | tgl_diterima | timestamp | NULL | Karyawan menekan Terima (sekaligus waktu selesai); direset saat admin input hasil |
 | status_transaksi | enum(proses, selesai) | proses | |
 | status_approval | enum(proses, disetujui, ditolak) | – | |
@@ -533,7 +531,7 @@ Method model, method controller (`checklistPengambilanUpgrade`), rute, dan notif
 Karyawan aktif → `lockHeader` memfilter `id_karyawan` (milik orang lain → "Upgrade asset tidak ditemukan.") → fase harus `menunggu_pengambilan` (**tidak ada lagi syarat checklist**) → `lockHeldAsset` (`terpakai`/`dalam_perbaikan`, dipegang karyawan) → asset `dalam_perbaikan` + log (karyawan → gudang) → fase `dalam_service`, `tgl/user_pelepasan` → `upgrade.dilepas`.
 
 ### 21.7 Hasil — `hasil`
-Admin → fase `dalam_service` → validasi status/keterangan/biaya/jadwal → UPDATE item (`nilai_baru` atau `alasan_tidak_upgrade`) → header `menunggu_pengembalian` + hasil + jadwal pengembalian, `tgl_diterima = NULL` → `upgrade.pengembalian`.
+Admin → fase `dalam_service` → validasi status/keterangan/jadwal → UPDATE item (`nilai_baru` atau `alasan_tidak_upgrade`) → header `menunggu_pengembalian` + hasil + jadwal pengembalian, `tgl_diterima = NULL` → `upgrade.pengembalian`.
 
 ### 21.8 Terima (langsung selesai) — `terima`
 Karyawan aktif → `lockHeader` memfilter `id_karyawan` → fase harus `menunggu_pengembalian` → `lockHeldAsset` (harus `dalam_perbaikan` di karyawan) → bila `status_hasil = selesai`: `applyAtribut` (update `komponen[].value` di `asset_data_item.json_value` untuk setiap `id_komponen`) → asset `terpakai` + log (gudang → karyawan) → header `fase_upgrade = selesai`, `status_transaksi = selesai`, `tgl_diterima = now` → `upgrade.diterima` ("… Upgrade selesai."). Tanpa body, tanpa checklist, satu `DB::transaction`.
@@ -545,7 +543,7 @@ Method model `selesai`, method controller `selesaiUpgradeKaryawan`, rute `POST /
 - **Opsi karyawan**: asset `terpakai` miliknya, tidak diblokir flow lain, punya atribut (`atribut[]`), + daftar urgensi.
 - **Opsi admin**: karyawan aktif yang memegang asset yang dapat diupgrade beserta `assets[]`.
 - **List**: tab `pengajuan` (approval proses), `proses` (disetujui & fase ≠ selesai), `selesai` (`status_transaksi = selesai`, termasuk ditolak).
-- **Detail**: header, jadwal, hasil, biaya, karyawan, asset, `items` (nilai lama/baru), `komponen`, `aksi`. Field `checklist_pengambilan`, `checklist_pengembalian`, `checklist_pengembalian_rusak` **tidak ada lagi**. `aksi` = `review`, `ubah_jadwal`, `pelepasan` (fase `menunggu_pengambilan`), `hasil` (fase `dalam_service`), `terima` (fase `menunggu_pengembalian`).
+- **Detail**: header, jadwal, hasil, karyawan, asset, `items` (nilai lama/baru), `komponen`, `aksi`. Field `checklist_pengambilan`, `checklist_pengembalian`, `checklist_pengembalian_rusak` **tidak ada lagi**. `aksi` = `review`, `ubah_jadwal`, `pelepasan` (fase `menunggu_pengambilan`), `hasil` (fase `dalam_service`), `terima` (fase `menunggu_pengembalian`).
 - **Pending**: karyawan (`pelepasan` untuk fase `menunggu_pengambilan`, `terima` untuk `menunggu_pengembalian`; tanpa syarat checklist); admin (approval `proses` ATAU fase `dalam_service`).
 
 ---
@@ -697,7 +695,6 @@ Rules: `id_karyawan` required max 150, `id_asset_data` required, `catatan` nulla
   "tgl_diterima": "2026-10-03 15:20:00",
   "status_hasil": "selesai",
   "keterangan_hasil": "RAM ditambah 1 keping 8 GB",
-  "biaya_upgrade": 650000,
   "karyawan": {"id_karyawan": "KRY0010", "nik": "EMP-010", "nama_karyawan": "Dimas Contoh", "cabang": "Kantor Pusat", "divisi": "Kreatif"},
   "asset": {"id_asset_data": "CMP00120260100012", "kode_asset": "LPT-0012", "nama_asset": "Laptop 14 inch", "kategori_asset": "Laptop", "merek": "MerekX", "status_asset": "terpakai"},
   "items": [
@@ -747,7 +744,6 @@ POST /asset/karyawan/upgrade/{id}/terima
 {
   "status_hasil": "selesai",
   "keterangan_hasil": "RAM ditambah 1 keping 8 GB",
-  "biaya_upgrade": 650000,
   "items": [{"id_item": "CMP001202609014", "nilai_baru": "16"}],
   "tgl_jadwal": "2026-10-03",
   "jam_jadwal": "15:00",
@@ -758,7 +754,6 @@ POST /asset/karyawan/upgrade/{id}/terima
 |---|---|
 | status_hasil | required\|in:selesai,tidak_dapat_diupgrade |
 | keterangan_hasil | required\|string\|max:1000 |
-| biaya_upgrade | nullable\|integer\|min:0 |
 | items | nullable\|array; `items.*.id_item` required distinct; `items.*.nilai_baru` nullable ≤255 |
 | tgl/jam/keterangan_jadwal | jadwal pengembalian |
 
@@ -809,14 +804,14 @@ Tab Pengajuan / Proses / Selesai; kartu dengan status (Menunggu Persetujuan, Men
 | Tombol | **Ajukan Upgrade** | **Buat Upgrade** | |
 
 ### 26.3 Detail Upgrade Asset
-Stepper **Pengajuan → Pengambilan → Service → Pengembalian → Selesai** (tidak berubah; data lama fase `menunggu_review` ditampilkan pada langkah Pengembalian); info asset, karyawan, Jadwal Pengambilan / Jadwal Pengembalian ("{tanggal}, jam {jam}"), **Komponen yang Diupgrade** (Sebelum / Sesudah), **Hasil Upgrade** (Upgrade Selesai / Tidak Dapat Diupgrade, Keterangan Hasil, Biaya Upgrade (Rp)). **Tidak ada lagi form atau tampilan checklist** (pengambilan maupun penerimaan).
+Stepper **Pengajuan → Pengambilan → Service → Pengembalian → Selesai** (tidak berubah; data lama fase `menunggu_review` ditampilkan pada langkah Pengembalian); info asset, karyawan, Jadwal Pengambilan / Jadwal Pengembalian ("{tanggal}, jam {jam}"), **Komponen yang Diupgrade** (Sebelum / Sesudah), **Hasil Upgrade** (Upgrade Selesai / Tidak Dapat Diupgrade, Keterangan Hasil). **Tidak ada lagi form atau tampilan checklist** (pengambilan maupun penerimaan).
 
 | Kondisi (`aksi`) | Role | Tampilan / Tombol |
 |---|---|---|
 | review | Admin | **Setujui & Jadwalkan** / **Tolak** (+Alasan Penolakan) |
 | pelepasan | Karyawan | Info "Admin/HR sudah memeriksa kondisi aset. Konfirmasi setelah aset diserahkan." (teks lama masih tampil, lihat INC-10) → **Serahkan Aset** (dialog "Pastikan aset sudah diserahkan kepada Admin/HR.") |
 | fase `dalam_service` | Admin & karyawan | Info "Aset sedang dalam proses upgrade oleh teknisi." |
-| hasil | Admin | Form hasil (status, Nilai Baru per atribut bila selesai, Keterangan Hasil, Biaya) → **Simpan Hasil & Jadwalkan** |
+| hasil | Admin | Form hasil (status, Nilai Baru per atribut bila selesai, Keterangan Hasil) → **Simpan Hasil & Jadwalkan** |
 | terima | Karyawan | **Terima Aset** (dialog "Pastikan aset hasil upgrade sudah Anda terima dan periksa."); tanpa form, langsung menyelesaikan |
 | ubah_jadwal | Admin | **Ubah Jadwal** |
 
@@ -840,7 +835,7 @@ Asset Saya: menu **Upgrade** + banner **Serahkan Aset untuk Upgrade** / **Terima
 | Catatan Tambahan | `catatan` | string ≤1000 | Tidak |
 | Jadwal | `tgl_jadwal`, `jam_jadwal`, `keterangan_jadwal` | Y-m-d, H:i, string | Jalur B, setujui, hasil, ubah jadwal |
 | Setujui / Tolak | `keputusan`, `ket_tolak` | string | Review |
-| Hasil | `status_hasil`, `keterangan_hasil`, `biaya_upgrade`, `items[].id_item`, `items[].nilai_baru` | – | Input hasil |
+| Hasil | `status_hasil`, `keterangan_hasil`, `items[].id_item`, `items[].nilai_baru` | – | Input hasil |
 | Serahkan Aset | – (tanpa body) | – | `pelepasan(id)` |
 | Terima Aset | – (tanpa body) | – | `terima(id)` |
 
@@ -857,7 +852,7 @@ Sejak v1.4 tidak ada lagi payload checklist (`items[].kondisi`, `ket_rusak`) mau
 | `sumber_pengajuan` | AssetUpgradeRecord | "Diinisiasi Admin/HR" |
 | `items[]` (nilai lama/baru) | AssetUpgradeItem | Sebelum / Sesudah |
 | `komponen` | AssetUpgradeRecord | Masih di-parse, tidak lagi dipakai UI Upgrade Karyawan (sisa) |
-| `status_hasil`, `keterangan_hasil`, `biaya_upgrade` | AssetUpgradeRecord | Hasil Upgrade |
+| `status_hasil`, `keterangan_hasil` | AssetUpgradeRecord | Hasil Upgrade |
 | `aksi` (`review`, `ubah_jadwal`, `pelepasan`, `hasil`, `terima`) | AssetUpgradeAksi | Tombol |
 | `assets[].atribut` / `karyawan[].assets` | AssetUpgradeAsset / Atribut / KaryawanOption | Form |
 
@@ -876,7 +871,7 @@ Field lama `checklist_pengambilan`, `checklist_pengembalian`, `checklist_pengemb
 | Catatan | `catatan` | `storeAdmin` | header | catatan |
 | Jadwal | `tgl_jadwal`, `jam_jadwal`, `keterangan_jadwal` | `parseJadwalValue` | header | tgl/jam_pengambilan atau tgl/jam_pengembalian, keterangan_pengembalian |
 | Serahkan Aset | – | `pelepasan()` | asset_data / asset_trx_log / header | status_asset / log / fase_upgrade, tgl_pelepasan, user_pelepasan |
-| Hasil | `status_hasil`, `keterangan_hasil`, `biaya_upgrade`, `items[].nilai_baru` | `hasil()` | header / item | status_hasil, keterangan_hasil, biaya_upgrade / nilai_baru, alasan_tidak_upgrade |
+| Hasil | `status_hasil`, `keterangan_hasil`, `items[].nilai_baru` | `hasil()` | header / item | status_hasil, keterangan_hasil / nilai_baru, alasan_tidak_upgrade |
 | Terima Aset | – | `terima()` + `applyAtribut` | asset_data_item / asset_data / asset_trx_log / header | json_value / status_asset / log / fase_upgrade = selesai, status_transaksi = selesai, tgl_diterima |
 
 Kolom `checklist_pengambilan` dan `checklist_pengembalian` **tidak lagi dipetakan** dari UI mana pun (tidak ditulis/dibaca sejak v1.4).
@@ -932,7 +927,7 @@ Kolom `checklist_pengambilan` dan `checklist_pengembalian` **tidak lagi dipetaka
 | Keputusan | ✅ | `user_approval`, `tgl_approval`, `ket_tolak` |
 | Kondisi sebelum & sesudah | ❌ | **Tidak dicatat sejak v1.4** (checklist dihapus). Kolom `checklist_pengambilan` / `checklist_pengembalian` hanya menyimpan sisa data lama; `asset_trx_log` selalu menulis `kondisi_akhir = kondisi_awal` |
 | Nilai atribut lama/baru | ✅ | item `nilai_lama`, `nilai_baru` |
-| Hasil & biaya | ✅ | `status_hasil`, `keterangan_hasil`, `biaya_upgrade` |
+| Hasil | ✅ | `status_hasil`, `keterangan_hasil` |
 | Waktu serah dan terima | ✅ | `tgl_pelepasan` / `user_pelepasan`; `tgl_diterima` (juga waktu selesai) |
 | Perpindahan asset | ✅ | `asset_trx_log upgrade_karyawan` (karyawan → gudang saat serah, gudang → karyawan saat terima) |
 | Perubahan `asset_data_item` | ⚠️ | Hanya `tgl_update/user_update` pada baris item (pelaku = karyawan yang menekan Terima) |
@@ -987,7 +982,7 @@ Detail → **Setujui & Jadwalkan** (isi jadwal pengambilan) atau **Tolak** (isi 
 Pada jadwal pengambilan, karyawan membuka banner **Serahkan Aset untuk Upgrade** (atau detail upgrade) → **Serahkan Aset** → konfirmasi. **Tidak ada checklist** yang harus diisi admin maupun karyawan (v1.4); tombol langsung aktif begitu status **Menunggu Pengambilan**.
 
 ### E. Hasil Upgrade (Admin)
-Detail → pilih **Upgrade Selesai** (isi **Nilai Baru** tiap atribut) atau **Tidak Dapat Diupgrade** → **Keterangan Hasil** → **Biaya Upgrade (Rp)** → jadwal pengembalian → **Simpan Hasil & Jadwalkan**.
+Detail → pilih **Upgrade Selesai** (isi **Nilai Baru** tiap atribut) atau **Tidak Dapat Diupgrade** → **Keterangan Hasil** → jadwal pengembalian → **Simpan Hasil & Jadwalkan**.
 
 ### F. Pengembalian (Karyawan)
 Terima aset dari teknisi/admin, periksa sendiri kondisinya, lalu buka banner **Terima Aset Hasil Upgrade** (atau detail) → **Terima Aset** → konfirmasi. **Tidak ada checklist.** Pada saat itu juga upgrade **selesai**: spesifikasi asset diperbarui (bila hasil berhasil) dan aset kembali aktif (`terpakai`).
@@ -1060,7 +1055,7 @@ Cakupan: TC-01, TC-03, TC-04, TC-06, TC-11, TC-12, TC-13, TC-14, TC-15, TC-20 da
 | INC-03 | Backend | Log serah terima mencatat `posisi_akhir = gudang` / `pemegang_asset = gudang`, padahal `asset_data.pemegang_asset` tetap karyawan | Log dan master berbeda | Samakan (catat posisi fisik secara eksplisit) |
 | INC-04 | Backend | Satu kolom `keterangan_pengembalian` dipakai untuk catatan jadwal pengambilan dan pengembalian (API: `keterangan_jadwal`) | Catatan tertimpa | Pisahkan kolom |
 | INC-05 | Backend | *(Tertutup v1.4)* Admin dapat Selesaikan walau checklist penerimaan berisi item rusak | Tidak relevan lagi: checklist dan review akhir dihapus | – |
-| INC-06 | Backend | *(Tertutup v1.4)* Setelah kirim ulang, checklist, hasil, dan biaya sebelumnya tertimpa | Tidak relevan lagi: kirim ulang dihapus | – |
+| INC-06 | Backend | *(Tertutup v1.4)* Setelah kirim ulang, checklist dan hasil sebelumnya tertimpa | Tidak relevan lagi: kirim ulang dihapus | – |
 | INC-07 | Mobile | Model jadwal upgrade memakai `AssetKerusakanJadwal` (modul Kerusakan) | Coupling antar modul | Model bersama / sendiri |
 | INC-08 | Backend | Validasi request sebelum cek admin | 422 bukan 403 | Pindahkan cek |
 | INC-09 | Backend | Tab `selesai` mencampur Ditolak dan Selesai | Riwayat tercampur | Pisahkan filter |
@@ -1159,7 +1154,7 @@ Ketergantungan rilis v1.4:
 | `API/app/Support/Asset/AssetNotification.php` | Support | `upgrade.*` |
 | `API/database/migrations/2026_09_26_000001_add_workflow_fields_to_asset_upgrade_karyawan.php` | Migration | Kolom workflow, index, log |
 | `Claude outputs/sql-upgrade-hapus-checklist-review-lama.sql` | SQL | Penyelesaian satu kali transaksi lama `menunggu_review` (**belum dijalankan**) |
-| `API/tests/Asset/AssetUpgradeKaryawanTest.php` | Test | 5 test, 54 assertion |
+| `API/tests/Asset/AssetUpgradeKaryawanTest.php` | Test | 5 test, 58 assertion |
 | `MOBILE/test/asset/asset_upgrade_test.dart` | Test | 5 test |
 | `MOBILE/lib/Repository/Service/assetUpgradeApi.dart` | Api | – |
 | `MOBILE/lib/Repository/Model/Asset/mAssetUpgrade.dart` | Model | – |
@@ -1188,7 +1183,7 @@ Karyawan: Laptop → atribut RAM (Saat ini: 8) → "8 GB menjadi 16 GB" → Ajuk
   → POST /asset/karyawan/upgrade → storeKaryawan() → header KRY-07-… (proses/pengajuan) + item nilai_lama "8"
 Admin: Setujui & Jadwalkan 23 Okt 10:00 → review() → disetujui/menunggu_pengambilan
 Karyawan: Serahkan Aset (tanpa checklist) → pelepasan() → asset dalam_perbaikan + log → dalam_service
-Admin: Upgrade Selesai, Nilai Baru "16", biaya 650.000, jadwal 26 Okt → hasil() → item nilai_baru "16" → menunggu_pengembalian
+Admin: Upgrade Selesai, Nilai Baru "16", jadwal 26 Okt → hasil() → item nilai_baru "16" → menunggu_pengembalian
 Karyawan: Terima Aset (tanpa checklist) → terima() → asset_data_item RAM value "16", asset terpakai + log → selesai
   → Mobile: Sebelum 8 / Sesudah 16, badge "Selesai"
 ```
@@ -1407,7 +1402,7 @@ Tanpa body.
 
 #### Langkah 4 — Admin mencatat hasil upgrade
 
-**Mobile:** teknisi menyelesaikan pekerjaan di luar sistem. Admin membuka **Hasil Upgrade**, memilih **Selesai**, mengisi keterangan, biaya, nilai baru RAM, dan jadwal pengembalian 26 Okt 2026 pukul 15:00 → `AssetUpgradeAdminApi.hasil`.
+**Mobile:** teknisi menyelesaikan pekerjaan di luar sistem. Admin membuka **Hasil Upgrade**, memilih **Selesai**, mengisi keterangan, nilai baru RAM, dan jadwal pengembalian 26 Okt 2026 pukul 15:00 → `AssetUpgradeAdminApi.hasil`.
 
 **Dikirim**
 ```http
@@ -1417,7 +1412,6 @@ POST /asset/upgrade-karyawan/CMP001202610001/hasil
 {
   "status_hasil": "selesai",
   "keterangan_hasil": "RAM ditambah 1 keping 8 GB",
-  "biaya_upgrade": 650000,
   "items": [ { "id_item": "CMP001202610001", "nilai_baru": "16" } ],
   "tgl_jadwal": "2026-10-26", "jam_jadwal": "15:00", "keterangan_jadwal": ""
 }
@@ -1425,9 +1419,9 @@ POST /asset/upgrade-karyawan/CMP001202610001/hasil
 
 **Diproses API** (`hasilUpgradeKaryawan` → `hasil`)
 1. Fase harus `dalam_service` ("Aset belum berada dalam proses upgrade.").
-2. `status_hasil` ∈ selesai/tidak_dapat_diupgrade; `keterangan_hasil` wajib (maks 1000); `biaya_upgrade` ≥ 0; jadwal pengembalian wajib.
+2. `status_hasil` ∈ selesai/tidak_dapat_diupgrade; `keterangan_hasil` wajib (maks 1000); jadwal pengembalian wajib.
 3. Per item: bila `selesai`, `nilai_baru` wajib ("Nilai baru setiap atribut wajib diisi."); bila `tidak_dapat_diupgrade`, `nilai_baru` dikosongkan dan `alasan_tidak_upgrade` diisi dari keterangan (maks 255).
-4. UPDATE header: `fase_upgrade = menunggu_pengembalian`, hasil, biaya, jadwal pengembalian, `keterangan_pengembalian`, serta **reset** `tgl_diterima = NULL`.
+4. UPDATE header: `fase_upgrade = menunggu_pengembalian`, hasil, jadwal pengembalian, `keterangan_pengembalian`, serta **reset** `tgl_diterima = NULL`.
 5. Notifikasi `upgrade.pengembalian` ke karyawan.
 
 **Hasil database**
@@ -1435,7 +1429,7 @@ POST /asset/upgrade-karyawan/CMP001202610001/hasil
 | Tabel | Perubahan |
 |---|---|
 | item `…001` | nilai_baru `'' → 16`; alasan_tidak_upgrade `''` |
-| header | fase_upgrade `dalam_service → menunggu_pengembalian`; status_hasil = selesai; keterangan_hasil = RAM ditambah 1 keping 8 GB; biaya_upgrade = 650000; tgl_pengembalian 2026-10-26; jam_pengembalian 15:00:00; tgl_diterima NULL |
+| header | fase_upgrade `dalam_service → menunggu_pengembalian`; status_hasil = selesai; keterangan_hasil = RAM ditambah 1 keping 8 GB; tgl_pengembalian 2026-10-26; jam_pengembalian 15:00:00; tgl_diterima NULL |
 | asset_data A12 | Tidak berubah (`dalam_perbaikan`) |
 | notif_data | + `CMP00120261000006`: KRY0010, rute `asset_detail_upgrade`, "Hasil upgrade KRY-07-202610001 sudah tersedia. Cek jadwal pengembalian." |
 
@@ -1477,7 +1471,7 @@ Tanpa body.
 
 #### Kondisi akhir data
 
-`asset_trx_upgrade_karyawan`: `CMP001202610001` / `KRY-07-202610001`, `status_approval = disetujui`, `fase_upgrade = selesai`, `status_transaksi = selesai`, `status_hasil = selesai`, `biaya_upgrade = 650000`, `tgl_pelepasan = 2026-10-23 10:15:00`, `tgl_diterima = 2026-10-26 15:20:00`, `checklist_pengambilan` dan `checklist_pengembalian` tetap NULL.
+`asset_trx_upgrade_karyawan`: `CMP001202610001` / `KRY-07-202610001`, `status_approval = disetujui`, `fase_upgrade = selesai`, `status_transaksi = selesai`, `status_hasil = selesai`, `tgl_pelepasan = 2026-10-23 10:15:00`, `tgl_diterima = 2026-10-26 15:20:00`, `checklist_pengambilan` dan `checklist_pengembalian` tetap NULL.
 
 `asset_trx_upgrade_karyawan_item`: `CMP001202610001`, `nilai_lama = 8`, `nilai_baru = 16`.
 
@@ -1492,7 +1486,7 @@ Tanpa body.
 **Admin menolak.** Pada langkah 2, `keputusan = ditolak` dengan `ket_tolak` (wajib): `status_approval = ditolak`, `status_transaksi = selesai`, `fase_upgrade = selesai`, asset tidak berubah, notifikasi `upgrade.ditolak`.
 
 **Hasil `tidak_dapat_diupgrade`.** Pada langkah 4, `status_hasil = tidak_dapat_diupgrade` (nilai baru tidak diisi):
-- item: `nilai_baru` dikosongkan (`''`) dan `alasan_tidak_upgrade` diisi dari `keterangan_hasil` (maks 255 karakter); header `status_hasil = tidak_dapat_diupgrade`, `biaya_upgrade` tetap boleh diisi, jadwal pengembalian tetap wajib, fase `menunggu_pengembalian`.
+- item: `nilai_baru` dikosongkan (`''`) dan `alasan_tidak_upgrade` diisi dari `keterangan_hasil` (maks 255 karakter); header `status_hasil = tidak_dapat_diupgrade`, jadwal pengembalian tetap wajib, fase `menunggu_pengembalian`.
 - Pada langkah 5, `applyAtribut` **dilewati** sehingga `asset_data_item` (RAM tetap 8) tidak berubah; namun asset tetap kembali `terpakai`, log gudang → karyawan tetap dibuat, header menjadi `selesai` dengan `tgl_diterima` terisi, dan notifikasi `upgrade.diterima` tetap berbunyi "… Upgrade selesai.".
 - Tidak ada lagi siklus kirim ulang: bila upgrade harus diulang, pengajuan baru harus dibuat.
 
@@ -1515,7 +1509,7 @@ Tanpa body.
 | Karyawan lain / PIC menyerahkan atau menerima milik orang lain | 3, 5 | 422 | Upgrade asset tidak ditemukan. | Tidak ada |
 | Hasil di luar fase `dalam_service` | 4 | 422 | Aset belum berada dalam proses upgrade. | Tidak ada |
 | Nilai baru kosong saat hasil `selesai` | 4 | 422 | Nilai baru setiap atribut wajib diisi. | Tidak ada |
-| Keterangan hasil kosong / biaya negatif | 4 | 422 | Keterangan hasil upgrade wajib diisi. / Biaya upgrade tidak boleh negatif. | Tidak ada |
+| Keterangan hasil kosong | 4 | 422 | Keterangan hasil upgrade wajib diisi. | Tidak ada |
 | Terima sebelum dijadwalkan kembali, atau terima kedua kali | 5 | 422 | Aset belum dijadwalkan untuk dikembalikan. | Tidak ada |
 | Memanggil rute lama `…/checklist-pengambilan` atau `…/selesai` | – | 404 | Rute tidak ada (dihapus v1.4) | Tidak ada |
 | Pengguna bukan admin asset | 2, 4 | 403 / 422 | Pengguna tidak memiliki akses admin asset. / Pengguna tidak terdaftar sebagai admin asset. | Tidak ada |
@@ -1531,7 +1525,7 @@ Semua pelanggaran aturan dilempar sebagai `InvalidArgumentException` di dalam `D
 | Ajukan / Buat | Pilih asset, atribut, detail, alasan, urgensi (Jalur A); atau karyawan + jadwal (Jalur B) | Validasi atribut, cek flow lain, snapshot nilai lama | header, item (`nilai_lama`), `notif_data` |
 | Review dan jadwal | Setujui/tolak, tanggal dan jam | Validasi jadwal, set fase | header, `notif_data` |
 | Serahkan | Tombol Serahkan Aset (tanpa checklist) | Asset → `dalam_perbaikan`, log, fase `dalam_service` | `asset_data`, `asset_trx_log`, header, `notif_data` |
-| Hasil | Status hasil, biaya, nilai baru, jadwal kembali | Simpan nilai baru, reset `tgl_diterima` | item, header, `notif_data` |
+| Hasil | Status hasil, nilai baru, jadwal kembali | Simpan nilai baru, reset `tgl_diterima` | item, header, `notif_data` |
 | Terima (langsung selesai) | Tombol Terima Aset (tanpa checklist) | Tulis nilai baru ke komponen (bila berhasil), asset → `terpakai`, log, fase `selesai` | `asset_data_item`, `asset_data`, `asset_trx_log`, header, `notif_data` |
 | Tampilan | JSON → model → widget; objek `aksi` menentukan tombol | `upgradeStatusMetadata`, `aksi`, `komponen` | `SELECT` saja |
 
@@ -1564,7 +1558,7 @@ Tidak ada lagi event Checklist pengambilan, Selesaikan, dan Kirim ulang (dihapus
 - [x] Jalur A & B, review, jadwal, hasil, serah terima tanpa checklist
 - [x] Update atribut `asset_data_item` (kini saat Terima)
 - [x] Hapus checklist pengambilan/penerimaan, review akhir (Selesaikan), kirim ulang; rute dan notifikasi terkait (v1.4)
-- [x] Test otomatis (5 test, 54 assertion)
+- [x] Test otomatis (5 test, 58 assertion)
 - [x] Cek upgrade aktif di Offboarding (v1.1)
 - [x] Cek upgrade aktif di Retur (v1.2)
 - [ ] Pembatalan / kedaluwarsa
@@ -1589,6 +1583,7 @@ Tidak ada lagi event Checklist pengambilan, Selesaikan, dan Kirim ulang (dihapus
 
 | Version | Date | Changes |
 |---|---|---|
+| 1.6 | 2026-11-19 | v1.6: biaya upgrade dihapus (kolom `biaya_upgrade` dihapus dari DB; API mengabaikan field itu bila masih dikirim klien lama). Validasi `biaya_upgrade` (integer, minimal 0) dan pesan "Biaya upgrade tidak boleh negatif" dihapus; mobile menghapus input "Biaya Upgrade (Rp)", tampilan biaya pada ringkasan hasil dan tahap Selesai, serta field model. ER diagram, data dictionary, contoh request/response, mapping UI-API-Model-DB, manual book, walkthrough, dan skenario error disesuaikan. Tes API "biaya negatif" dihapus. Tidak ada perubahan endpoint (tetap 13 aktif) dan tidak ada perubahan bagian/penomoran. |
 | 1.5 | 2026-11-11 | Prefix nomor transaksi diganti dari `KRY03-2-` menjadi `KRY-07-` (`AssetUpgradeKaryawan_m::store`); format baru `KRY-07-YYYYMMNNN`, selaras dengan Upgrade Ruangan `RGN07-`. Transaksi yang sudah tersimpan tetap memakai nomor lama (tidak ada migrasi data). Kode fitur di dokumen menjadi KRY-07; docblock dan komentar kode masih menulis `ALK-KRY03`. DBML `no_trx` diselaraskan (bagian INC-01). Tidak ada perubahan endpoint, payload, response, atau mobile. |
 | 1.4 | 2026-10-30 | Sinkronisasi dengan kode terbaru: **checklist pengambilan (admin) dan checklist pengembalian/penerimaan (karyawan) dihapus**; aksi admin **Selesaikan** dan **Kirim Ulang ke Teknisi** dihapus; rute `POST upgrade-karyawan/{id}/checklist-pengambilan` (API-007) dan `POST upgrade-karyawan/{id}/selesai` (API-009) dihapus. Penomoran API tidak digeser: kedua nomor tetap ada di tabel §23 sebagai baris "dihapus v1.4" agar rujukan lama tidak bergeser. Endpoint aktif 15 → **13**. Alur baru: Serahkan Aset tanpa checklist; Terima Aset (tanpa body) **langsung menyelesaikan** (atribut diperbarui, asset `terpakai`, log gudang → karyawan, fase `selesai`, `tgl_diterima`). Fase `menunggu_review` tidak dihasilkan lagi (dipertahankan hanya untuk data lama). `aksi` detail kini hanya `review`, `ubah_jadwal`, `pelepasan`, `hasil`, `terima`; field detail `checklist_*` dihapus; pending admin = approval `proses` atau fase `dalam_service`. Notifikasi `upgrade.checklist_pengambilan`, `upgrade.selesai`, `upgrade.kirim_ulang` dihapus; `upgrade.diterima` berakhiran "Upgrade selesai.". Kolom `checklist_pengambilan` / `checklist_pengembalian` tidak diubah tetapi tidak dipakai (ditandai di skema dan ERD). Menulis ulang BR-008/009/011/012 (BR-008 dan BR-012 ditandai dihapus, nomor tidak digeser; menambah BR-014/015), §10–§15, §21, §23–§30, §33–§34, §36–§38, §45.4 (walkthrough 6 langkah, variasi kirim ulang diganti hasil `tidak_dapat_diupgrade`), TC-09 s.d. TC-24, INC-05/06 ditutup, INC-10 s.d. INC-12, RISK-008 s.d. RISK-010, §47. Test: PHPUnit 5 test (54 assertion) dan Flutter 5 test lulus. Skrip `sql-upgrade-hapus-checklist-review-lama.sql` untuk data lama **belum dijalankan** (ketergantungan rilis). Perapihan: checklist Retur (§47) dicentang sesuai RISK-001. |
 | 1.3 | 2026-10-22 | Menambah §45.4 *Walkthrough Lengkap dengan Contoh Data* (Jalur A dari ajukan sampai atribut diperbarui: review, checklist pengambilan, serahkan, hasil, terima, selesaikan; variasi Jalur B, tolak, tidak dapat diupgrade, kirim ulang; kasus gagal). Sinkronisasi kode: tabel log ternyata `asset_trx_log` (`id_asset_trx_log`), bukan `asset_log`. |

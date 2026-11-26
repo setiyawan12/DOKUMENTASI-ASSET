@@ -12,6 +12,7 @@ Dokumentasi teknis dan manual book fitur Asset (API Lumen + MOBILE Flutter). Buk
 | Dokumentasi Teknis & Manual Book — Asset Onboarding Karyawan | [HTML](dokumentasi-asset-onboarding-karyawan.html) | [Markdown](dokumentasi-asset-onboarding-karyawan.md) |
 | Dokumentasi Teknis & Manual Book — Alokasi Asset ke Ruangan / Onboarding Ruangan (ALK-RGN01) | [HTML](dokumentasi-asset-onboarding-ruangan.html) | [Markdown](dokumentasi-asset-onboarding-ruangan.md) |
 | Dokumentasi Teknis & Manual Book — Pemeliharaan Terjadwal Asset Gudang | [HTML](dokumentasi-asset-pemeliharaan-gudang.html) | [Markdown](dokumentasi-asset-pemeliharaan-gudang.md) |
+| Dokumentasi Teknis & Manual Book — Pemeliharaan Terjadwal Asset Ruangan | [HTML](dokumentasi-asset-pemeliharaan-ruangan.html) | [Markdown](dokumentasi-asset-pemeliharaan-ruangan.md) |
 | Dokumentasi Teknis & Manual Book — Pemeliharaan Terjadwal Asset Karyawan | [HTML](dokumentasi-asset-pemeliharaan-karyawan.html) | [Markdown](dokumentasi-asset-pemeliharaan-karyawan.md) |
 | Dokumentasi Teknis & Manual Book — Peminjaman Asset Karyawan | [HTML](dokumentasi-asset-peminjaman-karyawan.html) | [Markdown](dokumentasi-asset-peminjaman-karyawan.md) |
 | Dokumentasi Teknis & Manual Book — Penambahan Asset ke Ruangan Aktif (ALK-RGN04) | [HTML](dokumentasi-asset-penambahan-ruangan.html) | [Markdown](dokumentasi-asset-penambahan-ruangan.md) |
@@ -19,7 +20,9 @@ Dokumentasi teknis dan manual book fitur Asset (API Lumen + MOBILE Flutter). Buk
 | Dokumentasi Teknis & Manual Book — Perbaikan Asset (PML02) | [HTML](dokumentasi-asset-perbaikan.html) | [Markdown](dokumentasi-asset-perbaikan.md) |
 | Dokumentasi Teknis & Manual Book — Request / Penambahan Asset Karyawan | [HTML](dokumentasi-asset-request-penambahan-karyawan.html) | [Markdown](dokumentasi-asset-request-penambahan-karyawan.md) |
 | Dokumentasi Teknis & Manual Book — Retur Asset Karyawan | [HTML](dokumentasi-asset-retur-karyawan.html) | [Markdown](dokumentasi-asset-retur-karyawan.md) |
+| Dokumentasi Teknis & Manual Book — Relokasi Asset Ruangan (ALK-RGN03) | [HTML](dokumentasi-asset-relokasi-ruangan.html) | [Markdown](dokumentasi-asset-relokasi-ruangan.md) |
 | Dokumentasi Teknis & Manual Book — Retur Asset Ruangan (ALK-RGN06) | [HTML](dokumentasi-asset-retur-ruangan.html) | [Markdown](dokumentasi-asset-retur-ruangan.md) |
+| Dokumentasi Teknis & Manual Book — Penarikan Asset Ruangan (ALK-RGN02) | [HTML](dokumentasi-asset-penarikan-ruangan.html) | [Markdown](dokumentasi-asset-penarikan-ruangan.md) |
 | Dokumentasi Teknis & Manual Book — Upgrade Asset Karyawan | [HTML](dokumentasi-asset-upgrade-karyawan.html) | [Markdown](dokumentasi-asset-upgrade-karyawan.md) |
 | Dokumentasi Teknis & Manual Book — Upgrade Komponen Aset Ruangan (ALK-RGN07) | [HTML](dokumentasi-asset-upgrade-ruangan.html) | [Markdown](dokumentasi-asset-upgrade-ruangan.md) |
 | Dokumentasi Teknis — MinIO Object Storage (API) | [HTML](dokumentasi-minio-object-storage.html) | [Markdown](dokumentasi-minio-object-storage.md) |

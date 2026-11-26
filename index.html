@@ -115,11 +115,11 @@ footer{color:var(--muted);font-size:13px;border-top:1px solid var(--line);paddin
     <div>
       <p class="eyebrow">Asset Management · Dokumentasi Teknis &amp; Manual Book</p>
       <h1>Dokumentasi Asset Karyawan</h1>
-      <p class="lede">Delapan belas fitur dan satu dokumen infrastruktur penyimpanan foto yang mengatur perjalanan asset — di tangan karyawan (diterima, dipakai, dikembalikan), di ruangan (dialokasikan, diupgrade, dilaporkan rusak, dan diretur lewat PIC), dan di gudang (dirawat, diperbaiki, diklaim, dihapus). Setiap dokumen disusun dari source code <code>API</code> (Lumen) dan <code>MOBILE</code> (Flutter) dengan 48 bagian yang sama.</p>
+      <p class="lede">Dua puluh satu fitur dan satu dokumen infrastruktur penyimpanan foto yang mengatur perjalanan asset — di tangan karyawan (diterima, dipakai, dikembalikan), di ruangan (dialokasikan, diupgrade, dilaporkan rusak, direlokasi, diretur, dan ditarik lewat PIC), dan di gudang (dirawat, diperbaiki, diklaim, dihapus). Setiap dokumen disusun dari source code <code>API</code> (Lumen) dan <code>MOBILE</code> (Flutter) dengan 48 bagian yang sama.</p>
     </div>
     <div class="stats" aria-label="Ringkasan">
-      <div><b>19</b>dokumen</div>
-      <div><b>223</b>endpoint</div>
+      <div><b>22</b>dokumen</div>
+      <div><b>265</b>endpoint</div>
       <div><b>48</b>bagian/dok</div>
     </div>
   </header>
@@ -243,13 +243,13 @@ footer{color:var(--muted);font-size:13px;border-top:1px solid var(--line);paddin
       <p>Pemeliharaan asset gudang sampai disposal, beserta master PIC.</p>
     </div>
     <div class="cards">
-      <a class="card" href="dokumentasi-asset-pemeliharaan-gudang.html" data-local="dokumentasi-asset-pemeliharaan-gudang.html" data-online="https://claude.ai/artifact/8sUsWedPNGp2WmsMtz2o6p" data-search="pemeliharaan gudang pml01 pm jatuh tempo h-14 pic pendamping checklist komponen hasil terberat">
-        <div class="tagline"><span class="code">PML01</span><span class="ver">v1.4</span></div>
+      <a class="card" href="dokumentasi-asset-pemeliharaan-gudang.html" data-local="dokumentasi-asset-pemeliharaan-gudang.html" data-online="https://claude.ai/artifact/8sUsWedPNGp2WmsMtz2o6p" data-search="pemeliharaan gudang pml01 pm jatuh tempo h-14 pic pendamping checklist komponen item dipilih hasil akhir aset banyak asset">
+        <div class="tagline"><span class="code">PML01</span><span class="ver">v1.5</span></div>
         <h3>Pemeliharaan Gudang</h3>
-        <p>Asset cadangan di gudang diservis berkala: PM dijadwalkan admin, PIC Pendamping mengisi checklist komponen, hasil terberat menentukan tindak lanjut.</p>
+        <p>Asset cadangan di gudang diservis berkala: admin menjadwalkan PM dan memilih item checklist per asset, PIC Pendamping mengisi item terpilih lalu menentukan hasil akhir tiap asset yang menentukan tindak lanjut.</p>
         <div class="flow">penjadwalan → menunggu_review → selesai · dibatalkan</div>
-        <div class="meta"><span>13 endpoint</span><span>16 test API</span><span>1 transaksi = 1 asset</span></div>
-        <div class="risk"><span class="sev sev-h">TINGGI</span><span>Skema dari SQL manual — wajib dijalankan sebelum fitur dipakai.</span></div>
+        <div class="meta"><span>13 endpoint</span><span>33 test API</span><span>47 test mobile</span><span>1 transaksi = banyak asset</span></div>
+        <div class="risk"><span class="sev sev-m">SEDANG</span><span>Belum diuji di MariaDB/perangkat nyata; klien lama (pemeliharaan[]) ditolak sehingga API dan mobile harus rilis bersamaan; validasi pilihan item disalin di model gudang dan ruangan.</span></div>
         <span class="open">Buka dokumen →</span>
       </a>
       <a class="card" href="dokumentasi-asset-perbaikan.html" data-local="dokumentasi-asset-perbaikan.html" data-online="https://claude.ai/artifact/6QBg6YAHq1NUM6fBAiXSB4" data-search="perbaikan pml02 service pic service vendor progres hasil unit baru">
@@ -323,9 +323,18 @@ footer{color:var(--muted);font-size:13px;border-top:1px solid var(--line);paddin
     <div class="stage-head">
       <span class="stage-arrow">tetap di ruangan</span>
       <h2 id="st-ruangan-pakai">Asset selama di ruangan</h2>
-      <p>Peningkatan spesifikasi dan penanganan kerusakan aset ruangan; pemegangnya tetap ruangan.</p>
+      <p>Pemeliharaan terjadwal, peningkatan spesifikasi, dan penanganan kerusakan aset ruangan; pemegangnya tetap ruangan.</p>
     </div>
     <div class="cards">
+      <a class="card" href="dokumentasi-asset-pemeliharaan-ruangan.html" data-local="dokumentasi-asset-pemeliharaan-ruangan.html" data-online="https://claude.ai/artifact/2F3WpQ1QkC3pVb5CH2MJ82" data-search="pemeliharaan ruangan pml01 pm terjadwal pic ruangan konfirmasi jadwal pic pendamping item checklist dipilih hasil akhir aset servis berkala">
+        <div class="tagline"><span class="code">PML01</span><span class="ver">v1.0</span></div>
+        <h3>Pemeliharaan Ruangan</h3>
+        <p>Aset di satu ruangan dipelihara berkala: Admin mengusulkan jadwal, PIC Ruangan menyetujui, Admin mengatur penjadwalan dan memilih item checklist per aset, lalu PIC Pendamping mengisi item terpilih dan menentukan hasil akhir tiap aset. Aset tetap di ruangan sampai hasilnya menuntut penarikan.</p>
+        <div class="flow">konfirmasi_jadwal → penjadwalan → pelaksanaan → menunggu_review → selesai</div>
+        <div class="meta"><span>15 endpoint</span><span>39 test API</span><span>38 test mobile</span><span>1 transaksi = 1 ruangan</span></div>
+        <div class="risk"><span class="sev sev-m">SEDANG</span><span>Belum diuji di MariaDB/perangkat nyata; tidak ada endpoint admin untuk batal, ganti PIC Pendamping, atau isi hasil; tidak ada notifikasi otomatis jatuh tempo.</span></div>
+        <span class="open">Buka dokumen →</span>
+      </a>
       <a class="card" href="dokumentasi-asset-upgrade-ruangan.html" data-local="dokumentasi-asset-upgrade-ruangan.html" data-online="https://claude.ai/artifact/1hB6TXQDgD5UGcLRgAYni2" data-search="upgrade ruangan komponen alk-rgn07 spesifikasi pic ruangan jalur a jalur b dalam service dalam_perbaikan teknisi admin hr">
         <div class="tagline"><span class="code">ALK-RGN07</span><span class="ver">v1.2</span></div>
         <h3>Upgrade Komponen Ruangan</h3>
@@ -347,11 +356,30 @@ footer{color:var(--muted);font-size:13px;border-top:1px solid var(--line);paddin
     </div>
   </section>
 
+  <section class="stage" aria-labelledby="st-ruangan-pindah">
+    <div class="stage-head">
+      <span class="stage-arrow">ruangan → ruangan</span>
+      <h2 id="st-ruangan-pindah">Asset pindah antar ruangan</h2>
+      <p>Admin/HR memindahkan asset dari satu ruangan ke ruangan lain lewat dua handoff PIC (asal melepas, tujuan menerima), lalu merekonsiliasi kondisinya.</p>
+    </div>
+    <div class="cards">
+      <a class="card" href="dokumentasi-asset-relokasi-ruangan.html" data-local="dokumentasi-asset-relokasi-ruangan.html" data-online="https://claude.ai/artifact/1Cj7HpCWCWg14kZsobgCJj" data-search="relokasi ruangan alk-rgn03 rgn03 pindah antar ruangan pic asal pic tujuan pelepasan tiba terima rekonsiliasi klarifikasi revisi checklist admin normal rusak gudang kunci lintas flow beranda perlu tindakan">
+        <div class="tagline"><span class="code">ALK-RGN03</span><span class="ver">v1.0</span></div>
+        <h3>Relokasi Asset Ruangan</h3>
+        <p>Admin/HR membuat relokasi; PIC Asal melepas aset dengan checklist, Admin mengonfirmasi pengambilan (aset rusak ditarik ke gudang) dan menandai tiba, PIC Tujuan menerima, lalu Admin merekonsiliasi dengan checklist sendiri sebagai penentu akhir. Perbedaan checklist wajib diklarifikasi dan direvisi kedua PIC.</p>
+        <div class="flow">pengambilan → pengiriman → terima tujuan → rekonsiliasi (⇄ klarifikasi) → selesai</div>
+        <div class="meta"><span>14 endpoint</span><span>24 test API</span><span>83 test mobile</span><span>tanpa jadwal &amp; batal</span></div>
+        <div class="risk"><span class="sev sev-h">TINGGI</span><span>Tiga SQL (revisi, checklist Admin, hapus jadwal) belum dijalankan dan API butuh dua yang pertama; tanpa pembatalan Admin, relokasi macet di pengambilan/pengiriman tidak punya jalan keluar.</span></div>
+        <span class="open">Buka dokumen →</span>
+      </a>
+    </div>
+  </section>
+
   <section class="stage" aria-labelledby="st-ruangan-keluar">
     <div class="stage-head">
       <span class="stage-arrow">ruangan → gudang</span>
       <h2 id="st-ruangan-keluar">Asset keluar dari ruangan</h2>
-      <p>PIC Ruangan mengajukan retur; Admin/HR memutuskan per asset dan menerimanya ke gudang.</p>
+      <p>PIC Ruangan mengajukan retur, atau Admin menarik aset setelah PIC mengonfirmasi kondisi; Admin/HR menerimanya ke gudang.</p>
     </div>
     <div class="cards">
       <a class="card" href="dokumentasi-asset-retur-ruangan.html" data-local="dokumentasi-asset-retur-ruangan.html" data-online="https://claude.ai/artifact/Xn76iWZKQjWToT53cf6UbJ" data-search="retur asset ruangan alk-rgn06 pic ruangan pengajuan keputusan per asset pengganti tukar unit rusak tidak digunakan terima asset gudang admin hr">
@@ -361,6 +389,15 @@ footer{color:var(--muted);font-size:13px;border-top:1px solid var(--line);paddin
         <div class="flow">pengajuan → dikonfirmasi → diterima (atau ditolak)</div>
         <div class="meta"><span>9 endpoint</span><span>16 test API</span><span>25 test mobile</span></div>
         <div class="risk"><span class="sev sev-m">SEDANG</span><span>Skrip unique no_trx per company belum dikonfirmasi dijalankan; belum ada jalur batal/edit.</span></div>
+        <span class="open">Buka dokumen →</span>
+      </a>
+      <a class="card" href="dokumentasi-asset-penarikan-ruangan.html" data-local="dokumentasi-asset-penarikan-ruangan.html" data-online="https://claude.ai/artifact/XNEDcczr2oJ3o9FyvR5BaV" data-search="penarikan ruangan alk-rgn02 rgn02 off board pic ruangan konfirmasi kondisi dua tahap batal admin semua sebagian gudang per aset dibatalkan">
+        <div class="tagline"><span class="code">ALK-RGN02</span><span class="ver">v1.0</span></div>
+        <h3>Penarikan Asset Ruangan</h3>
+        <p>Admin menarik aset ruangan ke gudang, semua atau sebagian; PIC Ruangan mengonfirmasi kondisi tiap aset, lalu Admin menerima dan memilih gudang per aset, atau membatalkan. Alur meniru penarikan karyawan tanpa peminjaman.</p>
+        <div class="flow">draft → pengajuan → dikonfirmasi → selesai · dibatalkan</div>
+        <div class="meta"><span>13 endpoint</span><span>46 test API</span><span>140 test mobile</span><span>semua / sebagian</span></div>
+        <div class="risk"><span class="sev sev-h">TINGGI</span><span>Skema kondisi dua tahap dan SQL batal belum dijalankan (API menolak aksi tulis sampai siap); semua test SQLite, MariaDB belum teruji.</span></div>
         <span class="open">Buka dokumen →</span>
       </a>
     </div>
@@ -437,6 +474,7 @@ footer{color:var(--muted);font-size:13px;border-top:1px solid var(--line);paddin
       <tr><td>Dokumentasi Teknis & Manual Book — Asset Onboarding Karyawan</td><td><a href="dokumentasi-asset-onboarding-karyawan.html" download>HTML</a></td><td><a href="dokumentasi-asset-onboarding-karyawan.md" download>Markdown</a></td></tr>
       <tr><td>Dokumentasi Teknis & Manual Book — Alokasi Asset ke Ruangan / Onboarding Ruangan (ALK-RGN01)</td><td><a href="dokumentasi-asset-onboarding-ruangan.html" download>HTML</a></td><td><a href="dokumentasi-asset-onboarding-ruangan.md" download>Markdown</a></td></tr>
       <tr><td>Dokumentasi Teknis & Manual Book — Pemeliharaan Terjadwal Asset Gudang</td><td><a href="dokumentasi-asset-pemeliharaan-gudang.html" download>HTML</a></td><td><a href="dokumentasi-asset-pemeliharaan-gudang.md" download>Markdown</a></td></tr>
+      <tr><td>Dokumentasi Teknis & Manual Book — Pemeliharaan Terjadwal Asset Ruangan</td><td><a href="dokumentasi-asset-pemeliharaan-ruangan.html" download>HTML</a></td><td><a href="dokumentasi-asset-pemeliharaan-ruangan.md" download>Markdown</a></td></tr>
       <tr><td>Dokumentasi Teknis & Manual Book — Pemeliharaan Terjadwal Asset Karyawan</td><td><a href="dokumentasi-asset-pemeliharaan-karyawan.html" download>HTML</a></td><td><a href="dokumentasi-asset-pemeliharaan-karyawan.md" download>Markdown</a></td></tr>
       <tr><td>Dokumentasi Teknis & Manual Book — Peminjaman Asset Karyawan</td><td><a href="dokumentasi-asset-peminjaman-karyawan.html" download>HTML</a></td><td><a href="dokumentasi-asset-peminjaman-karyawan.md" download>Markdown</a></td></tr>
       <tr><td>Dokumentasi Teknis & Manual Book — Penambahan Asset ke Ruangan Aktif (ALK-RGN04)</td><td><a href="dokumentasi-asset-penambahan-ruangan.html" download>HTML</a></td><td><a href="dokumentasi-asset-penambahan-ruangan.md" download>Markdown</a></td></tr>
@@ -444,6 +482,8 @@ footer{color:var(--muted);font-size:13px;border-top:1px solid var(--line);paddin
       <tr><td>Dokumentasi Teknis & Manual Book — Perbaikan Asset (PML02)</td><td><a href="dokumentasi-asset-perbaikan.html" download>HTML</a></td><td><a href="dokumentasi-asset-perbaikan.md" download>Markdown</a></td></tr>
       <tr><td>Dokumentasi Teknis & Manual Book — Request / Penambahan Asset Karyawan</td><td><a href="dokumentasi-asset-request-penambahan-karyawan.html" download>HTML</a></td><td><a href="dokumentasi-asset-request-penambahan-karyawan.md" download>Markdown</a></td></tr>
       <tr><td>Dokumentasi Teknis & Manual Book — Retur Asset Karyawan</td><td><a href="dokumentasi-asset-retur-karyawan.html" download>HTML</a></td><td><a href="dokumentasi-asset-retur-karyawan.md" download>Markdown</a></td></tr>
+      <tr><td>Dokumentasi Teknis & Manual Book — Penarikan Asset Ruangan (ALK-RGN02)</td><td><a href="dokumentasi-asset-penarikan-ruangan.html" download>HTML</a></td><td><a href="dokumentasi-asset-penarikan-ruangan.md" download>Markdown</a></td></tr>
+      <tr><td>Dokumentasi Teknis & Manual Book — Relokasi Asset Ruangan (ALK-RGN03)</td><td><a href="dokumentasi-asset-relokasi-ruangan.html" download>HTML</a></td><td><a href="dokumentasi-asset-relokasi-ruangan.md" download>Markdown</a></td></tr>
       <tr><td>Dokumentasi Teknis & Manual Book — Retur Asset Ruangan (ALK-RGN06)</td><td><a href="dokumentasi-asset-retur-ruangan.html" download>HTML</a></td><td><a href="dokumentasi-asset-retur-ruangan.md" download>Markdown</a></td></tr>
       <tr><td>Dokumentasi Teknis & Manual Book — Upgrade Asset Karyawan</td><td><a href="dokumentasi-asset-upgrade-karyawan.html" download>HTML</a></td><td><a href="dokumentasi-asset-upgrade-karyawan.md" download>Markdown</a></td></tr>
       <tr><td>Dokumentasi Teknis & Manual Book — Upgrade Komponen Aset Ruangan (ALK-RGN07)</td><td><a href="dokumentasi-asset-upgrade-ruangan.html" download>HTML</a></td><td><a href="dokumentasi-asset-upgrade-ruangan.md" download>Markdown</a></td></tr>
